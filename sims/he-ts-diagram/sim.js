@@ -712,6 +712,7 @@
     const m = MBY[c.id], q = markerPos(c.id);
     if (inPlot(p) && Math.hypot(q.x - p.x, q.y - p.y) <= (PHONE ? 28 : 22)) {
       c.placed = true; c.pop = 1; SciSim.tween(c, { pop: 0 }, { duration: 0.6, ease: 'outCubic' });
+      SciSim.tween(c, { x: c.hx, y: c.hy }, { duration: 0.35, ease: 'outCubic' });   // 점을 찍은 카드는 보관함으로 돌아가요 (그래프의 점·이름·등밀도선을 가리지 않게)
       Sound.success(); parts.burst(q.x, q.y, { count: 14, speed: 120, size: 3.2, life: 0.7, colors: [m.col, '#fff'] });
       say(m.name + ' (' + mk(m.T) + ' °C, ' + f1(m.S) + ' psu)의 점을 찍었어요.', false, 1.6);
     } else {

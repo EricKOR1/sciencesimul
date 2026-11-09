@@ -476,10 +476,10 @@
       ctx.restore();
       TX(R.x + R.w / 2, R.y + (PHONE ? 24 : 21), G.name, PHONE ? 15 : 15.5, '#fff', 'center', 800);
       TX(R.x + R.w / 2, R.y + (PHONE ? 46 : 40), G.desc, PHONE ? 11.5 : 12.5, '#e2e8f0', 'center', 700);
-      const n = dn1.binList(b).length;
-      if (n) D.label(R.x + R.w - 8, R.y + R.h - 14, n + '장', { bg: G.col, size: 12.5, align: 'right', pad: 7 });
     });
     dn1.drawOrder().forEach((it) => drawItemCard(it, dn1));
+    // 장수 표시는 사진 위에 그려요 (한 상자에 사진이 많아도 가려지지 않게)
+    GRP_ORDER.forEach((b, i) => { const R = binRect(i), n = dn1.binList(b).length; if (n) D.label(R.x + R.w - 8, R.y + R.h - 14, n + '장', { bg: GRP[b].col, size: 12.5, align: 'right', pad: 7 }); });
     if (!PHONE && !dn1.drag && !G1.some((g) => g.bin != null)) {
       const hy = PHONE ? 240 : 410;
       note(PHONE ? 10 : 12, hy, PHONE ? 580 : 446, '💡 사진을 상자에 끌어 놓거나, 사진을 누른 뒤 상자를 눌러도 돼요. 상자 안의 사진을 다시 끌어 옮길 수도 있어요.', 13.5, { bg: 'rgba(255,255,255,.9)' });

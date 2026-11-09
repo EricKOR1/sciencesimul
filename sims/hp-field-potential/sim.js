@@ -250,7 +250,7 @@
     if (fw > 0.5) { D.roundRect(bx, by, fw, bh, 9); ctx.fillStyle = '#f2873a'; ctx.fill(); }
     [0, 50, 100].forEach((v) => { const xx = bx + bw * v / 100; ctx.strokeStyle = 'rgba(60,70,90,.45)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(xx, by + bh); ctx.lineTo(xx, by + bh + 5); ctx.stroke(); T(xx, by + bh + 19, v + ' %', 12, '#3a465c', v === 0 ? 'left' : v === 100 ? 'right' : 'center', 800); });
     const num = fPct() + ' %';
-    T(bx + Math.min(Math.max(fw, 50), bw) - 8, by + 16.5, num, 14, fw > 56 ? '#fff' : '#26324a', fw > 56 ? 'right' : 'left', 800);
+    T(fw > 56 ? bx + Math.min(fw, bw) - 8 : bx + Math.max(fw + 6, 42), by + 16.5, num, 14, fw > 56 ? '#fff' : '#26324a', fw > 56 ? 'right' : 'left', 800);   // 짧은 막대일 때는 막대 끝 바깥에 써서 겹치지 않게
     if (!PHONE) {
       // 두 힘의 크기 비교
       const cy = by + bh + 44;
@@ -512,7 +512,7 @@
     if (t.st === 'tray') { D.ring(TRAY.x, TRAY.y, 24, S.t, { color: '#f26b3a', speed: 1, width: 2 }); }
     ctx.strokeStyle = '#cfd6e4'; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); D.roundRect(12 + 14, PY + 38, TRAY_W - 28, PH - 52, 12); ctx.stroke(); ctx.setLineDash([]);
     if (t.st === 'tray' || t.st === 'returning') {/* 토큰은 위에서 그려요 */}
-    T(12 + TRAY_W / 2, PY + PH - 16, t.st === 'tray' ? '끌어서 지도 위에 놓기' : '지도 위에 놓았어요', 12.5, '#5a6679', 'center', 700);
+    T(12 + TRAY_W / 2, PY + PH - 24, t.st === 'tray' ? '끌어서 지도 위에 놓기' : '지도 위에 놓았어요', 12.5, '#5a6679', 'center', 700);   // 점선 칸 안쪽에 써서 테두리와 겹치지 않게
     const rx = 12 + TRAY_W + 10, rw = VW - rx - 12;
     panel(rx, PY, rw, PH, 14);
     T(rx + 14, PY + 24, '지도 읽는 법', 13.5, '#26324a', 'left', 800);
@@ -648,7 +648,7 @@
     if (V > 0) {
       const len = (xr - xl - 24) * V / VMAX, cx = (xl + xr) / 2;
       [PYT + 26, PYT + 62, PYB - 62, PYB - 26].forEach((yy) => D.arrow(cx + len / 2, yy, cx - len / 2, yy, { color: '#1f2a44', width: 3, head: Math.min(12, len * 0.6), alpha: 0.72 }));
-      D.label(cx, PYT + 44, '전기장 방향 (+1이 받는 힘)', { bg: 'rgba(255,255,255,.88)', color: '#1f2a44', size: PHONE ? 11 : 12 });
+      D.label(cx, PYB - 44, '전기장 방향 (+1이 받는 힘)', { bg: 'rgba(255,255,255,.88)', color: '#1f2a44', size: PHONE ? 11 : 12 });   // 아래쪽 화살표 사이: 전하 위의 'q = 1 C' 이름표와 겹치지 않게
     }
     // 판
     const plate = (x0, w, sign, volt) => {
@@ -721,7 +721,10 @@
       ctx.save(); ctx.strokeStyle = 'rgba(60,70,90,.5)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
       ctx.beginPath(); ctx.moveTo(px(cm), gy1); ctx.lineTo(px(cm), yv(vv)); ctx.lineTo(gx0, yv(vv)); ctx.stroke(); ctx.restore();
       D.sphere(px(cm), yv(vv), 6.5, el ? NEG : POS, { gloss: false });
-      D.label(clamp(px(cm), gx0 + 50, gx1 - 40), yv(vv) - 26 < gy0 - 6 ? yv(vv) + 24 : yv(vv) - 26, '이 위치의 전위 ' + trim(fmtN(vv, 1)) + ' V', { bg: '#26324a', size: PHONE ? 11.5 : 12.5 });
+      // 이름표는 그래프 선을 가리지 않게: 선이 오른쪽 위로 올라가므로 점의 왼쪽 위(왼쪽 끝 가까이면 그래프 왼쪽 위 빈 곳)에 둬요
+      const lt = '이 위치의 전위 ' + trim(fmtN(vv, 1)) + ' V', lo = { bg: '#26324a', size: PHONE ? 11.5 : 12.5 };
+      if (px(cm) - gx0 > (PHONE ? 130 : 150)) D.label(px(cm) - 10, yv(vv) - 16, lt, Object.assign({ align: 'right' }, lo));
+      else D.label(gx0 + 12, gy0 + 14, lt, Object.assign({ align: 'left' }, lo));
     }
     // 오른쪽 카드: 에너지 = 전하 × 전위차
     const rx = PHONE ? 12 : lw + 24, ry = PHONE ? PY + lh + 10 : PY, rw = PHONE ? VW - 24 : VW - rx - 12, rh = PHONE ? PH - lh - 10 : PH;

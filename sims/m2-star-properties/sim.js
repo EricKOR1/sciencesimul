@@ -566,10 +566,11 @@
     if (mode === 'sort') {
       if (L.kind === 'wide') {
         const slots = [14, 275, 536].map((x) => R_(x, 312, 250, 112));
-        return { cw: 148, ch: 100, cap: 9, scIn: 0.8, slots, tray: [0, 1, 2, 3, 4].map((i) => ({ x: 10 + i * 158, y: 440 })), place: (s, i, n) => { const k = n <= 2 ? 2 : 3, sc = n <= 2 ? 0.8 : 0.56, w = 148 * sc, gap = 6, x0 = slots[s].x + (slots[s].w - (k * w + (k - 1) * gap)) / 2; return { x: x0 + (i % k) * (w + gap), y: slots[s].y + 26 + Math.floor(i / k) * (100 * sc + 4), sc }; } };
+        // 상자 안(헤더 아래 82 높이)에 카드가 몇 장이든 다 들어가게: 2장까지 크게, 3장은 한 줄, 4장부터는 두 줄 (넘쳐서 아래 카드·글자를 덮지 않게)
+        return { cw: 148, ch: 100, cap: 9, scIn: 0.8, slots, tray: [0, 1, 2, 3, 4].map((i) => ({ x: 10 + i * 158, y: 440 })), place: (s, i, n) => { const k = n <= 3 ? Math.max(2, n) : Math.ceil(n / 2), sc = n <= 2 ? 0.8 : n === 3 ? 0.5 : Math.min(0.38, (238 - (k - 1) * 4) / (k * 148)), w = 148 * sc, gap = n <= 3 ? 6 : 4, x0 = slots[s].x + (slots[s].w - (Math.min(k, n) * w + (Math.min(k, n) - 1) * gap)) / 2; return { x: x0 + (i % k) * (w + gap), y: slots[s].y + 26 + Math.floor(i / k) * (100 * sc + 4), sc }; } };
       }
       const slots = [8, 178, 348].map((x) => R_(x, 340, 164, 210));
-      return { cw: 156, ch: 100, cap: 9, scIn: 0.8, slots, tray: [[8, 562], [178, 562], [348, 562], [8, 668], [178, 668]].map((p) => ({ x: p[0], y: p[1] })), place: (s, i, n) => { const sc = n <= 2 ? 0.8 : 0.58, w = 156 * sc; return { x: slots[s].x + (slots[s].w - w) / 2, y: slots[s].y + 28 + i * (100 * sc + 4), sc }; } };
+      return { cw: 156, ch: 100, cap: 9, scIn: 0.8, slots, tray: [[8, 562], [178, 562], [348, 562], [8, 668], [178, 668]].map((p) => ({ x: p[0], y: p[1] })), place: (s, i, n) => { if (n <= 3) { const sc = n <= 2 ? 0.8 : 0.55, w = 156 * sc; return { x: slots[s].x + (slots[s].w - w) / 2, y: slots[s].y + 28 + i * (100 * sc + 4), sc }; } const rows = Math.ceil(n / 2), sc = Math.min(0.47, (176 - (rows - 1) * 4) / (rows * 100)), w = 156 * sc; return { x: slots[s].x + (slots[s].w - (2 * w + 4)) / 2 + (i % 2) * (w + 4), y: slots[s].y + 28 + Math.floor(i / 2) * (100 * sc + 4), sc }; } };
     }
     // 사다리 (표면 온도가 높은 별부터)
     if (L.kind === 'wide') {
@@ -647,7 +648,12 @@
     ctx.strokeStyle = c.slot >= 0 && !c.drag ? 'rgba(125,211,252,.8)' : 'rgba(190,210,255,.5)'; ctx.lineWidth = 1.6; ctx.stroke();
     ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.moveTo(12, 1); ctx.lineTo(w - 12, 1); ctx.stroke();
     const d = c.def;
-    if (d.kind === 'mag') {
+    if (d.kind === 'mag' && c.sc < 0.6 && c.slot >= 0 && !c.drag) {
+      // 상자에 여러 장 들어가 작아진 카드: 이름만 크게 (작은 글씨가 뭉개지지 않게)
+      const f = (L.kind === 'tall' ? 14 : 11.5) / c.sc;
+      star(ctx, w / 2, h * 0.3, 5 / c.sc * 0.5, d.color, { halo: 2.4, flare: 9 / c.sc * 0.5 });
+      txt(ctx, d.name, w / 2, h * 0.62 + f * 0.36, f, '#fff', { weight: 800, maxW: w - 10 });
+    } else if (d.kind === 'mag') {
       star(ctx, 20, 24, 6, d.color, { halo: 3, flare: 15 });
       ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(20, 24, 2.6, 0, TAU); ctx.fill();
       txt(ctx, d.name, 36, 30, 16, '#fff', { align: 'left', weight: 800, maxW: w - 44 });

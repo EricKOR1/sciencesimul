@@ -479,8 +479,8 @@
       const s = slotRect(i), b = boxRect(i), done = un.cards.some((c) => c.slot === i);
       D.shadow(() => { D.roundRect(s.x, s.y, s.w, s.h, 14); ctx.fillStyle = done ? '#f1fbf5' : '#faf8ff'; ctx.fill(); }, { blur: 4, y: 1 });
       ctx.strokeStyle = done ? GOOD : '#d6c9f5'; ctx.lineWidth = done ? 2.6 : 1.6; D.roundRect(s.x, s.y, s.w, s.h, 14); ctx.stroke();
-      T(s.x + 12, s.y + 24, lw.name, 15, INK, 'left', 800);
-      T(s.x + 12, s.y + 44, lw.fix, 13.5, AMB, 'left', 800);
+      T(s.x + 12, s.y + (PHONE ? 21 : 24), lw.name, 15, INK, 'left', 800);
+      T(s.x + 12, s.y + (PHONE ? 39 : 44), lw.fix, 13.5, AMB, 'left', 800);   // 휴대폰: 놓인 카드 위로 글자가 닿지 않게 조금 올려요
       if (!done) { ctx.save(); ctx.strokeStyle = '#b7a6ee'; ctx.setLineDash([6, 5]); ctx.lineWidth = 2; D.roundRect(b.x, b.y, b.w, b.h, 10); ctx.stroke(); ctx.restore(); }
       if (!done && un.drag && un.drag.over === i) { ctx.fillStyle = 'rgba(124,58,237,.10)'; D.roundRect(b.x, b.y, b.w, b.h, 10); ctx.fill(); }
     });

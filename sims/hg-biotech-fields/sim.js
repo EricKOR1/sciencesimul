@@ -144,8 +144,9 @@
     }
     boxAt(p) { for (const b of this.boxes) if (inRect(p.x, p.y, b)) return b; return null; }
     chipRect(box, k, n) {
-      const cols = box.cols || 2, gap = 6, rows = Math.max(1, Math.ceil(n / cols));
-      const kw = (box.w - gap * (cols + 1)) / cols, hdr = box.hdr || 26, avail = box.h - hdr - 6;
+      const gap = 6, hdr = box.hdr || 26, avail = box.h - hdr - 6;
+      let cols = box.cols || 2; while (cols < Math.min(n, 6) && Math.ceil(n / cols) * 20 > avail) cols++;   // 한 상자에 카드가 몰리면 열을 늘려 칩끼리 겹치지 않게
+      const rows = Math.max(1, Math.ceil(n / cols)), kw = (box.w - gap * (cols + 1)) / cols;
       const sp = Math.min(this.o.kh + 4, avail / rows), col = k % cols, row = Math.floor(k / cols);
       return { x: box.x + gap + col * (kw + gap), y: box.y + hdr + 1 + row * sp, w: kw, h: Math.max(18, Math.min(this.o.kh, sp - 3)) };
     }
@@ -434,7 +435,7 @@
   const curP = () => (S.mode === 'sel' ? 'N' : 'T');
   const triedN = () => Object.keys(DK.best).length;
   function dkGeom() {
-    if (PHONE) return { s: 0.74, px: 240, py: 180, score: { x: 8, y: 296, w: 464, h: 82 }, rank: { x: 8, y: 384, w: 464, h: 164 }, tray: { y: 560, h: 76 } };
+    if (PHONE) return { s: 0.74, px: 240, py: 180, score: { x: 8, y: 296, w: 464, h: 82 }, rank: { x: 8, y: 384, w: 464, h: 158 }, tray: { y: 560, h: 76 } };   // 휴대폰: 아래 '후보 화합물' 글자가 점수판 테두리에 걸리지 않게
     return { s: 1, px: 205, py: 238, score: { x: 372, y: 40, w: 418, h: 120 }, rank: { x: 372, y: 166, w: 418, h: 250 }, tray: { y: 448, h: 104 } };
   }
   function trayRects(ids) {
@@ -610,12 +611,13 @@
       ps.pairs.forEach((q) => {
         const a = -Math.PI / 2 + q.site * STEP, ca = Math.cos(a), sa = Math.sin(a);
         ctx.save(); ctx.translate(g.px, g.py); ctx.scale(g.s, g.s); ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(ca * 70, sa * 70); ctx.lineTo(ca * 80, sa * 80); ctx.stroke(); ctx.restore();
-        pill(g.px + ca * 150 * g.s, g.py + sa * 150 * g.s, fmtS(q.val), { bg: '#16a34a', color: '#fff', size: 13, pad: 7 });
+        const pa = a - 14 * Math.PI / 180;   // 점수 알약은 자리 이름(P1~P5) 옆으로 조금 돌려 놓아 이름을 가리지 않게
+        pill(g.px + Math.cos(pa) * 150 * g.s, g.py + Math.sin(pa) * 150 * g.s, fmtS(q.val), { bg: '#16a34a', color: '#fff', size: 13, pad: 7 });
       });
       if (ps.clash) {
         const a = -Math.PI / 2 + ps.clashSite * STEP;
         D.glow(g.px + Math.cos(a) * 120 * g.s, g.py + Math.sin(a) * 120 * g.s, 52 * g.s, '#ef4444', 0.55 + 0.25 * Math.sin(t * 6));
-        pill(clamp(g.px + Math.cos(a) * 160 * g.s, 66, PHONE ? 412 : 318), g.py + Math.sin(a) * 160 * g.s, '입체 충돌 +3.0', { bg: '#dc2626', color: '#fff', size: 13, pad: 7 });
+        pill(clamp(g.px + Math.cos(a) * 160 * g.s, 66, PHONE ? 412 : 318), g.py + Math.sin(a) * 160 * g.s + (Math.abs(Math.sin(a)) < 0.7 ? 28 : 0), '입체 충돌 +3.0', { bg: '#dc2626', color: '#fff', size: 13, pad: 7 });   // 옆쪽 자리는 조금 아래로: 자리 이름을 가리지 않게
       }
     }
     if (!PHONE) {

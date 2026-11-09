@@ -692,7 +692,12 @@
         txt('🃏 원자 카드를 끌어 알맞은 칸에 놓아요', 400, 396, 14, COL.muted, 'center', 800);
         ctx.restore();
       }
-      if (T.hoverZ && T.cards.some((c) => c.hold)) { const r = cellRect(T.hoverZ); D.label(r.x + r.w / 2, r.y + r.h + 16, T.hoverZ + '번 칸', { bg: COL.sub, size: 14, pad: 9 }); }
+      if (T.hoverZ && T.cards.some((c) => c.hold)) {
+        // 'N번 칸' 이름표는 아래(또는 위)가 빈 곳일 때만 — 이웃 칸의 원소 기호를 덮지 않게 (칸 안에도 번호가 보여요)
+        const r = cellRect(T.hoverZ), cx = r.x + r.w / 2, below = r.y + r.h + 16, above = r.y - 16;
+        const ly = !cellAt({ x: cx, y: below }) && !cellAt({ x: cx - 26, y: below }) && !cellAt({ x: cx + 26, y: below }) ? below : !cellAt({ x: cx, y: above }) && !cellAt({ x: cx - 26, y: above }) && !cellAt({ x: cx + 26, y: above }) && above > 40 ? above : null;
+        if (ly != null) D.label(cx, ly, T.hoverZ + '번 칸', { bg: COL.sub, size: 14, pad: 9 });
+      }
       drawInfo(t);
       drawBanner(t);
       if (T.sweep) {

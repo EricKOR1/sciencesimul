@@ -153,7 +153,7 @@
   const INF = PHONE ? { x: 8, y: 546, w: 464, h: 204 } : { x: 12, y: 430, w: 776, h: 120 };
   const palRect = (i) => (PHONE ? { x: 14 + (i % 3) * 152, y: PAL.y + 8 + Math.floor(i / 3) * 58, w: 146, h: 52 } : { x: 20 + i * 96, y: PAL.y + 8, w: 88, h: 86 });
   const TR_IN = PHONE ? { x: 16, y: TRY.y + 36, w: 448, h: 152 } : { x: 24, y: TRY.y + 34, w: 752, h: 106 };
-  const slotPos = (i) => (PHONE ? { x: 8 + 58 + (i % 4) * 116, y: TR_IN.y + 40 + Math.floor(i / 4) * 74 } : { x: 24 + 50 + i * 92, y: TR_IN.y + 53 });
+  const slotPos = (i) => (PHONE ? { x: 8 + 58 + (i % 4) * 116, y: TR_IN.y + 34 + Math.floor(i / 4) * 68 } : { x: 24 + 50 + i * 92, y: TR_IN.y + 53 });   // 폰: 둘째 줄 원자량 숫자가 접시 테두리 밖으로 넘치지 않게
   const TR = PHONE ? 25 : 28;
   const inTray = (p) => p.x >= TR_IN.x && p.x <= TR_IN.x + TR_IN.w && p.y >= TR_IN.y && p.y <= TR_IN.y + TR_IN.h;
   const trayMass = () => S.fd.tray.reduce((s, tk) => s + EL[tk.el].m, 0);

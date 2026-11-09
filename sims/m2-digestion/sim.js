@@ -1282,7 +1282,7 @@
     { name: 'liver', text: '간', x: 40, y: 236, ax: 78, ay: 238 },
     { name: 'gall', text: '쓸개', x: 112, y: 290, ax: 140, ay: 284 },
     { name: 'pan', text: '이자', x: 300, y: 308, ax: 238, ay: 320 },
-    { site: 'small', text: '소장', x: 268, y: 424, ax: 210, ay: 410 },
+    { site: 'small', text: '소장', x: 268, y: 452, ax: 210, ay: 414 },
     { site: 'large', text: '대장', x: 40, y: 410, ax: 92, ay: 412 },
   ];
   function drawLabels() {
@@ -1416,7 +1416,7 @@
     let tx, ty, tw, th;
     if (c.site) {
       const h = HOT[c.site], n = TR.cards.filter((q) => q.site === c.site && q.idx < c.idx).length;
-      tx = BX + h.chip[0] - 46; ty = h.chip[1] + n * 30 - 13; tw = 92; th = 26;
+      tx = BX + h.chip[0] - 46; ty = h.chip[1] + n * 26 - 12; tw = 92; th = 24;   // 4장이 한곳에 쌓여도 아래 '소장' 이름표를 덮지 않게 촘촘히
     } else { const p = cardRest(c); tx = p.x; ty = p.y; tw = 100; th = 46; }
     if (animate) SciSim.tween(c, { x: tx, y: ty, w: tw, h: th }, { duration: 0.45, ease: 'outBack' }); else { c.x = tx; c.y = ty; c.w = tw; c.h = th; }
   }
@@ -1585,6 +1585,17 @@
         if (it.s >= L) { it.state = 'gone'; V.respawn.push({ key: it.key, t: now() + 1.2, home: it.home }); }
       }
     });
+    // 떠다니는 영양소끼리 겹쳐 이름표가 가려지지 않게 살짝 밀어내요
+    const freeIt = V.items.filter((it) => it.state === 'free' && !(V.drag && V.drag.it === it));
+    for (let i = 0; i < freeIt.length; i++) for (let j = i + 1; j < freeIt.length; j++) {
+      const a = freeIt[i], b = freeIt[j], dx = b.x - a.x, dy = b.y - a.y, ox = 104 - Math.abs(dx), oy = 70 - Math.abs(dy);
+      if (ox > 0 && oy > 0) {
+        const k = Math.min(1, dt * 6);
+        if (ox / 104 < oy / 70) { const m = (dx >= 0 ? 1 : -1) * ox * 0.5 * k; a.x -= m; b.x += m; a.vx -= m * 2; b.vx += m * 2; }
+        else { const m = (dy >= 0 ? 1 : -1) * oy * 0.5 * k; a.y -= m; b.y += m; a.vy -= m * 2; b.vy += m * 2; }
+        a.x = clamp(a.x, 56, 344); b.x = clamp(b.x, 56, 344); a.y = clamp(a.y, 86, 474); b.y = clamp(b.y, 86, 474);
+      }
+    }
     V.items = V.items.filter((it) => it.state !== 'gone');
     V.respawn = V.respawn.filter((r) => {
       if (now() < r.t) return true;

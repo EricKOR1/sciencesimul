@@ -111,7 +111,7 @@
     ctx.strokeStyle = c.bad ? '#e2464b' : c.sel ? '#f59e0b' : C.shade(c.col || '#16a34a', 0.15); ctx.lineWidth = c.bad || c.sel ? 3 : 2; D.roundRect(-w / 2, -h / 2, w, h, r); ctx.stroke();
     const chip = h < 36;
     if (chip) {
-      TF(0, 5, w > 300 ? c.label : (c.short || c.label), w - 10, clamp(h * 0.58, 11, 14), 10.5, '#26324a', 'center', 800);
+      TF(0, Math.min(5, h * 0.3), w > 300 ? c.label : (c.short || c.label), w - 10, clamp(h * 0.6, 10, 14), 9.5, '#26324a', 'center', 800);
     } else {
       let lx = -w / 2 + 10, maxW = w - 20;
       if (c.icon) { E(c.icon, -w / 2 + 24, 1, 22); lx = -w / 2 + 40; maxW = w - 48; }
@@ -141,11 +141,17 @@
       this.cards = o.cards.map((d, i) => { const p = o.tray(i); return Object.assign({}, d, { x: p.x, y: p.y, w: o.cw, h: o.ch, zone: null, lift: 0, bad: false, shake: 0, home: p, seq: 0, sel: false }); });
     }
     boxAt(p) { for (const b of this.boxes) if (inRect(p.x, p.y, b)) return b; return null; }
+    /* 상자 속 칩 배치: 칩이 얇아지면 열을 늘리고(칩 너비 90 이상일 때), 칩끼리 겹치지 않게 칸 간격보다 작게 그려요 */
+    chipGrid(box, n) {
+      const gap = 6, hdr = box.hdr || 26, avail = box.h - hdr - 6 - (box.bot || 0); let cols = box.cols || 2;   // bot: 상자 아래쪽 그림·그래프 자리
+      while (avail / Math.ceil(Math.max(1, n) / cols) < 21 && (box.w - gap * (cols + 2)) / (cols + 1) >= 90) cols++;
+      const rows = Math.max(1, Math.ceil(n / cols)), sp = Math.min(this.o.kh + 4, avail / rows);
+      return { cols, sp, gap, hdr, kw: (box.w - gap * (cols + 1)) / cols, h: Math.min(this.o.kh, sp - 3) };
+    }
+    fits(box, n) { return this.chipGrid(box, n).h >= 14; }
     chipRect(box, k, n) {
-      const cols = box.cols || 2, gap = 6, rows = Math.max(1, Math.ceil(n / cols));
-      const kw = (box.w - gap * (cols + 1)) / cols, hdr = box.hdr || 26, avail = box.h - hdr - 6;
-      const sp = Math.min(this.o.kh + 4, avail / rows), col = k % cols, row = Math.floor(k / cols);
-      return { x: box.x + gap + col * (kw + gap), y: box.y + hdr + 1 + row * sp, w: kw, h: Math.max(18, Math.min(this.o.kh, sp - 3)) };
+      const g = this.chipGrid(box, n), col = k % g.cols, row = Math.floor(k / g.cols);
+      return { x: box.x + g.gap + col * (g.kw + g.gap), y: box.y + g.hdr + 1 + row * g.sp, w: g.kw, h: Math.max(10, g.h) };
     }
     layout(instant) {
       this.boxes.forEach((b) => {
@@ -159,6 +165,10 @@
       SciSim.tween(c, { x, y, w, h }, { duration: 0.35, ease: 'outBack' });
     }
     place(c, zoneId) {
+      const bx = zoneId && this.boxes.find((b) => b.id === zoneId);
+      if (bx && c.zone !== zoneId && !this.fits(bx, this.cards.filter((x) => x.zone === zoneId).length + 1)) {   // 상자가 꽉 차면 칩이 겹쳐 글자가 가려지므로 받지 않아요
+        c.shake = 1; c.lift = 0; this.layout(); SciSim.toast('그 상자는 꽉 찼어요. 다른 상자에 넣거나 카드를 빼 보세요.', 'bad', 2200); return;
+      }
       const was = c.zone; c.zone = zoneId || null; c.bad = false; if (zoneId) c.seq = ++this.seq; c.lift = 0;
       this.layout(); if (was !== c.zone) { Sound.click(); this.o.onChange && this.o.onChange(); }
     }

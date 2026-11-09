@@ -1611,9 +1611,12 @@
     const list = VENN.cards.filter((c) => c.at === cd.at);
     const k = list.indexOf(cd), n = list.length;
     const cx = cd.at === 'animal' ? (V.c1.x - V.c1.r + (V.c2.x - V.c2.r)) / 2 : cd.at === 'plant' ? (V.c1.x + V.c1.r + (V.c2.x + V.c2.r)) / 2 : (V.c1.x + V.c2.x) / 2;
-    const gap = Math.min(V.cardH + 12, ((V.c1.r * 1.5) - V.cardH) / Math.max(1, n - 1));
-    const y0 = V.c1.y - ((n - 1) * gap) / 2 + 6;
-    return { x: cx - V.cardW / 2, y: y0 + k * gap - V.cardH / 2, w: V.cardW, h: V.cardH };
+    // 카드는 위 이름표(동물·식물)와 아래 이름표(동물에만·둘 다·식물에만) 사이 띠 안에만 쌓고, 모자라면 겹치지 않게 카드 높이를 줄여요
+    const ty = V.c1.y - V.c1.r * 0.56, by = V.c1.y + V.c1.r * (TALL ? 0.78 : 0.82);
+    const top = cd.at === 'both' ? V.c1.y - V.c1.r * 0.8 : ty + 22, bot = by - 19, band = bot - top;
+    const h = Math.max(22, Math.min(V.cardH, (band - (n - 1) * 5) / n)), gap = Math.min(h + 12, n > 1 ? (band - h) / (n - 1) : 0);
+    const y0 = (top + bot) / 2 - ((n - 1) * gap + h) / 2;
+    return { x: cx - V.cardW / 2, y: y0 + k * gap, w: V.cardW, h };
   }
   function snapVenn(animate) { snapAll(VENN.cards, vennTarget, animate); }
   function resetVenn() { VENN.cards.forEach((c) => { c.at = null; c.ok = false; c.bad = -9; }); VENN.done = false; snapVenn(false); }
@@ -1647,7 +1650,7 @@
     const lv = LV[cd.key];
     cardFrame(cd, t, lv.color, (w, h) => {
       ctx.fillStyle = lv.color; rr(7, 9, 6, h - 18, 3); ctx.fill();
-      txt(cd.name, w / 2 + 4, h / 2 + 1, { size: 19, weight: 800, color: lv.color, align: 'center', base: 'middle', max: w - 30 });
+      txt(cd.name, w / 2 + 4, h / 2 + 1, { size: Math.min(19, h * 0.6), weight: 800, color: lv.color, align: 'center', base: 'middle', max: w - 30 });
     });
   }
   function drawVennScene(t) {
@@ -1737,7 +1740,15 @@
   function snapGame(animate) { snapAll(GAME.cards, gameTarget, animate); }
   function resetGame() { GAME.cards.forEach((c) => { c.at = null; c.ok = false; c.bad = -9; }); GAME.done = false; snapGame(false); }
   function bucketAt(p) { for (let i = 0; i < 6; i++) if (inR(p, bucketRect(i), 6)) return GAME_BUCKETS[i]; return null; }
-  function placeGame(cd, b) { cd.at = b; cd.ok = false; raise(GAME.cards, cd); Sound.tick(); snapGame(true); }
+  /* 상자에 한 장 더 넣어도 카드끼리 겹치지 않는지 (넘치면 카드가 포개져 이름이 가려져요) */
+  function gameHasRoom(cd, b) {
+    if (cd.at === b) return true;
+    const r = bucketRect(GAME_BUCKETS.indexOf(b)), n = GAME.cards.filter((c) => c !== cd && c.at === b).length + 1;
+    return n <= 1 || (r.h - 46 - LAY.game.cardH) / (n - 1) >= LAY.game.cardH + 2;
+  }
+  function placeGame(cd, b) {
+    if (b && !gameHasRoom(cd, b)) { cd.bad = now(); snapGame(true); SciSim.toast('그 상자는 꽉 찼어요. 다른 상자에 넣거나 카드를 빼 보세요.', 'bad', 2200); return; }
+    cd.at = b; cd.ok = false; raise(GAME.cards, cd); Sound.tick(); snapGame(true); }
   function gameCheck() {
     const empty = GAME.cards.filter((c) => !c.at).length;
     if (empty) return '아직 놓지 않은 카드가 ' + empty + '장 있어요. 8장을 모두 상자에 넣어 주세요.';

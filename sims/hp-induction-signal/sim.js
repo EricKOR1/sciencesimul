@@ -355,7 +355,7 @@
     T(HEAD.x - 24, HEAD.y - 8, '송신 코일', 11.5, '#5a6679', 'center', 800); T(HEAD.x + 34, HEAD.y - 8, '수신 코일', 11.5, '#5a6679', 'center', 800);
     ctx.strokeStyle = '#6b7488'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(HEAD.x, HEAD.y); ctx.lineTo(HEAD.x, DT.y + 40); ctx.stroke();
     // 놓는 자리
-    if (!o || d.drag) { ctx.save(); ctx.strokeStyle = 'rgba(38,50,74,.45)'; ctx.setLineDash([6, 6]); ctx.lineWidth = 2; D.roundRect(ZONE.x, ZONE.y, ZONE.w, ZONE.h, 12); ctx.stroke(); ctx.restore(); T(SLOT.x, ZONE.y + ZONE.h + 14, d.drag ? '여기에 놓기' : '물체를 여기에', 12, '#5a6679', 'center', 800); if (d.drag) D.ring(SLOT.x, SLOT.y, 26, S.t, { color: '#14a058' }); }
+    if (!o || d.drag) { ctx.save(); ctx.strokeStyle = 'rgba(38,50,74,.45)'; ctx.setLineDash([6, 6]); ctx.lineWidth = 2; D.roundRect(ZONE.x, ZONE.y, ZONE.w, ZONE.h, 12); ctx.stroke(); ctx.restore(); if (PHONE) T(ZONE.x + ZONE.w + 8, SLOT.y + 4, d.drag ? '여기에 놓기' : '물체를 여기에', 12, '#5a6679', 'left', 800); else T(SLOT.x, ZONE.y + ZONE.h + 14, d.drag ? '여기에 놓기' : '물체를 여기에', 12, '#5a6679', 'center', 800); /* 휴대폰은 칸 아래 자리가 좁아 오른쪽에 써요 */ if (d.drag) D.ring(SLOT.x, SLOT.y, 26, S.t, { color: '#14a058' }); }
     // 와전류
     if (o && o.metal && Math.hypot(d.objs[o.id].x - SLOT.x, d.objs[o.id].y - SLOT.y) < 8) {
       const a = clamp(o.d / 60, 0.3, 1);

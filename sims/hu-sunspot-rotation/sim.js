@@ -662,11 +662,14 @@
     limbShade(K.cx, K.cy, K.R);
     ctx.restore();
     // 이미 기록한 위치
+    // 가장자리에서 표시가 촘촘해지면 날짜 글자를 위·아래로 번갈아 놓아 서로 겹치지 않게 해요
+    let lastX = -1e9, lastUp = false;
     Tr.rec.forEach((v, d) => {
       if (v == null) return;
       const px = K.cx + v * K.R, py = K.cy - Math.sin(PHI_A * DEG) * K.R;
       ctx.strokeStyle = d === Math.round(Tr.day) ? '#22c55e' : 'rgba(255,255,255,.85)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px, py, 7, 0, TAU); ctx.stroke();
-      T(px, py - 12, String(d), 12, '#fff', 'center', 800, { stroke: 'rgba(0,0,0,.65)', strokeWidth: 3 });
+      const up = Math.abs(px - lastX) < 16 ? !lastUp : true; lastX = px; lastUp = up;
+      T(px, up ? py - 12 : py + 22, String(d), 12, '#fff', 'center', 800, { stroke: 'rgba(0,0,0,.65)', strokeWidth: 3 });
     });
     // 눈금자 + 호버 십자선
     xRuler(K.cx, K.cy, K.R, K.cy + K.R + 20, '#e2e8f0');

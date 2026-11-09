@@ -219,7 +219,8 @@
     { id: 'current', ico: '⚡', name: '전류', ex: '전기가 얼마나 흐를까?', tool: '전류계', unit: 'A', uname: '암페어' },
     { id: 'temp', ico: '🌡️', name: '온도', ex: '얼마나 뜨겁고 찰까?', tool: '온도계', unit: 'K', uname: '켈빈' },
   ];
-  const MR = PHONE ? { sx: 16, sw: 320, sh: 80, sy0: 70, gap: 12, cx: 470, cw: 200, ch: 70 } : { sx: 22, sw: 380, sh: 64, sy0: 84, gap: 12, cx: 590, cw: 190, ch: 64 };
+  // 놓인 카드(pw)가 칸 오른쪽에 들어가도 설명 글자를 가리지 않게 칸을 넓혀요 (휴대폰)
+  const MR = PHONE ? { sx: 16, sw: 350, sh: 80, sy0: 70, gap: 12, cx: 490, cw: 200, ch: 70, pw: 124 } : { sx: 22, sw: 380, sh: 64, sy0: 84, gap: 12, cx: 590, cw: 190, ch: 64, pw: 150 };
   function initMatch() {
     S.slots = QTY.map((q, i) => ({ q, i, x: MR.sx + MR.sw / 2, y: MR.sy0 + i * (MR.sh + MR.gap) + MR.sh / 2, w: MR.sw, h: MR.sh, card: null }));
     const order = [3, 0, 4, 2, 1];
@@ -233,8 +234,8 @@
     if (sl) {
       const other = sl.card && sl.card !== c ? sl.card : null;
       if (c.slot) c.slot.card = null;
-      if (other) { other.slot = null; if (c.slot) { other.slot = c.slot; c.slot.card = other; flyTo(other, c.slot.x + c.slot.w / 2 - 78, c.slot.y); other.w = 150; } else { flyTo(other, other.hx, other.hy); other.w = MR.cw; } other.bad = false; }
-      sl.card = c; c.slot = sl; c.bad = false; c.w = 150; c.h = sl.h - 14; Sound.tick(); flyTo(c, sl.x + sl.w / 2 - 82, sl.y);
+      if (other) { other.slot = null; if (c.slot) { other.slot = c.slot; c.slot.card = other; flyTo(other, c.slot.x + c.slot.w / 2 - MR.pw / 2 - 7, c.slot.y); other.w = MR.pw; } else { flyTo(other, other.hx, other.hy); other.w = MR.cw; } other.bad = false; }
+      sl.card = c; c.slot = sl; c.bad = false; c.w = MR.pw; c.h = sl.h - 14; Sound.tick(); flyTo(c, sl.x + sl.w / 2 - MR.pw / 2 - 7, sl.y);
     } else { if (c.slot) c.slot.card = null; c.slot = null; c.w = MR.cw; c.h = MR.ch - (PHONE ? 8 : 0); c.bad = false; flyTo(c, c.hx, c.hy); }
   }
   function drawMatch(t) {
@@ -248,7 +249,7 @@
       D.text(s.x - s.w / 2 + 16, s.y + 10, s.q.ico, { size: 28, align: 'left', weight: 700 });
       D.text(s.x - s.w / 2 + 62, s.y - 4, s.q.name, { size: 20, color: '#1b2333', weight: 800, align: 'left' });
       D.text(s.x - s.w / 2 + 62, s.y + 18, s.q.ex, { size: 13, color: '#5d6879', weight: 700, align: 'left' });
-      if (S.matchOK) D.text(s.x + s.w / 2 - 20, s.y + 8, s.q.unit, { size: 22, color: '#14a058', weight: 800, align: 'right' });
+      if (S.matchOK) { ctx.save(); ctx.font = D.font(20, 800); const nw = ctx.measureText(s.q.name).width; ctx.restore(); D.text(s.x - s.w / 2 + 70 + nw, s.y - 4, '(' + s.q.unit + ')', { size: 18, color: '#14a058', weight: 800, align: 'left' }); }  // 카드 밑에 숨지 않게 이름 옆에
     });
     S.cards.forEach((c) => {
       const end = cardBox(c, { stroke: c.bad ? '#e2464b' : S.matchOK ? '#14a058' : c.slot ? '#3867f4' : '#cbd5e1' });
@@ -372,19 +373,19 @@
       D.shadow(() => rr(R.x, R.y, R.w, R.h, 12).fill(), { blur: 5, y: 2 }); rr(R.x, R.y, R.w, R.h, 12).stroke(); ctx.setLineDash([]);
       if (!A[k].length) D.text(R.x + R.w / 2, R.y + R.h / 2 + 5, k === 'top' ? '위 칸 (분자) — 곱하는 양' : '아래 칸 (분모) — 나누는 양', { size: 14, color: '#94a3b8', weight: 700 });
     });
-    const bar = botR().y - 11; ctx.strokeStyle = '#1b2333'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(BL.fx + 20, bar); ctx.lineTo(BL.fx + BL.fw - 20, bar); ctx.stroke();
-    D.text(BL.fx + 4, bar - 8, '나누기', { size: 13, color: '#1b2333', weight: 800, align: 'left' });
+    const bar = botR().y - 11; ctx.strokeStyle = '#1b2333'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(BL.fx + 56, bar); ctx.lineTo(BL.fx + BL.fw - 20, bar); ctx.stroke();
+    D.text(BL.fx + 4, bar + 5, '나누기', { size: 13, color: '#1b2333', weight: 800, align: 'left' });
     // 결과 카드
     const rx = BL.resX, ry = BL.resY, rw = BL.resW, rh = BL.resH;
     D.shadow(() => { ctx.fillStyle = '#fff'; rr(rx, ry, rw, rh, 16).fill(); }, { blur: 10, y: 4 });
     ctx.strokeStyle = A.ok ? '#14a058' : '#cbd5e1'; ctx.lineWidth = 3; rr(rx, ry, rw, rh, 16).stroke();
     const v = A.vec || [0, 0, 0], us = unitStr(v), nm = NAMES[v.join('|')];
     A.unitA = SciSim.approach(A.unitA, 1, 0.016, 8);
-    D.text(rx + rw / 2, ry + 30, '블록을 합치면 단위는…', { size: 14, color: '#5d6879', weight: 800 });
-    ctx.save(); ctx.translate(rx + rw / 2, ry + (PHONE ? 72 : 88)); const sc2 = A.ok ? 1 + 0.12 * Math.sin(Math.min(1, (S.clock - A.okAt) * 3) * Math.PI) : 1; ctx.scale(sc2, sc2);
-    D.text(0, 0, us, { size: PHONE ? 38 : 46, color: A.ok ? '#14a058' : '#1b2333', weight: 800 }); ctx.restore();
+    D.text(rx + rw / 2, ry + (PHONE ? 24 : 30), '블록을 합치면 단위는…', { size: 14, color: '#5d6879', weight: 800 });
+    ctx.save(); ctx.translate(rx + rw / 2, ry + (PHONE ? 60 : 88)); const sc2 = A.ok ? 1 + 0.12 * Math.sin(Math.min(1, (S.clock - A.okAt) * 3) * Math.PI) : 1; ctx.scale(sc2, sc2);
+    D.text(0, 0, us, { size: PHONE ? 32 : 46, color: A.ok ? '#14a058' : '#1b2333', weight: 800 }); ctx.restore();
     if (!PHONE) { D.label(rx + rw / 2, ry + 140, nm ? ('= ' + nm) + (nm === tg.name ? ' ✔' : '') : '아직 이름 없는 양이에요', { bg: A.ok ? '#14a058' : nm ? '#f59e0b' : '#94a3b8', size: 17 }); if (A.ok) D.text(rx + rw / 2, ry + 174, tg.name + '은(는) 기본량으로 만든 유도량!', { size: 14, color: '#0b6b39', weight: 800 }); }
-    else D.label(rx + rw / 2, ry + 90, nm ? '= ' + nm + (A.ok ? ' ✔' : '') : '이름 없는 양', { bg: A.ok ? '#14a058' : '#94a3b8', size: 14 });
+    else D.label(rx + rw / 2, ry + 86, nm ? '= ' + nm + (A.ok ? ' ✔' : '') : '이름 없는 양', { bg: A.ok ? '#14a058' : '#94a3b8', size: 14 });
     // 트레이
     D.text(BL.fx, BL.trayY + 14, '🧱 기본량 블록 — 끌어서 위·아래 칸에 놓아요', { size: 14, color: '#5d6879', weight: 800, align: 'left' });
     BASEB.forEach((b, i) => { const tb = trayBlock(i); drawBlockShape(tb.x, tb.y, tb.w, tb.h, b, 0); });
@@ -833,7 +834,7 @@
   window.__sim = {
     S, VW, VH, get game() { return game; }, setMode, enterLevel, marsPlay, checkConv, startPend, startBall, recordNow, resetAsm, TARGET, BASEB, trayBlock, BL, MR, QTY,
     pickUnits(a) { S.units.pick = a.slice(); updateCtl(); },
-    solveMatch(right) { S.slots.forEach((s) => { s.card = null; }); S.cards.forEach((c) => { const s = S.slots.find((x) => x.q.id === c.id); const t2 = right === false ? S.slots[(S.slots.indexOf(s) + 1) % 5] : s; t2.card = c; c.slot = t2; c.x = c.tx = t2.x + t2.w / 2 - 82; c.y = c.ty = t2.y; c.w = 150; c.h = t2.h - 14; }); },
+    solveMatch(right) { S.slots.forEach((s) => { s.card = null; }); S.cards.forEach((c) => { const s = S.slots.find((x) => x.q.id === c.id); const t2 = right === false ? S.slots[(S.slots.indexOf(s) + 1) % 5] : s; t2.card = c; c.slot = t2; c.x = c.tx = t2.x + t2.w / 2 - MR.pw / 2 - 7; c.y = c.ty = t2.y; c.w = MR.pw; c.h = t2.h - 14; }); },
     addBlocks(top, bot) { resetAsm(); [['top', top], ['bot', bot]].forEach(([k, arr]) => arr.forEach((t) => { const b = newBlock(t, 0, 0); b.where = k; S.asm[k].push(b); S.blocks.push(b); })); layoutBlocks(); S.blocks.forEach((b) => { b.x = b.tx; b.y = b.ty; }); evalAsm(); updateCalc(); },
     setTarget(k) { resetAsm(k); updateCtl(); },
     setHeat(v) { S.ph.temp.heat = v; $('#bHeat').textContent = v ? '⏹ 물 데우기 끄기' : '🔥 물 데우기 켜기'; },

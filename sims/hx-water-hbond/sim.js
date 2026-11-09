@@ -1010,8 +1010,9 @@
     if (S.ap.drag && S.ap.drag.i === c.id && S.ap.drag.moved) return { x: S.ap.drag.px - S.ap.drag.ox, y: S.ap.drag.py - S.ap.drag.oy, w: c.w || 150, h: c.h || 50, lift: 1 };
     if (c.bin < 0) { const s = G.slots[c.id]; return { x: s.x, y: s.y, w: s.w, h: s.h, lift: 0 }; }
     const b = G.bins[c.bin], mates = S.ap.cards.filter((q) => q.bin === c.bin).sort((p, q) => p.seq - q.seq), k = mates.indexOf(c);
-    const hd = PHONE ? 46 : 66, top = b.y + hd, avail = b.h - hd - 6, sp = mates.length > 1 ? Math.min(G.chipH + 4, (avail - G.chipH) / (mates.length - 1)) : 0;
-    return { x: b.x + 6, y: top + k * sp, w: b.w - 12, h: G.chipH, lift: 0 };
+    // 많이 넣으면 겹쳐 쌓지 않고 칩을 납작하게 줄여 모두 읽히게 해요
+    const hd = PHONE ? 46 : 66, top = b.y + hd, avail = b.h - hd - 6, h = Math.min(G.chipH, avail / Math.max(1, mates.length) - 4);
+    return { x: b.x + 6, y: top + k * (h + 4), w: b.w - 12, h, lift: 0 };
   }
   function stepCards(dt) {
     const a = S.ap; if (!a.cards) return; const G = cardsGeo();
@@ -1043,8 +1044,13 @@
       ctx.save(); ctx.translate(c.x + sx + c.w / 2, c.y + c.h / 2 - lift * 4); ctx.scale(1 + lift * 0.04, 1 + lift * 0.04);
       D.shadow(() => { D.roundRect(-c.w / 2, -c.h / 2, c.w, c.h, 10); ctx.fillStyle = '#fff'; ctx.fill(); }, { blur: 4 + lift * 10, y: 2 + lift * 4 });
       ctx.strokeStyle = c.flag ? BAD : a.sel === c.id ? BLU : '#cfd8e8'; ctx.lineWidth = c.flag || a.sel === c.id ? 3 : 1.5; D.roundRect(-c.w / 2, -c.h / 2, c.w, c.h, 10); ctx.stroke();
-      const lines = wrap(c.t, c.w - 16, 12.5, 800);
-      lines.slice(0, 3).forEach((ln, k) => T(0, -((Math.min(lines.length, 3) - 1) * 8.5) + k * 17 + 4, ln, 12.5, INK, 'center', 800));
+      if (c.h < 36) {   // 납작한 칩: 한 줄로, 넓이에 맞춰 글자를 줄여요
+        ctx.font = D.font(12.5, 800); const tw = ctx.measureText(c.t).width, fz = Math.max(9, Math.min(12.5, 12.5 * (c.w - 12) / tw));
+        ctx.save(); D.roundRect(-c.w / 2, -c.h / 2, c.w, c.h, 10); ctx.clip(); T(0, fz * 0.36, c.t, fz, INK, 'center', 800); ctx.restore();
+      } else {
+        const lines = wrap(c.t, c.w - 16, 12.5, 800);
+        lines.slice(0, 3).forEach((ln, k) => T(0, -((Math.min(lines.length, 3) - 1) * 8.5) + k * 17 + 4, ln, 12.5, INK, 'center', 800));
+      }
       ctx.restore();
     });
     const un = a.cards.filter((c) => c.bin < 0).length;

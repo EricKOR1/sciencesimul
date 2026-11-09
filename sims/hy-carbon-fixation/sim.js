@@ -160,10 +160,12 @@
     }
     boxAt(p) { for (const b of this.boxes) if (inRect(p.x, p.y, b)) return b; return null; }
     chipRect(box, k, n) {
-      const cols = box.cols || 2, gap = 6, rows = Math.max(1, Math.ceil(n / cols));
-      const kw = (box.w - gap * (cols + 1)) / cols, hdr = box.hdr || 26, avail = box.h - hdr - 6;
+      const gap = 6, hdr = box.hdr || 26, avail = box.h - hdr - 6;
+      // 칩이 많아 한 줄 간격이 너무 좁아지면 열을 늘려요: 칩끼리 겹쳐 글자가 가려지지 않게
+      let cols = box.cols || 2; while (cols < 3 && n > cols && avail / Math.ceil(n / cols) < 21) cols++;
+      const rows = Math.max(1, Math.ceil(n / cols)), kw = (box.w - gap * (cols + 1)) / cols;
       const sp = Math.min(this.o.kh + 4, avail / rows), col = k % cols, row = Math.floor(k / cols);
-      return { x: box.x + gap + col * (kw + gap), y: box.y + hdr + 1 + row * sp, w: kw, h: Math.max(18, Math.min(this.o.kh, sp - 3)) };
+      return { x: box.x + gap + col * (kw + gap), y: box.y + hdr + 1 + row * sp, w: kw, h: Math.max(14, Math.min(this.o.kh, sp - 3)) };
     }
     layout(instant) {
       this.boxes.forEach((b) => {
@@ -574,15 +576,16 @@
      ③ 두 반응 연결: 엽록체 전체도
      ========================================================= */
   S.lk = null;
+  /* 빈칸 상자 A·B는 화살표 위를 오가는 ATP·NADP⁺ 알갱이와 겹치지 않게 조금 띄워 놓아요 */
   function lkG() {
     if (PHONE) return {
       ENV: { x: 10, y: 94, w: 460, h: 250 }, TH: { x: 24, y: 150, w: 118, h: 150 }, CV: { x: 360, y: 238 }, rr: 46, ay: [196, 272], ax: [150, 312],
-      box: { A: { x: 152, y: 150, w: 140, h: 40 }, B: { x: 152, y: 278, w: 140, h: 40 }, C: { x: 296, y: 24, w: 124, h: 38 }, D: { x: 60, y: 24, w: 96, h: 38 } },
+      box: { A: { x: 152, y: 134, w: 140, h: 40 }, B: { x: 152, y: 296, w: 140, h: 40 }, C: { x: 296, y: 24, w: 124, h: 38 }, D: { x: 60, y: 24, w: 96, h: 38 } },
       tray: (i) => ({ x: 10 + (i % 2) * 234, y: 352 + Math.floor(i / 2) * 46 }), cw: 226, ch: 40, G: { x: 10, y: 450, w: 460, h: 180 }, light: { x: 40, y: 56 },
     };
     return {
       ENV: { x: 14, y: 72, w: 772, h: 306 }, TH: { x: 36, y: 162, w: 236, h: 160 }, CV: { x: 616, y: 254 }, rr: 62, ay: [224, 288], ax: [278, 548],
-      box: { A: { x: 330, y: 172, w: 170, h: 44 }, B: { x: 330, y: 300, w: 170, h: 44 }, C: { x: 556, y: 18, w: 120, h: 42 }, D: { x: 110, y: 18, w: 96, h: 42 } },
+      box: { A: { x: 330, y: 156, w: 170, h: 44 }, B: { x: 330, y: 316, w: 170, h: 44 }, C: { x: 556, y: 18, w: 120, h: 42 }, D: { x: 110, y: 18, w: 96, h: 42 } },
       tray: (i) => ({ x: 14 + i * 195, y: 388 }), cw: 186, ch: 46, G: { x: 14, y: 446, w: 772, h: 102 }, light: { x: 44, y: 44 },
     };
   }
@@ -657,7 +660,7 @@
     D.arrow(g.box.C.x + g.box.C.w / 2, g.box.C.y + g.box.C.h + 2, cc.x + (PHONE ? 4 : 0), cc.y - rr - 8, { color: '#0f766e', width: 3.5, head: 12, alpha: 0.55 });
     D.arrow(g.TH.x + g.TH.w * 0.45, g.TH.y - 2, g.box.D.x + g.box.D.w / 2, g.box.D.y + g.box.D.h + 2, { color: '#0284c7', width: 3.5, head: 12, alpha: 0.55 });
     // 빛
-    D.glow(g.light.x, g.light.y, 40, '#fde047', 0.5); E('☀', g.light.x, g.light.y + 2, PHONE ? 30 : 36); T(g.light.x + (PHONE ? 26 : 32), g.light.y + 6, '빛', PHONE ? 13 : 14.5, '#a16207', 'left', 800);
+    D.glow(g.light.x, g.light.y, 40, '#fde047', 0.5); E('☀', g.light.x, g.light.y + 2, PHONE ? 30 : 36); T(g.light.x + (PHONE ? -20 : 32), g.light.y + 6, '빛', PHONE ? 13 : 14.5, '#a16207', PHONE ? 'right' : 'left', 800);   // 휴대폰: O₂ 상자에 가리지 않게 해 왼쪽에
     lk.ph.forEach((q) => { const e = q.t, x = g.light.x + 22 + (g.TH.x + 40 - g.light.x - 22) * e, y = g.light.y + 20 + (g.TH.y + 14 - g.light.y - 20) * e; ctx.save(); ctx.globalAlpha = 1 - e * e; D.glow(x, y, 12, '#fde047', 0.8); D.sphere(x, y, 3.8, '#fde047', { gloss: false }); ctx.restore(); });
     lk.o2.forEach((q) => { const e = q.t, sx = g.TH.x + g.TH.w * 0.45, sy = g.TH.y - 2, ex = g.box.D.x + g.box.D.w / 2, ey = g.box.D.y + g.box.D.h + 2, x = sx + (ex - sx) * e, y = sy + (ey - sy) * e; ctx.save(); ctx.globalAlpha = Math.sin(e * Math.PI); D.sphere(x - 4, y, 4.5, '#38bdf8', { gloss: true }); D.sphere(x + 4, y, 4.5, '#38bdf8', { gloss: true }); ctx.restore(); });
     lk.co2.forEach((q) => { const e = q.t, x = g.box.C.x + g.box.C.w / 2 + (cc.x - (g.box.C.x + g.box.C.w / 2)) * e, y = g.box.C.y + g.box.C.h + (cc.y - rr - 8 - g.box.C.y - g.box.C.h) * e; ctx.save(); ctx.globalAlpha = Math.sin(e * Math.PI) * 0.95; D.sphere(x, y, 5, '#14b8a6', { gloss: true }); D.sphere(x - 8, y + 5, 3.4, '#ef4444', { gloss: false }); D.sphere(x + 8, y + 5, 3.4, '#ef4444', { gloss: false }); ctx.restore(); });

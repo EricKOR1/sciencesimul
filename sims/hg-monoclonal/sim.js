@@ -129,8 +129,9 @@
       let lx = -w / 2 + 10, maxW = w - 20;
       if (c.icon) { E(c.icon, -w / 2 + 24, 1, 22); lx = -w / 2 + 40; maxW = w - 48; }
       if (c.sub) {
-        TF(lx, -2, c.label, maxW, 14.5, 12, '#26324a', 'left', 800);
-        TF(lx, 16, c.sub, maxW, 12, 10.5, '#5a6679', 'left', 700);
+        const sy = Math.min(16, h / 2 - 7), ly = Math.min(-2, sy - 16);   // 상자 속 낮은 칩(h < 46)에서도 둘째 줄이 테두리 밖으로 넘치지 않게
+        TF(lx, ly, c.label, maxW, h < 44 ? 13.5 : 14.5, 12, '#26324a', 'left', 800);
+        TF(lx, sy, c.sub, maxW, h < 44 ? 11 : 12, 10, '#5a6679', 'left', 700);
       } else {
         const sz = fitSize(c.label, maxW, 14.5, 12.5, 800);
         ctx.save(); ctx.font = D.font(sz, 800);
@@ -154,8 +155,9 @@
     }
     boxAt(p) { for (const b of this.boxes) if (inRect(p.x, p.y, b)) return b; return null; }
     chipRect(box, k, n) {
-      const cols = box.cols || 2, gap = 6, rows = Math.max(1, Math.ceil(n / cols));
-      const kw = (box.w - gap * (cols + 1)) / cols, hdr = box.hdr || 26, avail = box.h - hdr - 6;
+      const gap = 6, hdr = box.hdr || 26, avail = box.h - hdr - 6;
+      let cols = box.cols || 2; while (cols < Math.min(n, 6) && Math.ceil(n / cols) * 20 > avail) cols++;   // 한 상자에 카드가 몰리면 열을 늘려 칩끼리 겹치지 않게
+      const rows = Math.max(1, Math.ceil(n / cols)), kw = (box.w - gap * (cols + 1)) / cols;
       const sp = Math.min(this.o.kh + 4, avail / rows), col = k % cols, row = Math.floor(k / cols);
       return { x: box.x + gap + col * (kw + gap), y: box.y + hdr + 1 + row * sp, w: kw, h: Math.max(18, Math.min(this.o.kh, sp - 3)) };
     }
@@ -746,8 +748,8 @@
   function pairSorter(items, boxMap, order, cardH) {
     const n = items.length;
     const bh = PHONE ? 0 : Math.floor((VH - 74 - 12 - (n - 1) * 8) / n);
-    const boxes = order.map((id, k) => {
-      if (PHONE) { const cardRows = Math.ceil(n / 2), y0 = 64 + cardRows * (cardH + 8) + 8, h = Math.floor((VH - y0 - 8 - (n - 1) * 6) / n); return { id, label: boxMap[id], col: (items.find((q) => q.id === id) || { col: '#64748b' }).col, x: 10, y: y0 + k * (h + 6), w: VW - 20, h, cols: 1, hdr: 24 }; }
+    const boxes = order.map((id, k) => {   // 휴대폰: 맨 아래 안내 글자(VH - 8) 자리를 남겨요
+      if (PHONE) { const cardRows = Math.ceil(n / 2), y0 = 64 + cardRows * (cardH + 8) + 8, h = Math.floor((VH - y0 - 22 - (n - 1) * 6) / n); return { id, label: boxMap[id], col: (items.find((q) => q.id === id) || { col: '#64748b' }).col, x: 10, y: y0 + k * (h + 6), w: VW - 20, h, cols: 1, hdr: 24 }; }
       return { id, label: boxMap[id], col: (items.find((q) => q.id === id) || { col: '#64748b' }).col, x: 316, y: 66 + k * (bh + 8), w: VW - 316 - 16, h: bh, cols: 1, hdr: 24 };
     });
     return selectable({

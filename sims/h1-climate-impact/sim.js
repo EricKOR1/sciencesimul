@@ -681,7 +681,9 @@
       let x, y, w, h;
       if (PHONE) { y = 74; if (zc === 3) { w = 190; x = 8 + i * 195; h = 400; } else { w = 288; x = 8 + i * 296; h = 330; } }
       else { y = 62; if (zc === 3) { w = 244; x = 20 + i * 258; h = 292; } else { w = 372; x = 20 + i * 388; h = 240; } }
-      return { id, x, y, w, h, color: ZCOL[id], fill: 'rgba(255,255,255,.8)', line: ZCOL[id], head: 50, label: zlab[id], lsize: 16, draw: (z) => D.text(z.x + 12, z.y + 40, zdesc[id], { size: 12.5, weight: 700, color: '#64748b', align: 'left' }) };
+      // 칸 안에 들어가는 만큼만 받아요 (넘치면 카드가 아래 글자·카드를 가려요)
+      const cap = Math.max(1, Math.floor((w - 8 + 8) / (cw + 8))) * Math.max(1, Math.floor((h - 54 + 8) / (ch + 8)));
+      return { id, x, y, w, h, cap, color: ZCOL[id], fill: 'rgba(255,255,255,.8)', line: ZCOL[id], head: 50, label: zlab[id], lsize: 16, draw: (z) => D.text(z.x + 12, z.y + 40, zdesc[id], { size: 12.5, weight: 700, color: '#64748b', align: 'left' }) };
     });
     const ty = PHONE ? 74 + (zc === 3 ? 400 : 330) + 16 : 62 + (zc === 3 ? 292 : 240) + 16;
     const b = new Board({ zones: zs, tray: { x: PHONE ? 8 : 20, y: ty + 4, w: PHONE ? 584 : 760, cols: PHONE ? 3 : (zc === 3 ? 5 : 4) }, cw, ch, gap: 8, onDrop: () => true, onPlace: () => { clearBadB(b); } });

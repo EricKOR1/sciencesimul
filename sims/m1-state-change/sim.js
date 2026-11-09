@@ -1811,6 +1811,11 @@
     for (let i = 0; i < BINS.length; i++) if (inRect(p, binRect(i), 4)) return BINS[i].id;
     return null;
   }
+  /* 상자에 한 장 더 넣어도 카드 높이가 24 이상(이름이 보이는 크기)인지: 넘치면 카드끼리 납작해져 글자가 사라지므로 받지 않아요 */
+  function binHasRoom(binId) {
+    const r = binRect(BINS.findIndex((b) => b.id === binId)), n = B4.cards.filter((c) => c.bin === binId && c !== DR.card).length + 1;
+    return (r.h - 58 - 8 - (n - 1) * 4) / n >= 24;
+  }
   /* 상자 속 카드를 쌓아서 배치 */
   function layoutBins(animate) {
     BINS.forEach((b, bi) => {
@@ -2043,6 +2048,7 @@
       }
       if (S.scene === 'sort') {
         const bin = binAt(p);
+        if (bin && bin !== c.bin && !binHasRoom(bin)) { c.bin = null; layoutBins(true); goto(c, c.hx, c.hy, 1, 0.38); SciSim.toast('그 상자는 꽉 찼어요. 다른 상자에 넣거나 카드를 빼 보세요.', 'bad', 2200); return; }
         if (bin) placeLife(c, bin); else { c.bin = null; layoutBins(true); goto(c, c.hx, c.hy, 1, 0.38); }
         return;
       }

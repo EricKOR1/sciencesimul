@@ -1011,7 +1011,7 @@
     // 비커 + 입자
     if (IO.hover) { D.roundRect(IL.box.x - 12, IL.box.y - 40, IL.box.w + 24, IL.box.h + 48, 16); ctx.strokeStyle = 'rgba(139,92,246,.7)'; ctx.lineWidth = 3; ctx.setLineDash([8, 6]); ctx.stroke(); ctx.setLineDash([]); }
     IT.drawBeaker(t); IT.drawElectrodes(); IT.drawParticles(t); IT.drawCircuit(IO.lamp, t);
-    D.text(IL.box.x + IL.box.w / 2, IL.box.y + IL.box.h + fs(22), '물', { size: fs(13), weight: 800, color: MUTED });
+    D.text(IL.box.x + IL.box.w / 2, IL.box.y + IL.box.h + (PHONE ? 19 : fs(22)), '물', { size: fs(13), weight: 800, color: MUTED });
     // 설명판
     const r = IL.info;
     panel(r.x, r.y, r.w, r.h, { r: 14, stroke: '#d9cffa' });
@@ -1102,7 +1102,7 @@
   const AB_BINS = [{ id: 'acid', label: '산성' }, { id: 'base', label: '염기성' }];
   function abLayout() {
     if (PHONE) {
-      return { bins: { acid: { x: 8, y: 8, w: 270, h: 400 }, base: { x: 282, y: 8, w: 270, h: 400 } }, tray: { x: 8, y: 416, w: 544, h: 336 }, cw: 126, ch: 52, gap: 6, headH: 44, trayHead: 22 };
+      return { bins: { acid: { x: 8, y: 8, w: 270, h: 400 }, base: { x: 282, y: 8, w: 270, h: 400 } }, tray: { x: 8, y: 416, w: 544, h: 336 }, cw: 126, ch: 52, gap: 6, headH: 60, trayHead: 22 };
     }
     return { bins: { acid: { x: 16, y: 42, w: 380, h: 340 }, base: { x: 404, y: 42, w: 380, h: 340 } }, tray: { x: 16, y: 392, w: 768, h: 200 }, cw: 176, ch: 46, gap: 7, headH: 40, trayHead: 18 };
   }

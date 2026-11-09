@@ -417,7 +417,7 @@
     : { asm: { x: 12, y: 52, w: 560, h: 342 }, tray: { x: 584, y: 52, w: 204, h: 342 }, s: 70 };
   const a2Pos = () => { const G = a2Geo(); return { x: G.asm.x + G.asm.w / 2, y: G.asm.y + G.asm.h / 2 + 4 }; };
   const a2Scr = (id) => { const G = a2Geo(), p = a2Pos(), a = SPEC[A2.k].atoms.find((q) => q.id === id); return { x: p.x + (a.x - A2.mv.cx) * G.s, y: p.y + (a.y - A2.mv.cy) * G.s }; };
-  const trayAtoms = () => { const G = a2Geo(), tr = G.tray; return PHONE ? [{ el: 'H', x: tr.x + tr.w * 0.3, y: tr.y + 66, r: 28 }, { el: 'O', x: tr.x + tr.w * 0.7, y: tr.y + 66, r: 30 }] : [{ el: 'H', x: tr.x + tr.w / 2, y: tr.y + 100, r: 32 }, { el: 'O', x: tr.x + tr.w / 2, y: tr.y + 205, r: 36 }]; };
+  const trayAtoms = () => { const G = a2Geo(), tr = G.tray; return PHONE ? [{ el: 'H', x: tr.x + tr.w * 0.3, y: tr.y + 58, r: 28 }, { el: 'O', x: tr.x + tr.w * 0.7, y: tr.y + 58, r: 30 }] : [{ el: 'H', x: tr.x + tr.w / 2, y: tr.y + 100, r: 32 }, { el: 'O', x: tr.x + tr.w / 2, y: tr.y + 205, r: 36 }]; };
   function a2Near(p, rad) {
     const G = a2Geo(); let best = null, bd = rad == null ? G.s * 0.55 : rad;
     slotsOf(A2.k).forEach((a) => { if (A2.fill[A2.k][a.id] || !slotAvail(A2.k, a.id)) return; const q = a2Scr(a.id), d = Math.hypot(q.x - p.x, q.y - p.y); if (d < bd) { bd = d; best = a; } });
@@ -452,7 +452,7 @@
     trayAtoms().forEach((a) => {
       const pulse = 1 + 0.04 * Math.sin(t * 3 + (a.el === 'O' ? 1 : 0));
       atomBall(a.x, a.y, a.r * pulse, a.el, { shadow: true, ts: 1.0 });
-      T(a.x, a.y + a.r + 20, a.el + ' ' + NAMEEL[a.el], 13.5, MUTED, 'center', 800);
+      T(a.x, a.y + a.r + (PHONE ? 16 : 20), a.el + ' ' + NAMEEL[a.el], 13.5, MUTED, 'center', 800);   // 휴대폰: 이름이 상자 아래 테두리에 잘리지 않게
     });
     if (!PHONE) textBlock(tr.x + 14, tr.y + tr.h - 44, tr.w - 28, '구슬을 끌어다 빈 칸에 놓거나, 빈 칸을 눌러요.', 13.5, MUTED, 17, 700);
     // 표

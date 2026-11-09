@@ -581,7 +581,13 @@
     ctx.strokeStyle = '#111827'; ctx.lineWidth = 3; ctx.setLineDash([9, 6]); ctx.beginPath(); ctx.moveTo(R.x, y); ctx.lineTo(R.x + R.w, y); ctx.stroke(); ctx.setLineDash([]);
     ctx.restore();
     [['A', x0], ['B', x1]].forEach(([s, x]) => { D.shadow(() => D.sphere(x, y, 13, '#111827', { gloss: false }), { blur: 4, y: 1 }); T(x, y + 5, s, { size: 14, weight: 900, color: '#fff' }); });
-    D.label(x0 + 110, y - 14, '↕ AB선 끌기 · 중심에서 남쪽 ' + Math.round(S.abv) + ' km', { bg: 'rgba(17,24,39,.85)', size: 12.5, pad: 7 });
+    // AB선 이름표: 이름표 칸(카드가 놓이는 곳)과 겹치지 않는 자리를 골라요 (놓은 카드가 글자를 가리지 않게)
+    { const abTxt = '↕ AB선 끌기 · 중심에서 남쪽 ' + Math.round(S.abv) + ' km'; ctx.save(); ctx.font = D.font(12.5, 700); const lw = ctx.measureText(abTxt).width + 18; ctx.restore();
+      const hit = (cx, cy) => board.zones.some((z) => cx + lw / 2 > z.x - 4 && cx - lw / 2 < z.x + z.w + 4 && cy + 13 > z.y - 2 && cy - 13 < z.y + z.h + 2);
+      const xs = [x0 + 110, (x0 + x1) / 2, x1 - lw / 2 - 18].map((cx) => clamp(cx, R.x + lw / 2 + 4, R.x + R.w - lw / 2 - 4));
+      let at = [xs[0], y - 14];
+      for (const cy of [y - 14, y + 18, y - 40, y + 44]) { const cx = xs.find((q) => !hit(q, cy)); if (cx != null) { at = [cx, cy]; break; } }
+      D.label(at[0], at[1], abTxt, { bg: 'rgba(17,24,39,.85)', size: 12.5, pad: 7 }); }
     // 이름표가 붙은 칸 (이름표를 놓은 곳)
     NAMES.forEach((n) => { const z = board.zones.find((q) => q.id === n.id); z.hidden = board.inZone(n.id).length > 0; });
     // 규모 안내 (휴대폰은 아래 빈 공간)

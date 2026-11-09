@@ -745,6 +745,15 @@
     qs.lay.items.forEach((it) => {
       if (it.t === 'op') D.text(it.x, it.y + 8, it.txt, { size: 24, weight: 800, color: '#64748b' });
     });
+    // 연결선: 가정 카드 → 계산 결과 (칸 위쪽으로 휘어 흐르는 점선) — 칸보다 먼저 그려 칸 이름 글자 위를 지나지 않게
+    if (qs.done) {
+      qs.slots.forEach((s, i) => {
+        const a = clamp(e.link * 1.3 - i * 0.1, 0, 1);
+        ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = '#14a058'; ctx.lineWidth = 2.5; ctx.setLineDash([6, 5]); ctx.lineDashOffset = -t * 22;
+        const R0 = qs.res, sx = s.x, sy = s.y - s.h / 2, ex = R0.x, ey = R0.y - R0.h / 2, up = 26 + i * 4;
+        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.bezierCurveTo(sx, Math.min(sy, ey) - up, ex, Math.min(sy, ey) - up, ex, ey); ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+      });
+    }
     const dr = S.drag && S.drag.c.kind === 'ecard' ? S.drag.c : null;
     qs.slots.forEach((s) => {
       const hit = dr && slotAtEst(dr) === s, fit = hit && dr.k === s.k;
@@ -760,15 +769,6 @@
     D.shadow(() => rr(R0.x - R0.w / 2, R0.y - R0.h / 2, R0.w, R0.h, 14).fill(), { blur: 6, y: 2 }); rr(R0.x - R0.w / 2, R0.y - R0.h / 2, R0.w, R0.h, 14).stroke();
     D.text(R0.x, R0.y - R0.h / 2 + 16, '계산 결과', { size: 12.5, weight: 800, color: '#475569' });
     D.text(R0.x, R0.y + 16, v != null ? sci(v, 1) + ' ' + q.unit : '?', { size: v != null && sci(v, 1).length > 8 ? 17 : 21, weight: 800, color: v != null ? '#1b2333' : '#cbd5e1' });
-    // 연결선: 가정 카드 → 계산 결과 (칸 위쪽으로 휘어 흐르는 점선)
-    if (qs.done) {
-      qs.slots.forEach((s, i) => {
-        const a = clamp(e.link * 1.3 - i * 0.1, 0, 1);
-        ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = '#14a058'; ctx.lineWidth = 2.5; ctx.setLineDash([6, 5]); ctx.lineDashOffset = -t * 22;
-        const sx = s.x, sy = s.y - s.h / 2, ex = R0.x, ey = R0.y - R0.h / 2, up = 26 + i * 4;
-        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.bezierCurveTo(sx, Math.min(sy, ey) - up, ex, Math.min(sy, ey) - up, ex, ey); ctx.stroke(); ctx.setLineDash([]); ctx.restore();
-      });
-    }
     // 자릿수 눈금
     const gy = qs.gy, gx0 = 40, gx1 = VW - 40, G = (lv) => gx0 + (lv + 0.2) / 10.6 * (gx1 - gx0);
     const lg = v != null ? Math.log10(Math.max(1e-6, v)) : null;
@@ -776,12 +776,13 @@
     ctx.fillStyle = 'rgba(100,116,139,.14)'; rr(gx0 - 8, gy - 8, gx1 - gx0 + 16, 16, 8).fill();
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
     for (let k = 0; k <= 10; k++) { ctx.beginPath(); ctx.moveTo(G(k), gy - 6); ctx.lineTo(G(k), gy + 6); ctx.stroke(); if (k % 2 === 0) D.text(G(k), gy + 24, '10' + sup(k), { size: 12.5, weight: 800, color: '#64748b' }); }
-    D.text(gx0 - 8, gy - 16, '자릿수 눈금 (10의 거듭제곱)', { size: 12.5, weight: 800, color: '#64748b', align: 'left' });
     if (qs.done) { ctx.fillStyle = 'rgba(20,160,88,.28)'; rr(G(q.exp), gy - 8, G(q.exp + 1) - G(q.exp), 16, 8).fill(); }
     if (lg != null) {
       const gxp = G(clamp(e.gauge, -0.1, 10.1));
       ctx.fillStyle = qs.done ? '#14a058' : '#f26b3a'; ctx.beginPath(); ctx.moveTo(gxp, gy - 10); ctx.lineTo(gxp - 8, gy - 24); ctx.lineTo(gxp + 8, gy - 24); ctx.closePath(); ctx.fill();
     }
+    // 눈금 이름은 화살표 다음에, 테두리를 둘러 그려요 (화살표에 가리지 않게)
+    D.text(gx0 - 8, gy - 16, '자릿수 눈금 (10의 거듭제곱)', { size: 12.5, weight: 800, color: '#64748b', align: 'left', stroke: '#f4f7fb', strokeWidth: 4 });
     if (qs.done) D.label(gx1 + 8, gy - 18, '답: 약 ' + sci(v, 1) + ' ' + q.unit + ' → 자릿수 10' + sup(q.exp), { bg: '#14a058', size: 13.5, align: 'right' });
     // 트레이
     ctx.fillStyle = 'rgba(100,116,139,.08)'; rr(8, qs.trayY, VW - 16, VH - qs.trayY - 6, 14).fill();

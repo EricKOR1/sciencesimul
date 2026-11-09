@@ -157,7 +157,8 @@
     ctx.strokeStyle = o.needle || '#dc2626'; ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x, y + r * 0.12); ctx.lineTo(x + Math.cos(a) * r * 0.72, y + r * 0.12 + Math.sin(a) * r * 0.72); ctx.stroke();
     ctx.fillStyle = '#334155'; ctx.beginPath(); ctx.arc(x, y + r * 0.12, 2.6, 0, TAU); ctx.fill();
     ctx.restore();
-    T(x, y + r * 0.62, label, 13, INK, 'center', 900);
+    if (o.side) T(x + r + 6, y + 5, label, 13, INK, 'left', 900);   // 작은 눈금판: 값은 오른쪽 바깥에 써서 바늘·테두리에 겹치지 않게
+    else T(x, y + r * 0.62, label, 13, INK, 'center', 900);
   }
   function bulbDraw(x, y, lit) {
     if (lit > 0.02) D.glow(x, y, 20 + 36 * lit, '#fde047', 0.75 * lit);
@@ -403,7 +404,7 @@
     ctx.beginPath(); ctx.moveTo(g.xL, g.yTop + 8); ctx.lineTo(g.xL, g.sy); ctx.lineTo(g.sx - 48, g.sy); ctx.moveTo(g.sx + 48, g.sy); ctx.lineTo(g.xR, g.sy); ctx.lineTo(g.xR, g.yTop + 8); ctx.stroke(); ctx.restore();
     if (sOn) { ctx.save(); ctx.globalAlpha = kp; supplyDraw(g.sx, g.sy, go ? '0.50A' : 'OFF', go, true); ctx.restore(); }
     else { T(g.sx, g.sy + 5, '전원 장치 자리', 13.5, '#94a3b8', 'center', 800); pill(g.xL - 4, g.sy + 26, '(−)극에 연결', { bg: '#fee2e2', color: '#991b1b', border: '#fca5a5', size: 12.5, pad: 5 }); pill(g.xR + 4, g.sy + 26, '(+)극에 연결', { bg: '#dbeafe', color: '#1e3a8a', border: '#93c5fd', size: 12.5, pad: 5 }); }
-    if (sOn) gaugeDial(g.sx, g.by - 30, 21, p.I / 1.0, p.I.toFixed(2) + ' A', {});
+    if (sOn) gaugeDial(g.sx, g.by - 30, 21, p.I / 1.0, p.I.toFixed(2) + ' A', { side: true });
     // 비커
     const solK = p.k.sol;
     const bk = beaker(g.bx, g.by, g.bw, g.bh, { level: 0.7 * solK, color: '#3b9be0', alpha: 0.6, inside: (gm) => {

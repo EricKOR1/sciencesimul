@@ -117,8 +117,10 @@
     }
     boxAt(p) { for (const b of this.boxes) if (inRect(p.x, p.y, b)) return b; return null; }
     chipRect(box, k, n) {
-      const cols = box.cols || 2, gap = 6, rows = Math.max(1, Math.ceil(n / cols));
-      const kw = (box.w - gap * (cols + 1)) / cols, hdr = box.hdr || 26, avail = box.h - hdr - 6;
+      const gap = 6, hdr = box.hdr || 26, avail = box.h - hdr - 6;
+      // 카드가 많아 줄 높이가 칩보다 낮아지면 열을 늘려요 (칩끼리 겹쳐 글자가 가려지지 않게)
+      let cols = box.cols || 2; while (cols < 4 && n > cols && avail / Math.ceil(n / cols) < 22) cols++;
+      const rows = Math.max(1, Math.ceil(n / cols)), kw = (box.w - gap * (cols + 1)) / cols;
       const sp = Math.min(this.o.kh + 4, avail / rows), col = k % cols, row = Math.floor(k / cols);
       return { x: box.x + gap + col * (kw + gap), y: box.y + hdr + 1 + row * sp, w: kw, h: Math.max(18, Math.min(this.o.kh, sp - 3)) };
     }
@@ -234,7 +236,16 @@
         T(sl.x + this.o.cw / 2, sl.y + this.o.ch / 2 + 5, nm, 13, '#9aa7b6', 'center', 800);
       });
     }
-    drawCards() { this.cards.forEach((c) => { if (!(this.drag && this.drag.c === c)) drawCard(c); }); if (this.drag) drawCard(this.drag.c); }
+    drawCards() { this.cards.forEach((c) => { if (!(this.drag && this.drag.c === c)) drawCard(c); }); this.drawTags(); if (this.drag) drawCard(this.drag.c); }
+  /* 칸 이름(①, 1단계, 가장 작음…)은 카드에 가려지지 않게 카드 위 왼쪽 모서리에 작은 표로 다시 그려요 */
+  drawTags() {
+    this.o.slots.forEach((sl, s) => {
+      const nm = this.o.slotNames ? this.o.slotNames[s] : String(s + 1);
+      ctx.save(); ctx.font = D.font(11.5, 800); const w = Math.max(20, ctx.measureText(nm).width + 12); ctx.restore();
+      D.roundRect(sl.x + 6, sl.y - 8, w, 17, 8.5); ctx.fillStyle = 'rgba(71,85,105,.92)'; ctx.fill();
+      T(sl.x + 6 + w / 2, sl.y + 4.5, nm, 11.5, '#fff', 'center', 800);
+    });
+  }
     draw() { this.drawSlots(); this.drawCards(); }
   }
 

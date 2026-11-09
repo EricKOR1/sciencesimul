@@ -175,8 +175,9 @@ class Placer {
     this.chips.forEach((c) => {
       if (this.drag && this.drag.c === c) return;
       const t = this.slotOf(c);
-      if (t) { c.w = this.o.cw; c.h = this.o.ch; this.moveTo(c, t.x + (t.w - c.w) / 2, t.y + (t.h - c.h) / 2, instant); }
-      else this.moveTo(c, c.home.x, c.home.y, instant);
+      // 놓인 카드는 칸 크기에 맞춰 줄여요 (칸보다 크면 옆의 글자·그림을 가려요)
+      if (t) { c.w = Math.min(this.o.cw, t.w); c.h = Math.min(this.o.ch, t.h); this.moveTo(c, t.x + (t.w - c.w) / 2, t.y + (t.h - c.h) / 2, instant); }
+      else { c.w = this.o.cw; c.h = this.o.ch; this.moveTo(c, c.home.x, c.home.y, instant); }
     });
   }
   /* 매 프레임: 놓인 카드가 움직이는 칸을 따라가게 */
@@ -847,7 +848,7 @@ const CAS = [
   { id: 'c4', label: '손의 감각이 둔해졌어요', icon: '🤚', lobe: 'par' },
 ];
 const CASG = PHONE
-  ? { slot: (i) => ({ x: 8 + (i % 2) * 236, y: 266 + Math.floor(i / 2) * 74, w: 228, h: 54 }), tray: (i) => ({ x: 8 + (i % 2) * 236, y: 420 + Math.floor(i / 2) * 60 }), cw: 228, ch: 52 }
+  ? { slot: (i) => ({ x: 8 + (i % 2) * 236, y: 266 + Math.floor(i / 2) * 80, w: 228, h: 54 }), tray: (i) => ({ x: 8 + (i % 2) * 236, y: 428 + Math.floor(i / 2) * 60 }), cw: 228, ch: 52 }   // 둘째 줄 엽 이름표가 첫째 줄 카드에 겹치지 않게
   : { slot: (i) => ({ x: 14 + i * 196, y: 346, w: 184, h: 66 }), tray: (i) => ({ x: 14 + i * 196, y: 452 }), cw: 184, ch: 66 };
 const CASORD = ['fro', 'tem', 'par', 'occ'];       // 칸의 엽 차례
 function newCases() {

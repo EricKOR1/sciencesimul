@@ -324,8 +324,9 @@
   const AX = PHONE ? { x0: 40, x1: 440, y: 232, h: 18 } : { x0: 66, x1: 734, y: 250, h: 20 };
   const axX = (v) => AX.x0 + (v / 3.2) * (AX.x1 - AX.x0);
   const axV = (x) => clamp(Math.round(((x - AX.x0) / (AX.x1 - AX.x0)) * 3.2 * 10) / 10, 0, 3.2);
-  const SCW = PHONE ? 86 : 100, SCH = PHONE ? 46 : 50;
-  const LANES = PHONE ? [56, 108, 160] : [52, 112, 172];
+  const SCW = PHONE ? 96 : 100, SCH = PHONE ? 46 : 50;
+  // 줄 간격을 넓혀 카드 아래 'Δχ' 표가 아래 줄 카드를 가리지 않게 해요
+  const LANES = PHONE ? [40, 104, 168] : [42, 110, 178];
   const trayCard = (i) => PHONE ? { x: 20 + (i % 3) * (SCW + 12), y: 552 + Math.floor(i / 3) * (SCH + 12) } : { x: 428 + (i % 3) * (SCW + 12), y: 392 + Math.floor(i / 3) * (SCH + 12) };
   function buildScale() {
     const order = [4, 2, 5, 0, 3, 1];
@@ -376,7 +377,7 @@
       D.roundRect(-SCW / 2, -SCH / 2, SCW, SCH, 12); ctx.fillStyle = '#fff'; ctx.fill(); ctx.shadowColor = 'transparent';
       ctx.strokeStyle = t.bad ? BAD : t.ok ? GOOD : t.val != null ? '#8b5cf6' : '#cdbdf5'; ctx.lineWidth = t.bad || t.ok ? 3 : 2.2; ctx.stroke();
       T(0, -4, b.label, 15, b.ionic ? '#6d28d9' : '#0f766e', 'center', 900);
-      T(0, 15, b.a + ' ' + f1(b.ea) + ' · ' + b.b + ' ' + f1(b.eb), 11.5, MUTED, 'center', 800);
+      T(0, 15, b.a + ' ' + f1(b.ea) + ' · ' + b.b + ' ' + f1(b.eb), PHONE ? 11 : 11.5, MUTED, 'center', 800);
       if (t.val != null) { D.label(0, SCH / 2 + 3, 'Δχ ' + (t.val).toFixed(1), { size: fs(11.5), bg: PURD }); }
       ctx.restore();
     };

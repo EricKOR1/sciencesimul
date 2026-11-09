@@ -582,7 +582,7 @@
     const c = S.cp, r = CP_CH;
     if (tk.k !== 'ADP') { tk.shake = 1; Sound.fail(); c.msg = '이미 ATP예요. 에너지를 쓰고 ADP가 된 뒤에 충전해요.'; showHint(c.msg, 3200); cpLayout(); return; }
     if (c.run.charge > 0) { cpLayout(); return; }
-    tk.busy = true; c.run.charge = 1e-4; SciSim.tween(tk, { x: r.x + r.w / 2 - TOKW / 2, y: r.y + r.h - TOKH - 12 }, { duration: RM ? 0.01 : 0.35, ease: 'outCubic' });
+    tk.busy = true; c.run.charge = 1e-4; SciSim.tween(tk, { x: r.x + r.w / 2 - TOKW / 2, y: r.y + r.h - TOKH - 22 }, { duration: RM ? 0.01 : 0.35, ease: 'outCubic' });
     c.sel = null; Sound.click();
     after(RM ? 0.1 : 1.9, () => { tk.k = 'ATP'; tk.busy = false; c.run.charge = 0; c.cnt.charge++; c.conn.charge = true; c.msg = '세포호흡(에너지 방출)의 에너지로 ADP + Pi → ATP(에너지 흡수 반응)가 합성됐어요.'; Sound.success(); cpLayout(); updateCtl(); });
     cpLayout(); updateCtl();
@@ -643,8 +643,8 @@
     T(ch.x + 12, ch.y + 70, '이 에너지로 ATP를 합성해요', L(14, 13), '#9a3412', 'left', 700);
     const gl = run ? 1 - clamp(c.run.charge / 1.6, 0, 1) : 1;
     for (let q = 0; q < 6; q++) { D.sphere(ch.x + 30 + (q % 3) * 22, ch.y + (PHONE ? 100 : 112) + Math.floor(q / 3) * 20, 8 * (0.35 + 0.65 * gl), '#fff', { gloss: true, outline: '#cbd5e1' }); }
-    if (run) { D.flame(ch.x + ch.w - 50, ch.y + ch.h - 36, 30, t); bolt(ch.x + ch.w / 2 + Math.sin(t * 9) * 6, ch.y + ch.h - 60, 1.2); }
-    T(ch.x + ch.w / 2, ch.y + ch.h - 4, '← ADP를 끌어다 놓아요', 13, '#c2410c', 'center', 700);
+    if (run) { D.flame(ch.x + ch.w - 50, ch.y + ch.h - 36, 30, t); bolt(ch.x + ch.w / 2 + Math.sin(t * 9) * 6, ch.y + ch.h - TOKH - 34, 1.2); }
+    if (!(S.cp.run.charge > 0)) T(ch.x + ch.w / 2, ch.y + ch.h - 4, '← ADP를 끌어다 놓아요', 13, '#c2410c', 'center', 700);   // 충전 중에는 놓인 ADP가 안내 글을 가리지 않게 숨겨요
     if (c.cnt.charge > 0) T(ch.x + ch.w - 12, ch.y + 28, '✔ ' + c.cnt.charge + '회', 13.5, '#15803d', 'right', 800);
     // 기계
     MACH.forEach((m, i) => cpMachDraw(i, t));

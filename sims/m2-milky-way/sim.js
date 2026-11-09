@@ -546,8 +546,9 @@
       const dx = _q.x - sun.sx, dy = _q.y - sun.sy, L = Math.hypot(dx, dy) || 1;
       if (topA > 0.3 && L > 60) {
         ctx.save(); ctx.globalAlpha = topA;
-        const mx = sun.sx + dx * 0.5, my = sun.sy + dy * 0.5;
-        D.label(mx, my - 15, '중심에서 약 ' + fmtLy(sunDist()), { size: 14, bg: 'rgba(90,60,0,.92)', color: '#fff3c4', border: '#fde68a' });
+        // 거리 글자는 ☀ 바로 아래에 (점선 가운데에 두면 ☀와 '☀ 태양계' 이름표에 겹쳐요)
+        const mx = clamp(sun.sx, 100, 520), my = sun.sy + 34;
+        D.label(mx, my, '중심에서 약 ' + fmtLy(sunDist()), { size: 14, bg: 'rgba(90,60,0,.92)', color: '#fff3c4', border: '#fde68a' });
         ctx.restore();
       }
     } else if (sun.mode === 'park') {
@@ -559,14 +560,14 @@
     }
     sunSphere(sun.sx, sun.sy, r, sc);
     if (placed || sun.mode === 'drag') {
-      D.label(sun.sx, sun.sy - 26, '☀ 태양계', { size: 14, bg: 'rgba(120,70,0,.92)', color: '#fff3c4' });
+      D.label(clamp(sun.sx, 50, VW - 50), sun.sy - 26, '☀ 태양계', { size: 14, bg: 'rgba(120,70,0,.92)', color: '#fff3c4' });
     }
     if (sun.mode === 'drag') {
       const d = discInverse(sun.sx, sun.sy), dist = Math.hypot(d.x, d.y);
       if (topA > 0.3) {
         dproj(0, 0, 0, _q);
         ctx.save(); ctx.globalAlpha = 0.7; D.dashedLine(sun.sx, sun.sy, _q.x, _q.y, { color: '#fde68a', width: 2 }); ctx.restore();
-        D.label(sun.sx + 6, sun.sy + 34, '중심에서 ' + fmtLy(dist), { size: 14, bg: 'rgba(8,16,40,.92)', color: '#fde68a', border: '#fde68a' });
+        D.label(clamp(sun.sx + 6, 90, VW - 90), Math.min(sun.sy + 34, VH - 16), '중심에서 ' + fmtLy(dist), { size: 14, bg: 'rgba(8,16,40,.92)', color: '#fde68a', border: '#fde68a' });
       }
     }
   }

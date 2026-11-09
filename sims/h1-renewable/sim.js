@@ -484,8 +484,9 @@
     sortBoard = new Board({ onChange() { sortBoard.items.forEach((c) => { c.ok = false; c.bad = false; c.warned = false; }); }, onTap(c) { showHint(c.src.icon + ' ' + c.src.name + ': ' + c.src.desc, 6000); } });
     const cols = PHONE ? 2 : 4;
     const slots = PHONE
-      ? [{ id: 'new', x: 300, y: 436, w: 560, h: 150, cols: 3, label: '🔋 신에너지', sub: '새로운 방식으로 얻는 에너지', color: '#8b5cf6' },
-         { id: 're', x: 300, y: 650, w: 560, h: 240, cols: 3, label: '♻️ 재생 에너지', sub: '자연에서 다시 얻을 수 있는 에너지', color: '#16a34a' }]
+      // 휴대폰: 신에너지 칸은 두 줄(6장)까지 칸 안에 들어가게 — 넘치면 아래 재생 에너지 칸 이름을 가려요
+      ? [{ id: 'new', x: 300, y: 451, w: 560, h: 180, cols: 3, cap: 6, label: '🔋 신에너지', sub: '새로운 방식으로 얻는 에너지', color: '#8b5cf6' },
+         { id: 're', x: 300, y: 670, w: 560, h: 240, cols: 3, label: '♻️ 재생 에너지', sub: '자연에서 다시 얻을 수 있는 에너지', color: '#16a34a' }]
       : [{ id: 'new', x: 162, y: 400, w: 300, h: 280, cols: 2, label: '🔋 신에너지', sub: '새로운 방식으로 얻는 에너지', color: '#8b5cf6' },
          { id: 're', x: 555, y: 400, w: 466, h: 280, cols: 3, label: '♻️ 재생 에너지', sub: '자연에서 다시 얻을 수 있는 에너지', color: '#16a34a' }];
     slots.forEach((s) => { const gw = (s.w - 16) / s.cols; sortBoard.addSlot(Object.assign({ cap: 7, top: 52, gh: PHONE ? 58 : 54, isc: Math.min(0.9, (gw - 6) / SORT_W), pad: 8 }, s)); });

@@ -934,7 +934,8 @@
   function buildDBoard() {
     const cw = PHONE ? 160 : 240, ch = PHONE ? 72 : 48;
     const ids = ['gene', 'spc', 'eco'], labels = ['🧬 유전적 다양성', '🐾 종 다양성', '🗺️ 생태계 다양성'];
-    const pos = PHONE ? [{ x: 6, y: 304, w: 168, h: 330 }, { x: 176, y: 304, w: 168, h: 330 }, { x: 346, y: 304, w: 168, h: 330 }] : [{ x: 12, y: 262, w: 252, h: 236 }, { x: 274, y: 262, w: 252, h: 236 }, { x: 536, y: 262, w: 252, h: 236 }];
+    // 칸마다 카드 4장(최대)까지 칸 안에 들어가게 높이를 잡아요
+    const pos = PHONE ? [{ x: 6, y: 304, w: 168, h: 346 }, { x: 176, y: 304, w: 168, h: 346 }, { x: 346, y: 304, w: 168, h: 346 }] : [{ x: 12, y: 256, w: 252, h: 260 }, { x: 274, y: 256, w: 252, h: 260 }, { x: 536, y: 256, w: 252, h: 260 }];
     dBoard = new Board({ zones: zoneDefs(ids, { labels, pos }), tray: PHONE ? { x: 14, y: 52, w: 492, cols: 3 } : { x: 12, y: 62, w: 776, cols: 3 }, cw, ch, gap: PHONE ? 6 : 8, vertical: PHONE, onPlace: () => { dBoard.cards.forEach((c) => { c.badge = ''; }); ctlUpdate(); } });
     [0, 3, 6, 1, 4, 7, 2, 5, 8].forEach((i) => dBoard.add({ id: DCARDS[i].id, label: DCARDS[i].label, t: DCARDS[i].t }));
     dBoard.layout(true);
@@ -943,7 +944,7 @@
     const cw = PHONE ? 160 : 186, ch = PHONE ? 62 : 46;
     const ids = ['gene', 'spc', 'eco'], labels = ['🧬 유전적 다양성', '🐾 종 다양성', '🗺️ 생태계 다양성'];
     const pos = PHONE ? [{ x: 6, y: 282, w: 168, h: 300 }, { x: 176, y: 282, w: 168, h: 300 }, { x: 346, y: 282, w: 168, h: 300 }] : [{ x: 12, y: 190, w: 252, h: 296 }, { x: 274, y: 190, w: 252, h: 296 }, { x: 536, y: 190, w: 252, h: 296 }];
-    aBoard = new Board({ zones: zoneDefs(ids, { labels, pos }), tray: PHONE ? { x: 14, y: 46, w: 492, cols: 3 } : { x: 14, y: 46, w: 772, cols: 4 }, cw, ch, gap: PHONE ? 6 : 8, vertical: PHONE,
+    aBoard = new Board({ zones: zoneDefs(ids, { labels, pos }), tray: PHONE ? { x: 14, y: 46, w: 492, cols: 3 } : { x: 14, y: 46, w: 772, cols: 4 }, cw, ch, gap: PHONE ? 4 : 8, vertical: PHONE,
       onTap: (c) => { AC.sel = CASES.find((x) => x.id === c.id); },
       onPlace: (c) => { AC.sel = CASES.find((x) => x.id === c.id); aBoard.cards.forEach((k) => { k.badge = ''; }); ctlUpdate(); } });
     [4, 0, 6, 2, 7, 1, 5, 3].forEach((i) => aBoard.add({ id: CASES[i].id, label: CASES[i].label, t: CASES[i].t }));
@@ -953,8 +954,8 @@
     ctx.fillStyle = '#f2f8ee'; ctx.fillRect(0, 0, VW, VH);
     D.text(VW / 2, PHONE ? 28 : 34, '🗂️ 사례 카드를 알맞은 다양성 칸에 놓아요', { size: PHONE ? 14.5 : 17, weight: 800, color: '#14532d' });
     dBoard.update(dt); dBoard.draw(t);
-    if (!PHONE) D.text(VW / 2, 252, '▲ 아직 놓지 않은 카드', { size: 12.5, weight: 700, color: '#94a3b8' });
-    drawFlash(dt, PHONE ? 620 : 510);
+    if (!PHONE) D.text(VW / 2, 247, '▲ 아직 놓지 않은 카드', { size: 12.5, weight: 700, color: '#94a3b8' });
+    drawFlash(dt, PHONE ? 662 : 522);
   }
   function drawMatch(t, dt) {
     ctx.fillStyle = '#f2f8ee'; ctx.fillRect(0, 0, VW, VH);

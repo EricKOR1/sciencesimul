@@ -559,7 +559,7 @@
       c.spin += (0.4 + 9 * c.eff.motion) * 0.016 * (RM ? 0.3 : 1);
       c.wave += 0.016 * 4;
       drawAppliance(c, t);
-      if (done) { D.check(c.x + CARD.w / 2 - 14, CARD.y + 14, 11, 1); }
+      if (done) { D.check(c.x + CARD.w / 2 - 6, CARD.y + 4, 11, 1); }   // 카드 모서리에 걸쳐 그려 긴 이름('휴대 전화 충전')을 덮지 않게
     });
     // 에너지 카드(보관함)
     D.text(W / 2, TOKY - 38, '에너지 카드 — 가전제품 위로 끌어다 놓아요', { size: 14, weight: 800, color: MUTED });

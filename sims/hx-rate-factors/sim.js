@@ -432,8 +432,10 @@
   function lfTarget(i) {
     const c = LF().cards[i];
     if (c.bin < 0) return lfPoolRect(i);
-    const b = lfBinRect(c.bin), idx = LF().cards.filter((q) => q.bin === c.bin && q.ord < c.ord).length;
-    return { x: b.x + 8, y: b.y + 36 + idx * 40, w: b.w - 16, h: 36 };
+    // 상자 제목(위)과 설명 글(아래) 사이에만 쌓아요: 카드가 많으면 간격과 높이를 줄여 글을 가리지 않게
+    const b = lfBinRect(c.bin), mem = LF().cards.filter((q) => q.bin === c.bin), idx = mem.filter((q) => q.ord < c.ord).length;
+    const pitch = Math.min(40, (b.h - 36 - 26) / Math.max(1, mem.length));
+    return { x: b.x + 8, y: b.y + 36 + idx * pitch, w: b.w - 16, h: Math.min(36, pitch - 3) };
   }
   function lfInit() { const F = LF(); F.cards = LCARDS.map((c, i) => { const r = lfPoolRect(i); return { x: r.x, y: r.y, w: r.w, h: r.h, bin: -1, ord: 0, wrong: false, lift: 0 }; }); F.sel = -1; F.drag = -1; F.last = -1; F.ordN = 0; }
   function lfPlace(i, k) {
@@ -460,9 +462,10 @@
     ctx.save(); const s = 1 + 0.06 * c.lift; ctx.translate(c.x + c.w / 2, c.y + c.h / 2 - 4 * c.lift); ctx.scale(s, s);
     D.shadow(() => { D.roundRect(-c.w / 2, -c.h / 2, c.w, c.h, 10); ctx.fillStyle = c.bin >= 0 ? (c.wrong ? '#fff1f1' : '#effaf3') : sel ? '#f1ebff' : '#fff'; ctx.fill(); }, { blur: 4 + 8 * c.lift, y: 1 + 4 * c.lift });
     D.roundRect(-c.w / 2, -c.h / 2, c.w, c.h, 10); ctx.strokeStyle = c.bin >= 0 ? (c.wrong ? BAD : GOOD) : sel ? PUR : '#d9d0f5'; ctx.lineWidth = sel || c.bin >= 0 ? 2.4 : 1.5; ctx.stroke();
-    if (inBin) T(-c.w / 2 + 18, 5, q.ic, 17, INK, 'center', 800);
+    const ks = inBin ? Math.min(1, c.h / 30) : 1;   // 납작한 칩이면 글자도 조금 줄여요
+    if (inBin) T(-c.w / 2 + 18, 5 * ks, q.ic, 17 * Math.max(0.75, ks), INK, 'center', 800);
     else T(-c.w / 2 + 16, -c.h / 2 + 19, q.ic, 17, INK, 'center', 800);
-    if (inBin) T(-c.w / 2 + 34, 4, q.name, 12.5, INK, 'left', 800);
+    if (inBin) T(-c.w / 2 + 34, 4 * ks, q.name, Math.max(10, 12.5 * ks), INK, 'left', 800);
     else wrap(q.nm, c.w - 8, 11.5, 800).slice(0, 2).forEach((ln, k) => T(-c.w / 2 + 7, -c.h / 2 + 35 + k * 13, ln, 11.5, INK, 'left', 800));
     if (inBin && c.wrong) T(c.w / 2 - 14, 6, '✗', 15, BAD, 'center', 800);
     ctx.restore();

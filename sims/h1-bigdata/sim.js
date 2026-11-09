@@ -371,7 +371,7 @@
     ctx.fillStyle = 'rgba(100,116,139,.08)'; rr(PHONE ? 6 : 8, PHONE ? 534 : 322, VW - (PHONE ? 12 : 16), PHONE ? 296 : 140, 14).fill();
     bdDraw(B, (c) => {
       D.text(-c.w / 2 + 20, 7, c.ico, { size: 20, align: 'center' });
-      paraText(-c.w / 2 + 38, -c.h / 2 + (PHONE ? 20 : 19), c.t, c.w - 46, PHONE ? 11 : 12.5, { color: '#334155', lh: 1.26 });
+      paraText(-c.w / 2 + 38, -c.h / 2 + (PHONE ? 20 : 17), c.t, c.w - 46, PHONE ? 11 : 12.5, { color: '#334155', lh: PHONE ? 1.26 : 1.18 });  // 세 줄 카드도 테두리에 닿지 않게
     }, (c) => (c.bad ? '#e2464b' : B.ok && c.zone ? '#14a058' : c.zone ? (c.zone === 'good' ? '#14a058' : '#e2464b') : '#cbd5e1'));
   }
 

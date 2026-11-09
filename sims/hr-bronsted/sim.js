@@ -711,7 +711,7 @@
     ['acid', 'base'].forEach((bx) => {
       const list = so.cards.filter((c) => c.box === bx).sort((a, b) => a.ord - b.ord), n = list.length, cols = PHONE ? 2 : 3, rows = Math.max(1, Math.ceil(n / cols));
       const B = G.boxes[bx], slotW = (B.w - 16) / cols, rowH = Math.min(52, (B.h - 38) / Math.max(2, rows));
-      const s = Math.min(PHONE ? 0.74 : 0.88, slotW / soCW, rowH / soCH);
+      const s = Math.min(PHONE ? 0.74 : 0.88, (slotW - 6) / soCW, (rowH - 4) / soCH);   // 카드 사이에 틈을 남겨 테두리가 맞붙지 않게
       list.forEach((c, i) => { c.ts = s; c.tx = B.x + 8 + ((i % cols) + 0.5) * slotW; c.ty = B.y + 32 + (Math.floor(i / cols) + 0.5) * rowH; });
     });
     // 트레이

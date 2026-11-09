@@ -836,7 +836,8 @@
       ctx.globalAlpha = 1;
     });
   }
-  const DOT_OFF = { mercury: [-4, -26], venus: [38, 12], earth: [38, -16], mars: [34, 0], jupiter: [0, -24], saturn: [0, 26], uranus: [0, 26], neptune: [0, -26] };
+  // 수성 이름표는 세로축과 눈금 숫자를 덮지 않게 오른쪽 위로, 지구 이름표는 그만큼 더 오른쪽으로 비켜 둬요
+  const DOT_OFF = { mercury: [14, -30], venus: [38, 12], earth: [46, -12], mars: [34, 0], jupiter: [0, -24], saturn: [0, 26], uranus: [0, 26], neptune: [0, -26] };
   function drawGraphDots(ctx, L, t) {
     const fs = L.fs;
     PL.forEach((p) => {

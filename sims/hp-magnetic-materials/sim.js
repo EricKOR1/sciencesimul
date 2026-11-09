@@ -79,7 +79,7 @@
   const SINC = (XF + RC - AX) / PL, THC = Math.asin(SINC);          // 극면에 닿는 실의 각도
   const SCENE_END = PHONE ? 290 : 292;
   const TRAY_Y = PHONE ? 316 : 316, CELL_H = PHONE ? 112 : 112, CELL_W = (VW - 24) / 5;
-  const ZONE = { x: XF + 10, y: AY + 6, w: AX + (PHONE ? 62 : 86) - (XF + 10), h: YM + 80 - (AY + 6) };
+  const ZONE = { x: XF + 10, y: AY + 6, w: AX + (PHONE ? 62 : 86) - (XF + 10), h: YM + (PHONE ? 62 : 80) - (AY + 6) };   // 휴대폰: 탁자(YM+66) 위에서 끝나 '여기에 놓기'가 탁자 선에 걸리지 않아요
 
   /* ---------- 상태 ---------- */
   const S = {

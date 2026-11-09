@@ -117,7 +117,7 @@
     win: { cards: [{ id: 'sunny', ans: 0, title: '☀️ 맑고 건조해요', sub: '하강 기류 · 구름 없음', subCol: '#b45309' }, { id: 'cloud', ans: 2, title: '☁️ 구름 많고 눈·비', sub: '상승 기류 · 구름 생성', subCol: '#475569' }, { id: 'wind', ans: 1, title: '🌬️ 북서풍이 강해요', sub: '등압선 간격이 좁아요', subCol: '#1d4ed8' }],
       targets: [{ x: 150, y: 186, label: 'A', r: 80, cdx: 0, cdy: 62, cs: 0.74 }, { x: 536, y: 272, label: 'B', r: 70, cdx: -56, cdy: 66, cs: 0.74 }, { x: 716, y: 236, label: 'C', r: 80, cdx: 0, cdy: 66, cs: 0.74 }] },
     spr: { cards: [{ id: 'rain', ans: 0, title: '🌧️ 흐리고 오랫동안 비', sub: '넓은 지역 · 지속적인 비', subCol: '#475569' }, { id: 'shower', ans: 1, title: '⛈️ 소나기·천둥 번개', sub: '좁은 지역 · 세찬 비', subCol: '#6d28d9' }, { id: 'clear', ans: 2, title: '🌤️ 맑아지고 쌀쌀해져요', sub: '기온 하강', subCol: '#1d4ed8' }],
-      targets: [{ x: 612, y: 296, label: 'A', r: 70, cdx: 0, cdy: -52, cs: 0.74 }, { x: 352, y: 330, label: 'B', r: 70, cdx: 74, cdy: 36, cs: 0.74 }, { x: 236, y: 388, label: 'C', r: 70, cdx: 0, cdy: -52, cs: 0.74 }] },
+      targets: [{ x: 612, y: 296, label: 'A', r: 70, cdx: 0, cdy: -52, cs: 0.74 }, { x: 352, y: 330, label: 'B', r: 70, cdx: 110, cdy: 80, cs: 0.74 }, { x: 236, y: 388, label: 'C', r: 70, cdx: 0, cdy: -52, cs: 0.74 }] },
   };
   makeSet('win', WX.win.cards, WX.win.targets, 236, 52, 478);
   makeSet('spr', WX.spr.cards, WX.spr.targets, 236, 52, 478);
@@ -872,7 +872,7 @@
       if (!off && S.scene === 'mass') off = id === 'cMassCards' ? rev : !rev;
       $('#' + id).classList.toggle('is-off', off);
     });
-    showHint(HINT[S.scene], S.scene === 'wmap' ? 0 : 6000);
+    showHint(HINT[S.scene], S.scene === 'wmap' ? 9000 : 6000);   // 일기도 안내도 잠시 뒤 사라지게 (휴대폰에서 아래 날씨 카드를 계속 가려요)
     renderSeg();
   }
   let segKey = '';

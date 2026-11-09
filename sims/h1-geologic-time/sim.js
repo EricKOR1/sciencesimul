@@ -951,10 +951,11 @@
   ];
   function iconSea(x, y, s) { ctx.fillStyle = '#7dd3fc'; ctx.beginPath(); ctx.arc(x, y, s * 0.5, 0, TAU); ctx.fill(); crit('coral', x, y, s * 0.8, { color: '#f472b6' }); }
   function buildOrder() {
-    const slotW = PHONE ? 496 : 176, slotH = PHONE ? 74 : 112, cw = PHONE ? 480 : 168, ch = PHONE ? 64 : 100;
+    // 칸 이름('N번째')이 카드에 가리지 않게 칸 위쪽(head)을 비워 두어요
+    const slotW = PHONE ? 496 : 176, slotH = PHONE ? 96 : 136, cw = PHONE ? 480 : 168, ch = PHONE ? 64 : 100;
     const zones = [0, 1, 2, 3].map((i) => PHONE
-      ? { id: 's' + i, x: 12, y: 60 + i * (slotH + 14), w: slotW, h: slotH, label: (i + 1) + '번째', cap: 1, center: true, color: '#0284c7', fill: 'rgba(224,242,254,.7)', head: 0 }
-      : { id: 's' + i, x: 16 + i * (slotW + 18), y: 70, w: slotW, h: slotH, label: (i + 1) + '번째', cap: 1, center: true, color: '#0284c7', fill: 'rgba(224,242,254,.7)', head: 0 });
+      ? { id: 's' + i, x: 12, y: 60 + i * (slotH + 14), w: slotW, h: slotH, label: (i + 1) + '번째', cap: 1, color: '#0284c7', fill: 'rgba(224,242,254,.7)', head: 26 }
+      : { id: 's' + i, x: 16 + i * (slotW + 18), y: 70, w: slotW, h: slotH, label: (i + 1) + '번째', cap: 1, color: '#0284c7', fill: 'rgba(224,242,254,.7)', head: 28 });
     oBoard = new Board({ zones, tray: PHONE ? { x: 20, y: 60 + 4 * (slotH + 14) + 30, w: 480, cols: 1 } : { x: 16, y: 262, w: 768, cols: 4 }, cw, ch, gap: PHONE ? 6 : 18, onReject: (c, z, m) => say(m, true) });
     [2, 0, 3, 1].forEach((i) => oBoard.add({ id: CAUSE[i].id, label: CAUSE[i].label, n: CAUSE[i].n }));
     oBoard.layout(true);
@@ -967,7 +968,7 @@
   function drawOrder(t) {
     D.text(VW / 2, PHONE ? 30 : 36, '⛓ 원인과 결과의 순서대로 카드를 놓아요', { size: PHONE ? 14.5 : 18, weight: 800, color: '#075985' });
     oBoard.draw(t);
-    if (!PHONE) { ctx.fillStyle = '#0284c7'; for (let i = 0; i < 3; i++) { const x = 16 + (i + 1) * 194 - 18; ctx.beginPath(); ctx.moveTo(x - 4, 118); ctx.lineTo(x + 8, 126); ctx.lineTo(x - 4, 134); ctx.closePath(); ctx.fill(); } D.text(VW / 2, 246, '👇 아직 놓지 않은 카드', { size: 13.5, weight: 800, color: '#64748b' }); }
+    if (!PHONE) { ctx.fillStyle = '#0284c7'; for (let i = 0; i < 3; i++) { const x = 16 + (i + 1) * 194 - 18; ctx.beginPath(); ctx.moveTo(x - 4, 130); ctx.lineTo(x + 8, 138); ctx.lineTo(x - 4, 146); ctx.closePath(); ctx.fill(); } D.text(VW / 2, 246, '👇 아직 놓지 않은 카드', { size: 13.5, weight: 800, color: '#64748b' }); }
   }
   const FOS = [
     { id: 'f1', k: 'coral', label: '산호 화석', env: 'warmsea', c: '#f472b6' },
@@ -976,9 +977,9 @@
   ];
   const ENVS = [['warmsea', '따뜻하고 얕은 바다'], ['warmland', '따뜻하고 습한 육지'], ['cold', '춥고 건조한 한랭 환경']];
   function buildFossil() {
-    const zw = PHONE ? 496 : 248, zh = PHONE ? 78 : 132, cw = PHONE ? 230 : 200, ch = PHONE ? 62 : 70;
+    const zw = PHONE ? 496 : 248, zh = PHONE ? 100 : 132, cw = PHONE ? 230 : 200, ch = PHONE ? 62 : 70;  // 휴대폰: 환경 이름 아래에 카드
     const zones = ENVS.map((e, i) => PHONE
-      ? { id: e[0], x: 12, y: 58 + i * (zh + 12), w: zw, h: zh, label: e[1], cap: 1, center: true, head: 0, color: '#0284c7', fill: 'rgba(224,242,254,.7)', lsize: 14 }
+      ? { id: e[0], x: 12, y: 58 + i * (zh + 12), w: zw, h: zh, label: e[1], cap: 1, head: 26, color: '#0284c7', fill: 'rgba(224,242,254,.7)', lsize: 14 }
       : { id: e[0], x: 14 + i * (zw + 14), y: 70, w: zw, h: zh, label: e[1], cap: 1, color: '#0284c7', fill: 'rgba(224,242,254,.7)', lsize: 15.5 });
     fBoard = new Board({ zones, tray: PHONE ? { x: 20, y: 58 + 3 * (zh + 12) + 30, w: 480, cols: 2 } : { x: 14, y: 290, w: 772, cols: 3 }, cw, ch, gap: PHONE ? 8 : 20, onReject: (c, z, m) => say(m, true) });
     [2, 0, 1].forEach((i) => { const f = FOS[i]; fBoard.add({ id: f.id, label: f.label, env: f.env, draw: (x, y, s) => crit(f.k, x, y, s * 0.85, { fossil: true }), iconBg: '#d9c7a0' }); });
@@ -987,7 +988,7 @@
   function drawFossil(t) {
     D.text(VW / 2, PHONE ? 30 : 36, '🔎 화석은 옛 환경을 알려 주는 단서예요', { size: PHONE ? 14.5 : 18, weight: 800, color: '#075985' });
     fBoard.draw(t);
-    D.text(VW / 2, PHONE ? 58 + 3 * 90 + 14 : 274, '👇 화석 카드를 알맞은 환경 칸으로', { size: 13.5, weight: 800, color: '#64748b' });
+    D.text(VW / 2, PHONE ? 58 + 3 * 112 + 14 : 274, '👇 화석 카드를 알맞은 환경 칸으로', { size: 13.5, weight: 800, color: '#64748b' });
   }
 
   /* ======================================================

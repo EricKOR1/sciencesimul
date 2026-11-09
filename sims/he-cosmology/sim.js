@@ -363,7 +363,8 @@
       ctx.strokeStyle = col; ctx.lineWidth = over ? 3.5 : 2.4; ctx.setLineDash(over ? [] : [7, 5]); rr(R.x, R.y, R.w, R.h, 14).stroke(); ctx.setLineDash([]);
       ctx.fillStyle = rgba(col, 0.22); rr(R.x + 1.5, R.y + 1.5, R.w - 3, 44, 12).fill(); ctx.restore();
       TX(R.x + R.w / 2, R.y + 29, BIN_NAME[b], PHONE ? 14 : 15, '#fff', 'center', 800);
-      const n = dn1.binList(b).length; if (n) D.label(R.x + R.w - 8, R.y + R.h - 14, n + '장', { bg: col === '#94a3b8' ? '#475569' : '#b45309', size: 12.5, align: 'right', pad: 7 });
+      // 장수 표시는 머리 띠 오른쪽에: 상자 아래 구석에 두면 카드 6장이 다 들어갔을 때 가려져요
+      const n = dn1.binList(b).length; if (n) D.label(R.x + R.w - 10, R.y + 23, n + '장', { bg: col === '#94a3b8' ? '#475569' : '#b45309', size: 12.5, align: 'right', pad: 7 });
     });
     dn1.drawOrder().forEach(drawEvid);
   }

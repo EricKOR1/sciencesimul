@@ -19,7 +19,7 @@
     title: '엽록체 3D 단면',
     label: '🧊 3D 입체',
     hint: '드래그: 돌리기 · 두 손가락/휠: 확대',
-    camera: { dist: narrow ? 3.9 : 2.85, target: narrow ? [0, 0.25, 0] : [0, 0, 0], theta: 0.38, phi: 1.42, min: 2, max: 9 },
+    camera: { dist: narrow ? 3.9 : 2.85, target: narrow ? [0, 0.36, 0] : [0, 0, 0], theta: 0.38, phi: 1.42, min: 2, max: 9 },
     autoRotate: 0,
     levels: [0],   // 1단계(모형 조립 · 단면 이름: 3D 막대의 부품 · 자리 단추와 핀). 2단계(색소 분리) · 3단계(2D 단면 핀 · 흡수 스펙트럼) · 4단계(추론)는 2D 화면이에요
     build(ctx) {
@@ -29,7 +29,7 @@
           '.v3pan{position:absolute;z-index:2;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.8);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:12px;font-weight:700;line-height:1.35;pointer-events:none;max-width:48%}' +
           '.v3pan:empty{display:none}.v3pan.tr{right:10px;top:10px}.v3pan.bl{left:10px;bottom:10px}.v3pan .h{font-weight:900;margin-bottom:3px;font-size:12.5px}.v3pan .chip{display:inline-block;margin:1px 2px;padding:0 6px;border-radius:7px;background:rgba(255,255,255,.16);color:#eef3ff}.v3pan .chip.sel{background:#ffd34d;color:#1b2333}.v3pan.card{background:#fffdf7;color:#1b2333;border-top:5px solid var(--kc,#ffd34d);white-space:normal;max-width:min(260px,46%)}.v3pan.card .s{font-size:11.5px;font-weight:600;color:#475569}' +
           '.v3pan table{border-collapse:collapse}.v3pan th,.v3pan td{padding:1px 5px;text-align:center;white-space:nowrap}.v3pan th{color:#b9c6e4;text-align:left;font-weight:800}.v3pan td.e{color:#56658a}.v3pan .ok{color:#7ee2a8}.v3pan .hi{color:#ffd34d}' +
-          '@media (max-width:599px){.v3pan{font-size:10.5px;padding:4px 6px;max-width:58%}.v3pan.tr{top:auto;bottom:30px;right:8px}.v3pan.bl{left:8px;bottom:8px;max-width:42%}.v3pan th,.v3pan td{padding:0 3px}.v3pan .h{font-size:11px}}';
+          '@media (max-width:599px){.v3pan{font-size:10.5px;padding:4px 6px;max-width:58%}.v3pan.tr{top:auto;bottom:30px;right:8px}.v3pan.bl{left:8px;bottom:8px;max-width:42%}.v3pan th,.v3pan td{padding:0 3px}.v3pan .h{font-size:11px}.v3pan.tray{max-width:30%;bottom:34px}}';
           document.head.appendChild(s); }
         const el = document.createElement('div'); el.className = 'v3pan ' + (cls || 'tr'); ctx.renderer.domElement.parentElement.appendChild(el);
         let last = ''; el.put = (html) => { if (html !== last) { last = html; el.innerHTML = html; } }; return el;
@@ -262,7 +262,7 @@
         applyViz();
       }
       /* 부품 카드: 고른 부품 카드와 남은 · 놓은 부품을 3D 화면에도 보여 줘요 (2D의 부품 카드 줄과 같아요) */
-      const cardP = v3pan('bl card'), trayP = v3pan('tr');
+      const cardP = v3pan('bl card'), trayP = v3pan('tr tray');   // 휴대폰: 부품 카드 판을 좁혀 모형 위 ? 자리를 가리지 않게
       function drawParts() {
         const L = LB(), on = asmOn(); if (!L || !on) { cardP.put(''); trayP.put(''); return; }
         const b = L.S.b, P = L.PARTS[b.sel];

@@ -320,7 +320,7 @@
       ctx.beginPath(); ctx.ellipse(SC.cx, SC.cy, SC.rx[i], SC.ry[i], 0, 0, TAU); ctx.fillStyle = fills[i]; ctx.fill(); ctx.strokeStyle = cols[i]; ctx.lineWidth = 3; ctx.stroke();
     }
     // 집합 이름표 (경계 위)
-    const PDY = [-90, -30, 30, 90];
+    const PDY = [-90, -30, 30, 40];   // 안쪽 타원(ry 70)에서도 이름표 자리가 생기게 (90이면 경계 밖이라 '털·젖'이 사라져요)
     for (let i = 0; i < 4; i++) {
       if (!PHONE) chip(SC.cx - SC.rx[i], SC.cy, TR4[i], { align: 'center', size: 13.5, bg: cols[i], color: '#fff', pad: 8, h: 26 });
       else { const dy = PDY[i], bx = SC.cx - SC.rx[i] * Math.sqrt(1 - (dy / SC.ry[i]) * (dy / SC.ry[i])); chip(bx + 2, SC.cy + dy, TR4[i], { align: 'left', size: 13.5, bg: cols[i], color: '#fff', pad: 8, h: 26 }); }
@@ -360,7 +360,7 @@
       },
       tap(it) { if (it.kind === 'sp' && it.slotId != null) { const q = S.tr.pick, ix = q.indexOf(it.id); if (ix >= 0) q.splice(ix, 1); else { q.push(it.id); if (q.length > 2) q.shift(); } Sound.click(); updateCtl(); } },
     });
-    const TW = L(118, 106), TH = L(34, 32), SW = L(146, 108);
+    const TW = L(104, 78), TH = L(30, 28), SW = L(146, 108);   // 형질 카드는 가지 칸(trSlots) 크기와 같게: 넘치면 분기점·가지 선을 가려요
     TR4.forEach((n, i) => S.trTok.add({ kind: 'tr', id: i, w: TW, h: TH, hx: PHONE ? 8 + TW / 2 + (i % 2) * 124 : 20 + TW / 2 + i * 128, hy: PHONE ? 340 + Math.floor(i / 2) * 42 : 382, slotId: null }));
     SP5.forEach((n, i) => S.trTok.add({ kind: 'sp', id: i, w: SW, h: L(36, 32), hx: PHONE ? 8 + SW / 2 + (i % 3) * 115 : 20 + SW / 2 + i * 152, hy: PHONE ? 440 + Math.floor(i / 3) * 40 : 440, slotId: null }));
     updateCtl();

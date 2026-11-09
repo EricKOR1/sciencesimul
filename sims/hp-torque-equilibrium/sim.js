@@ -244,12 +244,14 @@
       // 작용선
       const foot = r * P * u.x;            // P에서 거꾸로 간 거리
       const Q = { x: Pp.x - u.x * foot, y: Pp.y - u.y * foot };
-      D.dashedLine(Q.x - u.x * 34, Q.y - u.y * 34, Pp.x + u.x * (len + 18), Pp.y + u.y * (len + 18), { color: 'rgba(124,92,255,.65)', width: 1.8, dash: [5, 5] });
+      const back = th > 60 ? 12 : 34;   // 수직에 가까우면 작용선을 짧게 늘여 손잡이 아래 눈금 숫자를 가로지르지 않게
+      D.dashedLine(Q.x - u.x * back, Q.y - u.y * back, Pp.x + u.x * (len + 18), Pp.y + u.y * (len + 18), { color: 'rgba(124,92,255,.65)', width: 1.8, dash: [5, 5] });
       if (ell > 0) {
         D.dashedLine(O.x, O.y, Q.x, Q.y, { color: '#7c5cff', width: 2.4, dash: [4, 3] });
         const sgx = Math.sign(Q.x - O.x) || 1, sgy = Math.sign(Q.y - O.y) || -1;
         ctx.strokeStyle = '#7c5cff'; ctx.lineWidth = 1.6; ctx.strokeRect(Math.min(Q.x, Q.x - sgx * 9), Math.min(Q.y, Q.y - sgy * 9), 9, 9);
-        D.label((O.x + Q.x) / 2 + (th === 90 ? -2 : 0), (O.y + Q.y) / 2 + (th === 90 ? 0 : -14), 'ℓ = ' + ell.toFixed(2) + ' m', { bg: '#7c5cff', size: PHONE ? 12 : 13 });
+        const shortL = th === 90 && Math.hypot(Q.x - O.x, Q.y - O.y) < (PHONE ? 80 : 110);   // ℓ가 짧으면 볼트·손과 겹치니 눈금 숫자 아래에 써요
+        D.label((O.x + Q.x) / 2 + (th === 90 ? -2 : 0), shortL ? O.y + 52 : (O.y + Q.y) / 2 + (th === 90 ? 0 : -14), 'ℓ = ' + ell.toFixed(2) + ' m', { bg: '#7c5cff', size: PHONE ? 12 : 13 });
       } else T(O.x, O.y - 70, '작용선이 볼트 중심을 지나요 → ℓ = 0', PHONE ? 12 : 13.5, '#7c5cff', 'center', 800);
       D.arrow(Pp.x, Pp.y, Pp.x + u.x * len, Pp.y + u.y * len, { color: '#e2464b', width: 5.5, label: F + ' N', labelOffset: th === 0 ? -22 : 20 });
       // 손
@@ -562,8 +564,9 @@
     D.arrow(lp.x, lp.y - llen, lp.x, lp.y - 2, { color: '#e2464b', width: 5, head: 11, label: '짐 ' + PLK.WL + ' N', labelOffset: lp.x > VW - 120 ? (PHONE ? 44 : 52) : (PHONE ? -44 : -52) });
     const mp = wpt((PLK.LEN / 2 - PLK.OVER - PLK.SPAN) * PPM3, 0), mlen = PLK.WP * FSC;
     D.arrow(mp.x, mp.y + 2, mp.x, mp.y + 2 + mlen, { color: '#c0392b', width: 5, head: 11, label: '판 ' + PLK.WP + ' N', labelOffset: PHONE ? -40 : -48 });
-    if (NA > 0) D.arrow(Ax + 20, PBY + NA * FSC, Ax + 20, PBY + 2, { color: '#14a058', width: 5, head: 11, label: nf(NA) + ' N', labelOffset: 26 });
-    D.arrow(Bx + 20, PBY + NB * FSC, Bx + 20, PBY + 2, { color: '#14a058', width: 5, head: 11, label: nf(NB) + ' N', labelOffset: 26 });
+    // 받침 힘 화살표는 센서 칸(폭 62) 바깥쪽에 그려, 힘이 커져 길어져도 센서 숫자를 가리지 않게
+    if (NA > 0) D.arrow(Ax + 40, PBY + NA * FSC, Ax + 40, PBY + 2, { color: '#14a058', width: 5, head: 11, label: nf(NA) + ' N', labelOffset: 26 });
+    D.arrow(Bx + 40, PBY + NB * FSC, Bx + 40, PBY + 2, { color: '#14a058', width: 5, head: 11, label: nf(NB) + ' N', labelOffset: 26 });
     if (tip) D.label(VW / 2, 56, '⚠️ A 쪽이 들려요! N_A = 0', { bg: '#e2464b', size: PHONE ? 13 : 15 });
     else if (NA === 0) D.label(VW / 2, 56, '아슬아슬: N_A = 0', { bg: '#f59e0b', size: PHONE ? 13 : 15 });
     T(VW - 14, 28, PHONE ? '짐을 끌어 보세요' : '짐을 끌어서 옮길 수 있어요', PHONE ? 12 : 13, '#5a6679', 'right', 700);

@@ -257,7 +257,7 @@
     obs: { x: 8, y: 488, w: 424, h: 82 },
   } : {
     zone: { clear: { x: 16, y: 14, w: 376, h: 252 }, cloudy: { x: 408, y: 14, w: 376, h: 252 } },
-    bw: 92, bh: 126, perRow: 3, px: 112, py: 140, padB: 34,
+    bw: 92, bh: 126, perRow: 4, px: 112, py: 140, padB: 34,
     bench: { x: 16, y: 282, w: 768, h: 262 }, tray: (i) => ({ x: 106 + i * 196, y: 420 }),
     obs: { x: 36, y: 462, w: 728, h: 66 },
   };
@@ -279,7 +279,8 @@
     const list = LK.bk.filter((q) => q.zone === b.zone).sort((a, c) => a.order - c.order);
     const idx = list.indexOf(b), k = list.length, per = LKG.perRow;
     const row = Math.floor(idx / per), n = Math.min(per, k - row * per), col = idx - row * per, rows = Math.ceil(k / per);
-    return { x: Z.x + Z.w / 2 + (col - (n - 1) / 2) * LKG.px, y: Z.y + Z.h - LKG.padB - (rows - 1 - row) * LKG.py };
+    const px = n > 1 ? Math.min(LKG.px, (Z.w - LKG.bw - 12) / (n - 1)) : LKG.px;   // 한 줄에 넉넉히 들어가게 (두 줄이 되면 윗줄이 상자 이름을 덮어요)
+    return { x: Z.x + Z.w / 2 + (col - (n - 1) / 2) * px, y: Z.y + Z.h - LKG.padB - (rows - 1 - row) * LKG.py };
   }
   function lkLayout(animate) {
     LK.bk.forEach((b) => {

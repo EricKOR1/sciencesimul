@@ -94,9 +94,9 @@
   };
   const EDGES = [
     { a: 'dig', b: 'cir', cargo: '영양소', col: '#f59e0b', bend: 0, lt: 0.5 },
-    { a: 'res', b: 'cir', cargo: '산소 (O₂)', col: '#ef4444', bend: -1, lt: 0.4 },
-    { a: 'cir', b: 'res', cargo: '이산화 탄소', col: '#3b82f6', bend: -1, lt: 0.35 },
-    { a: 'cir', b: 'mus', cargo: '산소 · 영양소', col: '#ef4444', bend: 1, lt: 0.3 },
+    { a: 'res', b: 'cir', cargo: '산소 (O₂)', col: '#ef4444', bend: -1, lt: P(0.25, 0.12) },   // 마주 보는 두 선의 이름표가 겹치지 않게 서로 다른 지점에 달아요
+    { a: 'cir', b: 'res', cargo: '이산화 탄소', col: '#3b82f6', bend: -1, lt: 0.5 },
+    { a: 'cir', b: 'mus', cargo: '산소 · 영양소', col: '#ef4444', bend: 1, lt: P(0.3, 0.5) },
     { a: 'mus', b: 'cir', cargo: 'CO₂ · 노폐물 · 열', col: '#3b82f6', bend: 1, lt: 0.3 },
     { a: 'cir', b: 'exc', cargo: '요소 · 물', col: '#a78bfa', bend: 0, lt: 0.5 },
     { a: 'cir', b: 'skin', cargo: '열 · 땀(물)', col: '#fb7185', bend: 0, lt: 0.5 },
@@ -449,11 +449,15 @@
       ctx.beginPath(); ctx.moveTo(p.a[0], p.a[1]); ctx.quadraticCurveTo(p.c[0], p.c[1], p.b[0], p.b[1]); ctx.stroke();
       const q1 = qpt(p, 0.94), q0 = qpt(p, 0.86); D.arrow(q0[0], q0[1], p.b[0], p.b[1], { color: e.col, width: 4, head: 11 });
       ctx.restore();
-      const mid = qpt(p, e.lt);
-      D.label(mid[0], mid[1], e.cargo, { bg: '#fff', color: e.col, size: PHONE ? 11.5 : 12.5, border: e.col, pad: 6 });
     });
     // 흐르는 입자 (모든 연결 완성 후 더 많이)
     m.flow.forEach((f) => { const p = edgePath(f.e); for (let k = 0; k < 3; k++) { const tt = (f.t + k / 3) % 1, q = qpt(p, tt); D.sphere(q[0], q[1], 4.2, f.e.col, { gloss: true }); } });
+    // 물질 이름표는 입자 위에 그려서 가려지지 않게 해요
+    EDGES.forEach((e) => {
+      if (!m.links.has(linkKey(e.a, e.b))) return;
+      const mid = qpt(edgePath(e), e.lt);
+      D.label(mid[0], mid[1], e.cargo, { bg: '#fff', color: e.col, size: PHONE ? 11.5 : 12.5, border: e.col, pad: 6 });
+    });
     // 만드는 중인 선
     if (m.drag && m.drag.moved) { const A = NODE[m.drag.from]; D.arrow(A.x, A.y, m.drag.x, m.drag.y, { color: '#64748b', width: 3.5, dash: [8, 6], head: 11 }); }
     // 노드
@@ -472,9 +476,10 @@
     const done = SYS.filter((s, i) => roleOK(i)).length;
     D.label(VW - P(100, 80), VH - P(22, 24), '🎭 역할 카드 ' + done + ' / 4', { bg: done >= 2 ? '#16a34a' : '#64748b', size: 12.5 });
     D.label(P(110, 90), VH - P(22, 24), '🔗 연결 ' + m.links.size + ' / ' + EDGES.length, { bg: mapDone() ? '#16a34a' : '#64748b', size: 12.5 });
-    if (m.links.size === EDGES.length) T(VW / 2, P(48, 50), '✔ 지도 완성! 물질이 흘러요', 14, '#166534', 'center', 800);
+    // 알림은 안내 문장 자리에 잠깐 띄워요 (연결선 이름표나 노드를 가리지 않게)
+    if (S.msgT > 0) { ctx.save(); ctx.globalAlpha = Math.min(1, S.msgT * 2); D.label(VW / 2, P(48, 50), S.msg, { bg: '#1b2333', color: '#fff', size: 13 }); ctx.restore(); }
+    else if (m.links.size === EDGES.length) T(VW / 2, P(48, 50), '✔ 지도 완성! 물질이 흘러요', 14, '#166534', 'center', 800);
     else T(VW / 2, P(48, 50), '기관계(근육 세포)를 눌러 고른 뒤, 물질을 받는 곳을 눌러요. 끌어다 놓아도 돼요.', P(13, 12), MUTED, 'center', 700);
-    if (S.msgT > 0) { ctx.save(); ctx.globalAlpha = Math.min(1, S.msgT * 2); D.label(VW / 2, P(528, 560), S.msg, { bg: '#1b2333', color: '#fff', size: 13 }); ctx.restore(); }
   }
   const roleOK = (i) => { const r = S.map.roles[i]; return !!r && r.job === i && r.take === i && r.give === i; };
   function roleFeedback() {

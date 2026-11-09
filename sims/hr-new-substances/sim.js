@@ -183,6 +183,8 @@
     T(G.tx(0), G.tlab, '물질 카드 (끌어서 위의 칸에 놓아요)', 14.5, WARN, 'left', 800);
     const list = TLC.filter((c) => !(TL.drag && TL.drag.id === c.id));
     list.forEach((c) => drawTlCard(c));
+    // 채운 칸의 번호(1~5)는 카드 위에 다시 그려 가려지지 않게 해요 (끄는 카드는 그 위에)
+    for (let i = 0; i < 5; i++) { if (!TL.slots[i] || (TL.drag && TL.drag.id === TL.slots[i])) continue; const x = G.sx(i), y = G.sy; ctx.beginPath(); ctx.arc(x + 12, y + 12, 9, 0, TAU); ctx.fillStyle = TL.solved ? GOODC : '#a78bfa'; ctx.fill(); T(x + 12, y + 16.5, String(i + 1), 12, '#fff', 'center', 900); }
     if (TL.drag) drawTlCard(tlC(TL.drag.id));
     panel(INFO.x, INFO.y, INFO.w, INFO.h, 14);
     const f = TL.focus ? tlC(TL.focus) : null;

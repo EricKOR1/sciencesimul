@@ -577,8 +577,9 @@
   function initMatch() {
     boardsB.reset(); S.matchOK = 0;
     ['div', 'sub', 'coll', 'trans'].forEach((kk, i) => {
-      const s = PHONE ? { x: 150 + (i % 2) * 300, y: 396 + Math.floor(i / 2) * 120, w: 286, h: 110 } : { x: 108 + i * 195, y: 450, w: 186, h: 104 };
-      boardsB.addSlot({ x: s.x, y: s.y, w: s.w, h: s.h, cap: 2, isc: 0.86, key: kk, top: 54, gh: 42, cols: 1, gw: s.w - 16 });
+      // 상자마다 카드 1장: 두 장째가 상자 밖으로 넘쳐 옆 상자 이름을 가리지 않게 (새 카드를 놓으면 있던 카드는 제자리로)
+      const s = PHONE ? { x: 150 + (i % 2) * 300, y: 396 + Math.floor(i / 2) * 120, w: 286, h: 110 } : { x: 108 + i * 195, y: 458, w: 186, h: 92 };
+      boardsB.addSlot({ x: s.x, y: s.y, w: s.w, h: s.h, cap: 1, iy: 14, isc: 0.86, key: kk, top: 54, gh: 42, cols: 1, gw: s.w - 16 });
     });
     [2, 0, 3, 1].forEach((ci, j) => { const c = MCARDS[ci], hx = PHONE ? 150 + (j % 2) * 300 : 108 + j * 195, hy = PHONE ? 656 + Math.floor(j / 2) * 56 : 534; boardsB.addItem({ label: c.label, ico: c.ico, ans: c.ans, hx, hy, w: PHONE ? 270 : 184, h: 44, fill: '#fff', stroke: '#64748b', paint: paintPlace }); });
   }

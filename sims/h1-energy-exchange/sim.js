@@ -392,8 +392,8 @@
   const SBINS = [{ id: 'out', label: '에너지 방출' }, { id: 'in', label: '에너지 흡수' }];
   const SO = { kind: false };
   function sLayout() {
-    if (PHONE) return { bins: { out: { x: 8, y: 8, w: 270, h: 420 }, in: { x: 282, y: 8, w: 270, h: 420 } }, tray: { x: 8, y: 436, w: 544, h: 316 }, cw: 126, ch: 52, gap: 6, headH: 46, trayHead: 22 };
-    return { bins: { out: { x: 16, y: 40, w: 380, h: 332 }, in: { x: 404, y: 40, w: 380, h: 332 } }, tray: { x: 16, y: 380, w: 768, h: 216 }, cw: 176, ch: 44, gap: 7, headH: 44, trayHead: 18 };
+    if (PHONE) return { bins: { out: { x: 8, y: 8, w: 270, h: 420 }, in: { x: 282, y: 8, w: 270, h: 420 } }, tray: { x: 8, y: 436, w: 544, h: 316 }, cw: 126, ch: 48, gap: 6, headH: 60, trayHead: 22 };
+    return { bins: { out: { x: 16, y: 40, w: 380, h: 332 }, in: { x: 404, y: 40, w: 380, h: 332 } }, tray: { x: 16, y: 380, w: 768, h: 216 }, cw: 176, ch: 40, gap: 7, headH: 44, trayHead: 18 };
   }
   const SB = makeBoard({
     items: CARDS.map((c) => ({ id: c.n })),

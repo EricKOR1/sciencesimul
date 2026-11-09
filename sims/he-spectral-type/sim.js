@@ -592,8 +592,10 @@
       const s = BY8[c.id], w = c.cw, h = c.ch, lift = c.lift, sh = c.shake > 0 ? Math.sin(c.shake * 40) * 5 * c.shake * 4 : 0, cx = c.x + sh, cy = c.y - lift * 6, sel = S.sel4 === c.id, compact = h < 58;
       D.shadow(() => { ctx.fillStyle = '#fff'; rr(cx - w / 2, cy - h / 2, w, h, 9).fill(); }, { blur: 4 + lift * 10, y: 2 + lift * 6 });
       ctx.strokeStyle = c.bad ? '#dc2626' : c.ok ? '#16a34a' : sel ? '#0ea5e9' : 'rgba(100,116,139,.6)'; ctx.lineWidth = c.bad || c.ok || sel ? 3 : 1.5; rr(cx - w / 2, cy - h / 2, w, h, 9).stroke();
-      const col = starColor(s.T); D.sphere(cx - w / 2 + 12, cy - h / 2 + (compact ? h / 2 : 13), 6, col, { gloss: false });
-      D.text(cx - w / 2 + 22, cy - h / 2 + (compact ? h / 2 + 4 : 18), PHONE ? s.short : s.name, { size: PHONE ? 11.5 : 12.5, weight: 800, color: '#0f172a', align: 'left' });
+      // 폰에서는 카드가 좁아요: 점을 작게, 이름 글자를 카드 폭에 맞춰 줄여서 옆 칸·옆 카드로 넘치지 않게
+      const col = starColor(s.T), dx0 = PHONE ? 9 : 12, tx0 = PHONE ? 16 : 22; D.sphere(cx - w / 2 + dx0, cy - h / 2 + (compact ? h / 2 : 13), PHONE ? 4.5 : 6, col, { gloss: false });
+      const nm = PHONE ? s.short : s.name; let nfs = PHONE ? 11.5 : 12.5; ctx.save(); ctx.font = D.font(nfs, 800); while (nfs > 9 && ctx.measureText(nm).width > w - tx0 - 4) { nfs -= 0.5; ctx.font = D.font(nfs, 800); } ctx.restore();
+      D.text(cx - w / 2 + tx0, cy - h / 2 + (compact ? h / 2 + 4 : 18), nm, { size: nfs, weight: 800, color: '#0f172a', align: 'left' });
       if (compact) { if (!PHONE && h > 30) D.text(cx - w / 2 + 22, cy - h / 2 + h / 2 + 18, comma(s.T) + ' K', { size: 11.5, weight: 700, color: '#475569', align: 'left' }); return; }
       if (!PHONE) {
         D.text(cx - w / 2 + 8, cy - h / 2 + 36, comma(s.T) + ' K', { size: 12, weight: 700, color: '#334155', align: 'left' });

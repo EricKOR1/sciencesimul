@@ -2193,7 +2193,21 @@
         const inside = this.inRect({ x: k.x, y: k.y }, pic, 0) || this.inRect(p, pic, 0);
         if (!inside) { k.placed = false; tokHome(k); return; }
         k.drag = false;
-        const x = clamp(k.x, pic.x + k.w * 0.4, pic.x + pic.w - k.w * 0.4), y = clamp(k.y, pic.y + k.h * 0.4 + 18, pic.y + pic.h - k.h * 0.4);
+        // 그림 칸 안에서: 위쪽 제목('⑦ 그림')과 아래 이름표 자리를 비우고, 이미 붙인 스티커와 겹치지 않는 가장 가까운 자리로 옮겨요
+        const hw = Math.max(k.w * 0.5, 40), x0 = pic.x + hw, x1 = pic.x + pic.w - hw, y0 = pic.y + 26 + k.h * 0.46, y1 = Math.max(y0, pic.y + pic.h - k.h * 0.46 - 22);
+        const others = this.stk.filter((o) => o !== k && o.placed).map((o) => ({ x: pic.x + o.fx * pic.w, y: pic.y + o.fy * pic.h }));
+        const free = (cx, cy) => others.every((o) => Math.abs(o.x - cx) >= hw * 2 + 4 || Math.abs(o.y - cy) >= k.h * 0.92 + 24);
+        let x = clamp(k.x, x0, Math.max(x0, x1)), y = clamp(k.y, y0, y1);
+        if (!free(x, y)) {
+          let best = null, bd = 1e9;
+          for (let cy = y0; cy <= y1 + 0.1; cy += 6) for (let cx = x0; cx <= Math.max(x0, x1) + 0.1; cx += 6) { if (!free(cx, cy)) continue; const d = Math.hypot(cx - x, cy - y); if (d < bd) { bd = d; best = [cx, cy]; } }
+          if (best) { x = best[0]; y = best[1]; }
+          else {   // 빈자리가 없으면 겹쳐 붙이지 않고 돌려보내요
+            SciSim.toast('그림 칸이 꽉 찼어요. 붙인 스티커를 빼고 붙여 보세요.', 'bad', 2200);
+            if (!k.placed) { tokHome(k); return; }
+            x = pic.x + k.fx * pic.w; y = pic.y + k.fy * pic.h;
+          }
+        }
         const first = !k.placed;
         k.placed = true; k.fx = (x - pic.x) / pic.w; k.fy = (y - pic.y) / pic.h;
         k.busy = true; k.sc = 0.82;

@@ -629,7 +629,6 @@
     ctx.save(); rr(M.x, M.y, M.w, M.h, 10).clip();
     arrowS(ax, ay + Lpx / 2, ax, ay - Lpx / 2, { color: '#ea580c', width: 6, head: 14 });
     ctx.restore();
-    D.text(ax - 10, ay + Lpx / 2 + 18, '압력 경도력', { size: 12.5, weight: 900, color: '#c2410c', align: 'right', stroke: 'rgba(255,255,255,.85)', strokeWidth: 3.5 });
     // 정지한 공기 덩어리의 가속 (회전 없음)
     { const P = S.pg, x = M.x + 0.84 * M.w, y0 = g.yc + 400 * pxkm, yy = clamp(y0 - P.y * pxkm, M.y + 12, M.y + M.h - 12);
       ctx.save(); rr(M.x, M.y, M.w, M.h, 10).clip();
@@ -654,6 +653,8 @@
       arrowS(xm, pb.y - up * 3, xm, pa.y + up * 3, { color: '#0f172a', width: 2.5, head: 9 });
       D.label(xm + 6, (pa.y + pb.y) / 2, 'Δn', { bg: '#0f172a', size: 12.5, pad: 6, align: 'left' });
     }
+    // 화살표 이름: Δn 화살표·탐침과 겹치지 않게 화살표 오른쪽에, 맨 나중에 그려요
+    D.text(ax + 12, ay + Lpx / 2 + 4, '압력 경도력', { size: 12.5, weight: 900, color: '#c2410c', align: 'left', stroke: 'rgba(255,255,255,.85)', strokeWidth: 3.5 });
     D.text(A.x + 14, A.y + A.h - 14, 'A, B를 끌어요. 놓으면 가까운 등압선에 붙어요.', { size: 12.5, weight: 700, color: '#475569', align: 'left' });
     // ----- B 패널
     const B = rcOf('pgf').B;

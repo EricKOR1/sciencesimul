@@ -154,8 +154,9 @@
     }
     boxAt(p) { for (const b of this.boxes) if (inRect(p.x, p.y, b)) return b; return null; }
     chipRect(box, k, n) {
-      const cols = box.cols || 2, gap = 6, rows = Math.max(1, Math.ceil(n / cols));
-      const kw = (box.w - gap * (cols + 1)) / cols, hdr = box.hdr || 26, avail = box.h - hdr - 6;
+      const gap = 6, hdr = box.hdr || 26, avail = box.h - hdr - 6;
+      let cols = box.cols || 2; while (cols < Math.min(n, 6) && Math.ceil(n / cols) * 20 > avail) cols++;   // 한 상자에 카드가 몰리면 열을 늘려 칩끼리 겹치지 않게
+      const rows = Math.max(1, Math.ceil(n / cols)), kw = (box.w - gap * (cols + 1)) / cols;
       const sp = Math.min(this.o.kh + 4, avail / rows), col = k % cols, row = Math.floor(k / cols);
       return { x: box.x + gap + col * (kw + gap), y: box.y + hdr + 1 + row * sp, w: kw, h: Math.max(18, Math.min(this.o.kh, sp - 3)) };
     }
@@ -437,7 +438,7 @@
     D.roundRect(4, ty - 30, VW - 8, 190, 14); ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fill();
     T(1, ty - 10, "5′", 12, '#64748b', 'left', 800); T(1, by + 5, "3′", 12, '#64748b', 'left', 800);
     for (let i = 0; i < GENOME.length; i++) {
-      const x = tgX(i); if (x < -G.slot || x > VW) continue;
+      const x = tgX(i); if (x + G.slot / 2 < 20 || x > VW) continue;   // 왼쪽 끝 5′·3′ 글자 자리에 들어온 염기는 그리지 않아요 (끌어서 옮길 때 겹치지 않게)
       const cx = x + G.slot / 2, inGuide = i >= q && i < q + 20, inPam = i >= q + 20 && i < q + 23;
       const ch = GENOME[i];
       if (inPam) { ctx.fillStyle = 'rgba(250,204,21,.45)'; ctx.fillRect(x, ty - 22, G.slot, 30); }
@@ -782,8 +783,8 @@
   const LIM_ORDER = ['cost', 'off', 'long', 'deliver', 'mosaic'];
   function pairSorter(items, boxMap, order, cardH) {
     const n = items.length, bh = PHONE ? 0 : Math.floor((VH - 74 - 12 - (n - 1) * 8) / n);
-    const boxes = order.map((id, k) => {
-      if (PHONE) { const cardRows = Math.ceil(n / 2), y0 = 64 + cardRows * (cardH + 8) + 8, h = Math.floor((VH - y0 - 8 - (n - 1) * 6) / n); return { id, label: boxMap[id], col: items.find((q) => q.id === id).col, x: 10, y: y0 + k * (h + 6), w: VW - 20, h, cols: 1, hdr: 24 }; }
+    const boxes = order.map((id, k) => {   // 휴대폰: 맨 아래 안내 글자(VH - 8) 자리를 남겨요
+      if (PHONE) { const cardRows = Math.ceil(n / 2), y0 = 64 + cardRows * (cardH + 8) + 8, h = Math.floor((VH - y0 - 22 - (n - 1) * 6) / n); return { id, label: boxMap[id], col: items.find((q) => q.id === id).col, x: 10, y: y0 + k * (h + 6), w: VW - 20, h, cols: 1, hdr: 24 }; }
       return { id, label: boxMap[id], col: items.find((q) => q.id === id).col, x: 316, y: 66 + k * (bh + 8), w: VW - 316 - 16, h: bh, cols: 1, hdr: 24 };
     });
     return selectable({ cards: items, boxes, cw: PHONE ? 228 : 276, ch: cardH, kh: PHONE ? 26 : 34, tray: (i) => (PHONE ? { x: 10 + (i % 2) * 236, y: 62 + Math.floor(i / 2) * (cardH + 8) } : { x: 20, y: 66 + i * (bh + 8) + (bh - cardH) / 2 }), onChange() { updateCtl(); } });

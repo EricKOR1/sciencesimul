@@ -365,19 +365,21 @@
     const rc = sortRC(), per = PHONE ? 4 : 6, gx = 8, x0 = rc.L.x + (rc.L.w - (per * CW + (per - 1) * gx)) / 2;
     return [x0 + (idx % per) * (CW + gx), rc.trayY + Math.floor(idx / per) * (CH + 8)];
   };
+  /* 상자 속 자리: 카드가 많으면 작게 줄이고 열을 늘려 상자 안에 겹치지 않게 놓아요 (상자 이름을 가리지 않게) → [x, y, 배율] */
   function slotOf(binIdx, k, n) {
-    const rc = sortRC(), b = rc.bins[binIdx], cols = 2, tw = cols * CW + (cols - 1) * 6, x0 = b.x + (b.w - tw) / 2, rows = Math.max(1, Math.ceil(n / cols));
-    const rowH = Math.min(CH + 6, (b.h - 64) / rows);
-    return [x0 + (k % cols) * (CW + 6), b.y + 58 + Math.floor(k / cols) * rowH];
+    const rc = sortRC(), b = rc.bins[binIdx], avail = b.h - 64;
+    const fitS = (cols) => Math.min(1, (b.w - 12 - (cols - 1) * 6) / (cols * CW), (avail / Math.max(1, Math.ceil(n / cols)) - 6) / CH);
+    const cols = fitS(3) > fitS(2) + 0.05 ? 3 : 2, s = fitS(cols), cw = CW * s, ch = CH * s, tw = cols * cw + (cols - 1) * 6, x0 = b.x + (b.w - tw) / 2;
+    return [x0 + (k % cols) * (cw + 6), b.y + 58 + Math.floor(k / cols) * (ch + 6), s];
   }
   function cardsInit() {
-    S.types.cards = CARDS.map((c, i) => { const h = homeOf(i); return { id: c.id, f: c.f, hint: c.hint, ans: c.ans, x: h[0], y: h[1], tx: h[0], ty: h[1], bin: null, seq: 0, lift: 0, shake: 0, flag: false, drag: false }; });
+    S.types.cards = CARDS.map((c, i) => { const h = homeOf(i); return { id: c.id, f: c.f, hint: c.hint, ans: c.ans, x: h[0], y: h[1], tx: h[0], ty: h[1], s: 1, ts: 1, bin: null, seq: 0, lift: 0, shake: 0, flag: false, drag: false }; });
     S.types.sel = null;
   }
   function cardsLayout() {
     const F = S.types;
-    for (let b = 0; b < 4; b++) { const list = F.cards.filter((c) => c.bin === b).sort((a, c) => a.seq - c.seq); list.forEach((c, k) => { if (!c.drag) { const s = slotOf(b, k, list.length); c.tx = s[0]; c.ty = s[1]; } }); }
-    F.cards.forEach((c, i) => { if (c.bin === null && !c.drag) { const h = homeOf(i); c.tx = h[0]; c.ty = h[1]; } });
+    for (let b = 0; b < 4; b++) { const list = F.cards.filter((c) => c.bin === b).sort((a, c) => a.seq - c.seq); list.forEach((c, k) => { if (!c.drag) { const s = slotOf(b, k, list.length); c.tx = s[0]; c.ty = s[1]; c.ts = s[2]; } }); }
+    F.cards.forEach((c, i) => { if (c.bin === null && !c.drag) { const h = homeOf(i); c.tx = h[0]; c.ty = h[1]; c.ts = 1; } });
   }
   function placeCard(c, b) {
     c.bin = b; c.seq = ++S.types.seq; c.flag = false; cardsLayout();
@@ -387,12 +389,13 @@
   function stepCards(dt) {
     S.types.cards.forEach((c) => {
       if (!c.drag) { c.x = SciSim.approach(c.x, c.tx, dt, 12); c.y = SciSim.approach(c.y, c.ty, dt, 12); }
+      c.s = SciSim.approach(c.s || 1, c.drag ? 1 : (c.ts || 1), dt, 12);
       c.lift = SciSim.approach(c.lift, c.drag || S.types.sel === c.id ? 1 : 0, dt, 14); c.shake = Math.max(0, c.shake - dt * 2.5);
     });
   }
   function drawCard(c) {
     const sx = c.shake > 0 ? Math.sin(c.shake * 40) * 4 * c.shake : 0, lf = c.lift;
-    ctx.save(); ctx.translate(c.x + CW / 2 + sx, c.y + CH / 2 - lf * 5); const sc = 1 + lf * 0.07; ctx.scale(sc, sc);
+    ctx.save(); const ks = c.s || 1; ctx.translate(c.x + CW * ks / 2 + sx, c.y + CH * ks / 2 - lf * 5); const sc = (1 + lf * 0.07) * ks; ctx.scale(sc, sc);
     D.shadow(() => { D.roundRect(-CW / 2, -CH / 2, CW, CH, 11); ctx.fillStyle = '#fff'; ctx.fill(); }, { blur: 6 + lf * 10, y: 2 + lf * 5 });
     D.roundRect(-CW / 2, -CH / 2, CW, CH, 11); ctx.strokeStyle = c.flag ? BAD : S.types.sel === c.id ? PUR : c.bin !== null ? TY[TK[c.bin]].col : '#c9d2df'; ctx.lineWidth = c.flag || S.types.sel === c.id ? 3 : 2; ctx.stroke();
     ctx.save(); ctx.font = D.font(16, 800); const w = ctx.measureText(c.f).width; ctx.restore();
@@ -711,7 +714,7 @@
 
   /* ================= 포인터 ================= */
   let dragCard = null, dragOff = [0, 0], dragStart = [0, 0], dragMoved = 0;
-  function cardAt(p) { const cs = S.types.cards; for (let i = cs.length - 1; i >= 0; i--) { const c = cs[i]; if (p.x >= c.x && p.x <= c.x + CW && p.y >= c.y && p.y <= c.y + CH) return c; } return null; }
+  function cardAt(p) { const cs = S.types.cards; for (let i = cs.length - 1; i >= 0; i--) { const c = cs[i]; const ks = c.s || 1; if (p.x >= c.x && p.x <= c.x + CW * ks && p.y >= c.y && p.y <= c.y + CH * ks) return c; } return null; }
   SciSim.pointer(view, {
     down(p) {
       if (S.mode === 'types' && S.sub.types === 'sort') {

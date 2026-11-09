@@ -229,7 +229,6 @@
       const x = G.sx(i), y = G.sy(i);
       D.roundRect(x - G.sw / 2, y - G.ch / 2, G.sw, G.ch, 12); ctx.fillStyle = 'rgba(148,163,184,.1)'; ctx.fill(); ctx.setLineDash([6, 5]); ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.8; ctx.stroke(); ctx.setLineDash([]);
       T(x, y + 6, String(i + 1), 34, '#cbd5e1', 'center', 900);
-      if (ordered) { const yr = TLC[i].yl; pill(x, y + G.ch / 2 + (PHONE ? -4 : 14), yr, { bg: '#ede9fe', color: '#5b21b6', border: '#a78bfa', size: 13, alpha: 1 }); }
     }
     T(MAIN.x + MAIN.w / 2, (PHONE ? MAIN.y + 232 : MAIN.y + 207), tlPlaced() < 6 ? '아래 카드를 위 칸으로 끌어 놓아요 (카드를 누르면 조사 자료)' : ordered ? '✅ 연대순이에요! 연도가 나타났어요' : '순서를 다시 살펴보세요 (카드를 누르면 연도를 볼 수 있어요)', 13.5, ordered ? '#166534' : MUTED, 'center', 800);
     // 문제-개선 화살표
@@ -244,6 +243,8 @@
     // 카드
     const ord = tl.cards.slice(); if (tl.drag) { const i = ord.indexOf(tl.drag.c); ord.splice(i, 1); ord.push(tl.drag.c); }
     ord.forEach((c) => drawTlCard(c, t, null));
+    // 연도 표시는 카드를 놓은 뒤 맨 위에 그려요 (휴대폰에서 칸에 놓인 카드가 연도를 가리지 않게)
+    if (ordered) for (let i = 0; i < 6; i++) pill(G.sx(i), PHONE ? G.sy(i) - G.ch / 2 + 1 : G.sy(i) + G.ch / 2 + 14, TLC[i].yl, { bg: '#ede9fe', color: '#5b21b6', border: '#a78bfa', size: 13, alpha: 1 });
     // INFO
     panel(INFO.x, INFO.y, INFO.w, INFO.h, 14);
     const sel = tl.sel ? TLC.find((q) => q.id === tl.sel) : null;
@@ -524,13 +525,14 @@
   function usReset() { const G = usG(); S.cf.drag = null; S.cf.okAll = false; S.cf.cards = ['car', 'remote', 'ev', 'clock', 'phone'].map((id, i) => { const u = USC.find((q) => q.id === id); return { id, name: u.name, ans: u.box, box: -1, home: i, x: G.tx(i), y: G.ty(i), s: 1, bad: false, ok: false }; }); updateCtl(); }
   function usTarget(c) {
     const G = usG(); if (c.box < 0) return { x: G.tx(c.home), y: G.ty(c.home) };
-    const mates = S.cf.cards.filter((q) => q.box === c.box), idx = mates.indexOf(c), step = Math.min(G.ch + 6, (G.bh - 44) / Math.max(1, mates.length));
-    return { x: G.bx(c.box) + G.bw / 2, y: G.by + 40 + G.ch / 2 + idx * step };
+    // 상자 이름(휴대폰은 두 줄) 아래부터 쌓고, 많이 넣으면 카드를 납작하게 줄여 겹치지 않게 해요
+    const top = PHONE ? 48 : 40, mates = S.cf.cards.filter((q) => q.box === c.box), idx = mates.indexOf(c), step = Math.min(G.ch + 6, (G.bh - top - 4) / Math.max(1, mates.length)), h = Math.min(G.ch, step - 4);
+    return { x: G.bx(c.box) + G.bw / 2, y: G.by + top + h / 2 + idx * step, h };
   }
   const usPlaced = () => S.cf.cards.filter((c) => c.box >= 0).length;
   const usRight = () => S.cf.cards.filter((c) => c.box === c.ans).length;
-  function stepUsage(dt) { S.cf.cards.forEach((c) => { const d = S.cf.drag && S.cf.drag.c === c; if (d) { c.x = S.cf.drag.x; c.y = S.cf.drag.y; } else { const g = usTarget(c); c.x = ap(c.x, g.x, dt, 14); c.y = ap(c.y, g.y, dt, 14); } c.s = ap(c.s, d ? 1.1 : 1, dt, 16); }); }
-  const usHit = (p) => { const G = usG(), a = S.cf.cards; for (let i = a.length - 1; i >= 0; i--) { const c = a[i]; if (Math.abs(p.x - c.x) <= G.cw / 2 && Math.abs(p.y - c.y) <= G.ch / 2) return c; } return null; };
+  function stepUsage(dt) { S.cf.cards.forEach((c) => { const d = S.cf.drag && S.cf.drag.c === c; if (d) { c.x = S.cf.drag.x; c.y = S.cf.drag.y; } else { const g = usTarget(c); c.x = ap(c.x, g.x, dt, 14); c.y = ap(c.y, g.y, dt, 14); } c.s = ap(c.s, d ? 1.1 : 1, dt, 16); c.h = ap(c.h || usG().ch, d ? usG().ch : (usTarget(c).h || usG().ch), dt, 16); }); }
+  const usHit = (p) => { const G = usG(), a = S.cf.cards; for (let i = a.length - 1; i >= 0; i--) { const c = a[i]; if (Math.abs(p.x - c.x) <= G.cw / 2 && Math.abs(p.y - c.y) <= (c.h || G.ch) / 2) return c; } return null; };
   function usDrop(c, p) { const G = usG(); let b = -1; for (let i = 0; i < 3; i++) if (p.x >= G.bx(i) && p.x <= G.bx(i) + G.bw && p.y >= G.by && p.y <= G.by + G.bh) b = i; c.box = b; c.bad = false; c.ok = false; if (b >= 0) Sound.tick(); }
   function usCheck() {
     if (usPlaced() < 5) return '아직 놓지 않은 카드가 있어요. 카드 5장을 모두 전지 상자에 놓아 주세요.';
@@ -603,10 +605,11 @@
     }
     const ord = c.cards.slice(); if (c.drag) { ord.splice(ord.indexOf(c.drag.c), 1); ord.push(c.drag.c); }
     ord.forEach((q) => {
+      const hh = q.h || G.ch;
       ctx.save(); ctx.translate(q.x, q.y); ctx.scale(q.s, q.s);
-      D.shadow(() => { D.roundRect(-G.cw / 2, -G.ch / 2, G.cw, G.ch, 10); ctx.fillStyle = q.ok ? '#dcfce7' : q.bad ? '#fee2e2' : '#fff'; ctx.fill(); }, { blur: q === (c.drag && c.drag.c) ? 12 : 4, y: 2 });
-      D.roundRect(-G.cw / 2, -G.ch / 2, G.cw, G.ch, 10); ctx.strokeStyle = q.ok ? '#22c55e' : q.bad ? '#ef4444' : '#94a3b8'; ctx.lineWidth = q.ok || q.bad ? 2.6 : 1.6; ctx.stroke();
-      T(0, 6, q.name, PHONE ? 13.5 : 15, INK, 'center', 800);
+      D.shadow(() => { D.roundRect(-G.cw / 2, -hh / 2, G.cw, hh, 10); ctx.fillStyle = q.ok ? '#dcfce7' : q.bad ? '#fee2e2' : '#fff'; ctx.fill(); }, { blur: q === (c.drag && c.drag.c) ? 12 : 4, y: 2 });
+      D.roundRect(-G.cw / 2, -hh / 2, G.cw, hh, 10); ctx.strokeStyle = q.ok ? '#22c55e' : q.bad ? '#ef4444' : '#94a3b8'; ctx.lineWidth = q.ok || q.bad ? 2.6 : 1.6; ctx.stroke();
+      const fz = (PHONE ? 13.5 : 15) * Math.max(0.78, Math.min(1, hh / 34)); T(0, fz * 0.38, q.name, fz, INK, 'center', 800);
       ctx.restore();
     });
     panel(INFO.x, INFO.y, INFO.w, INFO.h, 14);

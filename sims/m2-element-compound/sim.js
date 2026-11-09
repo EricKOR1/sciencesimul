@@ -1380,8 +1380,8 @@
       ctx.restore();
       if (glow) { ctx.save(); ctx.strokeStyle = rgba(b.c, 0.5 + 0.4 * Math.sin(t * 9)); ctx.lineWidth = 5; D.roundRect(b.x - 3, b.y + 11, b.w + 6, b.h - 8, 17); ctx.stroke(); ctx.restore(); }
       ctx.strokeStyle = b.c; ctx.lineWidth = 2.4; D.roundRect(b.x, b.y + 14, b.w, b.h - 14, 14); ctx.stroke();
-      // 뚜껑 (왼쪽 경첩, 위로 15° 열림)
-      ctx.save(); ctx.translate(b.x + 6, b.y + 14); ctx.rotate(-open * 0.26);
+      // 뚜껑 (왼쪽 경첩, 살짝 열림 — 많이 열면 위 상자의 칸 글자를 덮어요)
+      ctx.save(); ctx.translate(b.x + 6, b.y + 14); ctx.rotate(-open * 0.04);
       ctx.fillStyle = b.c; D.roundRect(-6, -14, b.w + 0, 30, 12); ctx.fill();
       ctx.fillStyle = 'rgba(255,255,255,.22)'; D.roundRect(-4, -12, b.w - 4, 8, 6); ctx.fill();
       txt(b.name + ' 상자', 12, 7, 17, '#fff', 'left', 800);

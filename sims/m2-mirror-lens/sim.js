@@ -1133,13 +1133,16 @@
     ctx.fillStyle = o.fill || '#f8fbff'; ctx.fill();
     ctx.shadowColor = 'transparent';
     ctx.lineWidth = 2; ctx.strokeStyle = o.stroke || '#cbd5e1'; ctx.stroke();
-    ctx.font = font(h * 0.5 / FS, 800); ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#000';
-    ctx.fillText(c.def.e, -w / 2 + h * 0.22, 1);
-    const tx = -w / 2 + h * 0.92, avail = w - h * 0.92 - (o.check ? h * 0.7 : 10);
-    ctx.fillStyle = o.ink || '#1e293b';
-    let fs = 15;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    let fs = 15, tx = -w / 2 + h * 0.92, avail = w - h * 0.92 - (o.check ? h * 0.7 : 10);
     ctx.font = font(fs, 800); const mw = ctx.measureText(c.def.t).width;
-    if (mw > avail) { fs = Math.max(9.5, fs * avail / mw); ctx.font = font(fs, 800); }
+    // 상자에 들어간 좁은 카드에서 이름이 ✔ 표시 밑으로 넘치면 그림 글자(이모지)를 빼서 이름 자리를 넓혀요
+    const noIcon = o.check && mw * 10.5 / fs > avail;
+    if (noIcon) { tx = -w / 2 + h * 0.4; avail = w - h * 0.4 - h * 0.64; }
+    else { ctx.font = font(h * 0.5 / FS, 800); ctx.fillStyle = '#000'; ctx.fillText(c.def.e, -w / 2 + h * 0.22, 1); }
+    ctx.fillStyle = o.ink || '#1e293b';
+    if (mw > avail) { fs = Math.max(noIcon ? 8.5 : 9.5, fs * avail / mw); }
+    ctx.font = font(fs, 800);
     ctx.fillText(c.def.t, tx, 1);
     if (o.check) { ctx.fillStyle = '#16a34a'; ctx.beginPath(); ctx.arc(w / 2 - h * 0.36, 0, h * 0.2, 0, TAU); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath(); const q = h * 0.2; ctx.moveTo(w / 2 - h * 0.36 - q * 0.5, 0); ctx.lineTo(w / 2 - h * 0.36 - q * 0.1, q * 0.4); ctx.lineTo(w / 2 - h * 0.36 + q * 0.5, -q * 0.4); ctx.stroke(); }
     ctx.restore();

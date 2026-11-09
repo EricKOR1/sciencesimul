@@ -1783,6 +1783,11 @@
     const pitch = list.length > 1 ? Math.min(SL_G.pitch, avail / (list.length - 1)) : SL_G.pitch;
     return list.map((c, i) => ({ c, x: B.x + B.w / 2, y: B.y + SL_G.first + SL_G.ch / 2 + i * pitch }));
   }
+  /* 상자에 한 장 더 넣어도 카드끼리 겹치지 않는지 (칸 간격 ≥ 카드 높이 + 2) */
+  function sortHasRoom(kind) {
+    const B = SL_G.bins[KINDS.indexOf(kind)], n = SORT.cards.filter((c) => c.bin === kind && c !== SORT.drag).length + 1;
+    return n <= 1 || (B.h - SL_G.first - 12 - SL_G.ch) / (n - 1) >= SL_G.ch + 2;
+  }
   function sortLayout(animate) {
     SORT.cards.forEach((c) => {
       if (c === SORT.drag) return;
@@ -1884,7 +1889,8 @@
     up(p) {
       const c = SORT.drag; if (!c) return;
       SORT.drag = null;
-      const bin = sortBinAt(p);
+      let bin = sortBinAt(p);
+      if (bin && bin !== c.bin && !sortHasRoom(bin)) { SciSim.toast('그 상자는 꽉 찼어요. 다른 상자에 넣거나 카드를 빼 보세요.', 'bad', 2200); bin = c.bin; }   // 넘치면 카드끼리 겹쳐 글자가 가려져요
       if (bin !== c.bin) c.order = sortOrderSeq++;
       c.bin = bin; SORT.hoverBin = null;
       SciSim.tween(c, { lift: 0 }, { duration: 0.25 });

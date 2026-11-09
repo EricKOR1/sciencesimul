@@ -1494,7 +1494,16 @@
   function boardReset(B) { B.cards.forEach((c) => { c.box = -1; c.ok = false; c.bad = -9; }); B.done = false; B.sel = null; B.selBox = null; B.msg = ''; snapBoard(B, false); }
   function boardSolve(B) { B.cards.forEach((c) => { c.box = cardKing(c); c.ok = true; c.bad = -9; c.ord = ++B.ordN; }); B.done = true; B.doneT = now() - 99; snapBoard(B, false); }
   function boardBoxAt(p) { for (let i = 0; i < 5; i++) if (inR(p, boxRect(i), 5)) return i; return -1; }
+  /* 상자에 한 장 더 넣어도 카드가 그림과 이름이 보이는 크기로 들어가는지 (넘치면 카드끼리 겹치므로 받지 않아요) */
+  function boardHasRoom(B, cd, bi) {
+    if (B.mode === 'feat' || cd.box === bi) return true;
+    const n = B.cards.filter((c) => c !== cd && c.box === bi).length + 1;
+    if (TALL) return n <= 5;
+    const R = boxRect(bi), ih = R.h - 54, cols = n <= 4 ? 2 : 3, rows = Math.ceil(n / cols);
+    return (ih - (rows - 1) * 4) / rows >= 50;
+  }
   function boardAssign(B, cd, bi) {
+    if (!boardHasRoom(B, cd, bi)) { cd.bad = now(); snapBoard(B, true); SciSim.toast('그 상자는 꽉 찼어요. 다른 상자에 넣거나 카드를 빼 보세요.', 'bad', 2200); return; }
     if (B.mode === 'feat') { const occ = B.cards.find((c) => c !== cd && c.box === bi); if (occ) { occ.box = -1; occ.ok = false; } }
     cd.box = bi; cd.ok = false; cd.ord = ++B.ordN; Sound.tick(); snapBoard(B, true);
   }

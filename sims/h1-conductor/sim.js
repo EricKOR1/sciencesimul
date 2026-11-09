@@ -218,6 +218,9 @@
   function chipDrop(c, p) {
     const G = sortGeo(); let b = -1;
     G.bins.forEach((bb, i) => { if (p.x >= bb.x && p.x <= bb.x + bb.w && p.y >= bb.y && p.y <= bb.y + bb.h) b = i; });
+    // 칸 안에 들어가는 만큼만 받아요 (넘치면 칩이 칸 아래 범위 글자와 바깥을 가려요)
+    const cap = PHONE ? 5 : 8;
+    if (b >= 0 && S.test.chips.filter((o) => o !== c && o.bin === b).length >= cap) { b = -1; Sound.fail(); showHint('이 칸은 가득 찼어요. 다른 칸에 놓아 보세요.', 2600); }
     if (b >= 0) { c.bin = b; Sound.tick(); c.bad = false; } else c.bin = -1;
     SciSim.tween(c, { lift: 0 }, { duration: 0.15 });
     layoutChips(); updateCtl();
@@ -503,7 +506,8 @@
       ctx.save(); ctx.strokeStyle = bad ? '#e2464b' : hot ? '#f26b3a' : '#cbbfae'; ctx.lineWidth = hot ? 3 : 2.2; ctx.setLineDash(tok ? [] : [6, 5]); rr(s.x, s.y, s.w, s.h, 10).stroke(); ctx.restore();
       if (tok) { const sh = A.shake && A.shake[i] > 0 ? Math.sin(A.shake[i] * 50) * 4 : 0; tokenDraw(tok, s.x + s.w / 2 + sh, s.y + s.h / 2, s.w - 4, s.h - 4, { scale: 1 }); }
       else D.text(s.x + s.w / 2, s.y + s.h / 2 + 5, '재료를 여기에', { size: 13, weight: 800, color: '#b9a99a' });
-      if (S.drag && S.drag.kind === 'tok' && S.drag.over === i) D.ring(s.x + s.w / 2, s.y + s.h / 2, s.h * 0.9, t, { color: '#f26b3a', speed: 1.3, width: 3 });
+      // 끌어 올린 칸 표시: 큰 고리 대신 칸 테두리만 굵게 (위의 설명 글자를 가리지 않게)
+      if (S.drag && S.drag.kind === 'tok' && S.drag.over === i) { ctx.save(); ctx.strokeStyle = '#f26b3a'; ctx.lineWidth = 3.5; rr(s.x - 3, s.y - 3, s.w + 6, s.h + 6, 12).stroke(); ctx.restore(); }
     });
     // 재료 트레이
     const ty = PHONE ? 508 : 372;

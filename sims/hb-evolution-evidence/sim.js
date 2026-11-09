@@ -590,8 +590,9 @@
       for (let i = 0; i < 4; i++) DSLOT.push({ g: 'obs', x: 14 + i * 196, y: 64, w: 186, h: 80 });
       DSLOT.push({ g: 'inf1', x: 14, y: 176, w: 380, h: 70 }, { g: 'inf2', x: 406, y: 176, w: 380, h: 70 }, { g: 'end', x: 14, y: 276, w: 772, h: 70 });
     } else {
-      for (let i = 0; i < 4; i++) DSLOT.push({ g: 'obs', x: 6 + (i % 2) * 237, y: 54 + Math.floor(i / 2) * 68, w: 231, h: 62 });
-      DSLOT.push({ g: 'inf1', x: 6, y: 198, w: 468, h: 58 }, { g: 'inf2', x: 6, y: 264, w: 468, h: 58 }, { g: 'end', x: 6, y: 330, w: 468, h: 58 });
+      // 띠 이름(② 추론, ③ 결론)이 칸에 가리지 않게 칸 사이에 자리를 남겨요
+      for (let i = 0; i < 4; i++) DSLOT.push({ g: 'obs', x: 6 + (i % 2) * 237, y: 54 + Math.floor(i / 2) * 64, w: 231, h: 58 });
+      DSLOT.push({ g: 'inf1', x: 6, y: 200, w: 468, h: 54 }, { g: 'inf2', x: 6, y: 260, w: 468, h: 54 }, { g: 'end', x: 6, y: 338, w: 468, h: 54 });
     }
   })();
   const DHOME = (i) => L({ x: 14 + (i % 4) * 196, y: 384 + Math.floor(i / 4) * 90, w: 186, h: 80 }, { x: 6 + (i % 2) * 237, y: 422 + Math.floor(i / 2) * 68, w: 231, h: 62 });
@@ -667,7 +668,7 @@
     });
     const bandName = (x, y, s, col) => T(x, y, s, L(13.5, 12.5), col, 'left', 800);
     if (!PHONE) { bandName(14, 56, '① 관찰한 사실 (4가지)', '#0369a1'); bandName(14, 168, '② 관찰에서 이끌어 낸 추론', '#b45309'); bandName(14, 268, '③ 결론', '#15803d'); T(VW - 14, 30, '🚢 비글호 항해 → 🕊️ 인위 선택 → 📖 맬서스 인구론', 13.5, '#64748b', 'right', 800); }
-    else { bandName(8, 48, '① 관찰한 사실 (4가지)', '#0369a1'); bandName(8, 192, '② 추론', '#b45309'); bandName(8, 324, '③ 결론', '#15803d'); }
+    else { bandName(8, 48, '① 관찰한 사실 (4가지)', '#0369a1'); bandName(8, 194, '② 추론', '#b45309'); bandName(8, 332, '③ 결론', '#15803d'); }
     // 화살표 (아래로)
     const ar = (x, y1, y2) => D.arrow(x, y1, x, y2, { color: '#94a3b8', width: 3, head: 10 });
     if (!PHONE) { ar(400, 146, 166); ar(400, 248, 266); }

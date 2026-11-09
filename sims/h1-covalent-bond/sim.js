@@ -493,6 +493,11 @@
       const g = d.atom;
       // 카드 보관함에 놓으면 지워요
       if (p.y > TRAY.y0) { removeComp(d.comp); Sound.click(); return true; }
+      // 실험대 밖(위쪽 분자 목록 · 아래 카드 칸)에 걸치지 않게 실험대 안으로 들여 놓아요
+      { let lx = -1e9, hx = 1e9, ly = -1e9, hy = 1e9; const m = 14;
+        d.comp.forEach((a) => { const r = EL[a.el].r + m; lx = Math.max(lx, WS.x0 + r - a.x); hx = Math.min(hx, WS.x1 - r - a.x); ly = Math.max(ly, WS.y0 + r - a.y); hy = Math.min(hy, WS.y1 - r - a.y); });
+        const dx = lx > 0 ? lx : hx < 0 ? hx : 0, dy = ly > 0 ? ly : hy < 0 ? hy : 0;
+        if (dx || dy) d.comp.forEach((a) => { a.x += dx; a.y += dy; }); }
       tryBond(d);
     }
     return true;
@@ -918,13 +923,17 @@
     if (PHONE) { return { x: 12 + 122 + (i % 2) * 262 + (i % 2 ? 0 : 0), y: 404 + Math.floor(i / 2) * 58 }; }
     return { x: 24 + 86 + (i % 4) * 182, y: 388 + Math.floor(i / 4) * 68 };
   }
-  function binTarget(bin, slot) {
+  function binTarget(bin, slot, n) {
     const b = BIN[bin], col = slot % 2, row = Math.floor(slot / 2);
-    return { x: b.x + 14 + CSZ.bw / 2 + col * (CSZ.bw + 10), y: b.y + (PHONE ? 74 : 84) + CSZ.bh / 2 + row * (CSZ.bh + 8) };
+    // 카드가 많아도 상자 안에 들어가게 줄 간격을 줄여요 (상자 밖 글자를 가리지 않게)
+    const top = PHONE ? 74 : 84, rows = Math.ceil((n || 0) / 2);
+    let top2 = top, step = CSZ.bh + 8;
+    if (rows > 1 && top + rows * step - 8 > b.h - 8) { top2 = PHONE ? top : 76; step = Math.min(step, (b.h - 8 - top2 - CSZ.bh) / (rows - 1)); }
+    return { x: b.x + 14 + CSZ.bw / 2 + col * (CSZ.bw + 10), y: b.y + top2 + CSZ.bh / 2 + row * step };
   }
   function layoutCards() {
     ['ion', 'cov'].forEach((k) => {
-      CL.cards.filter((c) => c.bin === k).sort((a, b) => a.seq - b.seq).forEach((c, i) => { const t = binTarget(k, i); c.tx = t.x; c.ty = t.y; });
+      const inK = CL.cards.filter((c) => c.bin === k).sort((a, b) => a.seq - b.seq); inK.forEach((c, i) => { const t = binTarget(k, i, inK.length); c.tx = t.x; c.ty = t.y; });
     });
     CL.cards.forEach((c) => { if (!c.bin) { const t = trayTarget(CARDS.findIndex((x) => x.id === c.id)); c.tx = t.x; c.ty = t.y; } });
   }

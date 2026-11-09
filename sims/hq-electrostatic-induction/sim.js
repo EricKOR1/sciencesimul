@@ -535,7 +535,7 @@
   ];
   const BINS = ['정전기 유도', '유전 분극', '정전 차폐'];
   const BIN_COL = ['#e0f2fe', '#fef3c7', '#dcfce7'];
-  const AP = PHONE ? { bin: { y: 56, h: 210, w: 148, gap: 8, x0: 10 }, card: { w: 228, h: 122, x0: 10, y0: 278, gx: 10, gy: 8 }, chip: { w: 134, h: 26, sp: 28 } }
+  const AP = PHONE ? { bin: { y: 56, h: 210, w: 148, gap: 8, x0: 10 }, card: { w: 228, h: 122, x0: 10, y0: 278, gx: 10, gy: 8 }, chip: { w: 134, h: 26, sp: 27 } }
     : { bin: { y: 54, h: 240, w: 250, gap: 11, x0: 14 }, card: { w: 250, h: 104, x0: 14, y0: 310, gx: 11, gy: 10 }, chip: { w: 226, h: 30, sp: 33 } };
   const binRect = (i) => ({ x: AP.bin.x0 + i * (AP.bin.w + AP.bin.gap), y: AP.bin.y, w: AP.bin.w, h: AP.bin.h });
   const cardHome = (i) => { const per = PHONE ? 2 : 3, c = i % per, r = (i / per) | 0; return { x: AP.card.x0 + c * (AP.card.w + AP.card.gx) + AP.card.w / 2, y: AP.card.y0 + r * (AP.card.h + AP.card.gy) + AP.card.h / 2 }; };
@@ -547,7 +547,7 @@
     if (c.drag) return null;
     if (c.bin == null) { const h = cardHome(c.i); return { x: h.x, y: h.y, sz: 1 }; }
     const r = binRect(c.bin), mates = S.ap.cards.filter((o) => o.bin === c.bin).sort((a, b) => a.order - b.order), idx = mates.indexOf(c);
-    return { x: r.x + r.w / 2, y: r.y + 54 + idx * AP.chip.sp, sz: 0 };
+    return { x: r.x + r.w / 2, y: r.y + 58 + idx * AP.chip.sp, sz: 0 };   // 칸 제목 두 줄 아래부터 쌓아 부제목을 가리지 않아요
   }
   function stepCards(dt) {
     S.ap.cards.forEach((c) => {
@@ -574,8 +574,8 @@
       const r = binRect(i);
       D.shadow(() => { D.roundRect(r.x, r.y, r.w, r.h, 14); ctx.fillStyle = BIN_COL[i]; ctx.fill(); }, { blur: 6, y: 2 });
       ctx.strokeStyle = 'rgba(100,116,139,.45)'; ctx.setLineDash([6, 5]); ctx.lineWidth = 2; D.roundRect(r.x, r.y, r.w, r.h, 14); ctx.stroke(); ctx.setLineDash([]);
-      T(r.x + r.w / 2, r.y + 26, b, PHONE ? 14.5 : 16.5, '#26324a', 'center', 800);
-      T(r.x + r.w / 2, r.y + 44, ['도체 속 전하 이동', '절연체 분자의 정렬', '도체 속 E = 0'][i], PHONE ? 11 : 12.5, '#516079', 'center', 700);
+      T(r.x + r.w / 2, r.y + 23, b, PHONE ? 14.5 : 16.5, '#26324a', 'center', 800);
+      T(r.x + r.w / 2, r.y + 40, ['도체 속 전하 이동', '절연체 분자의 정렬', '도체 속 E = 0'][i], PHONE ? 11 : 12.5, '#516079', 'center', 700);
     });
     const order = S.ap.cards.slice().sort((a, b) => (a.drag ? 1 : 0) - (b.drag ? 1 : 0));
     order.forEach(drawCard);

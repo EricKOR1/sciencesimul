@@ -124,7 +124,7 @@
     ctx.strokeStyle = c.bad ? '#e2464b' : c.sel ? '#f59e0b' : C.shade(c.col || '#16a34a', 0.15); ctx.lineWidth = c.bad || c.sel ? 3 : 2; D.roundRect(-w / 2, -h / 2, w, h, r); ctx.stroke();
     const chip = h < 36;
     if (chip) {
-      TF(0, 5, w > 300 ? c.label : (c.short || c.label), w - 10, clamp(h * 0.58, 11, 14), 10.5, '#26324a', 'center', 800);
+      TF(0, Math.min(5, h * 0.3), w > 300 ? c.label : (c.short || c.label), w - 10, clamp(h * 0.6, 10, 14), 9.5, '#26324a', 'center', 800);
     } else {
       let lx = -w / 2 + 10, maxW = w - 20;
       if (c.icon) { E(c.icon, -w / 2 + 24, 1, 22); lx = -w / 2 + 40; maxW = w - 48; }
@@ -153,11 +153,17 @@
       this.cards = o.cards.map((d, i) => { const p = o.tray(i); return Object.assign({}, d, { x: p.x, y: p.y, w: o.cw, h: o.ch, zone: null, lift: 0, bad: false, shake: 0, home: p, seq: 0, sel: false }); });
     }
     boxAt(p) { for (const b of this.boxes) if (inRect(p.x, p.y, b)) return b; return null; }
+    /* 상자 속 칩 배치: 칩이 얇아지면 열을 늘리고(칩 너비 90 이상일 때), 칩끼리 겹치지 않게 칸 간격보다 작게 그려요 */
+    chipGrid(box, n) {
+      const gap = 6, hdr = box.hdr || 26, avail = box.h - hdr - 6 - (box.bot || 0); let cols = box.cols || 2;   // bot: 상자 아래쪽 그림·그래프 자리
+      while (avail / Math.ceil(Math.max(1, n) / cols) < 21 && (box.w - gap * (cols + 2)) / (cols + 1) >= 90) cols++;
+      const rows = Math.max(1, Math.ceil(n / cols)), sp = Math.min(this.o.kh + 4, avail / rows);
+      return { cols, sp, gap, hdr, kw: (box.w - gap * (cols + 1)) / cols, h: Math.min(this.o.kh, sp - 3) };
+    }
+    fits(box, n) { return this.chipGrid(box, n).h >= 14; }
     chipRect(box, k, n) {
-      const cols = box.cols || 2, gap = 6, rows = Math.max(1, Math.ceil(n / cols));
-      const kw = (box.w - gap * (cols + 1)) / cols, hdr = box.hdr || 26, avail = box.h - hdr - 6;
-      const sp = Math.min(this.o.kh + 4, avail / rows), col = k % cols, row = Math.floor(k / cols);
-      return { x: box.x + gap + col * (kw + gap), y: box.y + hdr + 1 + row * sp, w: kw, h: Math.max(18, Math.min(this.o.kh, sp - 3)) };
+      const g = this.chipGrid(box, n), col = k % g.cols, row = Math.floor(k / g.cols);
+      return { x: box.x + g.gap + col * (g.kw + g.gap), y: box.y + g.hdr + 1 + row * g.sp, w: g.kw, h: Math.max(10, g.h) };
     }
     layout(instant) {
       this.boxes.forEach((b) => {
@@ -171,6 +177,10 @@
       SciSim.tween(c, { x, y, w, h }, { duration: 0.35, ease: 'outBack' });
     }
     place(c, zoneId) {
+      const bx = zoneId && this.boxes.find((b) => b.id === zoneId);
+      if (bx && c.zone !== zoneId && !this.fits(bx, this.cards.filter((x) => x.zone === zoneId).length + 1)) {   // 상자가 꽉 차면 칩이 겹쳐 글자가 가려지므로 받지 않아요
+        c.shake = 1; c.lift = 0; this.layout(); SciSim.toast('그 상자는 꽉 찼어요. 다른 상자에 넣거나 카드를 빼 보세요.', 'bad', 2200); return;
+      }
       const was = c.zone; c.zone = zoneId || null; c.bad = false; if (zoneId) c.seq = ++this.seq; c.lift = 0;
       this.layout(); if (was !== c.zone) { Sound.click(); this.o.onChange && this.o.onChange(); }
     }
@@ -418,7 +428,8 @@
       else drawBaseBlock(pc.x, pc.y, pc.id, { scale: sc, lift: pc.lift });
     });
     // 이름표 (놓인 조각)
-    if (have('s')) D.label(SL.s.x, SL.s.y - SR - 20, SUG[n.slots.s.id].name + ' (' + SUG[n.slots.s.id].note + ')', { bg: '#e8f2ff', color: '#1e40af', border: '#93c5fd', size: 13 });
+    // 폰에서는 당 위쪽이 안내 문장과 겹치므로 이름표를 당 오른쪽에 붙여요
+    if (have('s')) { const sl = SUG[n.slots.s.id].name + ' (' + SUG[n.slots.s.id].note + ')'; if (PHONE) D.label(SL.s.x + SR + 10, SL.s.y, sl, { bg: '#e8f2ff', color: '#1e40af', border: '#93c5fd', size: 12.5, align: 'left' }); else D.label(SL.s.x, SL.s.y - SR - 20, sl, { bg: '#e8f2ff', color: '#1e40af', border: '#93c5fd', size: 13 }); }
     if (have('b')) D.label(SL.b.x + (BS.w / 2) + 12, SL.b.y, BASES[n.slots.b.id].name, { bg: '#fff', color: '#334155', border: '#cbd5e1', size: 13, align: 'left' });
     if (n.phase === 'glue' && n.t < 1.0) D.label(ASM.x + ASM.w / 2, ASM.y + ASM.h - 26, (n.lastId.indexOf('deoxy') === 0 ? 'DNA' : 'RNA') + ' 뉴클레오타이드 완성!', { bg: '#15803d', size: 15 });
     // 수집 패널
@@ -705,7 +716,8 @@
     ctx.restore();
     T(NUCP.x + NUCP.w - 18, NUCP.y + 30, '핵 속 (전사)', L(18, 16), '#6d28d9', 'right', 800);
     T(PHONE ? CYTP.x + 18 : CYTP.x + CYTP.w / 2, CYTP.y + (PHONE ? 26 : 30), '세포질', L(18, 16), '#a16207', PHONE ? 'left' : 'center', 800);
-    D.label(PHONE ? PORE.x + 70 : PORE.x - 36, PHONE ? PORE.y - 14 : PORE.y - 50, '핵공', { bg: '#ede9fe', color: '#6d28d9', border: '#c4b5fd', size: 13 });
+    D.label(PHONE ? PORE.x + 70 : PORE.x - 36, PHONE ? PORE.y + 16 : PORE.y - 50, '핵공',   // 폰: 떨어져 나온 mRNA가 쉬는 줄(핵 아래쪽)과 겹치지 않게 세포질 쪽에
+      { bg: '#ede9fe', color: '#6d28d9', border: '#c4b5fd', size: 13 });
     // DNA 두 가닥
     const yC = lerp(R_YC[0], R_YC[1], zp), yT = lerp(R_YT[0], R_YT[1], zp);
     const bb = (y, col) => { ctx.lineCap = 'round'; ctx.strokeStyle = C.shade(col, -0.3); ctx.lineWidth = 11; ctx.beginPath(); ctx.moveTo(NUCP.x + 22, y); ctx.lineTo(NUCP.x + NUCP.w - 22, y); ctx.stroke(); ctx.strokeStyle = col; ctx.lineWidth = 7; ctx.stroke(); };
@@ -730,7 +742,7 @@
     const rb = RIB, rs = L(1, 0.9);
     D.sphere(rb.x, rb.y - 34 * rs, 40 * rs, '#f0b44c', { gloss: true, shadow: true }); ctx.save(); ctx.translate(rb.x, rb.y + 28 * rs); ctx.scale(1.15, 0.7); D.sphere(0, 0, 36 * rs, '#e89a2e', { gloss: true, shadow: true }); ctx.restore();
     ctx.restore();
-    if (PHONE) T(rb.x + 52, rb.y + 4, '리보솜', 14, '#a16207', 'left', 800); else T(rb.x, rb.y - 84, '리보솜', 14, '#a16207', 'center', 800);
+    if (PHONE) T(rb.x + 52, rb.y + 36, '리보솜', 14, '#a16207', 'left', 800);   // 리보솜에 붙은 mRNA 줄 아래로 else T(rb.x, rb.y - 84, '리보솜', 14, '#a16207', 'center', 800);
     // mRNA 가닥 (RNA 슬롯의 염기들)
     const k0 = r.stage >= 1 ? 1 : 0;
     let gx = R_CX, gy = R_YR, gs = 1;

@@ -938,6 +938,12 @@
         star(ctx, bx, by, 6 + 10 * u, '#dfe9ff', { halo: 3.5, flare: 14 + 28 * u, alpha: u });
       } else drawCard(ctx, L, g, c);
     });
+    // 카드가 놓인 칸: 칸 번호와 '가장 가까움·가장 멂'이 카드에 가려지지 않게 카드 위쪽 테두리에 작은 이름표로 다시 보여 줘요
+    if (!flying) g.slots.forEach((s, i) => {
+      const c = S.cards.find((q) => q.slot === i && !q.drag);
+      if (!c) return;
+      pill(ctx, s.x + 12, s.y, ['①', '②', '③', '④'][i] + (i === 0 ? ' 가장 가까움' : i === 3 ? ' 가장 멂' : ''), { align: 'left', bg: 'rgba(30,58,138,.95)', size: 12 });
+    });
     // 날아온 별과 빛
     if (S.mapDone) {
       S.cards.forEach((c) => {

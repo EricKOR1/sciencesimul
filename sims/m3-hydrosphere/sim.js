@@ -231,7 +231,9 @@
     F.chips.forEach((c) => {
       c.sx.update(dt); c.sy.update(dt);
       c.x = c.sx.value; c.y = c.sy.value;
-      c.lift = approach(c.lift, c.drag ? 1 : 0, dt, 18);
+      // 칸 위에 오면 들어 올린 높이를 낮춰 칸에 쏙 들어간 모습으로 미리 보여 줘요 (위의 'mL' 양 글자를 가리지 않게)
+      const overSlot = c.drag && [0, 1, 2].some((i) => { const r = slotRect(i); return c.x > r.x - 10 && c.x < r.x + r.w + 10 && c.y > r.y - 16 && c.y < r.y + r.h + 16; });
+      c.lift = approach(c.lift, c.drag ? (overSlot ? 0.12 : 1) : 0, dt, 18);
       c.tilt = approach(c.tilt, c.drag ? clamp(c.vx * 0.012, -0.08, 0.08) : 0, dt, 12);
       c.vx = approach(c.vx, 0, dt, 10);
       if (c.shake > 0) c.shake = Math.max(0, c.shake - dt);

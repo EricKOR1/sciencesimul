@@ -430,7 +430,7 @@
     const bg = ctx.createRadialGradient(g.X(MEAN.x), g.Y(0), 10, g.X(MEAN.x), g.Y(0), b.w * 0.6); bg.addColorStop(0, '#16224a'); bg.addColorStop(1, '#070c22'); ctx.fillStyle = bg; ctx.fillRect(b.x, b.y, b.w, b.h);
     // 거리 고리 (태양 기준)
     ctx.strokeStyle = 'rgba(148,163,184,.28)'; ctx.lineWidth = 1;
-    [5, 10, 15, 20, 25].forEach((r) => { ctx.beginPath(); ctx.arc(g.X(0), g.Y(0), r * g.sc, 0, TAU); ctx.stroke(); if (g.X(r) < b.x + b.w) T(g.X(r) + 3, g.Y(0) + 13, r + ' kpc', PHONE ? 9.5 : 10.5, 'rgba(203,213,225,.8)', 'left', 700); });
+    [5, 10, 15, 20, 25].forEach((r) => { ctx.beginPath(); ctx.arc(g.X(0), g.Y(0), r * g.sc, 0, TAU); ctx.stroke(); });
     ctx.strokeStyle = 'rgba(148,163,184,.35)'; ctx.beginPath(); ctx.moveTo(b.x, g.Y(0)); ctx.lineTo(b.x + b.w, g.Y(0)); ctx.stroke();
     // 은하 중심 (찾았을 때)
     S.rGlow = approach(S.rGlow, mapOK() || (FREE() && mapCount() === 24) ? 1 : 0, dt, 3);
@@ -450,6 +450,8 @@
       ctx.strokeStyle = mapOK() ? '#4ade80' : '#fde047'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(mx - 16, my); ctx.lineTo(mx + 16, my); ctx.moveTo(mx, my - 16); ctx.lineTo(mx, my + 16); ctx.stroke(); ctx.beginPath(); ctx.arc(mx, my, 9, 0, TAU); ctx.stroke();
       if (S.mkGlow > 0.05) { ctx.save(); ctx.globalAlpha = S.mkGlow; D.ring(mx, my, 24, t, { color: '#4ade80', width: 3 }); ctx.restore(); }
     }
+    // 거리 눈금 글자: 점·십자가를 놓은 뒤 맨 위에 테두리 글자로 그려 가려지지 않게 해요
+    [5, 10, 15, 20, 25].forEach((r) => { if (g.X(r) < b.x + b.w) T(g.X(r) + 3, g.Y(0) + 13, r + ' kpc', PHONE ? 9.5 : 10.5, '#cbd5e1', 'left', 700, { stroke: 'rgba(5,10,30,.85)', strokeWidth: 3 }); });
     // 태양
     D.glow(g.X(0), g.Y(0), 22, '#ffd447', 0.6); D.sphere(g.X(0), g.Y(0), 7, '#ffb703', { gloss: false });
     ctx.restore();
@@ -530,7 +532,8 @@
 
   /* ================= ⑥ 거리 사다리 ================= */
   const ladOK = () => S.ladOrder.length === 5 && S.ladOrder.every((v, i) => v === i);
-  const ladRows = (L) => { const rh = (L.h - 50) / 5; return [0, 1, 2, 3, 4].map((k) => ({ x: L.x + 12 + k * (PHONE ? 8 : 16), y: L.y + L.h - 8 - (k + 1) * rh + 4, w: L.w - 24 - k * (PHONE ? 8 : 16), h: rh - 8 })); };
+  const ladRows = (L) => { const rh = (L.h - (PHONE ? 66 : 50)) / 5; return [0, 1, 2, 3, 4].map((k) => ({ x: L.x + 12 + k * (PHONE ? 8 : 16), y: L.y + L.h - 8 - (k + 1) * rh + 4, w: L.w - 24 - k * (PHONE ? 8 : 16), h: rh - 8 })); };
+  /* 휴대폰: 사다리 칸 위에 안내 글 자리를 비워 두어요 (ladRows) */
   function drawLadder(dt, t) {
     const L = LYlad(), P = L.L, rows = ladRows(P), okL = ladOK() || FREE();
     panel(P.x, P.y, P.w, P.h, { r: 14 });
@@ -541,15 +544,16 @@
       const ci = S.ladOrder[k], c = ci != null ? LAD[ci] : null;
       ctx.fillStyle = c ? '#e0f2fe' : '#f8fafc'; rr(r.x, r.y, r.w, r.h, 10).fill(); ctx.strokeStyle = c ? '#0284c7' : '#cbd5e1'; ctx.lineWidth = 2; ctx.setLineDash(c ? [] : [5, 4]); rr(r.x, r.y, r.w, r.h, 10).stroke(); ctx.setLineDash([]);
       const nw = PHONE ? 176 : 250;
-      T(r.x + 12, r.y + r.h / 2 + 5, c ? c.n : (k + 1) + '번째 단계', PHONE ? 12 : 13.5, c ? '#0f172a' : '#94a3b8', 'left', 800);
+      const two = PHONE && c && okL;   // 휴대폰: 이름은 위 줄, 막대는 아래 줄에 따로 그려 막대가 이름을 덮지 않게
+      T(r.x + 12, two ? r.y + 22 : r.y + r.h / 2 + 5, c ? c.n : (k + 1) + '번째 단계', PHONE ? 12 : 13.5, c ? '#0f172a' : '#94a3b8', 'left', 800);
       if (c && okL) {
-        const bx = r.x + nw + 8, bw = r.w - nw - 20, lg = (log10(c.kpc) + 3) / 10, w = bw * lg * S.ladBar;
-        ctx.fillStyle = rgba('#0ea5e9', 0.75); rr(bx, r.y + r.h / 2 - 8, Math.max(0, w), 16, 8).fill();
-        if (S.ladBar > 0.9) T(bx + Math.max(0, w) - 4, r.y + r.h / 2 - 12, c.reach, PHONE ? 10.5 : 11.5, '#0369a1', 'right', 800);
+        const bx = two ? r.x + 12 : r.x + nw + 8, bw = two ? r.w - 24 : r.w - nw - 20, lg = (log10(c.kpc) + 3) / 10, w = bw * lg * S.ladBar, by = two ? r.y + r.h - 16 : r.y + r.h / 2;
+        ctx.fillStyle = rgba('#0ea5e9', 0.75); rr(bx, by - (two ? 6 : 8), Math.max(0, w), two ? 12 : 16, two ? 6 : 8).fill();
+        if (S.ladBar > 0.9) { if (two) { const room = bx + w + 86 < r.x + r.w; T(room ? bx + w + 6 : bx + w - 8, by + 4, c.reach, 10.5, room ? '#0369a1' : '#fff', room ? 'left' : 'right', 800); } else T(bx + Math.max(0, w) - 4, r.y + r.h / 2 - 12, c.reach, 11.5, '#0369a1', 'right', 800); }
       }
       HIT.ladSlots.push({ r, k });
     });
-    if (okL) T(P.x + P.w - 14, P.y + 24 * FS, '막대 길이: 잴 수 있는 거리 (로그 눈금)', PHONE ? 10 : 11.5, '#64748b', 'right', 700);
+    if (okL) T(P.x + P.w - 14, P.y + (PHONE ? 46 * FS : 24), '막대 길이: 잴 수 있는 거리 (로그 눈금)', PHONE ? 10 : 11.5, '#64748b', 'right', 700);
     // 카드
     const C = L.C; panel(C.x, C.y, C.w, C.h, { r: 14 });
     T(C.x + 14, C.y + 22 * FS, '방법 카드 (눌러서 쌓아요, 다시 누르면 빼요)', PHONE ? 12 : 13, '#1e293b', 'left', 800);
@@ -559,7 +563,7 @@
       const x = C.x + 12 + (k % cols) * (cw + 8), y = C.y + 36 * FS + Math.floor(k / cols) * (ch + 8), used = S.ladOrder.indexOf(ci);
       ctx.fillStyle = used >= 0 ? '#e2e8f0' : '#ffffff'; D.shadow(() => rr(x, y, cw, ch, 10).fill(), { blur: used >= 0 ? 2 : 5, y: used >= 0 ? 1 : 2 });
       ctx.strokeStyle = used >= 0 ? '#94a3b8' : '#0ea5e9'; ctx.lineWidth = 2; rr(x, y, cw, ch, 10).stroke();
-      drawWrap(x + cw / 2, y + 24, LAD[ci].n, cw - 14, PHONE ? 12 : 12.5, { color: used >= 0 ? '#94a3b8' : '#0f172a', weight: 800, align: 'center' });
+      drawWrap(x + cw / 2, y + 24, LAD[ci].n, cw - 40, PHONE ? 12 : 12.5, { color: used >= 0 ? '#94a3b8' : '#0f172a', weight: 800, align: 'center' });
       if (used >= 0) T(x + cw - 12, y + 16, String(used + 1), 12, '#64748b', 'right', 800);
       HIT.ladCards.push({ r: { x, y, w: cw, h: ch }, ci });
     });

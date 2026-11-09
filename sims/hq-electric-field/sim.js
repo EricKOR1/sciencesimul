@@ -255,7 +255,7 @@
     D.arrow(x.a, YA, x.a + f.la, YA, { color: COL_F, width: 5, head: 13 });
     D.arrow(x.b, YB, x.b + f.lb, YB, { color: COL_F, width: 5, head: 13 });
     lbl(x.a + f.la / 2, YA - 17, 'A가 받는 힘 ' + ftxt, { color: '#9a3412', border: '#f6b08a' });
-    lbl(x.b + f.lb / 2, YB + 18, 'B가 받는 힘 ' + ftxt, { color: '#9a3412', border: '#f6b08a' });
+    const rB = lbl(x.b + f.lb / 2, YB + 18, 'B가 받는 힘 ' + ftxt, { color: '#9a3412', border: '#f6b08a' });
     D.sphere(x.a, AY, ra, POS, { shadow: true, text: '+' });
     D.sphere(x.b, AY, rb, POS, { shadow: !f.drag, text: '+' });
     if (f.drag) { ctx.save(); ctx.strokeStyle = 'rgba(242,107,58,.8)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x.b, AY, rb + 5, 0, TAU); ctx.stroke(); ctx.restore(); }
@@ -268,7 +268,11 @@
     [0, 0.5, 1].forEach((u) => T(AX0 + u * PXM, ry + 22, u.toFixed(u === 0.5 ? 1 : 0) + ' m', PHONE ? 11 : 12, '#516079', 'center', 700));
     ctx.strokeStyle = COL_F; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x.a, ry); ctx.lineTo(x.b, ry); ctx.stroke();
     D.sphere(x.b, ry, 6, COL_F, { gloss: false });
-    lbl((x.a + x.b) / 2, ry - 18, 'r = ' + f.r.toFixed(2) + ' m', { bg: '#516079', color: '#fff' });
+    // 거리 이름표: B를 가까이 끌어 'B가 받는 힘' 이름표와 같은 줄에서 겹치면 그 왼쪽으로 비켜 써요
+    const rt = 'r = ' + f.r.toFixed(2) + ' m'; ctx.save(); ctx.font = D.font(PHONE ? 12 : 13, 800); const rw = ctx.measureText(rt).width + 16; ctx.restore();
+    let rcx = (x.a + x.b) / 2; const ryy = ry - 18;
+    if (rB && Math.abs(ryy - (rB.y + rB.h / 2)) < rB.h && rcx + rw / 2 > rB.x - 4) rcx = rB.x - 6 - rw / 2;
+    lbl(rcx, ryy, rt, { bg: '#516079', color: '#fff' });
     if (!f.hov && !f.seenDrag && S.t > 1.2) { D.arrow(x.b + rb + 34, AY + 34, x.b + rb + 8, AY + 8, { color: COL_F, width: 3 }); }
     // 식 알림 띠
     const sy0 = PHONE ? 246 : 270, sh = PHONE ? 50 : 44;
@@ -285,7 +289,7 @@
   function drawTable() {
     const x0 = 12, w = VW - 24, ai = activeRow(), n = rowsDone();
     panel(x0, TB_Y - 4, w, TB_H + 6 * TB_RH + 10, 14);
-    const cols = PHONE ? [0.08, 0.3, 0.52, 0.74, 1.0] : [0.06, 0.22, 0.38, 0.54, 0.80];
+    const cols = PHONE ? [0.08, 0.27, 0.46, 0.65, 1.0] : [0.06, 0.22, 0.38, 0.54, 0.80];   // 휴대폰: F 열 제목이 오른쪽 '기록 n / 6'과 겹치지 않게
     const hs = ['', 'A (μC)', 'B (μC)', 'r (m)', 'F (N)'];
     const cx = (i) => x0 + w * ((i === 0 ? 0 : cols[i - 1]) + cols[i]) / 2;
     hs.forEach((h, i) => { if (i === 0) T(cx(0), TB_Y + TB_H / 2 + 5, '줄', PHONE ? 12 : 13, '#5a6679', 'center', 800); else T(cx(i), TB_Y + TB_H / 2 + 5, h, PHONE ? 12.5 : 14, '#26324a', 'center', 800); });
@@ -398,13 +402,19 @@
     if (f.fly < 1) { const e = f.fly; px = f.flyFrom.x + (f.px - f.flyFrom.x) * e; py = f.flyFrom.y + (f.py - f.flyFrom.y) * e - Math.sin(e * Math.PI) * 40; }
     const nx = -g.uy, ny = g.ux;                        // 화살표 옆으로 비켜 그리기용 수직 벡터
     const inFlight = f.fly < 0.98;
+    let rE = null, rF = null; const segs = [];   // 이름표끼리·화살표와 겹치지 않게 자리를 고를 때 써요
+    const ovR = (a, b) => a && b && a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
     // E 화살표 (그 자리의 전기장: 시험 전하가 없어도 그려요)
     if (!inFlight) {
       const sx0 = f.px + g.ux * (PR2 + 5) + nx * -9, sy0 = f.py + g.uy * (PR2 + 5) + ny * -9;
       const clampE = g.E / 1e5 * E_LPX > E_LMAX + 0.5;
       D.arrow(sx0, sy0, sx0 + g.ux * f.la, sy0 + g.uy * f.la, { color: COL_E, width: 5, head: 13, dash: f.has ? null : [8, 6] });
       if (clampE) T(sx0 + g.ux * (f.la + 12), sy0 + g.uy * (f.la + 12) + 5, '≫', 16, COL_E, 'center', 800);
-      lbl(sx0 + g.ux * f.la / 2 + nx * -20, sy0 + g.uy * f.la / 2 + ny * -20, 'E = ' + sci(g.E) + ' N/C', { color: '#1e40af', border: '#93b4f8' });
+      // 이름표 알약이 화살표를 가리지 않게: 알약의 (화살표에 수직인 방향) 반폭만큼 비켜 놓아요
+      const et = 'E = ' + sci(g.E) + ' N/C', lsz = PHONE ? 12 : 13; ctx.save(); ctx.font = D.font(lsz, 800); const ew2 = ctx.measureText(et).width + 16; ctx.restore();
+      const extE = Math.abs(nx) * ew2 / 2 + Math.abs(ny) * (lsz + 10) / 2 + 6;
+      rE = lbl(sx0 + g.ux * f.la / 2 - nx * extE, sy0 + g.uy * f.la / 2 - ny * extE, et, { color: '#1e40af', border: '#93b4f8' });
+      segs.push([sx0, sy0, sx0 + g.ux * f.la, sy0 + g.uy * f.la]);
     }
     if (f.has) {
       if (!inFlight) {
@@ -412,10 +422,24 @@
         D.arrow(sx1, sy1, sx1 + g.sF * g.ux * f.lf, sy1 + g.sF * g.uy * f.lf, { color: COL_F, width: 5, head: 13 });
         const full = Math.abs(g.qp * 1e9) * g.E / 1e5 * E_LPX;
         if (g.sF > 0 && full > E_LMAX + 0.5) T(sx1 + g.ux * (f.lf + 12), sy1 + g.uy * (f.lf + 12) + 5, '≫', 16, COL_F, 'center', 800);
-        lbl(sx1 + g.sF * g.ux * f.lf / 2 + nx * 30, sy1 + g.sF * g.uy * f.lf / 2 + ny * 30, 'F = ' + (masked2() ? '?' : sci(g.F) + ' N'), { color: '#9a3412', border: '#f6b08a' });
+        segs.push([sx1, sy1, sx1 + g.sF * g.ux * f.lf, sy1 + g.sF * g.uy * f.lf]);
+        const ft = 'F = ' + (masked2() ? '?' : sci(g.F) + ' N');
+        ctx.save(); ctx.font = D.font(PHONE ? 12 : 13, 800); const fw = ctx.measureText(ft).width + 16; ctx.restore(); const fh = (PHONE ? 12 : 13) + 10;
+        const extF = Math.abs(nx) * fw / 2 + Math.abs(ny) * fh / 2 + 6; let fcx = sx1 + g.sF * g.ux * f.lf / 2 + nx * extF, fcy = sy1 + g.sF * g.uy * f.lf / 2 + ny * extF;
+        for (let k = 0; k < 8 && ovR(rE, { x: fcx - fw / 2, y: fcy - fh / 2, w: fw, h: fh }); k++) { fcx += nx * 12; fcy += ny * 12; }   // E 이름표와 겹치면 바깥쪽으로 비켜요
+        rF = lbl(fcx, fcy, ft, { color: '#9a3412', border: '#f6b08a' });
       }
       probeSphere(px, py, 1);
-      if (!inFlight) T(f.px, f.py + PR2 + (PHONE ? 14 : 16), "q′ = " + (f.qp > 0 ? '+' : '−') + Math.abs(f.qp) + ' nC', PHONE ? 11.5 : 13, '#26324a', 'center', 800);
+      if (!inFlight) {
+        // q′ 이름표: 아래 → 위 → 왼쪽 → 오른쪽 중 화살표·다른 이름표·중심 전하 이름표와 겹치지 않는 자리에 써요
+        const qt = "q′ = " + (f.qp > 0 ? '+' : '−') + Math.abs(f.qp) + ' nC', qs = PHONE ? 11.5 : 13;
+        ctx.save(); ctx.font = D.font(qs, 800); const qw = ctx.measureText(qt).width; const cw = ctx.measureText('q = +1.0 μC').width; ctx.restore();
+        const rQ = { x: R.cx - cw / 2 - 2, y: R.cy + QR2 + (PHONE ? 15 : 17) - qs - 2, w: cw + 4, h: qs + 6 };
+        const cands = [[0, PR2 + (PHONE ? 14 : 16)], [0, -PR2 - 6], [-PR2 - 8 - qw / 2, 5], [PR2 + 8 + qw / 2, 5]];
+        const bad = (cx, by) => { const r = { x: cx - qw / 2 - 3, y: by - qs - 1, w: qw + 6, h: qs + 5 }; if (ovR(r, rE) || ovR(r, rF) || ovR(r, rQ)) return true; return segs.some(([a, b, c, d]) => { for (let k = 0; k <= 16; k++) { const x = a + (c - a) * k / 16, y = b + (d - b) * k / 16; if (x > r.x && x < r.x + r.w && y > r.y && y < r.y + r.h) return true; } return false; }); };
+        const pick = cands.find(([dx, dy]) => !bad(f.px + dx, f.py + dy)) || cands[0];
+        T(f.px + pick[0], f.py + pick[1], qt, qs, '#26324a', 'center', 800);
+      }
     } else {
       ctx.save(); ctx.strokeStyle = 'rgba(100,116,139,.8)'; ctx.setLineDash([4, 4]); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(f.px, f.py, PR2, 0, TAU); ctx.stroke(); ctx.restore();
       T(f.px, f.py + PR2 + 16, '시험 전하 없음', PHONE ? 11.5 : 13, '#516079', 'center', 800);
@@ -653,7 +677,13 @@
     });
     D.ring(px, py, 10, S.t, { color: '#16a34a', width: 3 });
     D.sphere(px, py, 5, '#16a34a', { gloss: false });
-    T(px + (pre === 'a' ? 0 : 14), py + (pre === 'a' ? 28 : 4), 'P', 14, '#0b7a41', pre === 'a' ? 'center' : 'left', 800);
+    if (pre === 'a') {
+      // P가 전하 가까이 오면 아래 이름(+2 μC 등)과 겹치니, 전하 반대쪽 옆에 써요
+      const nc = PRE[pre].ch.reduce((b, c) => (Math.abs(sx(c.x) - px) < Math.abs(sx(b.x) - px) ? c : b), PRE[pre].ch[0]);
+      const dxc = px - sx(nc.x);
+      if (Math.abs(dxc) < (PHONE ? 40 : 48)) T(px + (dxc >= 0 ? 15 : -15), py + 5, 'P', 14, '#0b7a41', dxc >= 0 ? 'left' : 'right', 800);
+      else T(px, py + 28, 'P', 14, '#0b7a41', 'center', 800);
+    } else T(px + 14, py + 4, 'P', 14, '#0b7a41', 'left', 800);
     // 벡터
     const v1 = net.vs[0], v2 = net.vs[1], t = f.sumT;
     if (pre === 'a') {
@@ -663,7 +693,12 @@
       const an = drawArrowV(P, net, COL_S, { y: py + 44, x: px, w: 6 });
       if (a1.len) lbl(px + a1.ux * a1.len / 2, py - off - 36, 'E₁ ' + sci(v1.m), { color: '#1e40af', border: '#93b4f8', size: PHONE ? 11 : 12.5 });
       if (a2.len) lbl(px + a2.ux * a2.len / 2, py - off - 58, 'E₂ ' + sci(v2.m), { color: '#0f766e', border: '#7dd3cb', size: PHONE ? 11 : 12.5 });
-      if (an.len) lbl(px + an.ux * an.len / 2, py + 72, 'E합 ' + sci(Math.hypot(net.x, net.y)), { color: '#5b21b6', border: '#c4b5fd', size: PHONE ? 11 : 12.5 });
+      if (an.len) {
+        // E합 이름표는 화살표 끝 옆(같은 줄)에: 아래 x축 눈금 숫자를 가리지 않게
+        const et = 'E합 ' + sci(Math.hypot(net.x, net.y)), es = PHONE ? 11 : 12.5; ctx.save(); ctx.font = D.font(es, 800); const ew = ctx.measureText(et).width + 16; ctx.restore();
+        let ex = an.tx + an.ux * (ew / 2 + 8); if (ex - ew / 2 < 4 || ex + ew / 2 > VW - 4) ex = px - an.ux * (ew / 2 + 14);
+        lbl(ex, py + 44, et, { color: '#5b21b6', border: '#c4b5fd', size: es });
+      }
       else lbl(px, py + 56, 'E합 = 0', { bg: '#16a34a', color: '#fff', size: PHONE ? 12 : 14 });
       if (f.zeroT) D.check(px, py - 60, 14, 1);
     } else {

@@ -142,8 +142,9 @@
     boxAt(p) { for (const b of this.boxes) if (inRect(p.x, p.y, b)) return b; return null; }
     chipRect(box, k, n) {
       if (box.slot) return box.slot;
-      const cols = box.cols || 2, gap = box.gap || 6, rows = Math.max(1, Math.ceil(n / cols));
-      const kw = (box.w - gap * (cols + 1)) / cols, hdr = box.hdr || 26, avail = box.h - hdr - 6;
+      const gap = box.gap || 6, hdr = box.hdr || 26, avail = box.h - hdr - 6;
+      let cols = box.cols || 2; while (cols < Math.min(n, 6) && Math.ceil(n / cols) * 20 > avail) cols++;   // 한 상자에 카드가 몰리면 열을 늘려 칩끼리 겹치지 않게
+      const rows = Math.max(1, Math.ceil(n / cols)), kw = (box.w - gap * (cols + 1)) / cols;
       const sp = Math.min(this.o.kh + 4, avail / rows), col = k % cols, row = Math.floor(k / cols);
       return { x: box.x + gap + col * (kw + gap), y: box.y + hdr + 1 + row * sp, w: kw, h: Math.max(18, Math.min(this.o.kh, sp - 3)) };
     }
@@ -322,10 +323,10 @@
 
   /* ---------- 화면 배치 ---------- */
   const EG = PHONE
-    ? { x0: 44, w: 400, cy: 106, hh: 34, top: { x: 8, y: 8, w: 464, h: 200 }, gr: { x: 8, y: 216, w: 464, h: 232 }, plot: { y: 246, h: 140 }, lv: { x: 8, y: 456, w: 464, h: 176 } }
+    ? { x0: 44, w: 400, cy: 106, hh: 34, top: { x: 8, y: 8, w: 464, h: 200 }, gr: { x: 8, y: 216, w: 464, h: 232 }, plot: { y: 252, h: 134 }, lv: { x: 8, y: 456, w: 464, h: 176 } }
     : { x0: 60, w: 500, cy: 128, hh: 46, top: { x: 14, y: 14, w: 772, h: 246 }, gr: { x: 14, y: 268, w: 772, h: 278 }, plot: { y: 312, h: 180 }, lv: { x: 590, y: 24, w: 190, h: 226 } };
   const X = (um) => EG.x0 + um / EMB_LEN * EG.w;
-  const plotHeight = () => (PHONE && S.mode === 'thr' ? 190 : EG.plot.h);
+  const plotHeight = () => (PHONE && S.mode === 'thr' ? 184 : EG.plot.h);   // 휴대폰: 그래프 위쪽을 6 내려 제목과 맨 위 눈금(100)이 겹치지 않게
   const grHeight = () => (PHONE && S.mode === 'thr' ? 396 : EG.gr.h);
   const UM = (px) => clamp((px - EG.x0) / EG.w * EMB_LEN, 0, EMB_LEN);
 
@@ -407,6 +408,14 @@
   function drawProbeLine(x, y1, y2, label) {
     ctx.save(); ctx.strokeStyle = '#e11d48'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x, y2); ctx.stroke(); ctx.restore();
     if (label) D.label(x, y1 - 2, label, { bg: '#e11d48', size: L(13, 12) });
+  }
+  /* 측정 점 이름표: 농도 곡선은 오른쪽으로 내려가므로 점의 오른쪽 위에 두면 곡선을 가리지 않아요.
+     오른쪽 끝이라 자리가 없으면 측정선 왼쪽 맨 위(곡선이 낮은 곳)에 둬요 */
+  function probeTag(x, y, G, text, bg, avoid) {
+    const sz = L(13.5, 12); ctx.save(); ctx.font = D.font(sz, 800); const w = ctx.measureText(text).width + 16; ctx.restore();
+    const ry = Math.max(G.pl.y + 10, y - 18), h = sz + 10, hitA = avoid && x + 10 < avoid.x + avoid.w && avoid.x < x + 10 + w && ry - h / 2 < avoid.y + avoid.h && avoid.y < ry + h / 2;
+    if (x + 10 + w <= X(EMB_LEN) + 6 && !hitA) D.label(x + 10, ry, text, { bg, size: sz, align: 'left' });
+    else D.label(x - 10, G.pl.y + 14, text, { bg, size: sz, align: 'right' });
   }
   /* ---------- 공통 그리기: 농도 그래프 ---------- */
   function drawGraph(o) {
@@ -512,7 +521,7 @@
     const pv = shownC(e.probe), pxx = X(e.probe);
     drawProbeLine(pxx, G.pl.y - 4, G.pl.y + G.pl.h, null);
     D.sphere(pxx, G.py(pv), 6, '#e11d48', { outline: '#fff', outlineWidth: 2 });
-    D.label(clamp(pxx + 6, X(0) + 70, X(EMB_LEN) - 70), G.py(pv) - 18, 'x = ' + e.probe + ' µm → C = ' + fC(pv), { bg: '#e11d48', size: L(13.5, 12) });
+    probeTag(pxx, G.py(pv), G, 'x = ' + e.probe + ' µm → C = ' + fC(pv), '#e11d48');
     // 오른쪽: 어미별 유충
     if (!PHONE) {
       const lv = EG.lv, hx = lv.x + 14;
@@ -558,12 +567,13 @@
     drawEmbryoBody({ conc, hbOn: (um) => um <= mk });
     // 내가 표시한 구역
     ctx.save(); ctx.globalAlpha = 0.28; ctx.fillStyle = '#ef4444'; rr(X(0) - 10, cy - hh, X(mk) - X(0) + 10, hh * 2, hh); ctx.fill(); ctx.restore();
-    T(X(0) + 12, cy + 5, 'hunchback 켜짐', L(14, 12.5), '#b91c1c', 'left', 800, { stroke: '#fff', strokeWidth: 3 });
     // 깃발
     const fx = X(mk);
     ctx.strokeStyle = '#be123c'; ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(fx, cy + hh + 6); ctx.lineTo(fx, cy - hh - 22); ctx.stroke();
     ctx.fillStyle = okNow ? '#16a34a' : '#e11d48'; ctx.beginPath(); ctx.moveTo(fx, cy - hh - 22); ctx.lineTo(fx + 30, cy - hh - 14); ctx.lineTo(fx, cy - hh - 6); ctx.closePath(); ctx.fill();
     if (okNow) { D.label(clamp(fx + 38, X(0) + 60, X(EMB_LEN) - 40), cy - hh - 14, '경계 ' + bDisp(c0) + ' µm', { bg: '#16a34a', size: L(13.5, 12), align: 'left' }); }
+    // 구역 이름은 깃발 다음에 그려, 깃발을 앞쪽으로 끌어도 깃대가 글자를 가르지 않게 (흰 테두리 글자)
+    T(X(0) + 12, cy + 5, 'hunchback 켜짐', L(14, 12.5), '#b91c1c', 'left', 800, { stroke: '#fff', strokeWidth: 3 });
     T(X(0) - 4, cy + hh + L(52, 56), '← 앞 (머리 쪽)', L(13.5, 12), '#475569', 'left', 800);
     T(X(EMB_LEN) + 4, cy + hh + L(52, 56), '뒤 (꼬리 쪽) →', L(13.5, 12), '#475569', 'right', 800);
     drawRuler(cy + hh + L(18, 14));
@@ -575,7 +585,7 @@
     const cv = concAt(mk, c0), mx = X(mk);
     drawProbeLine(mx, G.pl.y - 4, G.pl.y + G.pl.h, null);
     D.sphere(mx, G.py(cv), 6, okNow ? '#16a34a' : '#e11d48', { outline: '#fff', outlineWidth: 2 });
-    D.label(clamp(mx + 8, X(0) + 80, X(EMB_LEN) - 80), G.py(cv) - 20, 'x = ' + mk + ' µm → C = ' + fC(cv), { bg: okNow ? '#16a34a' : '#e11d48', size: L(13.5, 12) });
+    probeTag(mx, G.py(cv), G, 'x = ' + mk + ' µm → C = ' + fC(cv), okNow ? '#16a34a' : '#e11d48', { x: X(EMB_LEN) - 4 - L(14, 12.5) * 6.2, y: G.py(THR) - 6 - L(14, 12.5), w: L(14, 12.5) * 6.2, h: L(14, 12.5) + 4 });   // '문턱 C = 20' 글자는 피해요
     if (c0 === 200) { T(X(150), G.py(concAt(150, 100)) + 20, '1배', L(13, 12), '#64748b', 'center', 800); }
     // 설명 카드 (오른쪽)
     if (!PHONE) {
@@ -756,10 +766,11 @@
     hover(p) { for (let k = 0; k < 8; k++) if (inRect(p.x, p.y, hxBox(k))) return 'pointer'; return 'default'; },
   };
 
-  /* ---------- 연결하기 (유전자 카드 → 몸 부위 칸) ---------- */
+  /* ---------- 연결하기 (유전자 카드 → 몸 부위 칸) ----------
+     데스크톱: 칸 안 카드 자리(slotY)를 올려 부위 이름이 칸 아래 테두리에 걸리지 않게 해요 */
   const MTG = PHONE
     ? { boxes: HOX.map((g, k) => ({ id: 'z' + k, x: 8 + (k % 4) * 117, y: 118 + Math.floor(k / 4) * 128, w: 111, h: 118 })), slotY: 34, slotH: 44, tray: { x0: 8, y0: 410, dx: 117, dy: 54, per: 4 }, cw: 111, ch: 44, kh: 42 }
-    : { boxes: HOX.map((g, k) => ({ id: 'z' + k, x: 20 + k * 95, y: 150, w: 89, h: 126 })), slotY: 56, slotH: 50, tray: { x0: 40, y0: 336, dx: 184, dy: 66, per: 4 }, cw: 160, ch: 50, kh: 48 };
+    : { boxes: HOX.map((g, k) => ({ id: 'z' + k, x: 20 + k * 95, y: 150, w: 89, h: 126 })), slotY: 46, slotH: 50, tray: { x0: 40, y0: 336, dx: 184, dy: 66, per: 4 }, cw: 160, ch: 50, kh: 48 };
   let mtS = null;
   function mtInit() {
     const G = MTG;

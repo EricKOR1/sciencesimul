@@ -231,7 +231,10 @@
       T(lx, ly + 30, 'LED', 11.5, '#fff', 'center', 800);
     }
     drawCoilRow(rx, ry, o.Nr, COILW, '#e6a04f', o.rxCur || 0);
-    if (o.led == null) T(rx, bt - 8, '수신 코일 ' + o.Nr + '회', 12, '#5a6679', 'center', 800);
+    if (o.led == null) {   // 휴대폰을 위로 끌어 장면 제목 바로 아래까지 오면 이름을 휴대폰 오른쪽 옆에 써서 제목과 붙지 않게
+      if (bt - 8 < SCN.y + 46) T(rx + BODYW / 2 + 8, bt + 18, '수신 코일 ' + o.Nr + '회', 12, '#5a6679', 'left', 800);
+      else T(rx, bt - 8, '수신 코일 ' + o.Nr + '회', 12, '#5a6679', 'center', 800);
+    }
     // 간격 치수선
     if (o.gap > 0 && o.dim) {
       const x = CX - PADW / 2 - 6 + (PHONE ? 2 : 0) - 0;

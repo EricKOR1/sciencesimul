@@ -447,7 +447,7 @@
   // 기생·편리 공생은 두 번째 생물(b)이 이익을 얻는 쪽, 상리는 둘 다 이익
   const SYMG = PHONE
     ? { col: (c) => ({ x: 6 + c * 158, y: 6, w: 152, h: 280 }), ins: { x: 6, y: 292, w: 468, h: 152 }, tray: (i) => ({ x: 6 + (i % 2) * 237, y: 452 + Math.floor(i / 2) * 45, w: 231, h: 41 }), chip: (c, k) => ({ x: 6 + c * 158 + 6, y: 80 + k * 50, w: 140, h: 46 }) }
-    : { col: (c) => ({ x: 10 + c * 186, y: 10, w: 178, h: 326 }), ins: { x: 574, y: 10, w: 216, h: 326 }, tray: (i) => ({ x: 10 + (i % 4) * 195, y: 366 + Math.floor(i / 4) * 92, w: 187, h: 84 }), chip: (c, k) => ({ x: 10 + c * 186 + 6, y: 92 + k * 58, w: 166, h: 52 }) };
+    : { col: (c) => ({ x: 10 + c * 186, y: 10, w: 178, h: 326 }), ins: { x: 574, y: 10, w: 216, h: 326 }, tray: (i) => ({ x: 10 + (i % 4) * 195, y: 366 + Math.floor(i / 4) * 92, w: 187, h: 84 }), chip: (c, k) => ({ x: 10 + c * 186 + 6, y: 86 + k * 54, w: 166, h: 50 }) };   // 4장이 들어가도 칸 아래 설명 글자를 가리지 않게
   const TRAY_ORDER = [3, 0, 6, 1, 7, 4, 2, 5];
   function resetSym() {
     S.sym = { place: SYM.map(() => null), drag: null, sel: 0, bad: {}, shakeT: -9, solved: false, pop: SYM.map(() => 1), flowK: 1, viewed: {} };

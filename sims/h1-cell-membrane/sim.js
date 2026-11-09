@@ -215,15 +215,16 @@
   /* ================= ① 살아 있는 세포 ================= */
   const CX = PHONE ? 240 : 270, CY = PHONE ? 150 : 205, CRX = PHONE ? 205 : 190, CRY = PHONE ? 96 : 128;
   const CW = PHONE ? 100 : 116, CH = PHONE ? 38 : 44;
-  const OZ = PHONE ? { x: 10, y: 270, w: 460, h: 100 } : { x: 526, y: 50, w: 266, h: 330 };
+  const OZ = PHONE ? { x: 10, y: 270, w: 460, h: 132 } : { x: 526, y: 50, w: 266, h: 330 };
   const SHORT = { o2: '산소', glu: '포도당', aa: '아미노산', co2: '이산화 탄소', urea: '요소', nh3: '암모니아' };
   const ITEMS = [
     ['o2', '산소 O₂', 'in', '#ef4444', 'O₂'], ['glu', '포도당', 'in', '#f59e0b', 'C'], ['aa', '아미노산', 'in', '#22c55e', 'A'],
     ['co2', '이산화 탄소', 'out', '#6b7280', 'CO₂'], ['urea', '요소', 'out', '#fb923c', 'U'], ['nh3', '암모니아', 'out', '#a855f7', 'N'],
   ];
-  const trayPos = (i) => PHONE ? { x: 22 + (i % 3) * 152, y: 400 + Math.floor(i / 3) * 56 } : { x: 24 + i * 124, y: 440 };
+  const trayPos = (i) => PHONE ? { x: 22 + (i % 3) * 152, y: 434 + Math.floor(i / 3) * 56 } : { x: 24 + i * 124, y: 440 };
   const slotIn = (k) => ({ x: CX - CW * 1.5 - 6 + (k % 3) * (CW + 6), y: CY + (k < 3 ? -30 : 26) });
-  const slotOut = (k) => PHONE ? { x: OZ.x + 14 + (k % 3) * (CW + 14), y: OZ.y + 22 + Math.floor(k / 3) * (CH + 12) } : { x: OZ.x + 10 + (k % 2) * (CW + 14), y: OZ.y + 70 + Math.floor(k / 2) * (CH + 18) };
+  // 휴대폰: 칸 제목(위쪽 36) 아래에 카드를 놓아요
+  const slotOut = (k) => PHONE ? { x: OZ.x + 14 + (k % 3) * (CW + 14), y: OZ.y + 38 + Math.floor(k / 3) * (CH + 8) } : { x: OZ.x + 10 + (k % 2) * (CW + 14), y: OZ.y + 70 + Math.floor(k / 2) * (CH + 18) };
   function makeContents() {
     const c = []; for (let i = 0; i < 26; i++) { const a = rnd(0, TAU), r = Math.sqrt(Math.random()); c.push({ hx: CX + Math.cos(a) * r * (CRX - 22), hy: CY + Math.sin(a) * r * (CRY - 18), a, s: rnd(2, 4), col: ['#9bd3a9', '#7cc48e', '#b9e0c3'][i % 3] }); }
     return c;
@@ -330,7 +331,7 @@
     // 흐름 (정답을 맞춘 뒤)
     if (c.flow || (game && game.free)) drawFlows(c);
     // 트레이 안내
-    if (!PHONE) { T(34, 424, '카드를 끌어서 놓아요 👇', 13.5, '#5a6679', 'left', 800); } else T(22, 392, '카드를 끌어서 놓아요 👇', 12.5, '#5a6679', 'left', 800);
+    if (!PHONE) { T(34, 424, '카드를 끌어서 놓아요 👇', 13.5, '#5a6679', 'left', 800); } else T(22, 426, '카드를 끌어서 놓아요 👇', 12.5, '#5a6679', 'left', 800);
     // 카드
     c.items.forEach((it) => drawCellCard(it));
     parts.update(dt); parts.draw(ctx);

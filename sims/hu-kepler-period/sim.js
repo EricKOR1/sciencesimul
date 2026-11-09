@@ -157,12 +157,15 @@
       return { x: g.x + col * (cw + g.gap), y: g.y + row * (g.cardH + g.gap), w: cw, h: g.cardH };
     }
     function binArea(L, b) {
-      const r = L.bins[b], head = (cfg.bins[b].sub ? 46 : 34) * (PHONE ? 1.05 : 1);
+      // 상자 이름(과 부제) 아래로 칩 자리를 비워요: 글자 크기(FS)가 커져도 이름이 칩에 가리지 않게
+      const r = L.bins[b], head = cfg.bins[b].sub ? Math.max(46, 40 * FS + 10) : Math.max(34, 22 * FS + 12);
       return { x: r.x + 8, y: r.y + head, w: r.w - 16, h: r.h - head - 8 };
     }
     function chipSlot(L, b, k, n) {
-      const a = binArea(L, b), cols = cfg.chipCols || 1, gap = 4, minRows = cfg.minRows || 3;
-      const rows = Math.max(Math.ceil(n / cols), minRows), ch = clamp((a.h - gap * (rows - 1)) / rows, 24, 38), cw = (a.w - gap * (cols - 1)) / cols;
+      const a = binArea(L, b), gap = 4, minRows = cfg.minRows || 3, fit = (r) => (a.h - gap * (r - 1)) / r;
+      // 칩이 많아도 상자 밖으로 넘치지 않게: 높이를 줄이고, 그래도 모자라면 열을 늘려요
+      let cols = cfg.chipCols || 1; while (cols < 3 && fit(Math.ceil(n / cols)) < 18 && n > cols) cols++;
+      const rows = Math.max(Math.ceil(n / cols), minRows), ch = clamp(fit(rows), clamp(fit(Math.ceil(n / cols)), 12, 24), 38), cw = (a.w - gap * (cols - 1)) / cols;
       return { x: a.x + (k % cols) * (cw + gap), y: a.y + Math.floor(k / cols) * (ch + gap), w: cw, h: ch };
     }
     C.targets = function () {
@@ -240,12 +243,17 @@
         if (!dragging) { it.x = approach(it.x, t.x, dt, 14); it.y = approach(it.y, t.y, dt, 14); it.w = approach(it.w, t.w, dt, 14); it.h = approach(it.h, t.h, dt, 14); }
         it.lift = approach(it.lift, dragging ? 1 : 0, dt, 18); it.fresh = Math.max(0, it.fresh - dt * 2.4);
         it.flip = approach(it.flip, it.open ? 1 : 0, dt, 9);
+        // 상자에 자리 잡은 칩은 상자 안으로 잘라 그려요 (옆 글자·그래프를 덮지 않게)
+        const settled = it.loc != null && !dragging && Math.abs(it.x - t.x) < 3 && Math.abs(it.y - t.y) < 3, br = settled ? L.bins[it.loc] : null;
+        if (br) { ctx.save(); rr(br.x + 1, br.y + 1, br.w - 2, br.h - 2, 13); ctx.clip(); }
         drawItem(it, it.idx === C.sel, dragging, o);
+        if (br) ctx.restore();
       });
       // 자세히 상자
       const dt_ = L.detail;
       if (dt_) {
         panel(dt_.x, dt_.y, dt_.w, dt_.h, { r: 12, line: '#cbd5e1', lw: 1.5 });
+        ctx.save(); rr(dt_.x, dt_.y, dt_.w, dt_.h, 12); ctx.clip();   // 설명 글이 길어도 아래 상자를 덮지 않게
         const it = C.sel >= 0 ? C.items[C.sel] : null;
         if (!it) drawWrap(dt_.x + 14, dt_.y + 24 * FS, cfg.placeholder || '카드를 눌러 보세요.', dt_.w - 28, 13.5, { color: '#64748b' });
         else {
@@ -253,6 +261,7 @@
           T(dt_.x + 14, dt_.y + 22 * FS, dd.title, 14.5, '#1e293b', 'left', 800);
           drawWrap(dt_.x + 14, dt_.y + 22 * FS + 22 * FS, dd.body, dt_.w - 28, 13.5, { color: dd.color || '#334155' });
         }
+        ctx.restore();
       }
     };
     function drawItem(it, selected, dragging, o) {
@@ -274,7 +283,8 @@
         if (it.mine) { ctx.strokeStyle = rgba('#fde68a', 0.6 + 0.4 * Math.sin(SciSim.time() * 4)); ctx.lineWidth = 3; rr(x - 2, y - 2, w + 4, h + 4, 12).stroke(); }
       } else if (chip) {
         ctx.save(); rr(x, y, w, h, 9); ctx.clip();
-        T(x + w / 2, y + h / 2 + 5 * Math.min(1.25, FS), it.chip || it.label, h < 30 ? 13 : 14, '#1e293b', 'center', 800);
+        const cs = it.chip || it.label; let fz = h < 22 ? 11.5 : h < 30 ? 13 : 14; ctx.font = D.font(fz, 800); const tw = ctx.measureText(cs).width; if (tw > w - 8) fz = Math.max(9.5, fz * (w - 8) / tw);
+        T(x + w / 2, y + h / 2 + 0.36 * fz * FS, cs, fz, '#1e293b', 'center', 800);
         ctx.restore();
       } else {
         if (it.icon) T(x + 8, y + h * 0.5 + 8, it.icon, 22, '#000', 'left', 700);
@@ -290,7 +300,7 @@
   }
 
 
-  initStage('#e8eef8', 800, 620, 480, 860, 1.25);
+  initStage('#e8eef8', 800, 620, 480, 900, 1.25);
   if (PHONE) view.canvas.style.touchAction = 'pan-y';
   const outlineT = (x, y, s, size, color, align) => T(x, y, s, size, color || '#e2e8f0', align || 'left', 800, { stroke: 'rgba(5,10,30,.75)', strokeWidth: 4 });
   const sup = (n) => String(n).split('').map((c) => ({ '-': '⁻', 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹' }[c])).join('');
@@ -565,7 +575,7 @@
   /* ---------- ③ 법칙의 의미 ---------- */
   const cvalStr = (v) => (v >= 100 ? sci(v, 2) : v >= 1 ? f1(v) : f3(v));
   function LM3() {
-    if (PHONE) return { s: { x: 8, y: 8, w: 464, h: 200 }, d: { x: 8, y: 216, w: 464, h: 262 }, grid: { x: 8, y: 486, w: 464, h: 148, cols: 2, cardH: 32, gap: 5 }, detail: { x: 8, y: 640, w: 464, h: 46 }, bins: [0, 1, 2].map((i) => ({ x: 8 + i * 157, y: 692, w: 150, h: 160 })) };
+    if (PHONE) return { s: { x: 8, y: 8, w: 464, h: 200 }, d: { x: 8, y: 216, w: 464, h: 262 }, grid: { x: 8, y: 486, w: 464, h: 148, cols: 2, cardH: 32, gap: 5 }, detail: { x: 8, y: 640, w: 464, h: 72 }, bins: [0, 1, 2].map((i) => ({ x: 8 + i * 157, y: 720, w: 150, h: 170 })) };
     return { s: { x: 10, y: 8, w: 380, h: 300 }, d: { x: 400, y: 8, w: 390, h: 300 }, grid: { x: 10, y: 316, w: 780, h: 92, cols: 4, cardH: 42, gap: 8 }, detail: { x: 10, y: 412, w: 780, h: 34 }, bins: [0, 1, 2].map((i) => ({ x: 10 + i * 264, y: 450, w: 252, h: 160 })) };
   }
   const cK = makeClassifier({

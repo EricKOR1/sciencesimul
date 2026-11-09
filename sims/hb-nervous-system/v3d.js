@@ -137,8 +137,12 @@
         if (ch && t) { P.place(ch, t); const nx = ids.findIndex((id, k) => k > cardI && !P.chips.find((q) => q.id === id).zone); if (nx >= 0) cardI = nx; } tabKey = '';
       });
       if (ctlEl) tabEls.push(...[].slice.call(ctlEl.children, nT0));
+      let tabCam = false;
       function syncTab() {
         const P = tabPl(); tabEls.forEach((e) => { e.style.display = P ? '' : 'none'; });
+        // 폰에서 비교표(정보 상자)가 커지면 몸 모형의 위쪽 이름표를 가려요: 표가 보이는 동안 모형을 아래로 내려 보여요
+        const wantCam = !!P && narrow && mode === 'body';
+        if (wantCam !== tabCam) { tabCam = wantCam; orbit.ty = wantCam ? 3.4 : (mode === 'body' ? 0.5 : 0.8); orbit.dist = wantCam ? 16.5 : (mode === 'body' ? (narrow ? 15.5 : 12) : (narrow ? 13 : 9.5)); }
         subCtl.forEach((e) => { e.style.display = mode === 'body' && !P ? '' : 'none'; });   // 비교표에서는 자율 신경 단추를 숨겨요
         if (!P) return;
         const L = L2(), ids = P.chips.map((q) => q.id).sort(), cur = P.chips.find((q) => q.id === ids[cardI % ids.length]);

@@ -213,7 +213,7 @@
   function keepOut(x, y) {
     const R = 32;
     const rects = S.scene === 'magnet'
-      ? [[MAG.x0, MAG.cy - MAG.hh, MAG.x1, MAG.cy + MAG.hh]]
+      ? [[MAG.x0, MAG.cy - MAG.hh, MAG.x1, MAG.cy + MAG.hh], [MAG.x0 + 30, MAG.cy + MAG.hh, MAG.x0 + 80, MAG.cy + MAG.hh + 32], [MAG.x1 - 80, MAG.cy + MAG.hh, MAG.x1 - 30, MAG.cy + MAG.hh + 32], [534, 490, 690, 510]]   // 'N극'·'S극' 글자 위에도 놓이지 않게
       : [[COIL.x0 - 14, COIL.cy - COIL.R - 8, COIL.x1 + 30, COIL.cy + COIL.R + 8], [BAT.x - 12, BAT.y, BAT.x + BAT.w + 12, BAT.y + BAT.h]];
     for (let pass = 0; pass < 2; pass++) {
       rects.forEach((r) => {

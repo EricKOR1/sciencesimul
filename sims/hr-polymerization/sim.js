@@ -628,7 +628,9 @@
     });
     if (BD.pop && W.length) {
       const a = clamp(1 - Math.max(0, BD.pop.t - 1.4) / 0.8, 0, 1);
-      pill(clamp(BD.pop.x, MAIN.x + 110, MAIN.x + MAIN.w - 110), BD.pop.y, '연결 지점마다 H₂O 1분자가 빠져요', { bg: '#dbeafe', color: '#1e40af', border: '#60a5fa', size: 13, alpha: a });
+      // 사슬 위 단위체 이름을 가리지 않게 물 모음통 옆(휴대폰은 모음통 제목 줄)에 띄워요
+      const px = PHONE ? wg.x + wg.w - 10 : wg.x - 10, py = PHONE ? wg.y + 18 : wg.y + wg.h / 2;
+      pill(px, py, '연결 지점마다 H₂O 1분자가 빠져요', { bg: '#dbeafe', color: '#1e40af', border: '#60a5fa', size: PHONE ? 12 : 13, alpha: a, align: 'right' });
     }
     if (BD.drag && BD.drag.moved) { const kd = KIND[BD.drag.kid]; drawTile(kd, BD.drag.x - kd.w * k / 2, BD.drag.y, k, { lift: 1, sc: 1.08 }); }
     if (BD.ret) { const kd = KIND[BD.ret.kid]; drawTile(kd, BD.ret.x - kd.w * k / 2, BD.ret.y, k, { lift: 1, sc: 1.05 }); }

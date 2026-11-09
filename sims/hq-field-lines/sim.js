@@ -427,11 +427,20 @@
       }
     }
     // 점 X, Y
+    // 값 이름표 자리: 오른쪽 위 → 왼쪽 위 → 오른쪽 아래 → 왼쪽 아래 중 그림 영역 안이면서 중심 전하·눈금 이름표·다른 점 이름표와 겹치지 않는 곳
+    const cc = { x: E2.cx, y: E2.cy }, taken = RADS.map((rr) => { const w = (PHONE ? 10.5 : 12.5) * 7.2; return { x: cc.x - w / 2, y: cc.y - rr * E2.px - 12, w, h: 24 }; });
+    taken.push({ x: cc.x - 22 * PS, y: cc.y - 22 * PS, w: 44 * PS, h: 44 * PS });
+    const ov = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
     [['X', l.X, '#7c3aed'], ['Y', l.Y, '#0d9488']].forEach((a) => {
       const p = a[1], v = Vof(p);
       D.shadow(() => { ctx.fillStyle = a[2]; ctx.beginPath(); ctx.arc(p.x, p.y, 11, 0, TAU); ctx.fill(); }, { blur: 6, y: 2 });
       T(p.x, p.y + 5, a[0], 13, '#fff', 'center', 800);
-      lbl(p.x + 28, p.y - 18, v + ' V', { bg: a[2], color: '#fff', size: PHONE ? 12 : 13.5 });
+      const lt = v + ' V', ls = PHONE ? 12 : 13.5; ctx.save(); ctx.font = D.font(ls, 800); const lw = ctx.measureText(lt).width + 16; ctx.restore(); const lh = ls + 10;
+      const cand = [[28, -18], [-28, -18], [28, 20], [-28, 20]].map(([dx, dy]) => ({ cx: p.x + dx + Math.sign(dx) * (lw / 2 - 20), cy: p.y + dy }));
+      const fits = (q) => { const r = { x: q.cx - lw / 2, y: q.cy - lh / 2, w: lw, h: lh }; return r.x >= AR.x0 + 2 && r.x + r.w <= AR.x1 - 2 && r.y >= AR.y0 + 2 && r.y + r.h <= AR.y1 - 2 && !taken.some((t) => ov(r, t)); };
+      const q = cand.find(fits) || cand[0];
+      taken.push({ x: q.cx - lw / 2, y: q.cy - lh / 2, w: lw, h: lh });
+      lbl(q.cx, q.cy, lt, { bg: a[2], color: '#fff', size: ls });
       if (l.drag === a[0]) D.ring(p.x, p.y, 15, S.t, { color: a[2], width: 2 });
     });
     if (!S.seenXY && S.t > 1.5 && S.t < 12 && !msk2()) T(AR.x0 + 14, AR.y1 - 14, '점 X, Y를 끌어 등전위선 위에 올려 보세요', PHONE ? 12 : 13.5, '#9a3412', 'left', 800);
@@ -546,7 +555,9 @@
     // 탐침 ✚
     const p = l.probe;
     D.shadow(() => { ctx.strokeStyle = '#26324a'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(p.x - 11, p.y); ctx.lineTo(p.x + 11, p.y); ctx.moveTo(p.x, p.y - 11); ctx.lineTo(p.x, p.y + 11); ctx.stroke(); }, { blur: 4, y: 1 });
-    lbl(p.x + 54, p.y - 16, 'E = ' + (mk ? '?' : fE3(E) + ' V/m'), { bg: '#26324a', color: '#fff', size: PHONE ? 12 : 13.5 });
+    const et = 'E = ' + (mk ? '?' : fE3(E) + ' V/m'); ctx.save(); ctx.font = D.font(PHONE ? 12 : 13.5, 800); const ew = ctx.measureText(et).width + 16; ctx.restore();
+    const ex = p.x + 14 + ew / 2 > PL.x1 ? p.x - 14 - ew / 2 : p.x + 14 + ew / 2;   // 판 오른쪽 밖(등전위선 전압 글자)으로 넘치면 탐침 왼쪽에 써요
+    lbl(ex, p.y - 18, et, { bg: '#26324a', color: '#fff', size: PHONE ? 12 : 13.5 });
     if (l.drag) D.ring(p.x, p.y, 16, S.t, { color: '#f26b3a', width: 2 });
     drawPlatesPanel(E, mk, tp);
   }

@@ -289,9 +289,12 @@
       const xx = -10 + (px + 1.5) / G.s, p = paths(xx, d), a = ampSpk(p.dr, lam) / 2, t = a * a;
       ctx.fillStyle = 'rgb(' + Math.round(30 + 223 * t) + ',' + Math.round(58 + 156 * t) + ',' + Math.round(138 - 28 * t) + ')'; ctx.fillRect(G.x0 + px, wy + 7, 3, 9);
     }
-    T(G.x0 + 4, wy - 6, '걷는 선 (스피커에서 10 m)', 13, '#334155', 'left', 800, { stroke: 'rgba(238,242,250,.85)', strokeWidth: 3 });
     // 사람(마이크)
     const mx = G.X(x), pp = paths(x, d);
+    // 걷는 선 이름: 마이크를 그쪽 끝으로 끌어 오면 반대쪽 끝에 써서 마이크에 가려지지 않게
+    ctx.save(); ctx.font = D.font(13, 800); const wlw = ctx.measureText('걷는 선 (스피커에서 10 m)').width; ctx.restore();
+    const wlLeft = !(mx < G.x0 + wlw + 24);
+    T(wlLeft ? G.x0 + 4 : G.x0 + G.w - 4, wy - 6, '걷는 선 (스피커에서 10 m)', 13, '#334155', wlLeft ? 'left' : 'right', 800, { stroke: 'rgba(238,242,250,.85)', strokeWidth: 3 });
     ctx.strokeStyle = '#7c3aed'; ctx.lineWidth = 2; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(G.X(-d / 2), G.Y(0)); ctx.lineTo(mx, wy); ctx.moveTo(G.X(d / 2), G.Y(0)); ctx.lineTo(mx, wy); ctx.stroke(); ctx.setLineDash([]);
     D.sphere(mx, wy, 9, PURPLE, { gloss: true }); T(mx, wy - 14, '🎤', 20, '#000', 'center', 700);
     S.hit = { mic: { x: mx, y: wy, G } };
@@ -407,7 +410,7 @@
   const CAP = 3;
   const cd = () => (PHONE ? { w: 136, h: 40 } : { w: 112, h: 52 });
   function cardGeo(c) {
-    const d = cd(), by = c.y + 34, bh = PHONE ? 30 + 3 * 44 + 4 : 30 + 2 * 58 + 6;
+    const d = cd(), by = c.y + 34, bh = PHONE ? 30 + 3 * 44 + 18 : 30 + 2 * 58 + 6;   // 휴대폰: 셋째 카드 아래에 'n/3' 글자 자리를 남겨요
     const bw = PHONE ? 148 : (c.w - 16 * 4) / 3, bxs = [0, 1, 2].map((i) => c.x + (PHONE ? 6 : 16) + i * (bw + (PHONE ? 6 : 16)));
     const bucket = (i) => ({ x: bxs[i], y: by, w: bw, h: bh });
     const slot = (b, k) => { const r = bucket(b); return PHONE ? { x: r.x + 6, y: r.y + 30 + k * 44, w: d.w, h: d.h } : { x: r.x + 8 + (k % 2) * (d.w + 5), y: r.y + 30 + Math.floor(k / 2) * 58, w: d.w, h: d.h }; };
@@ -499,12 +502,16 @@
     ctx.strokeStyle = '#8a95a8'; ctx.lineWidth = 2; ctx.strokeRect(G.x0, G.Y(-2), G.w, 16.6 * G.s);
     // 관객석
     ctx.save(); ctx.setLineDash([6, 4]); ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2; ctx.strokeRect(G.X(HX0), G.Y(HY0), (HX1 - HX0) * G.s, (HY1 - HY0) * G.s); ctx.restore();
-    D.label(G.X(HX0) + 4, G.Y(HY0) - 10, '관객석', { bg: 'rgba(30,41,59,.85)', size: 13, align: 'left' });
     const dead = hallDead();
     for (let sy = HY0 + 0.5; sy < HY1; sy += 1) for (let sx = HX0 + 0.5; sx < HX1; sx += 1) {
       const cc = Math.cos(Math.PI * (Math.hypot(sx - h.xa, sy) - Math.hypot(sx - h.xb, sy)) / lam); ctx.fillStyle = cc * cc < 0.12 ? '#ef4444' : 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(G.X(sx), G.Y(sy), 2.3, 0, TAU); ctx.fill();
     }
-    dead.forEach((q, i) => { const px = G.X(q.cx), py = G.Y(q.cy); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(px, py, 11, 0, TAU); ctx.stroke(); ctx.fillStyle = '#dc2626'; ctx.beginPath(); ctx.arc(px, py, 9.5, 0, TAU); ctx.fill(); T(px, py + 5, String(i + 1), 13, '#fff', 'center', 800); });
+    // 데드 스팟 번호 원: 스피커를 옮겨 데드 스팟이 촘촘해지면 원을 줄여 서로 겹치지 않게 하고, 너무 작으면 번호 없이 점만 그려요
+    const dp = dead.map((q) => ({ x: G.X(q.cx), y: G.Y(q.cy) }));
+    dp.forEach((p, i) => { let nd = 99; dp.forEach((o, j) => { if (j !== i) nd = Math.min(nd, Math.hypot(o.x - p.x, o.y - p.y)); }); const r = clamp(nd / 2 - 0.5, 5, 11);
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = r > 8 ? 3 : 2; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, TAU); ctx.stroke(); ctx.fillStyle = '#dc2626'; ctx.beginPath(); ctx.arc(p.x, p.y, r - 1.5, 0, TAU); ctx.fill();
+      if (r >= 8) T(p.x, p.y + r * 0.45, String(i + 1), Math.round(r * 1.18), '#fff', 'center', 800); });
+    D.label(G.X(HX0) + 4, G.Y(HY0) - 10, '관객석', { bg: 'rgba(30,41,59,.85)', size: 13, align: 'left' });   // 번호 원 위에 그려 가려지지 않게
     // 스피커
     const sp = [h.xa, h.xb]; S.hit = { hall: sp.map((sx) => ({ x: G.X(sx), y: G.Y(0) })), G };
     sp.forEach((sx, i) => { const px = G.X(sx), py = G.Y(0); D.shadow(() => { D.roundRect(px - 12, py - 20, 24, 22, 6); ctx.fillStyle = '#0f172a'; ctx.fill(); }, { blur: 4, y: 1 }); ctx.fillStyle = '#e2e8f0'; ctx.beginPath(); ctx.arc(px, py - 9, 6, 0, TAU); ctx.fill(); T(px, py + 18, 'S' + (i + 1), 13, '#fff', 'center', 800, { stroke: 'rgba(15,23,42,.8)', strokeWidth: 3 }); });

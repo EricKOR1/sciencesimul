@@ -174,8 +174,9 @@ class Placer {
     this.chips.forEach((c) => {
       if (this.drag && this.drag.c === c) return;
       const t = this.slotOf(c);
-      if (t) { c.w = this.o.cw; c.h = this.o.ch; this.moveTo(c, t.x + (t.w - c.w) / 2, t.y + (t.h - c.h) / 2, instant); }
-      else this.moveTo(c, c.home.x, c.home.y, instant);
+      // 놓인 카드는 칸 크기에 맞춰 줄여요 (칸보다 크면 옆의 글자·그림을 가려요)
+      if (t) { c.w = Math.min(this.o.cw, t.w); c.h = Math.min(this.o.ch, t.h); this.moveTo(c, t.x + (t.w - c.w) / 2, t.y + (t.h - c.h) / 2, instant); }
+      else { c.w = this.o.cw; c.h = this.o.ch; this.moveTo(c, c.home.x, c.home.y, instant); }
     });
   }
   /* 매 프레임: 놓인 카드가 움직이는 칸을 따라가게 */
@@ -289,7 +290,16 @@ class Reorder {
       T(sl.x - 12, sl.y + this.o.ch / 2 + 5, String(s + 1), 14, '#8795a8', 'right', 800);
     });
   }
-  drawCards() { this.cards.forEach((c) => { if (!(this.drag && this.drag.c === c)) drawChip(c); }); if (this.drag) drawChip(this.drag.c); }
+  drawCards() { this.cards.forEach((c) => { if (!(this.drag && this.drag.c === c)) drawChip(c); }); this.drawTags(); if (this.drag) drawChip(this.drag.c); }
+  /* 칸 이름(①, 1단계, 가장 작음…)은 카드에 가려지지 않게 카드 위 왼쪽 모서리에 작은 표로 다시 그려요 */
+  drawTags() {
+    this.o.slots.forEach((sl, s) => {
+      const nm = this.o.slotNames ? this.o.slotNames[s] : String(s + 1);
+      ctx.save(); ctx.font = D.font(11.5, 800); const w = Math.max(20, ctx.measureText(nm).width + 12); ctx.restore();
+      D.roundRect(sl.x + 6, sl.y - 8, w, 17, 8.5); ctx.fillStyle = 'rgba(71,85,105,.92)'; ctx.fill();
+      T(sl.x + 6 + w / 2, sl.y + 4.5, nm, 11.5, '#fff', 'center', 800);
+    });
+  }
   draw() { this.drawSlots(); this.drawCards(); }
 }
 

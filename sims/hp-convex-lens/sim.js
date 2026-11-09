@@ -536,20 +536,21 @@
     if (Math.abs(t.ix - tb) < 0.005) t.ix = tb; if (Math.abs(t.iy - ty) < 0.005) t.iy = ty;
   }
   function trueTip(a) { const im = imgOf(a, F_TR); return im ? { x: im.b, y: -OBJ_H * im.b / a } : null; }
-  function benchFrame() {      // 어두운 광학대 배경 + 축 + 눈금
+  function benchFrame(skip, noteTop) {      // 어두운 광학대 배경 + 축 + 눈금 (skip: 눈금 숫자를 비울 자리 cm — 물체 이름표와 겹치지 않게)
     D.shadow(() => { D.roundRect(BP.x, BP.y, BP.w, BP.h, 14); ctx.fillStyle = '#0f1a33'; ctx.fill(); }, { blur: 10, y: 3 });
     ctx.save(); D.roundRect(BP.x, BP.y, BP.w, BP.h, 14); ctx.clip();
     ctx.strokeStyle = 'rgba(190,205,235,.5)'; ctx.lineWidth = 1.4; ctx.setLineDash([8, 6]); ctx.beginPath(); ctx.moveTo(BP.x + 4, BP.AY); ctx.lineTo(BP.x + BP.w - 4, BP.AY); ctx.stroke(); ctx.setLineDash([]);
     for (let c = -Math.floor(-XL_CM / 5) * 5; c <= XR_CM; c += 5) {
       ctx.strokeStyle = 'rgba(190,205,235,.65)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(cx(c), BP.AY); ctx.lineTo(cx(c), BP.AY + (c % 10 === 0 ? 9 : 5)); ctx.stroke();
-      if (c % 10 === 0 && c !== 0) T(cx(c), BP.AY + 22, Math.abs(c) + '', 12.5, 'rgba(210,222,245,.9)', 'center', 700);
+      if (c % 10 === 0 && c !== 0 && !(skip || []).some((q) => (Array.isArray(q) ? Math.abs(q[0] - c) < q[1] : Math.abs(q - c) < (PHONE ? 8 : 4.5)))) T(cx(c), BP.AY + 22, Math.abs(c) + '', 12.5, 'rgba(210,222,245,.9)', 'center', 700);
     }
-    T(BP.x + BP.w - 12, BP.y + BP.h - 10, '※ 세로 방향은 ' + KY + '배로 늘려 그렸어요 (거리 눈금은 실제 비율)', 12.5, 'rgba(210,222,245,.75)', 'right', 700);
+    if (PHONE && noteTop) { T(BP.x + BP.w - 12, BP.y + 20, '※ 세로 방향은 ' + KY + '배로 늘려 그렸어요', 12.5, 'rgba(210,222,245,.75)', 'right', 700); T(BP.x + BP.w - 12, BP.y + 36, '(거리 눈금은 실제 비율)', 12.5, 'rgba(210,222,245,.75)', 'right', 700); }   // 광선 추적(휴대폰): 아래 렌즈 이름과 겹치지 않게 오른쪽 위에 두 줄로 (광학대 장면은 위 모서리에 작은 창이 있어 아래 그대로)
+    else T(BP.x + BP.w - 12, BP.y + BP.h - 10, '※ 세로 방향은 ' + KY + '배로 늘려 그렸어요 (거리 눈금은 실제 비율)', 12.5, 'rgba(210,222,245,.75)', 'right', 700);
     return () => ctx.restore();
   }
   function drawTrace() {
     const t = S.tr, a = t.a, f = F_TR, H = OBJ_H;
-    const end = benchFrame();
+    const end = benchFrame([-a], true);
     // 초점(F), 2F 표시
     [-1, 1].forEach((sg) => {
       [[1, 'F'], [2, '2F']].forEach(([k, nm]) => {
@@ -624,7 +625,7 @@
     const f = cfg.f, H = cfg.H, g = benchGeom(cfg.a, f, cfg.far, H);
     const Dm = BEN_D, dEff = cfg.cover ? Dm / 2 : Dm;
     const yTop = Dm / 2, yBot = cfg.cover ? 0 : -Dm / 2;
-    const end = benchFrame();
+    const end = benchFrame(cfg.sx != null ? [[cfg.sx, PHONE ? 4 : 2.5]] : []);   // 스크린 막대가 눈금 숫자를 가리지 않게 그 자리 숫자는 비워요
     // 렌즈 + 조리개 판
     const lh = 6.3 * PYC;
     lensShape(cx(0), lh, 8);

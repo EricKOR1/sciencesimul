@@ -657,10 +657,10 @@
     thickArrow(D, ex + r - 4, ey, ex + r + 82, ey - 8, wE, '#f87171');
     ctx.restore();
     if (vEm != null) { ctx.strokeStyle = 'rgba(255,200,180,.7)'; ctx.lineWidth = 1.6; ctx.beginPath(); for (let i = 0; i <= 20; i++) { const x = ex + r + 6 + i * 3.6, y = ey - 2 - i * 0.1 + Math.sin(i * 0.9 - t * 8) * 3; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke(); }
-    // 칸 이름
+    // 칸 이름 (집어 올린 숫자 카드가 칸 위에 떠 있을 때도 가려지지 않게 조금 위에)
     SLOTS.forEach((s) => {
       const r2 = E.slot[s.id], lx = r2.x - G.M.x + r2.w / 2, ly = r2.y - G.M.y;
-      D.text(lx, ly - 5 * fs, s.name, { size: 13 * fs, color: '#e6edff', weight: 800, stroke: 'rgba(5,10,30,.7)' });
+      D.text(lx, ly - 15 * fs, s.name, { size: 13 * fs, color: '#e6edff', weight: 800, stroke: 'rgba(5,10,30,.7)' });
     });
     // 식
     const done = slotsOK();

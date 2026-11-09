@@ -374,7 +374,7 @@
   function placeTile(tl, slotIdx, animate) {
     const st = S.stack;
     tl.slot = slotIdx;
-    const rp = slotIdx >= 0 ? { x: SL.slots[slotIdx].x + 10, y: SL.slots[slotIdx].y + (SL.slots[slotIdx].h - tileH(tl)) / 2 } : { x: tl.home.x, y: tl.home.y };
+    const rp = slotIdx >= 0 ? { x: SL.slots[slotIdx].x + 10, y: SL.slots[slotIdx].y + (SL.slots[slotIdx].h - tileH(tl)) / 2 + 6 }  /* 칸 왼쪽 위 '층 N' 글자 아래로 */ : { x: tl.home.x, y: tl.home.y };
     const tw = tileW(tl), th = tileH(tl);
     if (animate) { SciSim.tween(tl, { x: rp.x, y: rp.y, w: tw, h: th }, { duration: 0.45, ease: 'outBack' }); } else { tl.x = rp.x; tl.y = rp.y; tl.w = tw; tl.h = th; }
     st.bad = {};

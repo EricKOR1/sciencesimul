@@ -875,7 +875,7 @@
   ];
   const TCOL = { pcr: '#16a34a', ag: '#0ea5e9' };
   const TL = PHONE
-    ? { hy: 108, rowY: [176, 250, 324, 398], colX: { pcr: 232, ag: 460 }, cw: 220, ch: 62, labX: 62, pool: (k) => ({ x: 150 + (k % 2) * 300, y: 492 + Math.floor(k / 2) * 68 }), cardW: 270, cardH: 56 }
+    ? { hy: 108, rowY: [176, 250, 324, 398], colX: { pcr: 232, ag: 460 }, cw: 220, ch: 62, labX: 62, pool: (k) => ({ x: 150 + (k % 2) * 300, y: 492 + Math.floor(k / 2) * 68 }), cardW: 214, cardH: 56 }  // 카드가 표 칸(220)보다 넓으면 옆 칸 카드와 항목 이름을 가려요
     : { hy: 76, rowY: [128, 196, 264, 332], colX: { pcr: 380, ag: 640 }, cw: 250, ch: 58, labX: 135, pool: (k) => ({ x: 130 + (k % 4) * 180, y: 438 + Math.floor(k / 4) * 68 }), cardW: 168, cardH: 52 };
   function buildTable() {
     const b = new Board({ onChange() { b.items.forEach((c) => { c.ok = false; c.bad = false; c.warned = false; }); } });

@@ -216,8 +216,9 @@ class Placer {
     this.chips.forEach((c) => {
       if (this.drag && this.drag.c === c) return;
       const t = this.slotOf(c);
-      if (t) { c.w = this.o.cw; c.h = this.o.ch; this.moveTo(c, t.x + (t.w - c.w) / 2, t.y + (t.h - c.h) / 2, instant); }
-      else this.moveTo(c, c.home.x, c.home.y, instant);
+      // 놓인 카드는 칸 크기에 맞춰 줄여요 (칸보다 크면 옆의 글자·그림을 가려요)
+      if (t) { c.w = Math.min(this.o.cw, t.w); c.h = Math.min(this.o.ch, t.h); this.moveTo(c, t.x + (t.w - c.w) / 2, t.y + (t.h - c.h) / 2, instant); }
+      else { c.w = this.o.cw; c.h = this.o.ch; this.moveTo(c, c.home.x, c.home.y, instant); }
     });
   }
   /* 매 프레임: 놓인 카드가 움직이는 칸을 따라가게 */
@@ -524,10 +525,11 @@ function drawNameScene(dt) {
     ctx.fillStyle = '#fff'; ctx.strokeStyle = '#4b6b8a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(tp.x, tp.y, 5, 0, TAU); ctx.fill(); ctx.stroke();
   });
   pl.drawTargets();
-  pl.targets.forEach((t, i) => { D.sphere(t.x + 4, t.y + 4, 11, '#4b6b8a', { gloss: false, text: String(i + 1), textScale: 1.15 }); });
   if (pl.placed < 6) T(PHONE ? 12 : 20, PHONE ? 378 : 446, '👇 이름표를 끌어서 번호 칸에 놓아요 (눌러서 고르고 칸을 눌러도 돼요)', PHONE ? 12.5 : 14, '#5a6679', 'left', 800);
   else T(PHONE ? 12 : 20, PHONE ? 378 : 446, '✨ 모두 놓았어요! ✔ 확인하기를 눌러요', PHONE ? 13 : 14.5, '#166534', 'left', 800);
   pl.follow(); pl.update(dt); pl.drawChips();
+  // 번호 표시는 카드를 놓은 뒤에도 보이게 카드 위에 그려요
+  pl.targets.forEach((t, i) => { D.sphere(t.x + 4, t.y + 4, 11, '#4b6b8a', { gloss: false, text: String(i + 1), textScale: 1.15 }); });
 }
 const PT_NAME = {
   down(p) { return S.nr.namer.down(p); }, move(p) { S.nr.namer.move(p); }, up(p) { S.nr.namer.up(p); }, hover(p) { return S.nr.namer.hover(p); },
@@ -829,10 +831,11 @@ const AG = PHONE
 const AY = [-110, 40], AXT = [0, 7];
 function apAxes() { return makeAxes(AG.plot, AXT, AY); }
 function newTags() {
-  const A = apAxes(), by = A.Y(-84) + 1, hh = AG.plot.y + AG.plot.h - by - 3, cw = PHONE ? 118 : 118, ch = Math.min(34, hh);
+  // 폰에서는 이름표가 구간 폭 안에 들어가게 좁혀요. 과분극 칸은 구간 오른쪽에 붙여 '−80 mV' 글자를 가리지 않게 해요.
+  const A = apAxes(), by = A.Y(-84) + 1, hh = AG.plot.y + AG.plot.h - by - 3, cw = PHONE ? 84 : 118, ch = Math.min(34, hh);
   const zone = (a, b) => ({ x: A.X(a) + 3, w: A.X(b) - A.X(a) - 6 });
   const z = { dep: zone(0, 2), rep: zone(2, AP_CROSS), hyp: zone(AP_CROSS, 6) };
-  const tg = ['dep', 'rep', 'hyp'].map((id) => ({ id: 'z' + id, ans: id, x: z[id].x + (z[id].w - cw) / 2, y: by, w: cw, h: ch, hit: { x: z[id].x, y: AG.plot.y, w: z[id].w, h: AG.plot.h } }));
+  const tg = ['dep', 'rep', 'hyp'].map((id) => ({ id: 'z' + id, ans: id, x: id === 'hyp' ? z[id].x + z[id].w - cw : z[id].x + (z[id].w - cw) / 2, y: by, w: cw, h: ch, hit: { x: z[id].x, y: AG.plot.y, w: z[id].w, h: AG.plot.h } }));
   return new Placer({
     chips: [{ id: 'rep', label: '재분극' }, { id: 'hyp', label: '과분극' }, { id: 'dep', label: '탈분극' }].map((c) => Object.assign(c, { col: '#2563eb' })),
     targets: tg, tray: (i) => ({ x: (PHONE ? 8 : 84) + i * (cw + (PHONE ? 6 : 14)), y: AG.tray + (PHONE ? 0 : 0) }), cw, ch, onChange() {},

@@ -558,7 +558,7 @@
     ctx.fillStyle = sea; ctx.fillRect(P0.x0, P0.y0, P0.x1 - P0.x0, P0.y1 - P0.y0);
     const P = plotFrame(R, Object.assign({ bg: 'rgba(255,255,255,0)' }, SEO));
     // 깊이 띠 (놓을 위치)
-    bandKeys.forEach((k) => { const b = BANDS[k]; ctx.save(); ctx.fillStyle = 'rgba(255,255,255,.10)'; ctx.fillRect(P.x0, P.gy(b.d0), P.x1 - P.x0, P.gy(b.d1) - P.gy(b.d0)); ctx.setLineDash([5, 5]); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1.5; ctx.strokeRect(P.x0 + 1, P.gy(b.d0), P.x1 - P.x0 - 2, P.gy(b.d1) - P.gy(b.d0)); ctx.restore(); D.text(P.x0 + 8, P.gy(b.d0) + 16, b.label, { size: 12.5, weight: 800, color: '#fff', align: 'left', stroke: 'rgba(10,40,80,.55)', strokeWidth: 3 }); });
+    bandKeys.forEach((k) => { const b = BANDS[k]; ctx.save(); ctx.fillStyle = 'rgba(255,255,255,.10)'; ctx.fillRect(P.x0, P.gy(b.d0), P.x1 - P.x0, P.gy(b.d1) - P.gy(b.d0)); ctx.setLineDash([5, 5]); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1.5; ctx.strokeRect(P.x0 + 1, P.gy(b.d0), P.x1 - P.x0 - 2, P.gy(b.d1) - P.gy(b.d0)); ctx.restore(); D.text(P.x1 - 8, P.gy(b.d0) + 16, b.label, { size: 12.5, weight: 800, color: '#fff', align: 'right', stroke: 'rgba(10,40,80,.55)', strokeWidth: 3 }); });   // 층 이름은 오른쪽 위에: 남반구(왼쪽)에 놓이는 수괴 카드가 가리지 않게
     // 극 (얼음)
     ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillRect(P.x0, P.y0 - 5, (P.x1 - P.x0) * 0.04, 7); ctx.fillRect(P.x1 - (P.x1 - P.x0) * 0.04, P.y0 - 5, (P.x1 - P.x0) * 0.04, 7);
     // 침강 위치 고리

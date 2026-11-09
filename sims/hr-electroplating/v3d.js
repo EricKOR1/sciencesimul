@@ -56,7 +56,7 @@
         a: label('(+)극 구리판 · 녹아요', anode, { color: 'rgba(217,119,6,.95)', offset: [0, 2.6, 0] }),
         k: label('(−)극 철 열쇠 · 도금돼요', key, { color: 'rgba(37,99,235,.95)', offset: [0.6, 1.5, 0] }),
         s: label('CuSO₄ 수용액', [0, FY + 0.3, BR], { color: 'rgba(30,41,59,.85)' }),
-        i: label('Cu²⁺ →', [0, top - 0.5, 0], { color: 'rgba(30,111,224,.92)' }),
+        i: label('Cu²⁺ →', [0, top - 1.3, 0], { color: 'rgba(30,111,224,.92)' }),   // 용액 속으로 조금 내려 (−)극 이름표와 겹치지 않게
       };
       let showLab = true, txt = '';
       /* 부품 놓기: 2D에서 카드를 끌어 놓던 일을 3D 막대 단추로 해요 (slot L = (−)극, R = (+)극) */

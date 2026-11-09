@@ -25,7 +25,7 @@
           '.v3pan{position:absolute;z-index:2;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.8);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:12px;font-weight:700;line-height:1.35;pointer-events:none;max-width:48%}' +
           '.v3pan:empty{display:none}.v3pan.tr{right:10px;top:10px}.v3pan.bl{left:10px;bottom:10px}.v3pan .h{font-weight:900;margin-bottom:3px;font-size:12.5px}.v3pan .chip{display:inline-block;margin:1px 2px;padding:0 6px;border-radius:7px;background:rgba(255,255,255,.16);color:#eef3ff}.v3pan .chip.sel{background:#ffd34d;color:#1b2333}.v3pan.card{background:#fffdf7;color:#1b2333;border-top:5px solid var(--kc,#ffd34d);white-space:normal;max-width:min(260px,46%)}.v3pan.card .s{font-size:11.5px;font-weight:600;color:#475569}' +
           '.v3pan table{border-collapse:collapse}.v3pan th,.v3pan td{padding:1px 5px;text-align:center;white-space:nowrap}.v3pan th{color:#b9c6e4;text-align:left;font-weight:800}.v3pan td.e{color:#56658a}.v3pan .ok{color:#7ee2a8}.v3pan .hi{color:#ffd34d}' +
-          '@media (max-width:599px){.v3pan{font-size:10.5px;padding:4px 6px;max-width:58%}.v3pan.tr{top:auto;bottom:30px;right:8px}.v3pan.bl{left:8px;bottom:8px;max-width:42%}.v3pan th,.v3pan td{padding:0 3px}.v3pan .h{font-size:11px}}';
+          '@media (max-width:599px){.v3pan{font-size:10.5px;padding:4px 6px;max-width:58%}.v3pan.tr{top:auto;bottom:30px;right:8px}.v3pan.bl{left:8px;bottom:8px;max-width:42%}.v3pan th,.v3pan td{padding:0 3px}.v3pan .h{font-size:11px}.v3pan.tray>:not(.h){display:none}.v3pan.tray .h{margin:0}}';   // 폰: 놓은 카드 목록 판은 제목(개수)만 보여 3D 모형과 이름표를 가리지 않게 해요
           document.head.appendChild(s); }
         const el = document.createElement('div'); el.className = 'v3pan ' + (cls || 'tr'); ctx.renderer.domElement.parentElement.appendChild(el);
         let last = ''; el.put = (html) => { if (html !== last) { last = html; el.innerHTML = html; } }; return el;
@@ -281,7 +281,7 @@
           const b = L.S.b, P = L.PARTS[b.sel];
           if (P) cardP.style.setProperty('--kc', P.col || '#ffd34d');
           cardP.put(P && !b.placed[b.sel] ? '<div class="h">🧩 ' + P.name + '</div><div class="s">' + P.clue + '</div><div class="s">→ 알맞은 <b>?</b> 자리 단추를 눌러요</div>' : '');
-          trayP.put('<div class="h">🧩 부품 카드 ' + b.placed.filter(Boolean).length + ' / ' + b.placed.length + '</div>' + b.tok.map((t) => { const q = L.PARTS[t.pi]; return '<span class="chip' + (t.pi === b.sel && !b.placed[t.pi] ? ' sel' : '') + '">' + (b.placed[t.pi] ? '✅ ' : '') + q.name + '</span>'; }).join(''));
+          trayP.classList.add('tray'); trayP.put('<div class="h">🧩 부품 카드 ' + b.placed.filter(Boolean).length + ' / ' + b.placed.length + '</div>' + b.tok.map((t) => { const q = L.PARTS[t.pi]; return '<span class="chip' + (t.pi === b.sel && !b.placed[t.pi] ? ' sel' : '') + '">' + (b.placed[t.pi] ? '✅ ' : '') + q.name + '</span>'; }).join(''));
           return;
         }
         if (mapOn()) {
@@ -289,13 +289,13 @@
           if (c) cardP.style.setProperty('--kc', c.col || '#ffd34d');
           cardP.put(c ? '<div class="h">🃏 ' + (c.icon ? c.icon + ' ' : '') + c.label + '</div>' + (c.sub ? '<div class="s">' + c.sub + '</div>' : '') + '<div class="s">→ 알맞은 구역 단추를 눌러요</div>' : '');
           const left = so.cards.filter((q) => !q.zone);
-          trayP.put('<div class="h">📍 위치 지도 ' + so.cards.filter((q) => q.zone).length + ' / ' + so.cards.length + '</div>' + ZN.map(([z, t]) => '<div>' + t + ' ' + so.cards.filter((q) => q.zone === z).map((q) => '<span class="chip' + (q === c ? ' sel' : '') + '">' + q.label + '</span>').join('') + '</div>').join('') + (left.length ? '<div style="color:#b9c6e4">남은 카드 ' + left.map((q) => '<span class="chip' + (q === c ? ' sel' : '') + '">' + q.label + '</span>').join('') + '</div>' : ''));
+          trayP.classList.add('tray'); trayP.put('<div class="h">📍 위치 지도 ' + so.cards.filter((q) => q.zone).length + ' / ' + so.cards.length + '</div>' + ZN.map(([z, t]) => '<div>' + t + ' ' + so.cards.filter((q) => q.zone === z).map((q) => '<span class="chip' + (q === c ? ' sel' : '') + '">' + q.label + '</span>').join('') + '</div>').join('') + (left.length ? '<div style="color:#b9c6e4">남은 카드 ' + left.map((q) => '<span class="chip' + (q === c ? ' sel' : '') + '">' + q.label + '</span>').join('') + '</div>' : ''));
           return;
         }
         cardP.put('');
         if (L.S.mode === 'zoom' && L.S.zm) {
           const z = L.S.zm, bar = (t, v, col) => '<tr><th>' + t + '</th><td style="text-align:left"><span style="display:inline-block;height:9px;border-radius:5px;vertical-align:middle;background:' + col + ';width:' + Math.round(Math.max(0, Math.min(100, v)) * 0.8) + 'px"></span></td><td>' + Math.round(v) + '</td></tr>';
-          trayP.put('<div class="h">게이지 (처리 전 = 100)</div><table>' + bar('산소 소비', z.o2.v, '#ef4444') + bar('ATP 생산', z.atp.v, '#f59e0b') + '</table>');
+          trayP.classList.remove('tray'); trayP.put('<div class="h">게이지 (처리 전 = 100)</div><table>' + bar('산소 소비', z.o2.v, '#ef4444') + bar('ATP 생산', z.atp.v, '#f59e0b') + '</table>');
         } else trayP.put('');
       }
       setCut(cut);

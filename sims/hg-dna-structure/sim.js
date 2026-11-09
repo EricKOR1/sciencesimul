@@ -116,8 +116,9 @@
       let lx = -w / 2 + 10, maxW = w - 20;
       if (c.icon) { E(c.icon, -w / 2 + 24, 1, 22); lx = -w / 2 + 40; maxW = w - 48; }
       if (c.sub) {
-        TF(lx, -2, c.label, maxW, 14.5, 12, '#26324a', 'left', 800);
-        TF(lx, 16, c.sub, maxW, 12, 10.5, '#5a6679', 'left', 700);
+        const sy = Math.min(16, h / 2 - 7), ly = Math.min(-2, sy - 16);   // 상자 속 낮은 칩(h < 46)에서도 둘째 줄이 테두리 밖으로 넘치지 않게
+        TF(lx, ly, c.label, maxW, h < 44 ? 13.5 : 14.5, 12, '#26324a', 'left', 800);
+        TF(lx, sy, c.sub, maxW, h < 44 ? 11 : 12, 10, '#5a6679', 'left', 700);
       } else {
         const sz = fitSize(c.label, maxW, 14.5, 12.5, 800);
         ctx.save(); ctx.font = D.font(sz, 800);
@@ -142,8 +143,9 @@
     boxAt(p) { for (const b of this.boxes) if (inRect(p.x, p.y, b)) return b; return null; }
     chipRect(box, k, n) {
       if (box.slot) return box.slot;
-      const cols = box.cols || 2, gap = box.gap || 6, rows = Math.max(1, Math.ceil(n / cols));
-      const kw = (box.w - gap * (cols + 1)) / cols, hdr = box.hdr || 26, avail = box.h - hdr - 6;
+      const gap = box.gap || 6, hdr = box.hdr || 26, avail = box.h - hdr - 6 - (box.foot || 0);   // foot: 상자 아래 안내 글자 자리
+      let cols = box.cols || 2; while (cols < Math.min(n, 6) && Math.ceil(n / cols) * 20 > avail) cols++;   // 한 상자에 카드가 몰리면 열을 늘려 칩끼리 겹치지 않게
+      const rows = Math.max(1, Math.ceil(n / cols)), kw = (box.w - gap * (cols + 1)) / cols;
       const sp = Math.min(this.o.kh + 4, avail / rows), col = k % cols, row = Math.floor(k / cols);
       return { x: box.x + gap + col * (kw + gap), y: box.y + hdr + 1 + row * sp, w: kw, h: Math.max(18, Math.min(this.o.kh, sp - 3)) };
     }
@@ -588,7 +590,8 @@
     x.m.forEach((m, i) => {
       const y = xrY(clamp(m.mm, -105, 105)), h = xrHandle(i);
       ctx.save(); ctx.strokeStyle = cols[i]; ctx.lineWidth = 2.5; ctx.setLineDash(m.drag ? [] : [8, 5]);
-      ctx.beginPath(); ctx.moveTo(XB.x + 34, y); ctx.lineTo(XB.x + XB.w - 8, y); ctx.stroke(); ctx.restore();
+      const nearBig = Math.abs(Math.abs(clamp(m.mm, -105, 105)) % 50 - (Math.abs(clamp(m.mm, -105, 105)) % 50 > 25 ? 50 : 0)) * Math.abs(xrY(1) - xrY(0)) < 9;   // 50 mm 눈금 숫자 높이면 숫자 오른쪽에서 선을 시작해 가리지 않게
+      ctx.beginPath(); ctx.moveTo(XB.x + (nearBig ? 60 : 34), y); ctx.lineTo(XB.x + XB.w - 8, y); ctx.stroke(); ctx.restore();
       D.shadow(() => { ctx.beginPath(); ctx.arc(h.x, y, m.drag ? 15 : 13, 0, TAU); ctx.fillStyle = cols[i]; ctx.fill(); }, { blur: 6, y: 1 });
       T(h.x, y + 5, String(i + 1), 14, '#0b1220', 'center', 800);
       if (!m.drag && !x.recA && !x.recB && i === 0) D.ring(h.x, y, 20, t, { color: cols[i], speed: 0.9, width: 2 });
@@ -981,7 +984,7 @@
   function talkInit() {
     talk = selectable({
       cards: TLC.map((c) => ({ id: c.id, label: c.label, sub: c.sub, icon: c.icon, col: c.col })),
-      boxes: [{ id: 'board', label: '발표 자료 보드: 시간 순서대로 4~6장', col: '#16a34a', x: TKB.x, y: TKB.y, w: TKB.w, h: TKB.h, cols: 2, hdr: 32, gap: PHONE ? 22 : 30 }],
+      boxes: [{ id: 'board', label: '발표 자료 보드: 시간 순서대로 4~6장', col: '#16a34a', x: TKB.x, y: TKB.y, w: TKB.w, h: TKB.h, cols: 2, hdr: 32, gap: PHONE ? 22 : 30, foot: 20 }],
       tray: (i) => ({ x: TKW.x0 + (i % TKW.per) * TKW.dx, y: TKW.y0 + Math.floor(i / TKW.per) * TKW.dy }),
       cw: TKW.cw, ch: TKW.ch, kh: PHONE ? 42 : 48,
       afterTap: (c) => { S.talk.sel = c.id; },

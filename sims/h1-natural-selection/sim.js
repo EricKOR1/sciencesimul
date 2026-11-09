@@ -779,10 +779,10 @@
     const zones = STAGES.map((s, i) => PHONE
       ? { id: 'o' + i, x: 8, y: 52 + i * 98, w: 504, h: 92, label: '', cap: 1, head: 0, color: '#16a34a', fill: 'rgba(220,252,231,.5)', cols: 1,
           draw: (z) => { const c = tBoard.inZone(z.id)[0]; D.text(z.x + 12, z.y + 16, (i + 1) + '단계', { size: 13, weight: 800, color: '#15803d', align: 'left' }); if (c && c.n === i) D.text(z.x + z.w / 2, z.y + z.h - 8, '🔬 ' + STAGES[i].map, { size: 12, weight: 700, color: '#15803d' }); } }
-      : { id: 'o' + i, x: 14 + i * 156, y: 56, w: 148, h: 190, label: '', cap: 1, head: 0, color: '#16a34a', fill: 'rgba(220,252,231,.5)', cols: 1,
-          draw: (z) => { const c = tBoard.inZone(z.id)[0]; D.text(z.x + 10, z.y + 17, (i + 1) + '단계', { size: 13, weight: 800, color: '#15803d', align: 'left' }); if (c && c.n === i) drawWrap(z.x + z.w / 2, z.y + 138, STAGES[i].map.replace('모의실험: ', '🔬 '), z.w - 14, 12.5, { weight: 700, color: '#15803d', lh: 1.2 }); } });
+      : { id: 'o' + i, x: 14 + i * 156, y: 56, w: 148, h: 190, label: '', cap: 1, head: 22,  // 'N단계' 글자 아래에 카드 color: '#16a34a', fill: 'rgba(220,252,231,.5)', cols: 1,
+          draw: (z) => { const c = tBoard.inZone(z.id)[0]; D.text(z.x + 10, z.y + 17, (i + 1) + '단계', { size: 13, weight: 800, color: '#15803d', align: 'left' }); if (c && c.n === i) drawWrap(z.x + z.w / 2, z.y + 156, STAGES[i].map.replace('모의실험: ', '🔬 '), z.w - 14, 12.5, { weight: 700, color: '#15803d', lh: 1.2 }); } });
     zones.forEach((z, i) => { z.center = false; });
-    tBoard = new Board({ zones, tray: PHONE ? { x: 12, y: 552, w: 496, cols: 2 } : { x: 14, y: 300, w: 772, cols: 5 }, cw: PHONE ? 244 : 148, ch: PHONE ? 66 : 112, gap: 8, vertical: false, maxLines: PHONE ? 3 : 5, onReject: (c, z, m) => say(m, true) });
+    tBoard = new Board({ zones, tray: PHONE ? { x: 12, y: 560, w: 496, cols: 2 } : { x: 14, y: 300, w: 772, cols: 5 }, cw: PHONE ? 244 : 148, ch: PHONE ? 66 : 112, gap: 8, vertical: false, maxLines: PHONE ? 3 : 5, onReject: (c, z, m) => say(m, true) });
     // 칸 안 카드는 위쪽에 놓이도록
     [3, 0, 4, 2, 1].forEach((i) => tBoard.add({ id: STAGES[i].id, label: STAGES[i].label, n: i, border: '#cfd8e6' }));
     tBoard.layout(true);
@@ -790,7 +790,7 @@
   function drawTheory(t) {
     D.text(VW / 2, PHONE ? 30 : 36, '📜 다윈의 자연선택설 — 순서대로 카드를 놓아요', { size: PHONE ? 14.5 : 18, weight: 800, color: '#14532d' });
     tBoard.draw(t);
-    D.text(VW / 2, PHONE ? 543 : 286, '👇 아직 놓지 않은 카드', { size: 13, weight: 800, color: '#64748b' });
+    D.text(VW / 2, PHONE ? 552 : 286, '👇 아직 놓지 않은 카드', { size: 13, weight: 800, color: '#64748b' });
   }
   /* ---------- 항생제 내성 세균 ---------- */
   const BA = { list: [], phase: 'ready', cycles: 0, treats: 0, t: 0, drops: [], dishT: 0 };

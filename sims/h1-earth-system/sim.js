@@ -1009,7 +1009,7 @@
     flow([P('geo')[0] + 30, P('geo')[1] + nh], [P('hyd')[0] - 30, P('hyd')[1] + nh], { both: true, col: IC, cp: [(P('geo')[0] + P('hyd')[0]) / 2, lowY + 30], label: '침식·퇴적·용해', lp: [(P('geo')[0] + P('hyd')[0]) / 2, lowY - 2 + (PHONE ? 0 : 4)] });
     // 에너지원 → 권역
     const EC = '#ea580c';
-    flow([P('sun')[0] + (PHONE ? 20 : 40), P('sun')[1] + nh + 4], [P('atm')[0] - nw + 8, P('atm')[1] - 6], { col: EC, w: 5, dot: '#fff7ed', label: '바람·구름·날씨', lbg: '#fff7ed', lcol: '#9a3412', lp: PHONE ? [140, 150] : [250, 150] });
+    flow([P('sun')[0] + (PHONE ? 20 : 40), P('sun')[1] + nh + 4], [P('atm')[0] - nw + 8, P('atm')[1] - 6], { col: EC, w: 5, dot: '#fff7ed', label: '바람·구름·날씨', lbg: '#fff7ed', lcol: '#9a3412', lp: PHONE ? [222, 150] : [250, 150] });
     flow([P('moon')[0] - (PHONE ? 10 : 10), P('moon')[1] + nh + 4], [P('hyd')[0] + (PHONE ? 16 : 20), P('hyd')[1] - nh - 2], { col: EC, w: 3.5, dot: '#fff7ed', label: '밀물·썰물', lbg: '#fff7ed', lcol: '#9a3412', lp: PHONE ? [510, 200] : [655, 200] });
     flow([P('core')[0], P('core')[1] - nh - 2], [P('geo')[0], P('geo')[1] + nh + 2], { col: EC, w: 5, dot: '#fff7ed', label: '화산·지진·판 이동', lbg: '#fff7ed', lcol: '#9a3412', lp: PHONE ? [112, 460] : [190, 385] });
     // 노드
