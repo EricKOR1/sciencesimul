@@ -247,7 +247,7 @@
       }
       /* 📏 장력 기록 그래프: 2D처럼 기록한 점(F–v²)과 직선을 3D 화면에도 보여 줘요 */
       const gEl = document.createElement('div');
-      gEl.style.cssText = 'position:absolute;' + (PHN ? 'left:8px;bottom:8px;' : 'right:10px;top:10px;') + 'padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.8);color:#fff;font-size:' + (PHN ? 10.5 : 12) + 'px;font-weight:800;pointer-events:none;display:none';
+      gEl.style.cssText = 'position:absolute;' + (PHN ? 'left:8px;bottom:30px;' : 'right:10px;top:10px;') + 'padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.8);color:#fff;font-size:' + (PHN ? 10.5 : 12) + 'px;font-weight:800;pointer-events:none;display:none';
       ctx.renderer.domElement.parentElement.appendChild(gEl);
       let gSig = null;
       /* 📱 스마트폰 센서: 2D 캔버스의 센서 막대 · 그래프를 3D 화면에도 보여 줘요 (회전 그네: 수평 · 수직, 관람차: 연직 센서 그래프) */

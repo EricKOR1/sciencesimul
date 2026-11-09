@@ -164,7 +164,7 @@
       const AAN = { M: 'Met', A: 'Ala', H: 'His', L: 'Leu', T: 'Thr', P: 'Pro', V: 'Val', K: 'Lys', W: 'Trp', R: 'Arg', E: 'Glu', S: 'Ser', D: 'Asp', G: 'Gly', F: 'Phe', Y: 'Tyr', Q: 'Gln' };
       const NA = 14, CW = narrow ? 12 : 15;
       const protEl = document.createElement('div');
-      protEl.style.cssText = 'position:absolute;' + (narrow ? 'left:8px;bottom:8px;' : 'right:10px;top:10px;') + 'padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.8);color:#fff;font-size:' + (narrow ? 10.5 : 12) + 'px;font-weight:800;pointer-events:none;display:none;max-width:' + (NA * (CW + 2) + 18) + 'px';
+      protEl.style.cssText = 'position:absolute;' + (narrow ? 'left:8px;bottom:30px;' : 'right:10px;top:10px;') + 'padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.8);color:#fff;font-size:' + (narrow ? 10.5 : 12) + 'px;font-weight:800;pointer-events:none;display:none;max-width:' + (NA * (CW + 2) + 18) + 'px';
       renderer.domElement.parentElement.appendChild(protEl);
       let protSig = null;
       function drawProt() {

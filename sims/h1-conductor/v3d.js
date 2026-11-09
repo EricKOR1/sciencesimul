@@ -65,7 +65,7 @@
         const S2 = lesson() && lesson().S, hideKind = !!(S2 && S2.sub === 'cls' && !S2.model.clsOK);   // 구분하기 미션의 답을 미리 알려 주지 않아요
         const nm = hideKind ? MATS[s.mat].name.replace(/ \(.*\)$/, '') : MATS[s.mat].name;
         const base = s.kind === 'metal' ? '원자 사이를 자유롭게 돌아다니는 <b>자유전자</b>가 많아요.' : s.kind === 'insul' ? '전자가 원자에 단단히 묶여 <b>자유전자가 없어요</b>.' : '자유전자가 <b>아주 적어요</b>.';
-        return '<b>' + nm + '</b> · 자유전자 <b>' + s.n + '개</b><br>' + base + '<br>' + (s.volt ? '⚡ 전압을 걸어 자유전자가 + 극 쪽으로 이동해요.' : '전압을 걸지 않으면 전자는 제멋대로 움직여요. (옆의 <b>⚡ 전압 걸기</b>)');
+        return '<b>' + nm + '</b> · 자유전자 <b>' + s.n + '개</b><br>' + base + '<br>' + (S2 && S2.sub === 'cls' ? '화면의 <b>세 물질 비교</b>표에서 자유전자 수와 전류를 보고 종류를 골라요.' : s.volt ? '⚡ 전압을 걸어 자유전자가 + 극 쪽으로 이동해요.' : '전압을 걸지 않으면 전자는 제멋대로 움직여요. (옆의 <b>⚡ 전압 걸기</b>)');
       }
       function applyKind(s) {
         const kind = s.kind, atomC = scene === 'semi' ? MATS.si.atom : MATS[s.mat].atom;
@@ -73,11 +73,25 @@
         eB.visible = kind !== 'metal';
         for (let i = 0; i < NE; i++) eMesh.setColorAt(i, i < s.green ? cG : cB); eMesh.instanceColor.needsUpdate = true;
         const c = s.n * (s.volt || 0);
-        curLab.set(scene === 'semi' ? (s.rel < 10 ? '전류 약함' : s.rel < 100 ? '전류 커져요' : '전류 매우 커져요') : (!s.volt ? '전압을 걸어 보세요' : kind === 'insul' ? '전류 거의 없음' : kind === 'metal' ? '전류 잘 흘러요' : c < 4 ? '전류 조금 흘러요' : '전류 흘러요'));
+        const S4 = lesson() && lesson().S; curLab.set(S4 && S4.sub === 'cls' && scene !== 'semi' ? '구리 (자유전자 많음)' : scene === 'semi' ? (s.rel < 10 ? '전류 약함' : s.rel < 100 ? '전류 커져요' : '전류 매우 커져요') : (!s.volt ? '전압을 걸어 보세요' : kind === 'insul' ? '전류 거의 없음' : kind === 'metal' ? '전류 잘 흘러요' : c < 4 ? '전류 조금 흘러요' : '전류 흘러요'));
         nLab.set('자유전자 ' + s.n + '개');
         info(textOf(s));
       }
 
+      /* 구분하기(cls): 2D처럼 세 물질의 자유전자 수 · 전류 비교표를 3D 화면에도 보여 줘요. 종류(도체 등)는 맞힌 뒤에만 보여요 */
+      if (!document.getElementById('cd3d-cls')) { const st2 = document.createElement('style'); st2.id = 'cd3d-cls'; st2.textContent =
+        '.cd-cls{position:absolute;right:10px;top:10px;padding:7px 9px;border-radius:12px;background:rgba(8,12,24,.76);color:#fff;font-size:12px;font-weight:700;pointer-events:none}.cd-cls .h{font-weight:900;margin-bottom:4px}.cd-cls table{border-collapse:collapse}.cd-cls td,.cd-cls th{padding:2px 6px;text-align:center}.cd-cls th{color:#c9d3e6;font-weight:800}.cd-cls td:first-child{text-align:left;font-weight:900}.cd-cls .k{color:#86efac}' +
+        '@media (max-width:599px){.cd-cls{top:auto;bottom:30px;right:8px;font-size:10.5px;padding:4px 6px}.cd-cls td,.cd-cls th{padding:1px 4px}}';
+        document.head.appendChild(st2); }
+      const clsEl = document.createElement('div'); clsEl.className = 'cd-cls'; clsEl.style.display = 'none'; ctx.renderer.domElement.parentElement.appendChild(clsEl);
+      let clsSig = '';
+      function drawCls() {
+        const L = lesson(), S = L && L.S, on = !!(S && S.mode === 'model' && S.sub === 'cls' && L.DEFN);
+        const sig = on ? 'on' + (S.model.clsOK ? 1 : 0) : ''; if (sig === clsSig) return; clsSig = sig; clsEl.style.display = on ? '' : 'none'; if (!on) return;
+        const cur = (n) => (n > 20 ? '많이 흘러요' : n === 0 ? '흐르지 않아요' : '아주 조금');
+        clsEl.innerHTML = '<div class="h">🗂️ 세 물질 비교 (모형)</div><table><tr><th></th><th>자유전자</th><th>전류</th>' + (S.model.clsOK ? '<th>종류</th>' : '') + '</tr>' +
+          ['cu', 'gl', 'si'].map((id) => '<tr><td>' + L.MATNAME[id] + '</td><td>' + L.DEFN[id] + '개</td><td>' + cur(L.DEFN[id]) + '</td>' + (S.model.clsOK ? '<td class="k">' + L.KIND[id] + '</td>' : '') + '</tr>').join('') + '</table>';
+      }
       const pl = controls.player({
         duration: 8, loop: true, autoplay: false, label: '전류 흐름',
         phases: [[0, '자유전자 움직임'], [0.4, '전압을 걸면']],
@@ -88,6 +102,7 @@
       let lastKey = '', hold = 0;
       return {
         update(dt, t) {
+          drawCls();
           const s = readState(); cur = s;
           const S3 = lesson() && lesson().S, key = (S3 && S3.sub === 'cls' && !S3.model.clsOK ? 'h|' : '') + scene + '|' + (s.mat || '') + '|' + s.kind + '|' + s.n + '|' + s.green + '|' + (s.volt ? 1 : 0) + '|' + (s.d == null ? '' : s.d + ',' + Math.round(s.T) + ',' + Math.round(s.L));
           if (key !== lastKey) { lastKey = key; applyKind(s); }

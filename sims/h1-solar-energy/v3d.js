@@ -226,8 +226,8 @@
             if (!base) resetBase();
             stepFusion(Math.min(dt, 0.05)); updateBursts(dt);
             if (phase === 'run' && base && FU2() && FU2().heTotal > base.he) {   // 2D에서 헬륨 핵이 생겼는데 3D가 아직이면 곧 이어서 융합시켜요
-              forceT += dt;
-              if (forceT > 1.2) {
+              const now = performance.now(); if (!forceT) forceT = now;   // 실제 시간 기준 (느린 기기에서도 곧 따라가요)
+              if (now - forceT > 900) {
                 const P = () => ps.filter((q) => q.kind === 'p'), Dd = () => ps.filter((q) => q.kind === 'd');
                 while (Dd().length < 2 && P().length >= 2) { const pp = P(); fuseDD(pp[0], pp[1]); }
                 const dd = Dd(); if (dd.length >= 2) fuseHe(dd[0], dd[1]);

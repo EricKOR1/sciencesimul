@@ -631,7 +631,7 @@
       $$('#qmode button').forEach((b) => b.classList.toggle('on', b.dataset.m === f.mode));
       $('#bThrow').disabled = f.mode !== 'rand' || f.placed >= NQ; $('#bThrow').textContent = f.placed >= NQ ? '✅ 방형구 ' + NQ + '개 설치 완료' : '🎲 방형구 던지기 (' + f.placed + ' / ' + NQ + ')';
       const last = f.log.length ? QPOS[f.log[f.log.length - 1]] : null;
-      $('#fldNote').innerHTML = f.mode === 'rand' ? (last ? '<b>' + f.log.length + '번</b> 좌표: 가로 ' + last[0].toFixed(1) + ' m, 세로 ' + last[1].toFixed(1) + ' m. 방형구를 누르면 열어서 세요.' : '난수로 뽑은 좌표에 방형구가 떨어져요.') : '초지를 눌러 보세요. 마음대로 고르면 어떤 일이 생길까요?';
+      $('#fldNote').innerHTML = f.mode === 'rand' ? (last ? '<b>' + f.log.length + '번</b> 좌표: 가로 ' + last[0].toFixed(1) + ' m, 세로 ' + last[1].toFixed(1) + ' m. <span class="only2d">방형구를 누르면 열어서 세요.</span><span class="only3d">🔍 방형구 확대로 열어서 세요.</span>' : '난수로 뽑은 좌표에 방형구가 떨어져요.') : '<span class="only2d">초지를 눌러 보세요.</span><span class="only3d">아래 👆 눈에 띄는 곳 고르기를 눌러 보세요.</span> 마음대로 고르면 어떤 일이 생길까요?';
       $('#bZPrev').disabled = f.placed < 2; $('#bZNext').disabled = f.placed < 2;
     }
     if (S.zoom) $('#zoomNote').innerHTML = f && f.placed > 0 ? '<b>' + (S.zoom.q + 1) + '번</b> 방형구를 보고 있어요. 센 식물 <b>' + zoomCount(S.zoom.q) + '</b>포기' + (S.zoom.done['q' + S.zoom.q] ? ' · ✅ 모두 읽었어요' : '') : '먼저 초지에 방형구를 설치해요.';

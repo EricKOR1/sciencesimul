@@ -961,7 +961,7 @@
 
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
-    S, MAT, MID, VW, VH, get game() { return game; }, setMode, enterLevel, updateCtl, placeSample, rackPos, sortGeo, poolPos, binPos, layoutChips, setMat, tokRect, partRect, slotRect, fabSlot, fabLayout, fabDrop, fabCheck, partsCheck, placeToken, chipDrop, semiRel,
+    S, MAT, MID, DEFN, MATNAME, KIND, VW, VH, get game() { return game; }, setMode, enterLevel, updateCtl, placeSample, rackPos, sortGeo, poolPos, binPos, layoutChips, setMat, tokRect, partRect, slotRect, fabSlot, fabLayout, fabDrop, fabCheck, partsCheck, placeToken, chipDrop, semiRel,
     measureAll() { MAT.forEach((m) => { S.test.meas[m.id] = true; }); },
     sortAll(right) { S.test.chips.forEach((c) => { c.bin = right === false ? (MID[c.id].tier + 1) % 3 : MID[c.id].tier; }); layoutChips(); },
     fabSolve() { S.apply.fab.forEach((c) => { c.slot = c.id; }); fabLayout(); S.apply.fab.forEach((c) => { c.x = c.tx; c.y = c.ty; }); },

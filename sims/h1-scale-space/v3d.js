@@ -38,9 +38,9 @@
       let dexSig = '';
       function drawDex() {
         const L = window.__sim, S = L && L.S; if (!S || !S.seen || !L.OBJ || S.mode !== 'zoom') { if (dexSig) { dexSig = ''; dexEl.style.display = 'none'; } return; }
-        const sig = [...S.seen].join(',') + '|' + S.nearId; if (sig === dexSig) return; dexSig = sig; dexEl.style.display = '';
-        const near = L.OBJ.find((o) => o.id === S.nearId);
-        dexEl.innerHTML = '📖 장면 도감 ' + S.seen.size + ' / ' + L.OBJ.length + '<div class="d">' + L.OBJ.map((o) => '<i class="' + (S.seen.has(o.id) ? 'on' : '') + (o.id === S.nearId ? ' cur' : '') + '"></i>').join('') + '</div><div class="n">작은 것 ← → 큰 것' + (near ? ' · 지금: ' + near.short : '') + '</div>';
+        let near = L.OBJ[0]; L.OBJ.forEach((o) => { if (Math.abs(o.le - S.e) < Math.abs(near.le - S.e)) near = o; });   // 2D와 같은 '가장 가까운 장면'
+        const sig = [...S.seen].join(',') + '|' + near.id; if (sig === dexSig) return; dexSig = sig; dexEl.style.display = '';
+        dexEl.innerHTML = '📖 장면 도감 ' + S.seen.size + ' / ' + L.OBJ.length + '<div class="d">' + L.OBJ.map((o) => '<i class="' + (S.seen.has(o.id) ? 'on' : '') + (o.id === near.id ? ' cur' : '') + '"></i>').join('') + '</div><div class="n">작은 것 ← → 큰 것' + (near ? ' · 지금: ' + near.short : '') + '</div>';
       }
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.05 }, o || {}));
       const V = THREE.Vector3;

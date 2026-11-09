@@ -134,9 +134,11 @@
       [[0, 0, 0], [0, 0.9, 0.5], [0, -0.9, 0.4]].forEach((o) => { const off = new THREE.Vector3(...o); sunG.add(arrow(sunPos.clone().multiplyScalar(0.74).add(off), sunPos.clone().multiplyScalar(0.42).add(off), 0xffd34d, 0.07)); });
       const inner = [new THREE.Vector3(0.6, -0.5, -1).normalize(), new THREE.Vector3(0.9, 0.4, -0.7).normalize(), new THREE.Vector3(0.2, -0.9, -0.5).normalize()];
       inner.forEach((d) => coreG.add(arrow(d.clone().multiplyScalar(R + 0.15), d.clone().multiplyScalar(R + 1.15), 0xff7a3c, 0.06)));
-      const lSun = label('태양 에너지', sun, { offset: [0, 2.3, 0], color: 'rgba(180,120,0,.92)' });
-      const lIn = label('지구 내부 에너지', [inner[0].x * (R + 1.2), inner[0].y * (R + 1.2), inner[0].z * (R + 1.2)], { color: 'rgba(200,80,30,.92)' });
-      const lMoon = label('달 · 조력 에너지', moon, { offset: [0, 0.9, 0], color: 'rgba(80,90,120,.92)' });
+      // 에너지원 이름표: 꺼져 있어도 보이고, 눌러서 켜고 끌 수 있어요 (2D에서 그림을 누르는 것과 같아요)
+      const tapSrc = (k) => () => { const L = lesson(); if (mode === 'all' && L && L.toggleSrc && L.S && (L.S.mode === 'energy' || L.S.mode === 'pair')) L.toggleSrc(k); };
+      const lSun = label('태양 에너지', sun, { offset: [0, 2.3, 0], color: 'rgba(180,120,0,.92)', tap: tapSrc('sun') });
+      const lIn = label('지구 내부 에너지', [inner[0].x * (R + 1.2), inner[0].y * (R + 1.2), inner[0].z * (R + 1.2)], { color: 'rgba(200,80,30,.92)', tap: tapSrc('core') });
+      const lMoon = label('달 · 조력 에너지', moon, { offset: [0, 0.9, 0], color: 'rgba(80,90,120,.92)', tap: tapSrc('moon') });
       const lOut = label('외권 (우주)', sat, { size: 12, offset: [0, 0.45, 0] });
 
       const labs = [];
@@ -223,8 +225,12 @@
           moon.position.set(Math.cos(a) * 5.4, 0.9, Math.sin(a) * 5.4); moon.rotation.y = t * 0.1;
           // 에너지원: 2D에서 켠 것만 보여요
           const src = S ? S.src : { sun: false, core: false, moon: false }, show = mode === 'all';
-          sunG.visible = show && src.sun; coreG.visible = show && src.core; moonG.visible = show;
-          lSun.show(sunG.visible); lIn.show(coreG.visible); lMoon.show(show && src.moon);
+          const srcMode = !!(S && S.mode === 'energy');   // 에너지원 단계: 꺼진 태양도 흐리게 보여서 누를 수 있어요
+          sunG.visible = show && (src.sun || srcMode); sunG.children.forEach((c) => { if (c !== sun) c.visible = !!src.sun; }); sun.material.color.setHex(src.sun ? 0xffd34d : 0x6b6450);
+          coreG.visible = show && src.core; moonG.visible = show;
+          const lt = (l, on, a, b) => { const t2 = on ? a : b; if (l.txt !== t2) { l.txt = t2; l.set(t2); } };
+          lt(lSun, src.sun, '태양 에너지', '☀️ 태양 (꺼짐 · 눌러 켜요)'); lt(lIn, src.core, '지구 내부 에너지', '🌋 지구 내부 (꺼짐 · 눌러 켜요)'); lt(lMoon, src.moon, '달 · 조력 에너지', '🌙 달 (꺼짐 · 눌러 켜요)');
+          lSun.show(show && (src.sun || srcMode)); lIn.show(show && (src.core || srcMode)); lMoon.show(show && (src.moon || srcMode));
           moon.material.emissive.setHex(src.moon ? 0x555a66 : 0x000000);
           const tOn = show && src.moon && !(S && S.srcA && S.srcA.moon < 0.05); tide.visible = tOn; tideLab.show(tOn);
           if (tOn) { const md = new THREE.Vector3(moon.position.x, 0, moon.position.z).normalize(), k = S && S.srcA ? S.srcA.moon : 1; tide.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), md); tide.scale.set(1 + 0.09 * k, 1 - 0.03 * k, 1 - 0.03 * k); }

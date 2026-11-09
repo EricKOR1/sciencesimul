@@ -105,7 +105,7 @@
         onFrame(p) { P = p; },
       });
       player.set(1);
-      const l0 = rd(); if (l0.w != null) { wind = l0.w; wSeg.set(wind); } sgn = l0.hem || 1; meas = l0.meas || {}; free = !!l0.free;
+      const l0 = rd(); if (l0.w != null) { wind = l0.w; wSeg.set(wind); } sgn = l0.hem || 1; meas = Object.assign({}, l0.meas || {}); free = !!l0.free;   // 복사해 둬야 2D에서 층을 잴 때마다 3D도 바뀌어요
       wV = wind; place(wV); apply();
 
       function follow() {

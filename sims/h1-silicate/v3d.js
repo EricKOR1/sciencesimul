@@ -160,9 +160,9 @@
       }
       function text(n, shared) {
         const T = TYPES[type];
-        if (!n) { info('<b>' + T.name + '</b> 조립하기<br>화면 아래 <b>＋ 블록 하나 놓기</b>를 눌러 흐린 선으로 보이는 빈 자리에 사면체 블록을 하나씩 이어 붙여요.'); return; }
+        if (!n) { info('<b>' + T.name + '</b> 조립하기<br>화면 아래 <b>＋ 블록 하나 놓기</b>를 눌러 사면체 블록을 하나씩 이어 붙여요. 흐린 선은 완성될 배열의 모양이에요.'); return; }
         const cl = gap > 0.15 ? '<br><b style="color:#fbbf24">' + (type === 'frame' ? '벌어지는 곳이 없어요.' : '벌어지는 곳이 약한 면이에요.') + '</b> ' + T.cleave : '';
-        info((specTxt ? specTxt + '<br>' : '') + '<b>' + T.name + '</b> · ' + T.mineral + '<br>' + T.how + '<br>' + (buildCnt ? '놓은 블록 ' + buildCnt : '사면체 ' + n + '개') + ' · 함께 쓰는 산소(<span style="color:#ff8a8a">밝은 빨강</span>) ' + shared + '개' + cl);
+        info((specTxt ? specTxt + '<br>' : '') + '<b>' + T.name + '</b> · ' + T.mineral + '<br>' + T.how + '<br>' + (buildCnt ? '놓은 블록 ' + buildCnt + (ghostOn ? ' (흐린 선: 완성될 모양)' : '') : '사면체 ' + n + '개') + ' · 함께 쓰는 산소(<span style="color:#ff8a8a">밝은 빨강</span>) ' + shared + '개' + cl);
       }
       function fitK() { const v = ctx.renderer.domElement, asp = Math.max(0.3, v.clientWidth / Math.max(1, v.clientHeight)); return asp < 1 ? Math.min(2, Math.pow(1 / asp, 1)) : 1; }
       function pack(els) { const w = document.createElement('span'); w.style.cssText = 'display:inline-flex;align-items:center;gap:6px;white-space:nowrap'; els[0].parentNode.insertBefore(w, els[0]); els.forEach((e) => w.appendChild(e)); return w; }

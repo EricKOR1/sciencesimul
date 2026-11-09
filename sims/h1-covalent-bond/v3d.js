@@ -163,7 +163,7 @@
       document.querySelectorAll('#molSeg button').forEach((b) => b.addEventListener('click', () => { lastSh = null; }));   // 옆의 H₂·Cl₂를 다시 누르면 3D도 그 분자로 돌아와요
       const ease = (x) => x * x * (3 - 2 * x);
       const pl = controls.player({
-        duration: 7, loop: true, autoplay: false, label: '결합 만들기',
+        duration: 7, loop: true, autoplay: false, label: '결합 미리 보기',
         phases: [[0, '떨어진 원자'], [0.3, '가까워져요'], [0.5, '전자쌍 공유'], [0.8, '결합 완성']],
         onFrame(p) { demoP = p; if (p > 0) form(1.8 * (1 - ease(Math.min(1, p / 0.5))), ease(Math.max(0, Math.min(1, (p - 0.5) / 0.25)))); },
       });

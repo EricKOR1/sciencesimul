@@ -193,7 +193,7 @@
       /* 📏 v·T 측정: 2D 캔버스의 측정 표와 T²–r³ 그래프를 3D 화면에도 보여 줘요 */
       const PH3 = window.innerWidth < 600;
       const mEl = document.createElement('div');
-      mEl.style.cssText = 'position:absolute;' + (PH3 ? 'left:8px;bottom:8px;' : 'right:10px;top:10px;') + 'padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.8);color:#fff;font-size:' + (PH3 ? 10 : 11.5) + 'px;font-weight:800;line-height:1.45;pointer-events:none;display:none';
+      mEl.style.cssText = 'position:absolute;' + (PH3 ? 'left:8px;bottom:30px;' : 'right:10px;top:10px;') + 'padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.8);color:#fff;font-size:' + (PH3 ? 10 : 11.5) + 'px;font-weight:800;line-height:1.45;pointer-events:none;display:none';
       renderer.domElement.parentElement.appendChild(mEl);
       let mSig = null;
       function drawMeas(S) {

@@ -138,7 +138,7 @@
       let lsig = '', lkey = null;
       /* 🔎 한계 점검: 2D 캔버스의 '궤도 위의 전자' 속도 막대(불확정성)를 3D 화면에도 보여 줘요 */
       const ckEl = document.createElement('div');
-      ckEl.style.cssText = 'position:absolute;' + (PHN ? 'left:8px;bottom:8px;' : 'right:10px;top:10px;') + 'width:' + (PHN ? 170 : 220) + 'px;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.8);color:#fff;font-size:' + (PHN ? 10.5 : 12) + 'px;font-weight:800;line-height:1.45;pointer-events:none;display:none';
+      ckEl.style.cssText = 'position:absolute;' + (PHN ? 'left:8px;bottom:30px;' : 'right:10px;top:10px;') + 'width:' + (PHN ? 170 : 220) + 'px;padding:6px 9px;border-radius:12px;background:rgba(8,12,24,.8);color:#fff;font-size:' + (PHN ? 10.5 : 12) + 'px;font-weight:800;line-height:1.45;pointer-events:none;display:none';
       ctx.renderer.domElement.parentElement.appendChild(ckEl);
       let ckOn = null;
       function drawCheck() {
@@ -150,12 +150,12 @@
       }
       /* 📋 비교표: 2D 캔버스의 '보어 모형 · 현대 원자 모형' 표가 고른 문장대로 채워지는 모습을 3D 화면에도 보여 줘요 */
       const tbEl = document.createElement('div');
-      tbEl.style.cssText = 'position:absolute;' + (PHN ? 'left:6px;right:6px;bottom:6px;' : 'right:10px;top:10px;width:330px;') + 'padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.82);color:#fff;font-size:' + (PHN ? 10 : 11.5) + 'px;font-weight:800;line-height:1.35;pointer-events:none;display:none';
+      tbEl.style.cssText = 'position:absolute;' + (PHN ? 'left:6px;right:6px;bottom:30px;' : 'right:10px;top:10px;width:330px;') + 'padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.82);color:#fff;font-size:' + (PHN ? 10 : 11.5) + 'px;font-weight:800;line-height:1.35;pointer-events:none;display:none';
       ctx.renderer.domElement.parentElement.appendChild(tbEl);
       let tbSig = null;
       function drawTable() {
         const L = window.__sim, on = !!(L && L.S && L.S.mode === 'cmp' && L.TBL && L.SEL_T);
-        let sig = ''; if (on) sig = L.SEL_T.vals.join(',') + '|' + L.SEL_T.sels.map((e) => e.className).join(',') + '|' + (L.SEL_K ? L.SEL_K.count() + ':' + L.SEL_K.right() : '');
+        let sig = ''; if (on) sig = L.TBL.map((r, i) => L.SEL_T.vals[i]).join(',') + '|' + L.SEL_T.sels.map((e) => e.className).join(',') + '|' + (L.SEL_K ? L.SEL_K.count() + ':' + L.SEL_K.right() : '');
         if (sig === tbSig) return; tbSig = sig; tbEl.style.display = on ? '' : 'none'; if (!on) return;
         const rows = L.TBL.map((r, i) => {
           const v = L.SEL_T.vals[i], has = v !== undefined && v !== '', cl = has ? L.SEL_T.sels[i].className : '', col = /\bok\b/.test(cl) ? '#86efac' : /\bbad\b/.test(cl) ? '#fca5a5' : '#fff';

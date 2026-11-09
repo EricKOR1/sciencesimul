@@ -228,7 +228,7 @@
       }
       /* 틈 카드: 짝 단추로 놓은 두 염기가 두 줄(당–인산 뼈대) 사이 2 nm 틈에 어떻게 들어가는지 3D 화면에도 보여 줘요 */
       const gapEl = document.createElement('div');
-      gapEl.style.cssText = 'position:absolute;right:10px;top:10px;padding:6px 8px 7px;border-radius:12px;background:rgba(8,12,24,.78);color:#fff;font-size:12px;font-weight:800;pointer-events:none;display:none;width:' + (PHONE ? 150 : 190) + 'px';
+      gapEl.style.cssText = 'position:absolute;' + (PHONE ? 'left:8px;bottom:30px;' : 'right:10px;top:10px;') + 'padding:6px 8px 7px;border-radius:12px;background:rgba(8,12,24,.78);color:#fff;font-size:12px;font-weight:800;pointer-events:none;display:none;width:' + (PHONE ? 150 : 190) + 'px';
       renderer.domElement.parentElement.appendChild(gapEl);
       let gapSig = null;
       function drawGap() {

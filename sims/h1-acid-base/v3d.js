@@ -122,7 +122,7 @@
       });
       controls.button('🏷 이름', () => { st.names = !st.names; apply(); });
       const pl = controls.player({
-        duration: 7, loop: true, label: '물에 녹이기',
+        duration: 7, loop: true, label: '녹는 모습 다시 보기',
         phases: [[0, '물에 넣기'], [0.15, '녹는 중'], [0.65, '녹은 뒤']],
         onFrame(p) { st.s = Math.max(0, Math.min(1, (p - 0.12) / 0.5)); if (items.length) apply(); },
       });

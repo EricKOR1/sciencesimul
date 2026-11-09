@@ -124,7 +124,7 @@
         const S0 = L2(), mvN = st.rx === 'zn2' && S0 && S0.MODE === 'move' && S0.MV && !pl.playing ? S0.MV.zn.reduce((n, z) => n + z.e.filter((q) => q.st === 'gone').length, 0) : null;   // 옮긴 전자 수만큼만 옮겨 가요
         P.es.forEach((e) => {
           const start = (e.idx / nE) * 0.55; let u = ease((p - start) / 0.4);
-          if (mvN != null) { const dtE = Math.min(0.25, Math.max(0, st.t - (e.tl || st.t))); e.tl = st.t; e.uu = Math.min(1, (e.uu || 0) + (e.idx < mvN ? dtE * 1.4 : -1)); if (e.uu < 0) e.uu = 0; u = ease(e.uu); }
+          if (mvN != null) { const nowS = performance.now() / 1000, dtE = Math.min(0.4, Math.max(0, nowS - (e.tl || nowS))); e.tl = nowS; e.uu = Math.min(1, (e.uu || 0) + (e.idx < mvN ? dtE * 1.4 : -1)); if (e.uu < 0) e.uu = 0; u = ease(e.uu); }
           const d = P.don[e.di], c = P.acc[e.ai], da = new V3(...R.don[e.di].pos), ca = new V3(...R.acc[e.ai].pos);
           const th = e.orbit / e.nOrb * Math.PI * 2 + st.t * 2.2 + e.idx;
           const from = da.clone().add(new V3(Math.cos(th) * (R.don[e.di].rad + 0.35), Math.sin(th) * (R.don[e.di].rad + 0.35), Math.sin(th * 1.0) * 0.0));
