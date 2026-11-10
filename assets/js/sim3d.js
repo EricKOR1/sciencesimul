@@ -93,11 +93,11 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
 .v3-wrap { position: absolute; inset: 0; z-index: 25; display: flex; flex-direction: column; background: radial-gradient(ellipse at 50% 40%, #1d2a4a 0%, #0c1222 100%); color: #e8eefc; animation: v3in .25s ease; }
 .v3-wrap[hidden] { display: none; }
 @keyframes v3in { from { opacity: 0; } to { opacity: 1; } }
-.v3-head { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: rgba(8,12,24,.55); }
+.v3-head { display: flex; align-items: center; gap: 8px; padding: 5px 8px; background: rgba(8,12,24,.55); }
 .v3-wrap.pad .v3-head { padding-right: 150px; }
 .v3-head .v3-full { display: none; }
 .v3-title { flex: 1; min-width: 0; font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.v3-head button { min-height: 38px; padding: 4px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.35); background: rgba(255,255,255,.1); color: #fff; font-weight: 800; font-size: 13.5px; cursor: pointer; white-space: nowrap; }
+.v3-head button { min-height: 32px; padding: 3px 11px; border-radius: 999px; border: 1px solid rgba(255,255,255,.35); background: rgba(255,255,255,.1); color: #fff; font-weight: 800; font-size: 13.5px; cursor: pointer; white-space: nowrap; }
 .v3-view { position: relative; flex: 1; min-height: 0; overflow: hidden; touch-action: none; cursor: grab; }
 .v3-view:active { cursor: grabbing; }
 .v3-view canvas { display: block; width: 100%; height: 100%; }
@@ -110,12 +110,14 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
 .v3-info:empty { display: none; }
 .v3-info.mini { max-height: 1.6em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .v3-info.mini::after { content: ' ▾'; }
-.v3-ctl { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; padding: 8px 10px; background: rgba(8,12,24,.55); }
+.v3-ctl { display: flex; flex-wrap: wrap; gap: 5px 7px; align-items: center; padding: 6px 8px; background: rgba(8,12,24,.55); }
 .v3-ctl:empty { display: none; }
+.v3-ctl .v3-row { display: flex; flex-wrap: wrap; gap: 5px 7px; align-items: center; flex: 1 1 100%; min-width: 0; }
+.v3-ctl .v3-row:empty { display: none; }
 .v3-ctl .lab { font-weight: 800; font-size: 13px; color: #b9c6e4; }
-.v3-ctl button { min-height: 38px; padding: 4px 11px; border-radius: 999px; border: 1px solid rgba(255,255,255,.35); background: rgba(255,255,255,.08); color: #fff; font-weight: 800; font-size: 13.5px; cursor: pointer; }
+.v3-ctl button { min-height: 34px; padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,.35); background: rgba(255,255,255,.08); color: #fff; font-weight: 800; font-size: 13.5px; cursor: pointer; }
 .v3-ctl button.on { background: #ffd34d; border-color: #ffd34d; color: #1b2333; }
-.v3-ctl input[type=range] { width: 140px; height: 38px; }
+.v3-ctl input[type=range] { width: 140px; height: 34px; }
 .v3-player { display: flex; align-items: center; gap: 8px; flex: 1 1 100%; min-width: 0; padding: 2px 0; }
 .v3-ctl .v3-play { min-width: 92px; background: #ffd34d; border-color: #ffd34d; color: #1b2333; }
 .v3-ctl .v3-play.on { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.4); color: #fff; }
@@ -133,7 +135,12 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
   .v3-wrap.pad .v3-head { padding-right: 128px; }
   .v3-head .v3-reset { display: none; }
   .v3-wrap.full .v3-head .v3-reset { display: inline-block; }
-  .stage-canvas.v3-on, .stage-card.v3-on { aspect-ratio: auto !important; height: auto; min-height: min(78vh, 600px); }
+  .stage-canvas.v3-on, .stage-card.v3-on { aspect-ratio: auto !important; height: auto; min-height: min(86vh, 720px); }
+  .v3-ctl { padding: 5px 6px; gap: 4px; }
+  .v3-ctl .v3-row { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+  .v3-ctl .v3-row::-webkit-scrollbar { display: none; }
+  .v3-ctl .v3-row > * { flex: none; }
+  .v3-ctl button { min-height: 32px; font-size: 13px; padding: 3px 9px; }
   .v3-title { font-size: 14px; } .v3-info { font-size: 12px; max-width: 75%; } .v3-ctl input[type=range] { width: 110px; } }
 @media (prefers-reduced-motion: reduce) { .v3-wrap { animation: none; } }
 `;
@@ -250,9 +257,10 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
     const labs = [];
 
     function placeCamera() {
-      const p = Math.max(0.05, Math.min(Math.PI - 0.05, orbit.phi)), D = orbit.dist * fitK;
-      camera.position.set(orbit.tx + D * Math.sin(p) * Math.sin(orbit.theta), orbit.ty + D * Math.cos(p), orbit.tz + D * Math.sin(p) * Math.cos(orbit.theta));
-      camera.lookAt(orbit.tx, orbit.ty, orbit.tz);
+      const p = Math.max(0.05, Math.min(Math.PI - 0.05, orbit.phi)), D = orbit.dist * fitK * auto.k;
+      const tx = orbit.tx + auto.ox, ty = orbit.ty + auto.oy, tz = orbit.tz + auto.oz;
+      camera.position.set(tx + D * Math.sin(p) * Math.sin(orbit.theta), ty + D * Math.cos(p), tz + D * Math.sin(p) * Math.cos(orbit.theta));
+      camera.lookAt(tx, ty, tz);
     }
     function resize() {
       if (!renderer) return;
@@ -260,7 +268,88 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       renderer.setSize(w, h, false);
       camera.aspect = w / h; camera.updateProjectionMatrix();
       fitK = opts.fit === false ? 1 : (w / h < 0.95 ? Math.min(1.6, Math.pow(0.95 / (w / h), 0.55)) : 1);
+      refit(0.4);
     }
+
+    /* 자동 맞춤: 모형이 화면의 약 80 %를 채우도록 가까이/멀리, 가운데로 맞춰요.
+       배경(하늘 공·별·넓은 바닥 등 아주 큰 물체, 안쪽 면만 보이는 물체)은 빼고 잽니다.
+       학생이 확대/축소하면 그때부터는 손대지 않아요 (↺ 시점을 누르면 다시 맞춰요). 차시는 opts.autofit === false로 끌 수 있어요. */
+    const auto = { k: 1, kT: 1, ox: 0, oy: 0, oz: 0, oxT: 0, oyT: 0, ozT: 0, user: false, due: 0, last: 0 };
+    let autoTmp = null;
+    function measureFit(force) {
+      if (opts.autofit === false || auto.user || !root || !camera) return;
+      const T3 = THREE; if (!autoTmp) autoTmp = { b: new T3.Box3(), v: new T3.Vector3(), s: new T3.Sphere(), c: new T3.Vector3() };
+      const items = [];
+      root.updateMatrixWorld(true);
+      root.traverse((o) => {
+        if (!o.isMesh || o.isInstancedMesh || !o.geometry || o.userData.v3bg) return;
+        for (let n = o; n; n = n.parent) { if (n.visible === false) return; if (n === root) break; }
+        const m = Array.isArray(o.material) ? o.material[0] : o.material;
+        if (!m || m.side === T3.BackSide || (m.transparent && m.opacity < 0.15) || m.visible === false) return;
+        if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere();
+        if (!o.geometry.boundingSphere) return;
+        autoTmp.s.copy(o.geometry.boundingSphere).applyMatrix4(o.matrixWorld);
+        if (!isFinite(autoTmp.s.radius) || autoTmp.s.radius <= 0) return;
+        const gt = o.geometry.type || '', gp = o.geometry.parameters || {};
+        // 바닥판처럼 얇고 넓은 것: 평면·원판·고리, 얇은 원기둥(받침대), 얇은 상자(탁자 판)
+        const flat = /Plane|Circle|Ring/.test(gt)
+          || (/Cylinder/.test(gt) && gp.height != null && gp.height < 0.2 * Math.max(gp.radiusTop || 0, gp.radiusBottom || 0))
+          || (/Box/.test(gt) && gp.width != null && Math.min(gp.width, gp.height, gp.depth) < 0.12 * Math.max(gp.width, gp.height, gp.depth));
+        items.push({ o, r: autoTmp.s.radius, c: autoTmp.s.center.clone(), flat });
+      });
+      if (items.length < 1) return;
+      const rs = items.map((q) => q.r).sort((a, b) => a - b), med = rs[Math.floor(rs.length / 2)];
+      // 배경으로 보는 것: 카메라를 감쌀 만큼 큰 공(하늘), 아주 넓은 바닥판(평면·원판). 큰 주인공(지구본 등)은 그대로 넣어요
+      const camD = orbit.dist * fitK;
+      const isBg = (q) => q.r > camD * 0.9 || (q.flat && q.r > med * 6 && items.length > 3);
+      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, n = 0; const cw = new T3.Vector3(); let wsum = 0;
+      for (const q of items) {
+        if (isBg(q)) continue;
+        q.o.geometry.boundingBox || q.o.geometry.computeBoundingBox();
+        autoTmp.b.copy(q.o.geometry.boundingBox).applyMatrix4(q.o.matrixWorld);
+        const bb = autoTmp.b;
+        for (let i = 0; i < 8; i++) {
+          autoTmp.v.set(i & 1 ? bb.max.x : bb.min.x, i & 2 ? bb.max.y : bb.min.y, i & 4 ? bb.max.z : bb.min.z).project(camera);
+          if (autoTmp.v.z > 1 || autoTmp.v.z < -1) continue;
+          x0 = Math.min(x0, autoTmp.v.x); x1 = Math.max(x1, autoTmp.v.x); y0 = Math.min(y0, autoTmp.v.y); y1 = Math.max(y1, autoTmp.v.y); n++;
+        }
+        const w = Math.max(q.r, 1e-3); cw.addScaledVector(q.c, w); wsum += w;
+      }
+      if (n < 2) return;
+      x0 = Math.max(-1.6, x0); x1 = Math.min(1.6, x1); y0 = Math.max(-1.6, y0); y1 = Math.min(1.6, y1);
+      // 설명 상자가 화면 위쪽을 넓게 가리면(휴대폰), 그 아래 빈 곳에 맞춰요
+      let topCut = 0;
+      if (info.innerHTML && info.offsetParent && !info.classList.contains('mini') && info.offsetWidth > view.clientWidth * 0.5) topCut = Math.min(0.45, (info.offsetTop + info.offsetHeight) / Math.max(1, view.clientHeight));
+      const availY = 1 - topCut;   // 위아래로 쓸 수 있는 비율
+      const fill = Math.max((x1 - x0) / 2, (y1 - y0) / 2 / availY), TGT = 0.8;
+      auto.fill = fill; auto.cx = (x0 + x1) / 2; auto.cy = (y0 + y1) / 2;
+      // 너무 작거나(65 % 미만) 잘리면(100 % 넘음) 맞춰요 — 조금씩 다르면 그대로 둬서 흔들리지 않게
+      // 가까이 당기기만 해요 (차시가 정한 거리보다 멀리 물러나지 않아요: 넓은 배경이 있는 장면이 작아지지 않게)
+      if (force || fill < 0.65 || fill > 1.0) auto.kT = Math.max(0.4, Math.min(1, auto.k * fill / TGT));
+      // 가운데 맞추기: 화면에서 한쪽으로 많이 쏠렸으면 회전 중심을 모형 쪽으로 옮겨요 (조금만)
+      const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+      if (wsum > 0 && auto.kT < 0.97 && (force || Math.abs(cx) > 0.18 || Math.abs(cy) > 0.18)) {
+        cw.multiplyScalar(1 / wsum);
+        const tgt = new T3.Vector3(orbit.tx, orbit.ty, orbit.tz), d = cw.sub(tgt), R = Math.max(med * 4, 0.5);
+        if (d.length() > R * 3) d.setLength(R * 3);
+        auto.oxT = d.x * 0.85; auto.oyT = d.y * 0.85; auto.ozT = d.z * 0.85;
+        if (topCut > 0) {   // 화면에서 조금 아래로 내려 설명 상자와 겹치지 않게: 시점 중심을 카메라 위쪽으로 옮겨요
+          const up = new T3.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+          const Dn = orbit.dist * fitK * auto.kT, hw = Dn * Math.tan((camera.fov * Math.PI / 180) / 2);
+          up.multiplyScalar(topCut * hw);
+          auto.oxT += up.x; auto.oyT += up.y; auto.ozT += up.z;
+        }
+      }
+    }
+    function stepFit(dt, tNow) {
+      if (auto.kT >= 0.97 && !auto.user) { auto.oxT = auto.oyT = auto.ozT = 0; }
+      if (opts.autofit === false) return;
+      if (auto.due && tNow >= auto.due) { measureFit(true); auto.due = 0; auto.last = tNow; }
+      else if (!auto.user && tNow - auto.last > 3) { measureFit(false); auto.last = tNow; }
+      const a = 1 - Math.pow(0.02, dt);
+      auto.k += (auto.kT - auto.k) * a; auto.ox += (auto.oxT - auto.ox) * a; auto.oy += (auto.oyT - auto.oy) * a; auto.oz += (auto.ozT - auto.oz) * a;
+    }
+    const refit = (delay) => { if (auto.user) return; auto.due = performance.now() / 1000 + (delay == null ? 0.6 : delay); };
 
     /* 3D 위치에 붙는 HTML 이름표 */
     function label(text, obj, o) {
@@ -394,7 +483,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
         const dT = -dx * 0.008 * DIR, dP = -dy * 0.008 * DIR;
         orbit.theta += dT; orbit.phi = Math.max(0.05, Math.min(Math.PI - 0.05, orbit.phi + dP));
         vel.t = vel.t * 0.5 + (dT / dts) * 0.5; vel.p = vel.p * 0.5 + (dP / dts) * 0.5;
-      } else if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch0 > 0) orbit.dist = Math.max(cam0.min, Math.min(cam0.max, dist0 * pinch0 / d)); vel.t = vel.p = 0; }
+      } else if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch0 > 0) { orbit.dist = Math.max(cam0.min, Math.min(cam0.max, dist0 * pinch0 / d)); auto.user = true; } vel.t = vel.p = 0; }
     });
     const up = (e) => {
       const p = ptrs.get(e.pointerId);
@@ -402,8 +491,8 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch0 = 0;
     };
     view.addEventListener('pointerup', up); view.addEventListener('pointercancel', up);
-    view.addEventListener('wheel', (e) => { e.preventDefault(); touched = true; orbit.dist = Math.max(cam0.min, Math.min(cam0.max, orbit.dist * (e.deltaY > 0 ? 1.1 : 0.9))); }, { passive: false });
-    resetB.addEventListener('click', () => { Object.assign(orbit, { dist: cam0.dist, theta: cam0.theta, phi: cam0.phi, tx: cam0.target[0], ty: cam0.target[1], tz: cam0.target[2] }); touched = false; vel.t = vel.p = 0; });
+    view.addEventListener('wheel', (e) => { e.preventDefault(); touched = true; auto.user = true; orbit.dist = Math.max(cam0.min, Math.min(cam0.max, orbit.dist * (e.deltaY > 0 ? 1.1 : 0.9))); }, { passive: false });
+    resetB.addEventListener('click', () => { Object.assign(orbit, { dist: cam0.dist, theta: cam0.theta, phi: cam0.phi, tx: cam0.target[0], ty: cam0.target[1], tz: cam0.target[2] }); touched = false; vel.t = vel.p = 0; auto.user = false; refit(0); });
 
     /* 화면이 세로로 길면 모형이 잘리지 않게 조금 물러서서 봐요 */
     let fitK = 1;
@@ -445,6 +534,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       players.forEach((pl) => pl.tick(dt));
       if (user && user.update) { try { user.update(dt, t / 1000); } catch (e) { console.error(e); } }
       if (frameN++ % 20 === 0) { if (shadowOn) markShadows(); fitShadow(); }
+      stepFit(dt, t / 1000);
       placeCamera();
       renderer.render(scene, camera);
       if (global.SciSimShare && global.SciSimShare.grab) global.SciSimShare.grab(renderer.domElement);
@@ -465,12 +555,13 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       [hemi, sun].forEach((l) => { l.userData.v3engine = true; scene.add(l); });
       root = new THREE.Group(); scene.add(root);
       const lvHooks = [];
-      global.addEventListener('scisim-level', (e) => { const li = e.detail && e.detail.level; lvHooks.forEach((f) => { try { f(li); } catch (err) { console.error(err); } }); });
+      global.addEventListener('scisim-level', (e) => { const li = e.detail && e.detail.level; lvHooks.forEach((f) => { try { f(li); } catch (err) { console.error(err); } }); refit(0.8); });
       user = opts.build ? opts.build({
         THREE, scene, camera, root, renderer, label, info: (h) => { info.innerHTML = h || ''; }, controls, orbit,
         get level() { return typeof global.SciSimLevel === 'number' ? global.SciSimLevel : 0; },   // 지금 학습 단계(0부터)
         onLevel(f) { lvHooks.push(f); },                                                      // 단계가 바뀔 때 (2D와 같은 장면으로 맞추기)
         lesson: () => global.__sim || null,                                                    // 2D 실험 상태 (sim.js의 window.__sim)
+        refit: (delay) => refit(delay),                                                        // 장면이 크게 바뀌었을 때 다시 화면에 맞추기
       }) || {} : {};
       // 차시가 직접 조명(태양 등)을 두면 낮·밤 대비가 중요하므로 환경 반사를 쓰지 않아요
       // (차시가 기본 조명을 바꾸거나 새 조명을 더했으면 그 조명을 그대로 존중해요)
@@ -481,8 +572,13 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
         const rim = new THREE.DirectionalLight(0x9fc4ff, 0.3); rim.position.set(-6, 3, -7); rim.userData.v3engine = true; scene.add(rim);
         if (opts.shadows !== false) { if (!perf.stage) setupShadows(); setupContact(); }
       }
+      // 조작 도구 정리: 버튼·슬라이더는 한 줄(휴대폰에서는 옆으로 밀어 보기), ▶ 재생 막대는 그 아래 줄
+      const row = el('div', 'v3-row');
+      const pack = () => { Array.from(ctl.children).forEach((c) => { if (c !== row && !c.classList.contains('v3-player')) row.appendChild(c); }); if (row.parentNode !== ctl) ctl.insertBefore(row, ctl.firstChild); else if (ctl.firstChild !== row) ctl.insertBefore(row, ctl.firstChild); };
+      pack();
+      if (global.MutationObserver) new MutationObserver((ms) => { if (ms.some((m) => Array.from(m.addedNodes).some((n) => n !== row && n.parentNode === ctl && !(n.classList && n.classList.contains('v3-player'))))) pack(); }).observe(ctl, { childList: true });
       built = true;
-      wrap.__v3 = () => ({ THREE, scene, root, camera, labs, orbit });   // 점검 도구용 (화면에는 영향 없음)
+      wrap.__v3 = () => ({ THREE, scene, root, camera, labs, orbit, auto, measure: () => { const u = auto.user; auto.user = false; const k = auto.kT; measureFit(false); auto.kT = k; auto.user = u; return { fill: auto.fill, k: auto.k, cx: auto.cx, cy: auto.cy }; } });   // 점검 도구용 (화면에는 영향 없음)
       if (global.ResizeObserver) new ResizeObserver(resize).observe(view);
       resize();
     }
@@ -608,6 +704,12 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
   function emptyCards() {
     if (!doc.body) return;
     const on = doc.body.classList.contains('v3-mode');
+    // 실험 화면 위의 제목 줄(2D 장면 이름)은 누를 것이 없으면 3D 단계에서 숨겨 3D 화면을 더 크게 써요
+    doc.querySelectorAll('.stage-card > .stage-toolbar, .stage-card .stage-toolbar').forEach((tb) => {
+      let hide = false;
+      if (on) { const cs = Array.from(tb.querySelectorAll('button, input, select')).filter((e) => !e.closest('[hidden]') && e.type !== 'hidden' && !e.closest('[data-v3="2d"], .v3-2d-wrap')); hide = cs.length === 0; }
+      tb.classList.toggle('v3-empty', hide);
+    });
     doc.querySelectorAll('.side-col .card').forEach((c) => {
       if (c.id === 'game' || c.closest('#game, .game')) return;
       let hide = false;
