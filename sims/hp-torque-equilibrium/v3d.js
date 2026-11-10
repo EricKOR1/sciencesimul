@@ -69,6 +69,7 @@
       const wr = new THREE.Group(); wr.position.y = 0.62; gSp.add(wr);
       const wMat = M(0xaab3c4, { metalness: 0.75, roughness: 0.3 });
       const wHandle = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.2, 0.3), wMat); wHandle.position.x = 0.1 + 2.3; wHandle.castShadow = true; wr.add(wHandle);
+      { const fitBox = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.7, 1.2), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); fitBox.position.x = 2.1; wr.add(fitBox); }   // 보이지 않는 맞춤 상자: 길고 얇은 손잡이도 자동 맞춤이 스패너 전체로 재게 해요
       const wHead = new THREE.Mesh(new THREE.CylinderGeometry(0.49, 0.49, 0.2, 40), wMat); wHead.castShadow = true; wr.add(wHead);
       const wHole = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.31, 0.22, 6), M(0x4b5566, { metalness: 0.6 })); wr.add(wHole);
       const tickAnchors = [];
