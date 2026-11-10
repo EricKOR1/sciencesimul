@@ -316,12 +316,12 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
         // 크기를 늘려 납작하게 만든 상자·원기둥(바닥·탁자)도 바닥판으로 봐요: 세계 좌표에서 얇은지로 판단
         if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
         const wb = autoTmp.b.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld), wx = wb.max.x - wb.min.x, wy = wb.max.y - wb.min.y, wz = wb.max.z - wb.min.z;
-        const thinW = Math.min(wx, wy, wz) < 0.1 * Math.max(wx, wy, wz);
+        const dd = [wx, wy, wz].sort((a, b) => a - b), thinW = dd[0] < 0.1 * dd[2] && dd[1] > 0.4 * dd[2];   // 판(넓고 얇음)만 — 막대(가늘고 긴 것)는 아니에요
         const gt = o.geometry.type || '', gp = o.geometry.parameters || {};
         // 바닥판처럼 얇고 넓은 것: 평면·원판·고리, 얇은 원기둥(받침대), 얇은 상자(탁자 판)
         const flat = /Plane|Circle|Ring/.test(gt)
           || (/Cylinder/.test(gt) && gp.height != null && gp.height < 0.2 * Math.max(gp.radiusTop || 0, gp.radiusBottom || 0))
-          || (/Box/.test(gt) && gp.width != null && Math.min(gp.width, gp.height, gp.depth) < 0.12 * Math.max(gp.width, gp.height, gp.depth))
+          || (/Box/.test(gt) && gp.width != null && (() => { const g = [gp.width, gp.height, gp.depth].sort((a, b) => a - b); return g[0] < 0.12 * g[2] && g[1] > 0.4 * g[2]; })())
           || (/Box|Cylinder/.test(gt) && thinW);
         items.push({ o, r: autoTmp.s.radius, c: autoTmp.s.center.clone(), flat });
       });

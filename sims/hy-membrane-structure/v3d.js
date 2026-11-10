@@ -16,7 +16,7 @@
   window.SciSim3D.attach({
     title: '세포막 3D 모형',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHONE ? 15.5 : 8.4, theta: 0.2, phi: 1.3, fov: 40, min: 4, max: 20, target: [PHONE ? 0 : -0.5, PHONE ? 0.3 : 0, 0] },
+    camera: { dist: PHONE ? 12.5 : 8.4, theta: 0.2, phi: 1.3, fov: 40, min: 4, max: 20, target: [PHONE ? 0 : -0.5, PHONE ? 0.3 : 0, 0] },
     autoRotate: 0,
     levels: [1, 2],   // 2단계(막 단백질 · 기능 연결은 3D 막대의 단추로) · 3단계(유동성). 1단계(조립 · 이중층 배열)와 4단계(통과 시험 · 분류)는 2D 화면이에요
     build(ctx) {
