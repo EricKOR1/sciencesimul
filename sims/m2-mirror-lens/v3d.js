@@ -96,8 +96,8 @@
 
       // 광선 (가는 원기둥 인스턴스)
       const MAXI = 420;
-      const cyl = new THREE.InstancedMesh(new THREE.CylinderGeometry(1, 1, 1, 6), new THREE.MeshBasicMaterial({ color: 0xffe066 }), MAXI); cyl.frustumCulled = false; root.add(cyl);
-      const dash = new THREE.InstancedMesh(new THREE.CylinderGeometry(1, 1, 1, 6), new THREE.MeshBasicMaterial({ color: 0xbfe8ff, transparent: true, opacity: 0.75 }), MAXI); dash.frustumCulled = false; root.add(dash);
+      const cyl = new THREE.InstancedMesh(new THREE.CylinderGeometry(1, 1, 1, 6), new THREE.MeshBasicMaterial({ color: 0xffe066 }), MAXI); cyl.frustumCulled = false; cyl.userData.v3bg = true; root.add(cyl);
+      const dash = new THREE.InstancedMesh(new THREE.CylinderGeometry(1, 1, 1, 6), new THREE.MeshBasicMaterial({ color: 0xbfe8ff, transparent: true, opacity: 0.75 }), MAXI); dash.frustumCulled = false; dash.userData.v3bg = true; root.add(dash);
       const dm = new THREE.Object3D(), up = new V3(0, 1, 0);
       let nC = 0, nD = 0;
       function seg(inst, p, q, r) {

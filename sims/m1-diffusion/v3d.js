@@ -35,7 +35,7 @@
       function makeBox(color) {
         const g = new THREE.Group();
         const geo = new THREE.BoxGeometry(2, 2, 2);
-        g.add(new THREE.Mesh(geo, glass(0xbfe0ff, 0.15)));
+        g.add(new THREE.Mesh(geo, glass(0xbfe0ff, 0.1)));
         g.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0x9cc3ff })));
         const w = new THREE.Mesh(new THREE.BoxGeometry(1.98, 1.8, 1.98), glass(color || 0x4aa8ff, 0.22, { side: THREE.FrontSide })); w.position.y = -0.1; g.add(w);
         g.userData.water = w; root.add(g); return g;

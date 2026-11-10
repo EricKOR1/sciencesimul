@@ -73,7 +73,7 @@
         const pos = []; let sd = 11; const rr = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
         for (let i = 0; i < 140; i++) { const a = rr() * 6.283, r = 3 + rr() * 9, y = (rr() - 0.3) * 9; pos.push(Math.cos(a) * r, y, Math.sin(a) * r); }
         const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-        const pts = new THREE.Points(bg, new THREE.PointsMaterial({ color: 0x9fc0ff, size: 3, sizeAttenuation: false, transparent: true, opacity: 0.5 })); pts.position.y = 2; root.add(pts); }
+        const pts = new THREE.Points(bg, new THREE.PointsMaterial({ color: 0x9fc0ff, size: 3, sizeAttenuation: false, transparent: true, opacity: 0.5 })); pts.position.y = 2; pts.userData.v3bg = true; root.add(pts); }
       stage.traverse((o) => { if (o.isMesh) o.userData.v3bg = true; });   // 받침판은 배경: 자동 맞춤이 분자에 맞춰 크게 보여 줘요
       function floorAt(y) { stage.position.y = y; }
       function place(m, a, b) {

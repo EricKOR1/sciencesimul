@@ -49,7 +49,7 @@
       { const fb = new THREE.Mesh(new THREE.BoxGeometry(9, 5.2, 1.3), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); fb.position.set(-0.5, 2.5, 0); root.add(fb); }
       const NT = 110, trunkI = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.03, 0.045, 0.22, 5), sm(0x6b4423), NT), leafI = new THREE.InstancedMesh(new THREE.ConeGeometry(0.2, 0.55, 7), sm(0x2d7a3c, { roughness: 0.9 }), NT), tseed = [];
       { let rr = 3; const rn = () => { rr = (rr * 16807) % 2147483647; return rr / 2147483647; }; for (let i = 0; i < NT; i++) tseed.push([(rn() - 0.5) * (GW - 1), (rn() - 0.5) * (GD - 1), 0.7 + rn() * 0.7]); }
-      root.add(trunkI, leafI);
+      trunkI.userData.v3bg = leafI.userData.v3bg = true; root.add(trunkI, leafI);   // 들판의 나무는 배경
       const tdm = new THREE.Object3D();
       function plant() { let n = 0; tseed.forEach((q) => { const y = ground(q[0], q[1]), tt = y / PK; if (tt > 0.5 || (mode === 'conv' && Math.hypot(q[0] + 0.5, q[1]) < 1.9) || (mode === 'meet' && Math.abs(q[1]) < 0.6)) return; tdm.position.set(q[0], y + 0.11 * q[2], q[1]); tdm.scale.setScalar(q[2]); tdm.rotation.set(0, 0, 0); tdm.updateMatrix(); trunkI.setMatrixAt(n, tdm.matrix); tdm.position.y = y + 0.4 * q[2]; tdm.updateMatrix(); leafI.setMatrixAt(n, tdm.matrix); n++; }); trunkI.count = leafI.count = n; trunkI.instanceMatrix.needsUpdate = leafI.instanceMatrix.needsUpdate = true; }
       /* 공기 덩어리의 길 */
