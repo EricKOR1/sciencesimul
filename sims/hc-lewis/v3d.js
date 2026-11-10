@@ -114,8 +114,8 @@
         x.fillStyle = gr; x.fillRect(0, 0, 256, 256); x.strokeStyle = 'rgba(180,205,255,.35)'; x.lineWidth = 1.5;
         [40, 70, 100, 124].forEach((r) => { x.beginPath(); x.arc(128, 128, r, 0, 7); x.stroke(); });
         const tex = new THREE.CanvasTexture(c);
-        const f = new THREE.Mesh(new THREE.CircleGeometry(3.0, 64), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false })); f.rotation.x = -Math.PI / 2; f.position.y = -1.45; root.add(f);
-        const rim = new THREE.Mesh(new THREE.TorusGeometry(1.3, 0.015, 6, 90), new THREE.MeshBasicMaterial({ color: 0x9ec5ff, transparent: true, opacity: 0.45 })); rim.rotation.x = Math.PI / 2; rim.position.y = -1.44; root.add(rim);
+        const f = new THREE.Mesh(new THREE.CircleGeometry(3.0, 64), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false })); f.rotation.x = -Math.PI / 2; f.position.y = -1.45; root.add(f); f.userData.v3bg = true;
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(1.3, 0.015, 6, 90), new THREE.MeshBasicMaterial({ color: 0x9ec5ff, transparent: true, opacity: 0.45 })); rim.rotation.x = Math.PI / 2; rim.position.y = -1.44; root.add(rim); rim.userData.v3bg = true;   // 받침대는 화면 맞춤에서 빼요
       })();
       const g = new THREE.Group(); root.add(g);
       const lbl = []; for (let i = 0; i < 6; i++) { const l = label('', [0, 0, 0], { size: 12.5 }); l.show(false); lbl.push(l); }
@@ -270,7 +270,7 @@
         update(dt, t) {
           const Z = ctx.lesson(); if (!Z) return; Z0 = Z; dt = Math.min(dt, 0.05);
           const S = Z.S, sc = S.scene;
-          if (sc !== lastSc) { lastSc = sc; if (orbit) orbit.dist = sc === 'atom' ? (phone ? 5.2 : 4.3) : sc === 'ionic' ? (phone ? 10 : 8.2) : (phone ? 6.4 : 5.8); }
+          if (sc !== lastSc) { lastSc = sc; if (orbit) orbit.dist = sc === 'atom' ? (phone ? 5.2 : 4.3) : sc === 'ionic' ? (phone ? 10 : 8.2) : (phone ? 6.4 : 5.8); ctx.refit(0.3); }
           g.visible = sc === 'mol' || sc === 'wizard'; gi.visible = sc === 'ionic'; ga.visible = sc === 'atom';
           elTxt.style.display = sc === 'atom' ? '' : 'none'; elBtns.forEach(([z, b]) => { b.style.display = sc === 'atom' ? '' : 'none'; b.classList.toggle('on', Z.A && Z.A.z === z); });
           rowP.style.display = sc === 'ionic' ? '' : 'none'; if (sc !== 'ionic' && pl.playing) pl.pause();

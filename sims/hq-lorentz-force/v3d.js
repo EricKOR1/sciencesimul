@@ -51,7 +51,7 @@
       const grid = new THREE.Group(); root.add(grid);
       for (let i = -3; i <= 3; i++) for (let j = -3; j <= 3; j++) {
         const a = mkArrow(Bcol, 0.022); const x = i * 2.4, z = j * 2.4;
-        setArrow(a, new V3(x, -1.2, z), new V3(x, 0.1, z)); a.children.forEach((c) => { c.material = mat(Bcol, { transparent: true, opacity: 0.45 }); }); grid.add(a);
+        setArrow(a, new V3(x, -1.2, z), new V3(x, 0.1, z)); a.children.forEach((c) => { c.material = mat(Bcol, { transparent: true, opacity: 0.45 }); if (Math.max(Math.abs(i), Math.abs(j)) >= 2) c.userData.v3bg = true; }); grid.add(a);   // 바깥쪽 자기장 화살표는 배경: 자동 맞춤이 가운데(입자 · 궤도)를 크게 보여 줘요
       }
       const floor = new THREE.Mesh(new THREE.PlaneGeometry(17.5, 17.5), basic(0x6b7fb4, { transparent: true, opacity: 0.1, side: THREE.DoubleSide })); floor.rotation.x = -Math.PI / 2; floor.position.y = -1.2; root.add(floor);
       const labBField = label('자기장 B ↑ (전부 위쪽)', [-7, -1.2, 7], { color: '#6d28d9', size: 12.5 });
@@ -93,7 +93,7 @@
         ball.material.color.setHex(s.col); ball.material.emissive.setHex(s.col === 0xff5a5f ? 0x661b1b : 0x1b2f66);
         labQ.set(s.sgn > 0 ? '+ ' + s.name : '− ' + s.name);
         const hMid = Math.min(6, pu * nTurns / 2);
-        ctx.orbit.ty = Math.max(0.5, hMid); ctx.orbit.tz = s.sgn * ru; ctx.orbit.tx = 0; ctx.orbit.dist = Math.max(10, 7 + pu * nTurns * 0.9, ru * 4.5) * KD;
+        ctx.orbit.ty = Math.max(0.5, hMid); ctx.orbit.tz = s.sgn * ru; ctx.orbit.tx = 0; ctx.orbit.dist = Math.max(6, 5.5 + pu * nTurns * 0.9, ru * 4.2) * KD;   // 입자 · 궤도가 크게 보이게 가까이
         text();
       }
       function posAt(t, ru, pu) { // t = 보이는 시간(초): x = r sin ωt, z = s·r(1−cos ωt), y = 피치 · t/T

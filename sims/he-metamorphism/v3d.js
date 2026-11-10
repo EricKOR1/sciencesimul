@@ -27,6 +27,7 @@
       const N = 260, flakes = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 0.16), std(0xffffff, { roughness: 0.45, metalness: 0.12 }), N); gA.add(flakes);
       const heater = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.16, 5.2), std(0x222a3a, { emissive: 0xff4a1a, emissiveIntensity: 0, roughness: 0.6 })); heater.position.y = -2.0; gA.add(heater);
       const frame = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0xaecbff, transparent: true, opacity: 0.07, depthWrite: false })); gA.add(frame);
+      const fitP = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.2, colorWrite: false, depthWrite: false })); gA.add(fitP);   // 화면 맞춤용 보이지 않는 상자 (암석 틀과 같은 크기: 알갱이는 화면 맞춤이 재지 못해요)
       const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.6 })); gA.add(edges);
       const aL = arrow(gA, 0xffd34d, 1, 0.1), aR = arrow(gA, 0xffd34d, 1, 0.1); aL.rotation.z = -Math.PI / 2; aR.rotation.z = Math.PI / 2;
       let sd = 21; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
@@ -42,7 +43,7 @@
         const G = (ctx.lesson() && ctx.lesson().S && ctx.lesson().S.grain) || { T: 20, P: 0, g: 0, a: 0, pS: 0, dv: 0 };
         const t = Math.min(1, G.g / 3), p = G.pS, al = G.a, dv = G.dv, ax = [1 - dv, dv];
         const cw = lerp(3.4, lerp(2.3, 3.9, dv), p), ch = lerp(3.4, lerp(3.9, 2.3, dv), p), sz = lerp(0.2, 0.62, t);
-        frame.scale.set(cw, ch, 3.4); edges.scale.copy(frame.scale);
+        frame.scale.set(cw, ch, 3.4); edges.scale.copy(frame.scale); fitP.scale.copy(frame.scale);
         const band = t > 0.62 && al > 0.5;
         for (let i = 0; i < N; i++) {
           const f = FL[i]; tmpV.set(f.r[0] * (1 - al) + al * (ax[0] + f.r[0] * 0.12), f.r[1] * (1 - al) + al * (ax[1] + f.r[1] * 0.12), f.r[2] * (1 - al) + al * (f.r[2] * 0.12)).normalize();
@@ -129,7 +130,7 @@
         if (v === 'A') applyA(); else setD(dKm);
         Object.values(LA).forEach((l) => l.show(v === 'A' && l !== LA.fol && l !== LA.pr && l !== LA.ht)); Object.values(LBs).forEach((l) => l.show(v === 'B')); l0.forEach((l) => l.show(v === 'B'));
         if (v === 'A') applyA();
-        ctx.orbit.tx = 0; ctx.orbit.ty = v === 'A' ? 0.2 : -1.2; ctx.orbit.dist = v === 'A' ? (PHONE ? 13 : 9.5) : (PHONE ? 17 : 12.5);
+        ctx.orbit.tx = 0; ctx.orbit.ty = v === 'A' ? 0.2 : -1.2; ctx.orbit.dist = v === 'A' ? (PHONE ? 13 : 9.5) : (PHONE ? 17 : 12.5); ctx.refit(0.3);
       }
       function applyCtl() {
         gA1.els.concat(gA2.els).forEach((e) => (e.style.display = view === 'A' ? '' : 'none')); gB1.els.forEach((e) => (e.style.display = view === 'B' ? '' : 'none'));

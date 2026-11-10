@@ -10,7 +10,7 @@
     title: '세 가지 상태의 입자 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [1],   // 2단계(입자 모형으로 비교하기): 얼음·물·수증기 비교 + 태그 붙이기(막대 버튼) — 나머지 단계는 끌어 놓기·분류라 2D
-    camera: { dist: 13 * (PHN0 ? 1.1 : 1), theta: 0.25, phi: 1.2, fov: 45, target: [0, 0, 0], min: 5, max: 26 },
+    camera: { dist: 13 * (PHN0 ? 1.32 : 1), theta: 0.25, phi: 1.2, fov: 45, target: [0, 0, 0], min: 5, max: 26 },
     autoRotate: 0.06,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -153,6 +153,9 @@
         s.prep(k); return s;
       });
       const stand = new THREE.Mesh(new THREE.BoxGeometry(11.4, 0.2, 3.4), mat(0x64748b, { metalness: 0.4, roughness: 0.4 })); stand.position.y = -HH - 0.12; root.add(stand);
+      // 자동 맞춤용 보이지 않는 상자: 세 용기(입자는 계속 움직여요)를 한 덩어리로 재서 세 칸이 모두 크게 보이게
+      const fitBox = new THREE.Mesh(new THREE.BoxGeometry(2 * (XS[2] + W) + 0.3, HH * 2 + 0.7, 2 * W), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); fitBox.position.y = 0.3; root.add(fitBox);
+      stand.userData.v3bg = true;
       const nameLab = KINDS.map((k, i) => label(NAME[k], [XS[i], HH, 0], { size: 13.5, color: 'rgba(30,64,175,.92)', offset: [0, 0.45, 0] }));
       const featLab = KINDS.map((k, i) => label('', [XS[i], -HH, 0], { size: 12, color: 'rgba(20,90,70,.92)', offset: [0, -0.45, 0] }));
       /* 입자 하나를 따라가는 꼬리 (2D의 주황색 입자) */
@@ -160,7 +163,7 @@
         const l = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xffa31a })); const tp = new Float32Array(TN * 3);
         l.geometry.setAttribute('position', new THREE.BufferAttribute(tp, 3)); l.frustumCulled = false; root.add(l); return { l, tp, n: 0 };
       });
-      const dots = KINDS.map(() => { const d = new THREE.Mesh(new THREE.SphereGeometry(PR * 1.5, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffa31a, transparent: true, opacity: 0.55, depthWrite: false })); root.add(d); return d; });
+      const dots = KINDS.map(() => { const d = new THREE.Mesh(new THREE.SphereGeometry(PR * 1.5, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffa31a, transparent: true, opacity: 0.55, depthWrite: false })); d.userData.v3bg = true; root.add(d); return d; });
       let follow = true, tcount = 0;
 
       const FEAT = {

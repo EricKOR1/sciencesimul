@@ -34,11 +34,11 @@
         Dt: new THREE.MeshStandardMaterial({ color: 0xff3b3b, emissive: 0x991111, emissiveIntensity: 0.5, roughness: 0.35 }),
         Mt: new THREE.MeshStandardMaterial({ color: 0xff3b3b, emissive: 0x991111, emissiveIntensity: 0.5, roughness: 0.45 }),
       };
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.scale.set(15, 0.1, 11); floor.position.y = -0.06; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.scale.set(15, 0.1, 11); floor.position.y = -0.06; root.add(floor); floor.userData.v3bg = true;   // 바닥은 화면 맞춤에서 빼요
       const dum = new THREE.Object3D();
       function makeBox() {
         const g = new THREE.Group(); root.add(g);
-        const glass = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x9ec5ff, transparent: true, opacity: 0.1, roughness: 0.15, depthWrite: false }));
+        const glass = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x9ec5ff, transparent: true, opacity: 0.15, roughness: 0.15, depthWrite: false }));
         const edge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.75 }));
         const lid = new THREE.Mesh(new THREE.BoxGeometry(1, 0.14, 1), new THREE.MeshStandardMaterial({ color: 0x8a95a8, roughness: 0.5, transparent: true, opacity: 0.45 }));
         g.add(glass, edge, lid);

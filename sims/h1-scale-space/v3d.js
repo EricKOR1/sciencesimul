@@ -59,8 +59,8 @@
         for (let i = 0; i < 700; i++) { const v = new V(rr() - 0.5, rr() - 0.5, rr() - 0.5).normalize().multiplyScalar(30 + rr() * 6); sa.push(v.x, v.y, v.z); const c = 0.5 + rr() * 0.5; sc.push(c * 0.85, c * 0.9, c); }
         const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(sa, 3)); sg.setAttribute('color', new THREE.Float32BufferAttribute(sc, 3));
         const stars = new THREE.Points(sg, new THREE.PointsMaterial({ size: 0.16, vertexColors: true, sizeAttenuation: true, transparent: true, opacity: 0.85, depthWrite: false })); root.add(stars);
-        const plat = new THREE.Mesh(new THREE.CylinderGeometry(4.3, 4.5, 0.2, 72), new THREE.MeshStandardMaterial({ color: 0x18264a, roughness: 0.35, metalness: 0.6 })); plat.position.y = -3.4; root.add(plat);
-        [4.2, 3.0, 1.8].forEach((r, k) => { const t = new THREE.Mesh(new THREE.TorusGeometry(r, 0.025, 8, 96), new THREE.MeshBasicMaterial({ color: k % 2 ? 0x3b6ea8 : 0x4fd1c5 })); t.rotation.x = Math.PI / 2; t.position.y = -3.28; root.add(t); }); }
+        const plat = new THREE.Mesh(new THREE.CylinderGeometry(4.3, 4.5, 0.2, 72), new THREE.MeshStandardMaterial({ color: 0x18264a, roughness: 0.35, metalness: 0.6 })); plat.position.y = -3.4; root.add(plat); plat.userData.v3bg = true;   // 받침은 배경: 자동 맞춤이 물체에 맞춰요
+        [4.2, 3.0, 1.8].forEach((r, k) => { const t = new THREE.Mesh(new THREE.TorusGeometry(r, 0.025, 8, 96), new THREE.MeshBasicMaterial({ color: k % 2 ? 0x3b6ea8 : 0x4fd1c5 })); t.rotation.x = Math.PI / 2; t.position.y = -3.28; t.userData.v3bg = true; root.add(t); }); }
       const BUILD = {
         proton() { const g = new THREE.Group(); g.add(new THREE.Mesh(new THREE.SphereGeometry(2.1, 48, 32), std(0xf0786a, { transparent: true, opacity: 0.35, depthWrite: false, roughness: 0.2 })));
           const q = [0xff5a52, 0xffd34d, 0x4aa3ff].map((c) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.55, 28, 20), std(c, { roughness: 0.25, emissive: c, emissiveIntensity: 0.3 })); g.add(m); return m; });
@@ -127,6 +127,7 @@
         const prev = idx > 0 ? OB[idx - 1] : null; const ratio = prev ? Math.round(Math.log10(o.m / prev.m)) : 0;
         info('<b>' + o.n + '</b> · ' + o.t + '<br>' + NOTE[o.id] + (prev ? '<br>앞의 <b>' + prev.n + '</b>보다 약 <b>10<sup>' + ratio + '</sup>배</b> 커요.' : ''));
         rng && rng.set(idx);
+        if (ctx.refit) ctx.refit(0.6);   // 물체가 바뀌면 (커지는 효과가 끝난 뒤) 다시 화면에 맞춰요
         if (!from2d && !quiet) { const L = window.__sim; if (L && L.setExp && L.OBJ && L.OBJ[idx]) L.setExp(L.OBJ[idx].le, true); }
         const cnt = document.querySelector('.v3-scale-cnt'); if (cnt) cnt.textContent = '';
       }

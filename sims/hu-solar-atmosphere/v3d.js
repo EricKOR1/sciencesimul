@@ -32,7 +32,7 @@
     title: '태양 대기 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [0, 1],
-    camera: { dist: PHONE ? 13.5 : 12.5, theta: 1.0, phi: 1.22, min: 6, max: 28 },
+    camera: { dist: PHONE ? 13.5 : 12.5, theta: 1.0, phi: 1.22, min: 6, max: 28, target: PHONE ? [0, 0, 0] : [-0.86, 0.7, 1.34] },   // PC: 태양을 조금 오른쪽 아래로 (왼쪽 위 설명 상자에 홍염·코로나 구멍이 가리지 않게)
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls, renderer } = ctx;

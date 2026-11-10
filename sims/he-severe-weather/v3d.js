@@ -14,7 +14,7 @@
     title: '뇌우(적란운) 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [0],
-    camera: { dist: PHONE ? 14 : 9.2, theta: 0.5, phi: 1.3, min: 6, max: 28, target: [0.6, 2.5, 0] },
+    camera: { dist: PHONE ? 15 : 12.5, theta: 0.5, phi: 1.3, min: 6, max: 30, target: [1.1, 2.9, 0] },
     autoRotate: 0.08,
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
@@ -23,10 +23,13 @@
       let sd = 5; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
 
       /* 땅 · 마을 */
-      const ground = new THREE.Mesh(new THREE.CylinderGeometry(6.4, 6.4, 0.3, 72), std(0x3b6a3a)); ground.position.y = -0.15; root.add(ground);
+      const ground = new THREE.Mesh(new THREE.CylinderGeometry(6.4, 6.4, 0.3, 72), std(0x3b6a3a)); ground.position.y = -0.15; root.add(ground); ground.userData.v3bg = true;   // 바닥은 화면 맞춤에서 빼요
       { const hm = [std(0xe8d9b9), std(0xd9826a), std(0xb9c6d8)];
         [[-3.6, 1.2], [-4.2, -0.3], [-3.2, -1.7], [4.0, 1.6], [4.4, -0.6], [3.4, -2.2]].forEach((p, i) => { const h = new THREE.Group(), b = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.36, 0.42), hm[i % 3]), r = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.28, 4), std(0x6b4e3d)); r.rotation.y = Math.PI / 4; b.position.y = 0.18; r.position.y = 0.5; h.add(b, r); h.position.set(p[0], 0, p[1]); root.add(h); });
         const tw = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.06, 0.95, 8), std(0x9aa5b4, { metalness: 0.6, roughness: 0.4 })); tw.position.set(3.0, 0.48, 0.4); root.add(tw); }
+      root.traverse((o) => { if (o.isMesh) o.userData.v3bg = true; });   // 땅 · 마을은 화면 맞춤에서 빼요
+      const fitB = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.2, colorWrite: false, depthWrite: false })); root.add(fitB);   // 화면 맞춤용 보이지 않는 상자: 지금 단계의 구름(기둥 + 모루)을 감싸요 (구름 알갱이는 화면 맞춤이 재지 못해요)
+      let fitSt = 0;
 
       /* 구름 기둥 + 모루 */
       const BASE = 1.35, H = 4.3;
@@ -100,6 +103,7 @@
           if (wait >= 0) { wait -= dt; if (wait <= 0) { wait = -1; strike(); } }
           { const th = (() => { try { return L2().S.thunder; } catch (e) { return null; } })(); if (th && th !== seenTh && wait < 0) strike(true); const c = clockTxt(); if (c !== clockLast) { clockLast = c; text(); } }   // 조작판의 ⚡ 단추로 친 번개도 3D에 보여요
           const top = BASE + 0.9 + (H - 0.9) * cur.top;
+          { const x1 = 2.0 + 3.0 * cur.anvil, y1 = top + 0.7; fitB.scale.set(x1 + 2.0, y1 + 0.1, 3.6); fitB.position.set((x1 - 2.0) / 2, (y1 - 0.1) / 2, 0); if (st !== fitSt) { fitSt = st; ctx.refit(1.6); } }   // 단계가 바뀌면 구름이 다 자란 뒤 다시 맞춰요
           let n = 0;
           for (let i = 0; i < NB; i++) {
             const c = col[i], y = lerp(BASE, top, c.f), vis = Math.max(0, Math.min(1, (cur.top * 1.05 - c.f * cur.top) * 5)), grow = 0.8 + 0.2 * cur.up;

@@ -165,7 +165,7 @@
       const springs = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.BufferGeometry(), mat(0x9aa3b2, { metalness: 0.7 })); fG.add(m); return m; });
       const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.4 + 0.5, 16), mat(0xb9c2d0, { metalness: 0.7, roughness: 0.3 })); wire.rotation.x = Math.PI / 2; wire.position.y = 0.12; wire.castShadow = true; fG.add(wire);
       const hot = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 1, 16), new THREE.MeshBasicMaterial({ color: 0xffb400, transparent: true, opacity: 0.55 })); hot.rotation.x = Math.PI / 2; hot.position.y = 0.12; fG.add(hot);
-      const supply = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 1.9), mat(0x394258)); supply.position.set(-3.3, 0.4, 0); fG.add(supply);
+      const supply = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 1.9), mat(0x394258)); supply.position.set(-3.3, 0.4, 0); supply.userData.v3bg = true; fG.add(supply);
       const aI = mkArrow(0xe2552a, 0.05), aFw = mkArrow(0x14a058, 0.09); fG.add(aI, aFw);
       const lSup = label('', supply, { color: '#394258', size: 13 }), lL = label('', [0, 0, 0], { color: '#26324a', size: 13 }), lB = label('', [0, 0.4, 0], { color: '#5b3fd0', size: 13 }), lFo = label('F', aFw, { color: '#0f7a43', size: 14 }), lIo = label('I', aI, { color: '#c2410c', size: 13 });
       const dots = []; for (let i = 0; i < 6; i++) { const d = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshBasicMaterial({ color: 0xe2552a })); fG.add(d); dots.push(d); }
@@ -302,7 +302,7 @@
         bPar.style.display = mode === 'force' ? '' : 'none';
         pF.row.style.display = mode === 'force' ? '' : 'none'; pM.row.style.display = mode === 'motor' ? '' : 'none';
         if (mode !== 'force') { pF.pause(); pF.set(0); } if (mode !== 'motor') { pM.pause(); pM.set(0); }
-        if (mode === 'force') { Object.assign(ctx.orbit, { tx: -0.4, ty: 0, tz: 0, phi: 0.8, theta: 0.0, dist: 7 * KD }); lSup.show(true); lL.show(true); lB.show(true); }
+        if (mode === 'force') { Object.assign(ctx.orbit, { tx: -0.4, ty: 0, tz: 0, phi: 0.8, theta: 0.0, dist: PHN ? 8.8 : 7 }); lSup.show(true); lL.show(true); lB.show(true); }
         else if (mode === 'motor') { Object.assign(ctx.orbit, { tx: 0, ty: -0.6, tz: 0.4, phi: 1.15, theta: 0.55, dist: 14 * KD }); labB.show(true); labL.show(true); labR.show(true); labPlus.show(true); labMinus.show(true); labBrush.show(true); labComm.show(true); }
         else if (mode === 'speaker') { Object.assign(ctx.orbit, { tx: 0, ty: 2.5, tz: 0, phi: 1.25, theta: 0.5, dist: 15 * KD }); }
         else if (mode === 'design') { Object.assign(ctx.orbit, { tx: 0, ty: 3.2, tz: 0, phi: 1.2, theta: 0.5, dist: 17 * KD }); }

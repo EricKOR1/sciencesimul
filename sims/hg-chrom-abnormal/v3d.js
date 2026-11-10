@@ -95,8 +95,8 @@
       const chroms = [];     // {p, h, g(중심체), sis:[메시, 메시], side}
       for (let p = 2; p < 3; p++) for (let h = 0; h < 2; h++) {     // 2D처럼 21번 염색체 한 쌍만
         const g = new THREE.Group(), sis = [];
-        for (let s = 0; s < 2; s++) { const m = new THREE.Mesh(new THREE.CapsuleGeometry(0.14, PL[p], 8, 16), std(MC[h], { roughness: 0.4 })); meiG.add(m); sis.push(m); }
-        const cen = new THREE.Mesh(new THREE.SphereGeometry(0.2, 14, 10), std(0xfde68a, { roughness: 0.4 })); g.add(cen);
+        for (let s = 0; s < 2; s++) { const m = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, PL[p], 8, 16), std(MC[h], { roughness: 0.4 })); meiG.add(m); sis.push(m); }
+        const cen = new THREE.Mesh(new THREE.SphereGeometry(0.27, 14, 10), std(0xfde68a, { roughness: 0.4 })); g.add(cen);
         meiG.add(g); chroms.push({ p, h, g, sis, cen, side: 0, gi: [0, 0] });
       }
       const gLab = [0, 1, 2, 3].map(() => label('', null, { color: '#334155' }));
@@ -182,7 +182,7 @@
         g2.els.forEach((e) => { e.style.display = v === 'mei' ? '' : 'none'; }); g3.els.forEach((e) => { e.style.display = v === 'struct' ? '' : 'none'; });
         g4.els.forEach((e) => { e.style.display = v === 'mei' ? '' : 'none'; }); g5.els.forEach((e) => { e.style.display = v === 'struct' ? '' : 'none'; });
         if (v === 'struct') { showSt(true); textSt(); orbit.dist = narrow ? 14 : 11.5; orbit.phi = 1.38; orbit.ty = -0.4; t = 0; setKind(kind); }
-        else { showSt(false); gLab.forEach((l) => l.show(false)); orbit.dist = narrow ? 11 : 8.8; orbit.phi = 0.95; orbit.ty = 0; setMei(meiKind); }
+        else { showSt(false); gLab.forEach((l) => l.show(false)); orbit.dist = narrow ? 9 : 6.6; orbit.phi = 0.95; orbit.ty = 0; setMei(meiKind); }
       }
       setKind('del'); setMei('normal'); setScene('mei');
 

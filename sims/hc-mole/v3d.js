@@ -93,7 +93,7 @@
       const gEgg = new THREE.Group(), gDrop = new THREE.Group(), gMol = new THREE.Group();
       root.add(gEgg, gDrop, gMol);
       const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 }));
-      floor.scale.set(15, 0.1, 12); floor.position.set(0, -0.06, -0.8); root.add(floor);
+      floor.scale.set(15, 0.1, 12); floor.position.set(0, -0.06, -0.8); root.add(floor); floor.userData.v3bg = true;
       const dum = new THREE.Object3D();
 
       /* ---- 달걀과 다스 상자 (2D: 세기의 한계 · 달걀) ---- */
@@ -178,6 +178,7 @@
         }
         const slab = new THREE.Mesh(new THREE.BoxGeometry(4.9, 0.1, 2.4), new THREE.MeshStandardMaterial({ color: 0x1b2540, roughness: 0.8 })); slab.position.set(CX(i), 0.0, CZ(i)); gMol.add(slab);
       }
+      { const fb = new THREE.Mesh(new THREE.BoxGeometry(phone ? 4.9 : 14.9, 2.0, phone ? 7.6 : 2.4), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.2, colorWrite: false, depthWrite: false })); fb.position.set(0, 0.9, -0.8); gMol.add(fb); }   // 화면 맞춤용 보이지 않는 상자: 1 mol 상자 3개가 다 들어가요
       function molScene(Z, own, p) {
         const n = own ? 3 * (p < 0.92 ? Math.min(1, p / 0.85) : 1 - sm((p - 0.92) / 0.08)) : Z.S.mo.disp;
         for (let i = 0; i < 3; i++) {
@@ -201,7 +202,7 @@
       const rowMol = rowOf();
       const PL = { egg: plEgg, drop: plDrop, mol: plMol };
       let lastKind = '';
-      const DIST = phone ? { egg: 17, drop: 16, mol: 17 } : { egg: 10.5, drop: 11, mol: 13 };
+      const DIST = phone ? { egg: 17, drop: 16, mol: 17 } : { egg: 10.5, drop: 11, mol: 15 };
 
       return {
         update(dt, t) {
@@ -212,7 +213,7 @@
             sig = s;
             if (own) { const k = own; own = null; PL[k].pause(); PL[k].set(0); }
           }
-          if (kind !== lastKind) { lastKind = kind; ctx.orbit.dist = DIST[kind]; }
+          if (kind !== lastKind) { lastKind = kind; ctx.orbit.dist = DIST[kind]; ctx.refit(0.3); }
           rowEgg.style.display = kind === 'egg' ? '' : 'none'; rowDrop.style.display = kind === 'drop' ? '' : 'none'; rowMol.style.display = kind === 'mol' ? '' : 'none';
           if (kind !== 'egg' && plEgg.playing) plEgg.pause();
           if (kind !== 'drop' && plDrop.playing) plDrop.pause();

@@ -80,7 +80,7 @@
   window.SciSim3D.attach({
     title: '결합의 극성 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 전기 음성도 슬라이더로 구름이 움직여요',
-    camera: { dist: phone ? 9.6 : 8.4, theta: 0.45, phi: 1.2, min: 4, max: 20, target: [0, 0.3, 0] },
+    camera: { dist: phone ? 15 : 11, theta: 0.45, phi: 1.2, min: 4, max: 20, target: [0, 0.2, 0] },
     autoRotate: 0.1,
     levels: [0],
     build(ctx) {

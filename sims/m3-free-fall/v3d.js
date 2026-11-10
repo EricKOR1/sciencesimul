@@ -30,6 +30,8 @@
       for (let i = 0; i < 9; i++) { const a = i * 0.7 + 0.3, r = 13 + (i % 3) * 3, h0 = 0.8 + (i % 4) * 0.3; const hl = new THREE.Mesh(new THREE.ConeGeometry(3 + (i % 3), h0 * 3, 8), sm(i % 2 ? 0x3c5f3a : 0x46703f, { roughness: 1, metalness: 0, flatShading: true })); hl.position.set(Math.cos(a) * r - 2, h0 * 1.5 - 0.3, -Math.abs(Math.sin(a)) * r - 5); root.add(hl); }
       for (let i = 0; i < 7; i++) { const tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, 0.5, 6), sm(0x6b4423, { metalness: 0 })); tk.position.y = 0.25; tr.add(tk); [0.5, 0.85].forEach((y, j) => { const c = new THREE.Mesh(new THREE.ConeGeometry(0.4 - j * 0.1, 0.7, 8), sm(0x1c5a30, { roughness: 0.9, metalness: 0 })); c.position.y = y + 0.1; tr.add(c); }); tr.position.set(3.4 + (i % 2) * 0.8, 0, -2.6 + i * 0.7); tr.scale.setScalar(1.1 + (i % 3) * 0.2); root.add(tr); }
       /* 탑과 눈금 (높이는 2D의 탑 높이 H에 맞춰 다시 만들어요) */
+      // 하늘 · 먼 들판 · 언덕 · 나무 · 잔디밭은 배경: 자동 맞춤이 탑 · 공 · 눈금에 맞춰요
+      root.children.forEach((o) => { if (o !== pad && o !== mat) o.traverse((m) => { if (m.isMesh) m.userData.v3bg = true; }); });
       const tower = new THREE.Group(); root.add(tower);
       const magM = sm(0x334155, { metalness: 0.6, roughness: 0.35, emissive: 0x2563eb, emissiveIntensity: 0.0 });
       let Hm = 0, topY = 0;

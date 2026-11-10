@@ -24,7 +24,7 @@
       const { THREE, root, label, info, controls } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.85, metalness: 0.0 }, o || {}));
       const grp = new THREE.Group(); root.add(grp);
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(6.2, 6.2, 0.2, 64), std(0x2a3550, { roughness: 0.9 })); floor.position.y = -0.12; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(6.2, 6.2, 0.2, 64), std(0x2a3550, { roughness: 0.9 })); floor.position.y = -0.12; root.add(floor); floor.userData.v3bg = true;   // 바닥은 화면 맞춤에서 빼요
       const ext = (poly, col, d, x0) => {
         const sh = new THREE.Shape(); poly.forEach((p, i) => (i ? sh.lineTo(p[0], p[1]) : sh.moveTo(p[0], p[1]))); sh.closePath();
         const g = new THREE.ExtrudeGeometry(sh, { depth: d, bevelEnabled: false, curveSegments: 3 }); g.translate(0, 0, -d / 2);

@@ -15,7 +15,7 @@
     title: '마그마와 화성암 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [0],             // 1단계(용암 흐름) · 2단계(정출 순서) · 3단계(카드 끌어 분류표 채우기)는 2D 화면에서 해요
-    camera: { dist: PHONE ? 17 : 12.5, theta: 0.4, phi: 1.2, min: 6, max: 26, target: [0, -1.2, 0] },
+    camera: { dist: PHONE ? 19 : 14.5, theta: 0.4, phi: 1.2, min: 6, max: 28, target: [0, -1.2, 0] },
     autoRotate: 0,
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
@@ -23,7 +23,7 @@
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.85, metalness: 0 }, o || {}));
       const glow = (c, i) => std(c, { emissive: c, emissiveIntensity: i == null ? 0.7 : i, roughness: 0.5 });
       const grp = new THREE.Group(), live = new THREE.Group(); root.add(grp, live);
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(7.4, 7.4, 0.2, 64), std(0x2a3550)); floor.position.y = -3.7; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(7.4, 7.4, 0.2, 64), std(0x2a3550)); floor.position.y = -3.7; root.add(floor); floor.userData.v3bg = true;   // 바닥은 화면 맞춤에서 빼요
       const polyMesh = (pts, mat, d) => { const sh = new THREE.Shape(); pts.forEach((p, i) => (i ? sh.lineTo(p[0], p[1]) : sh.moveTo(p[0], p[1]))); sh.closePath(); const g = new THREE.ExtrudeGeometry(sh, { depth: d || ZD, bevelEnabled: false, curveSegments: 3 }); g.translate(0, 0, -(d || ZD)); const m = new THREE.Mesh(g, mat); m.castShadow = m.receiveShadow = true; grp.add(m); return m; };
       const arrow = (parent, col, len, rad) => { const g = new THREE.Group(), m = std(col, { emissive: col, emissiveIntensity: 0.35, roughness: 0.4 }), s = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, len - rad * 4, 12), m), h = new THREE.Mesh(new THREE.ConeGeometry(rad * 2.3, rad * 4.4, 16), m); s.position.y = (len - rad * 4) / 2; h.position.y = len - rad * 2.2; g.add(s, h); parent.add(g); return g; };
       const LB = { a: label('', [0, 0, 0], { size: 12 }), b: label('', [0, 0, 0], { size: 12 }), c: label('', [0, 0, 0], { size: 12 }), d: label('', [0, 0, 0], { size: 12 }), e: label('', [0, 0, 0], { size: 12 }) };

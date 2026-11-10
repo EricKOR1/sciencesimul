@@ -78,7 +78,7 @@
       });
       const hand = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 16), M(0xf3cfa8, { roughness: 0.6 })); hand.position.y = 0.9; gSp.add(hand);
       const fA = mkArrow(0xe2464b, 0.07); gSp.add(fA);
-      const lineAct = rod(new V3(), new V3(), 0.025, 0x7c5cff, 0.7), lineEll = rod(new V3(), new V3(), 0.05, 0x7c5cff); gSp.add(lineAct, lineEll);
+      const lineAct = rod(new V3(), new V3(), 0.025, 0x7c5cff, 0.7), lineEll = rod(new V3(), new V3(), 0.05, 0x7c5cff); lineAct.userData.v3bg = PHN; gSp.add(lineAct, lineEll);   // 휴대폰: 긴 작용선은 빼고 스패너에 맞춰요 (PC는 아래 시점 거리로 크게)
       const lF = label('', fA, { color: '#c0392b', size: 13 }), lEll = label('', [0, 0, 0], { color: '#6d4fe0', size: 13 }), lTau = label('', [0, 0, 0], { color: '#c2410c', size: 13 });
       const arcMat = M(0xf26b3a, { emissive: 0x7a2d12 }); let arcMesh = null, arcKey = '';
       const lRef = label('볼트 중심(회전축)', [0, 0.2, 1.0], { color: '#475569', size: 12 });
@@ -361,7 +361,7 @@
         [lW, lAx, lSupW, lTq, lAng].forEach((l) => l.show(gTp.visible)); lBook.show(false);
         if (pl && pl.row) pl.row.style.display = spl ? '' : 'none';
         if (plC && plC.row) plC.row.style.display = mode === 'couple' ? '' : 'none'; if (plP && plP.row) plP.row.style.display = mode === 'plank' ? '' : 'none'; if (plR && plR.row) plR.row.style.display = mode === 'crane' ? '' : 'none';
-        if (mode === 'spanner') { Object.assign(orbit, { tx: 2.3, ty: 0.3, tz: 0, phi: 0.7, theta: 0.0, dist: 9 * KD }); }
+        if (mode === 'spanner') { Object.assign(orbit, { tx: PHN ? 2.3 : 2.1, ty: 0.3, tz: 0, phi: 0.7, theta: 0.0, dist: PHN ? 9 * KD : 5.4 }); }
         else if (mode === 'seesaw') { Object.assign(orbit, { tx: 0, ty: 1.3, tz: 0, phi: 1.3, theta: 0.3, dist: 7.6 * KD }); }
         else if (mode === 'tilt') { Object.assign(orbit, { tx: -0.6, ty: 0.7, tz: 0, phi: 1.25, theta: 0.2, dist: 4.6 * KD }); bodyKey = ''; }
         else if (mode === 'load') { Object.assign(orbit, { tx: -0.4, ty: 1.0, tz: 0, phi: 1.3, theta: 0.25, dist: 7 * KD }); bodyKey = ''; }

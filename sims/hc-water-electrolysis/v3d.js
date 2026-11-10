@@ -141,6 +141,7 @@
       const lw = label('물 분자 2개', [-3.6, -4.1, 0], { size: 12 }), lp = label('수소 2개 · 산소 1개', [3.3, -4.1, 0], { size: 12 });
       const lt = label('에너지(전기)로 결합이 끊겨요', [0, 0, 0], { size: 12, color: 'rgba(255,170,40,.9)' });
       const arr = L.arrow([-1.3, 0, 0], [1.3, 0, 0], 0xffd34d, 0.07, 0.4); mm.add(arr); arr.position.y = -3.2; arr.visible = true;
+      { const fb = new THREE.Mesh(new THREE.BoxGeometry(9.6, 7.4, 2.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.2, colorWrite: false, depthWrite: false })); fb.position.set(-0.3, 0.2, 0); mm.add(fb); }   // 화면 맞춤용 보이지 않는 상자: 반응 전·중·후 원자와 이름표가 모두 들어가요 (진행에 따라 화면이 흔들리지 않게)
       const pv = new THREE.Vector3();
       function atomPos(i, p) {
         const a = atoms[i], m = mid[i]; const u = L.sstep(p / 0.5), w = L.sstep((p - 0.5) / 0.5);
@@ -173,7 +174,7 @@
       function setMode(m) {
         mode = m; dev.visible = m === 'dev'; mm.visible = m === 'mol';
         lc.show(m === 'dev'); la.show(m === 'dev'); lb.show(m === 'dev'); eqLab.show(m === 'mol'); lw.show(m === 'mol'); lp.show(m === 'mol'); lt.show(false);
-        orbit.ty = m === 'dev' ? 3.3 : 0.3; orbit.dist = m === 'dev' ? (phone ? 22 : 17) : (phone ? 17 : 13);
+        orbit.ty = m === 'dev' ? 3.3 : 0.3; orbit.dist = m === 'dev' ? (phone ? 22 : 17) : (phone ? 19 : 12); ctx.refit(0.3);
         rowD.style.display = m === 'dev' ? '' : 'none'; rowM.style.display = m === 'mol' ? '' : 'none';
         if (m === 'dev') { if (plM.playing) plM.pause(); } else if (plD.playing) plD.pause();
         if (m === 'dev') devInfo(); else setProg(prog);

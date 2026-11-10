@@ -9,6 +9,7 @@
   if (!window.SciSim3D) return;
   const PHN0 = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
   window.SciSim3D.attach({
+    host: PHN0 ? '.sc-tall' : '.sc-wide',   // 휴대폰에서는 세로 화면(.sc-tall)을 덮어요 (.sc-wide는 휴대폰에서 숨겨져 3D가 안 보였어요)
     title: '태양 표면과 활동 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 13 * (PHN0 ? 1.05 : 1), theta: 0.4, phi: 1.3, fov: 45, target: [0, 0, 0], min: 6, max: 30 },

@@ -288,7 +288,7 @@
           const ind = view === 'ind'; bk.forEach((b) => { b.nm.show(ind); if (!ind) b.btb.show(false); }); lLeg.show(ind); [lHcl, lNh3, lSmk, lBA, lBB].forEach((l) => l.show(!ind));
         } else { bk.forEach((b) => { b.nm.show(false); b.btb.show(false); }); lLeg.show(false); [lHcl, lNh3, lSmk, lBA, lBB].forEach((l) => l.show(false)); build(); }
         const o = ctx.orbit;
-        if (isObs && view === 'ind') { o.dist = PHONE ? 15 : 11.5; o.tx = 0; o.ty = 0.8; o.theta = 0.2; o.phi = 1.35; }
+        if (isObs && view === 'ind') { o.dist = PHONE ? 17.5 : 11.5; o.tx = 0; o.ty = 0.8; o.theta = 0.2; o.phi = 1.35; }
         else if (isObs) { o.dist = PHONE ? 21 : 11.5; o.tx = 0; o.ty = 1.3; o.theta = 0.1; o.phi = 1.4; }
         else { o.dist = PHONE ? 12.5 : 9.5; o.tx = 0; o.ty = 0; o.theta = 0.35; o.phi = 1.25; }
         txt = '';

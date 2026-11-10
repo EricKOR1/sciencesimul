@@ -112,6 +112,7 @@
       const benchEdge = new THREE.Mesh(new THREE.BoxGeometry(26.1, 0.08, 11.1), mat(0x4a2f15, { roughness: 0.7 })); benchEdge.position.set(1.5, -3.72, -0.3); gEnv.add(benchEdge);
       const boardTex = ctex(512, 256, (g, w, hh) => { const gr = g.createLinearGradient(0, 0, 0, hh); gr.addColorStop(0, '#34497c'); gr.addColorStop(1, '#233559'); g.fillStyle = gr; g.fillRect(0, 0, w, hh); g.strokeStyle = 'rgba(180,200,240,.15)'; g.lineWidth = 1; for (let x = 0; x <= w; x += w / 24) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, hh); g.stroke(); } for (let y = 0; y <= hh; y += hh / 12) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); } }, 1, 1);
       const boardEnv = new THREE.Mesh(new THREE.BoxGeometry(26, 14, 0.15), mat(0xffffff, { map: boardTex, roughness: 0.7, metalness: 0.05 })); boardEnv.position.set(1.5, 3.2, -6); gEnv.add(boardEnv);
+      gEnv.traverse((o) => { if (o.isMesh) o.userData.v3bg = true; });   // 실험대·뒤판은 배경: 자동 맞춤이 막·광선을 크게 보여 주도록
       /* 틀 */
       const fm = mat(0x64748b, { metalness: 0.6, roughness: 0.35 });
       const addB = (w, hh, d, x, y) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), fm); m.position.set(x, y, 0); gFilm.add(m); };

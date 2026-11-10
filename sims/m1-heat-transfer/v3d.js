@@ -12,7 +12,7 @@
     title: '열의 이동 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [1, 2, 3],   // 대류 · 복사 · 단열은 3D, 전도(막대 고르기 · 입자 모형)는 2D
-    camera: { dist: 14 * (PHN0 ? 1.05 : 1), theta: 0.45, phi: 1.3, fov: 45, target: [0, 0, 0], min: 5, max: 26 },
+    camera: { dist: 14 * (PHN0 ? 1.05 : 1), theta: PHN0 ? 0.85 : 0.45, phi: 1.3, fov: 45, target: [0, 0, 0], min: 5, max: 26 },
     autoRotate: 0.08,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;

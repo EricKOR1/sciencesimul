@@ -80,7 +80,7 @@
   window.SciSim3D.attach({
     title: 'pH와 이온 수 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 14 : 12.5, theta: 0.35, phi: 1.2, min: 5, max: 24, target: [1.6, 2.6, 0] },
+    camera: { dist: phone ? 17 : 12.5, theta: 0.35, phi: 1.2, min: 5, max: 24, target: [1.6, 2.6, 0] },
     autoRotate: 0.12,
     levels: [1],   // pH 계산(시료 단추 · 답 칸 · 맞히면 pH 측정기와 입자가 바뀌어요). 로그 눈금 · 기록 그래프 · 물질 끌기 단계는 2D
     build(ctx) {
@@ -95,7 +95,7 @@
         for (let i = 0; i < 240; i++) { x.strokeStyle = 'rgba(40,22,8,' + (0.05 + Math.random() * 0.1) + ')'; x.lineWidth = 0.6 + Math.random(); const y = Math.random() * 512; x.beginPath(); x.moveTo(0, y); x.bezierCurveTo(150, y + Math.random() * 6 - 3, 350, y + Math.random() * 6 - 3, 512, y + Math.random() * 4 - 2); x.stroke(); }
         const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2.2, 1.4); return t;
       })();
-      const bench = new THREE.Mesh(new THREE.BoxGeometry(16, 0.5, 10), new THREE.MeshStandardMaterial({ map: wood, color: 0x9a7d62, roughness: 0.6 })); bench.position.y = -0.3; root.add(bench);
+      const bench = new THREE.Mesh(new THREE.BoxGeometry(16, 0.5, 10), new THREE.MeshStandardMaterial({ map: wood, color: 0x9a7d62, roughness: 0.6 })); bench.position.y = -0.3; root.add(bench); bench.userData.v3bg = true;
       const glass = new THREE.MeshPhysicalMaterial({ color: 0xd8e8ff, transparent: true, opacity: 0.16, roughness: 0.04, clearcoat: 1, clearcoatRoughness: 0.05, side: THREE.DoubleSide, depthWrite: false });
       const beaker = new THREE.Mesh(new THREE.CylinderGeometry(R, R, HGT, 64, 1, true), glass); beaker.position.y = HGT / 2; root.add(beaker);
       const bot = new THREE.Mesh(new THREE.CylinderGeometry(R, R * 0.98, 0.2, 64), new THREE.MeshPhysicalMaterial({ color: 0xd8e8ff, transparent: true, opacity: 0.4, roughness: 0.05, clearcoat: 1, depthWrite: false })); bot.position.y = 0.1; root.add(bot);

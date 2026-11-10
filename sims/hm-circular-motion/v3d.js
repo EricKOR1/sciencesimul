@@ -59,7 +59,7 @@
       const rnd = (() => { let s = 11; return () => ((s = (s * 16807) % 2147483647) / 2147483647); })();
       const hexs = (c) => '#' + new THREE.Color(c).getHexString();
       const plateTex = (col) => ctex(256, 256, (g, w, h) => { g.fillStyle = hexs(col); g.fillRect(0, 0, w, h); for (let i = 0; i < 1800; i++) { g.fillStyle = 'rgba(' + (rnd() < 0.5 ? '255,255,255' : '0,0,0') + ',' + (0.03 + rnd() * 0.05) + ')'; g.fillRect(rnd() * w, rnd() * h, 2, 2); } g.strokeStyle = 'rgba(255,255,255,.12)'; g.lineWidth = 2; g.strokeRect(1, 1, w - 2, h - 2); }, 5, 5);
-      const floorMk = (g, r, col) => { const grp = new THREE.Group(); const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.12, 64), M(0xffffff, { map: plateTex(col), roughness: 0.55, metalness: 0.15 })); m.receiveShadow = true; grp.add(m); const rim = new THREE.Mesh(new THREE.TorusGeometry(r, 0.07, 10, 96), M(0x94a3b8, { metalness: 0.8, roughness: 0.3 })); rim.rotation.x = Math.PI / 2; rim.position.y = 0.05; grp.add(rim); const skirt = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.04, r * 1.1, 0.5, 64), M(0x1e293b, { roughness: 0.8 })); skirt.position.y = -0.4; grp.add(skirt); grp.position.y = -0.07; g.add(grp); return grp; };
+      const floorMk = (g, r, col, keep) => { const grp = new THREE.Group(); const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.12, 64), M(0xffffff, { map: plateTex(col), roughness: 0.55, metalness: 0.15 })); m.receiveShadow = true; grp.add(m); const rim = new THREE.Mesh(new THREE.TorusGeometry(r, 0.07, 10, 96), M(0x94a3b8, { metalness: 0.8, roughness: 0.3 })); rim.rotation.x = Math.PI / 2; rim.position.y = 0.05; grp.add(rim); const skirt = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.04, r * 1.1, 0.5, 64), M(0x1e293b, { roughness: 0.8 })); skirt.position.y = -0.4; grp.add(skirt); grp.position.y = -0.07; if (!keep) grp.traverse((o) => { if (o.isMesh) o.userData.v3bg = true; }); g.add(grp); return grp; };   // 바닥판은 배경: 자동 맞춤이 원운동 쪽을 크게 보여 줘요
       const dir3 = (a) => new V3(Math.cos(a), 0, -Math.sin(a));       // 위에서 본 모습: 2D의 (x, y↑) → 3D의 (x, −z)
       /* ================= 🧊 퍽 (10 m × 10 m 얼음판) ================= */
       const iceTex = ctex(512, 512, (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#d6ecfb'); gr.addColorStop(1, '#b3d4ee'); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.lineWidth = 1; for (let i = 0; i < 90; i++) { g.strokeStyle = 'rgba(255,255,255,' + (0.15 + rnd() * 0.3) + ')'; g.beginPath(); const x = rnd() * w, y = rnd() * h; g.moveTo(x, y); g.lineTo(x + (rnd() - 0.5) * 120, y + (rnd() - 0.5) * 120); g.stroke(); } }, 1, 1);
@@ -91,7 +91,7 @@
       const PUCK_V = 3;
       /* ================= 📐 구심 가속도 (Δv 작도) ================= */
       const dvRing = new THREE.Mesh(new THREE.TorusGeometry(1, 0.012, 8, 120), new THREE.MeshBasicMaterial({ color: 0x9db1cf })); dvRing.rotation.x = Math.PI / 2; G.dv.add(dvRing);
-      const dvFloor = floorMk(G.dv, 4.2, 0x56718f);
+      const dvFloor = floorMk(G.dv, 4.2, 0x56718f, true);   // Δv 작도 장면은 판 전체가 보이게 (자동 맞춤이 오른쪽 Δv 그림을 자르지 않게)
       const b0 = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 14), M(0xf59e0b)), b1 = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 14), new THREE.MeshStandardMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.45 })); G.dv.add(b0, b1);
       const dv0 = mkArrow(0x2563eb, 0.05), dv1 = mkArrow(0x60a5fa, 0.05), dvd = mkArrow(0xe2464b, 0.06), dva = mkArrow(0x14a058, 0.05); G.dv.add(dv0, dv1, dvd, dva);
       const rr0 = rod(new V3(), new V3(), 0.012, 0x5a6679, 0.7), rr1 = rod(new V3(), new V3(), 0.012, 0x5a6679, 0.7); G.dv.add(rr0, rr1);
@@ -242,7 +242,7 @@
         Object.keys(G).forEach((k) => (G[k].visible = k === mode));
         Object.keys(LAB).forEach((k) => LAB[k].forEach((l) => l.show(k === mode)));
         Object.keys(PL).forEach((k) => { PL[k].row.style.display = k === mode ? '' : 'none'; if (k !== mode) { PL[k].pause(); PL[k].set(0); } });
-        const cams = { puck: { tx: 0, ty: 0, tz: 0, phi: 0.95, theta: 0.15, dist: 15.5 }, dv: { tx: 2, ty: 0, tz: -1, phi: 0.95, theta: 0.1, dist: 13 }, ball: { tx: 0, ty: 0, tz: 0, phi: 0.9, theta: 0.2, dist: 10 }, road: { tx: 0, ty: 0, tz: 0, phi: 0.9, theta: 0.2, dist: 14 }, swing: { tx: 0, ty: 2.4, tz: 0, phi: 1.25, theta: 0.3, dist: 12 }, wheel: { tx: 0, ty: 4.5, tz: 0, phi: 1.4, theta: 0.2, dist: 17 }, rotor: { tx: 0, ty: 1.6, tz: 0, phi: 1.2, theta: 0.4, dist: 9 } };
+        const cams = { puck: { tx: 0, ty: 0, tz: 0, phi: 0.95, theta: 0.15, dist: 15.5 }, dv: { tx: 1.5, ty: 0, tz: -1, phi: 0.95, theta: 0.1, dist: PHN ? 13 : 11 }, ball: { tx: 0, ty: 0, tz: 0, phi: 0.9, theta: 0.2, dist: 10 }, road: { tx: 0, ty: 0, tz: 0, phi: 0.9, theta: 0.2, dist: 14 }, swing: { tx: 0, ty: 2.4, tz: 0, phi: 1.25, theta: 0.3, dist: 12 }, wheel: { tx: 0, ty: 4.5, tz: 0, phi: 1.4, theta: 0.2, dist: 17 }, rotor: { tx: 0, ty: 1.6, tz: 0, phi: 1.2, theta: 0.4, dist: 9 } };
         const c = cams[mode]; if (c) Object.assign(orbit, c, { dist: c.dist * KD });
       }
       /* 📏 장력 기록 그래프: 2D처럼 기록한 점(F–v²)과 직선을 3D 화면에도 보여 줘요 */

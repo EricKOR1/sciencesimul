@@ -11,7 +11,7 @@
   window.SciSim3D.attach({
     title: '3D 지층과 화석',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 16 : 11.5, theta: 0.45, phi: 1.2, target: [0, 3.1, 0], min: 7, max: 30 },
+    camera: { dist: PHN ? 18 : 15, theta: 0.45, phi: 1.2, target: [0, 3.4, 0], min: 7, max: 30 },
     autoRotate: 0.12,
     levels: [0],
     build(ctx) {
@@ -373,7 +373,7 @@
         const o = ctx.orbit;
         if (ck) { o.theta = 0; o.phi = 1.5; o.tx = 0; o.ty = 0; o.tz = 0; o.dist = PHN ? 14 : 12; }
         else if (en) { o.theta = 0; o.phi = 1.5; o.tx = 0; o.ty = -0.2; o.tz = 0; o.dist = PHN ? 28 : 18.5; }
-        else { o.theta = 0.45; o.phi = 1.2; o.tx = 0; o.ty = 3.1; o.tz = 0; o.dist = PHN ? 16 : 11.5; }
+        else { o.theta = 0.45; o.phi = 1.2; o.tx = 0; o.ty = 3.4; o.tz = 0; o.dist = PHN ? 18 : 15; }   // PC: 지층 맨 위가 설명 상자에 가리지 않게 조금 물러서요
       }
 
       return {

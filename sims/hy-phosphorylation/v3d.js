@@ -192,7 +192,7 @@
       };
       function setMode(m) {
         mode = m; chemi.visible = m === 'chemi'; sub.visible = m === 'sub';
-        orbit.dist = m === 'sub' ? (narrow ? 10 : 8.2) : (narrow ? 11.5 : 10.5); orbit.phi = m === 'sub' ? 1.15 : 1.36; { const ty = m === 'sub' ? 0.6 : -0.2; if (narrow) { orbit.tx = -ty; orbit.ty = 0; } else orbit.ty = ty; }
+        orbit.dist = m === 'sub' ? (narrow ? 11.5 : 8.2) : (narrow ? 11.5 : 10.5); orbit.phi = m === 'sub' ? 1.15 : 1.36; { const ty = m === 'sub' ? 0.6 : -0.2; if (narrow) { orbit.tx = m === 'sub' ? 0.4 : -ty; orbit.ty = 0; } else orbit.ty = ty; }
         ['ims', 'mat', 'etc', 'syn', 'atp'].forEach((k) => L[k].show(m === 'chemi')); ['sE', 'sS', 'sA', 'sT'].forEach((k) => L[k].show(m === 'sub'));
         if (m !== 'sub') pLab.show(false);
         st = 0; text();

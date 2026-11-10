@@ -43,6 +43,7 @@
       const im = new THREE.InstancedMesh(pg, pm, NXC * NZ * ND); im.frustumCulled = false; root.add(im);
       const imB = new THREE.InstancedMesh(new THREE.SphereGeometry(0.11, 14, 10), pmB, ND); imB.frustumCulled = false; root.add(imB);
       const orbG = new THREE.Group(); root.add(orbG);
+      const fitCol = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); root.add(fitCol);   // 자동 맞춤용 보이지 않는 상자: 앞쪽 입자 열(수면~해저)이 잘리지 않게
       const dummy = new THREE.Object3D();
       let W = waveOf(st.T, H()), sc = 1, depthS = 2, yTop = 0.9;
       const labS = label('해수면', [LX / 2 - 0.3, 0.4, LZ / 2], { color: 'rgba(14,90,160,.9)', size: 11.5 });
@@ -55,6 +56,7 @@
         const hl = W.hl;
         depthS = Math.min(Math.max(hl, 0.04), 0.62) * LV * 1.0 + 0.0;            // 바닥 깊이(장면)
         depthS = Math.max(depthS, 0.45);
+        fitCol.scale.set(1.4, depthS + 1.1, 0.4); fitCol.position.set(0, (0.9 - depthS - 0.2) / 2, LZ / 2 + 0.25);
         floor.position.y = -depthS - 0.2; body.scale.y = depthS; body.position.y = -depthS / 2;
         labF.obj = [LX / 2 - 0.2, -depthS + 0.0, LZ / 2 + 0.3];
         /* 궤도 타원 */

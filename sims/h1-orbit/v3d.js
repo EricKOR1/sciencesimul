@@ -89,6 +89,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 12, theta: 0.9, phi: 1.15, min: 0.12, max: 70 },
     levels: [0],
+    autofit: false,   // 차시가 발사할 때마다 궤적에 맞춰 카메라를 직접 옮겨요 (대포·공 크기도 거리에 맞춰 바뀌어요)
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
@@ -183,7 +184,7 @@
         sh.path.forEach((q) => { x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y); });
         if (sh.cls !== 'impact') { x0 = Math.min(x0, -R); x1 = Math.max(x1, R); y0 = Math.min(y0, -R); y1 = Math.max(y1, R); }
         const size = Math.max(x1 - x0, y1 - y0) * K;
-        const dist = sh.cls === 'impact' ? Math.max(0.3, size * 2.6) : Math.max(10.5, Math.min(60, size * 1.6 + 3));
+        const dist = sh.cls === 'impact' ? Math.max(0.3, size * 2.1) : Math.max(10.5, Math.min(60, size * 1.6 + 3));
         tgt = { tx: (x0 + x1) / 2 * K, ty: (y0 + y1) / 2 * K, dist };
         tubeR = 0.0034 * dist;
         // 선 두께는 확대 정도에 맞춰 다시 만들어요

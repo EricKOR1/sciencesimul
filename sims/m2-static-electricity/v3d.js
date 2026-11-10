@@ -17,7 +17,7 @@
   window.SciSim3D.attach({
     title: '정전기 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 14 : 10.5, theta: 0.3, phi: 1.25, min: 5, max: 22, target: [1.0, -0.4, 0] },
+    camera: { dist: PHN ? 13 : 10.5, theta: PHN ? -0.6 : 0.3, phi: 1.25, min: 5, max: 22, target: [1.0, -0.4, 0] },   // 휴대폰: 털가죽과 막대가 비스듬히 놓여 화면에 다 들어와요
     autoRotate: 0,
     levels: [0],                     // 1단계(마찰 전기): ▶ 문지르기로 막대를 문질러요. 2~4단계는 막대를 끌어 가까이 대고 막대를 눌러 고르는 미션이라 2D
     build(ctx) {
@@ -49,7 +49,7 @@
       const cTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
       const woodT = cTex(512, 256, (c, w, h) => { c.fillStyle = '#5a3a20'; c.fillRect(0, 0, w, h); for (let i = 0; i < 70; i++) { c.strokeStyle = 'rgba(' + (30 + (i * 23) % 40) + ',16,6,' + (0.12 + (i % 4) * 0.05) + ')'; c.lineWidth = 1 + (i % 3); c.beginPath(); const y = i / 70 * h; c.moveTo(0, y); for (let x = 0; x <= w; x += 32) c.lineTo(x, y + Math.sin(x * 0.04 + i) * 2.5); c.stroke(); } });
       woodT.repeat.set(2, 1);
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(16, 0.3, 7), mat(0xffffff, { map: woodT, roughness: 0.5 })); floor.position.set(0, -2.45, 0); floor.receiveShadow = true; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(16, 0.3, 7), mat(0xffffff, { map: woodT, roughness: 0.5 })); floor.position.set(0, -2.45, 0); floor.receiveShadow = true; floor.userData.v3bg = true; root.add(floor);
       const wallT = cTex(8, 256, (c, w, h) => { const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#27375a'); g.addColorStop(1, '#0e1830'); c.fillStyle = g; c.fillRect(0, 0, w, h); });
       const wallM = new THREE.Mesh(new THREE.PlaneGeometry(90, 40), new THREE.MeshBasicMaterial({ map: wallT })); wallM.position.set(0, 8, -14); root.add(wallM);
       // 막대 양 끝을 둥글게 (같은 재질을 써서 색이 함께 바뀌어요)

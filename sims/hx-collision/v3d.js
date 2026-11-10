@@ -17,7 +17,7 @@
   window.SciSim3D.attach({
     title: '유효 충돌 3D · CO + NO₂',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHONE ? 19 : 14.5, theta: 0.25, phi: 1.3, min: 8, max: 30, target: [-0.5, 2.0, 0] },
+    camera: { dist: PHONE ? 19 : 14.5, theta: 0.25, phi: 1.3, min: 8, max: 30, target: [PHONE ? -2.2 : -0.5, 2.0, 0] },
     autoRotate: 0,
     levels: [0, 1],
     build(ctx) {
@@ -134,6 +134,7 @@
       const glass = new THREE.Mesh(new THREE.BoxGeometry(BW, BH, BD), new THREE.MeshStandardMaterial({ color: 0x9fb4d6, transparent: true, opacity: 0.1, roughness: 0.2, depthWrite: false }));
       glass.position.set(0, BY, 0); gBox.add(glass);
       const frame = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(BW, BH, BD)), new THREE.LineBasicMaterial({ color: 0x8aa0c8 })); frame.position.set(0, BY, 0); gBox.add(frame);
+      { const fit = new THREE.Mesh(new THREE.BoxGeometry(BW, BH, BD), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); fit.position.set(0, BY, 0); gBox.add(fit); }   // 자동 맞춤용 보이지 않는 상자: 반응기 전체가 잘리지 않게
       const floor = new THREE.Mesh(new THREE.BoxGeometry(BW + 0.6, 0.2, BD + 0.6), mat(0x1c2540)); floor.position.set(0, BY - BH / 2 - 0.1, 0); gBox.add(floor);
       const SL = 16, slots = [];
       for (let i = 0; i < SL; i++) {
@@ -267,7 +268,7 @@
         labCtl.forEach((g) => vis(g, sc === 'lab'));
         vis(boxCtl, sc === 'box'); vis(dsSeg, sc === 'en'); vis(eRange, sc === 'en'); vis(eRoll, sc === 'en'); vis(eaRng, sc === 'eas');
         const o = ctx.orbit;
-        if (sc === 'lab') { o.theta = 0.25; o.phi = 1.3; o.ty = 2.0; o.tx = -0.5; o.dist = PHONE ? 19 : 14.5; }
+        if (sc === 'lab') { o.theta = 0.25; o.phi = 1.3; o.ty = 2.0; o.tx = PHONE ? -2.2 : -0.5; o.dist = PHONE ? 19 : 14.5; }
         else if (sc === 'box') { o.theta = 0.3; o.phi = 1.3; o.tx = 0; o.ty = BY; o.dist = PHONE ? 17 : 12.5; }
         else { o.theta = 0.1; o.phi = 1.5; o.tx = 0; o.ty = EY0 + 1.6; o.dist = PHONE ? 16 : 13; }
         shown = '';

@@ -10,17 +10,18 @@
 
   window.SciSim3D.attach({
     title: '떨어뜨린 공 · 던진 공 3D',
-    camera: { dist: PHN ? 24 : 17, theta: 0.3, phi: 1.3, target: [1.4, 2.4, 0], min: 8, max: 34 },
+    camera: PHN ? { dist: 21, theta: 0.85, phi: 1.25, target: [-0.6, 2.6, 0], min: 8, max: 34 }   // 휴대폰: 비스듬히 봐서 긴 바닥이 좁은 화면에 들어오게
+      : { dist: 16, theta: 0.15, phi: 1.32, target: [-0.2, 3.0, 0], min: 8, max: 34 },
     levels: [3],
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.05 }, o || {}));
       let body = 'earth', v0 = 8, t = 0, state = 'ready', hold = 0;
-      const gnd = new THREE.Mesh(new THREE.BoxGeometry(15, 0.3, 5), std(BODY.earth.c, { roughness: 0.9 })); gnd.position.set(1.5, -0.15, 0); root.add(gnd);
+      const gnd = new THREE.Mesh(new THREE.BoxGeometry(15, 0.3, 5), std(BODY.earth.c, { roughness: 0.9 })); gnd.position.set(1.5, -0.15, 0); root.add(gnd); gnd.userData.v3bg = PHN;   // 휴대폰: 바닥·격자판은 배경 → 자동 맞춤이 탑과 공의 길에 맞춰요 (PC는 바닥까지 넣어 위쪽 설명 상자에 안 가리게)
       // 뒤쪽 격자판 (높이·거리를 읽기 쉽게)
       const gridG = new THREE.Group(); root.add(gridG);
-      const wall = new THREE.Mesh(new THREE.PlaneGeometry(15, H * KY + 0.4), new THREE.MeshStandardMaterial({ color: 0x20304f, roughness: 0.9, transparent: true, opacity: 0.75, side: THREE.DoubleSide })); wall.position.set(1.5, (H * KY + 0.4) / 2 - 0.0, -2.4); gridG.add(wall);
+      const wall = new THREE.Mesh(new THREE.PlaneGeometry(15, H * KY + 0.4), new THREE.MeshStandardMaterial({ color: 0x20304f, roughness: 0.9, transparent: true, opacity: 0.75, side: THREE.DoubleSide })); wall.position.set(1.5, (H * KY + 0.4) / 2 - 0.0, -2.4); wall.userData.v3bg = PHN; gridG.add(wall);
       const lm = new THREE.LineBasicMaterial({ color: 0x5f78b0, transparent: true, opacity: 0.55 });
       function buildGrid() {
         while (gridG.children.length) { const o = gridG.children[0]; gridG.remove(o); o.geometry.dispose(); }

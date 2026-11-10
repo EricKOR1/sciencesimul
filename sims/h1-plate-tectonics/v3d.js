@@ -8,7 +8,7 @@
 
   window.SciSim3D.attach({
     title: '판의 경계 블록 3D',
-    camera: { dist: PHN ? 12.5 : 10.8, theta: 0.35, phi: 1.12, min: 6, max: 24 },
+    camera: { dist: PHN ? 14.5 : 10.8, theta: 0.35, phi: 1.12, min: 6, max: 24 },
     levels: [1],
     autoRotate: 0,
     build(ctx) {

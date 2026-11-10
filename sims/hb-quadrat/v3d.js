@@ -13,7 +13,7 @@
   window.SciSim3D.attach({
     title: '초지와 방형구 조사 3D',
     hint: '드래그: 돌리기 · 방형구를 확대해 식물을 세어 봐요',
-    camera: { dist: narrow ? 30 : 22, theta: 0.15, phi: 0.95, min: 2.5, max: 48, target: [0, 0, 0] },
+    camera: { dist: narrow ? 44 : 27, theta: 0.15, phi: 0.95, min: 2.5, max: 48, target: [0, 0, 0] },
     autoRotate: 0,
     levels: [0],   // 방형구 설치와 식물 세기(던지기 · 확대 · ➕ 세기 · 📐 면적 읽기 단추). 기록표 · 곡선 · 층 이름표 단계는 2D
     build(ctx) {
@@ -95,7 +95,8 @@
         if (L && !zoomed && last >= 0 && L.S.mode !== 'zoom' && L.openZoom) L.openZoom(last); else if (L && zoomed && L.S.mode === 'zoom' && L.setMode) L.setMode('field');
         zoomed = !zoomed; zb.classList.toggle('on', zoomed); zb.textContent = zoomed ? '🔍 초지 전체' : '🔍 방형구 확대';
         if (zoomed && last >= 0) { const q = quads[last]; orbit.tx = q.x; orbit.tz = q.z; orbit.ty = 0.1; orbit.dist = 3.2; orbit.phi = 0.9; }
-        else { zoomed = false; orbit.tx = 0; orbit.tz = 0; orbit.ty = 0; orbit.dist = narrow ? 30 : 22; orbit.phi = 0.95; zb.textContent = '🔍 방형구 확대'; zb.classList.remove('on'); }
+        else { zoomed = false; orbit.tx = 0; orbit.tz = 0; orbit.ty = 0; orbit.dist = narrow ? 44 : 27; orbit.phi = 0.95; zb.textContent = '🔍 방형구 확대'; zb.classList.remove('on'); }
+        ctx.refit(0.3);
       });
       /* 방형구 세기: 고른 식물을 한 포기씩 세고(✓), 그 종이 덮은 면적을 읽어요 */
       let cMsg = '', cMsgT = 0;

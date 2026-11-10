@@ -12,7 +12,7 @@
   window.SciSim3D.attach({
     title: '3D 태양광 · 풍력 · 연료 전지',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 14 : 9.5, theta: 0.25, phi: 1.3, target: [0.2, 1.6, 0], min: 6, max: 26 },
+    camera: { dist: PHN ? 18 : 9.5, theta: 0.25, phi: 1.3, target: [0.2, 1.6, 0], min: 6, max: 26 },
     autoRotate: 0,
     levels: [1],
     build(ctx) {
@@ -25,7 +25,7 @@
       const windP = () => { const v = st.wind; return v < 3 ? 0 : v >= 12 ? 2 : 2 * Math.pow(v / 12, 3); };
 
       /* ---------- 바닥 ---------- */
-      const ground = new THREE.Mesh(new THREE.CylinderGeometry(4.6, 4.8, 0.3, 64), new THREE.MeshLambertMaterial({ color: 0x3f7a33 })); ground.position.y = -0.15; ground.receiveShadow = true; root.add(ground);
+      const ground = new THREE.Mesh(new THREE.CylinderGeometry(4.6, 4.8, 0.3, 64), new THREE.MeshLambertMaterial({ color: 0x3f7a33 })); ground.position.y = -0.15; ground.receiveShadow = true; root.add(ground); ground.userData.v3bg = true;   // 바닥·해·햇빛 줄기는 배경: 자동 맞춤이 패널(풍차·연료 전지)에 맞춰요
 
       /* ================= ① 태양광 ================= */
       const gS = new THREE.Group(); root.add(gS);
@@ -47,7 +47,7 @@
       const rayM = new THREE.MeshBasicMaterial({ color: 0xffd34d, transparent: true, opacity: 0.85 });
       for (let i = 0; i < 5; i++) {
         const g = new THREE.Group(), L = 5.2, sh = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, L, 8), rayM), hd = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.36, 12), rayM);
-        sh.position.y = L / 2; hd.position.y = 0.0; hd.rotation.x = Math.PI; g.add(sh, hd);
+        sh.position.y = L / 2; sh.userData.v3bg = true; hd.position.y = 0.0; hd.rotation.x = Math.PI; g.add(sh, hd);
         g.userData = { off: (i - 2) * 0.62, mat: rayM }; gS.add(g); rays.push(g);
       }
       function placeRays() {
@@ -62,7 +62,7 @@
         });
       }
       // 태양
-      const sunM = new THREE.Mesh(new THREE.SphereGeometry(0.7, 28, 20), new THREE.MeshBasicMaterial({ color: 0xffd23f })); sunM.position.copy(sunDir).multiplyScalar(7.4).add(new V3(0, PY, 0)); gS.add(sunM);
+      const sunM = new THREE.Mesh(new THREE.SphereGeometry(0.7, 28, 20), new THREE.MeshBasicMaterial({ color: 0xffd23f })); sunM.position.copy(sunDir).multiplyScalar(7.4).add(new V3(0, PY, 0)); gS.add(sunM); sunM.userData.v3bg = true;
       const gt = document.createElement('canvas'); gt.width = gt.height = 128; { const g = gt.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,225,130,1)'); gr.addColorStop(0.3, 'rgba(255,190,60,.5)'); gr.addColorStop(1, 'rgba(255,160,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); }
       const sGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(gt), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); sGlow.scale.set(4.5, 4.5, 1); sGlow.position.copy(sunM.position); gS.add(sGlow);
       // 구름
@@ -72,6 +72,7 @@
         [[0, 0, 0, 0.5], [0.5, 0.05, 0.1, 0.4], [-0.5, 0, -0.1, 0.38], [0.15, 0.3, 0, 0.38]].forEach((q) => { const m = new THREE.Mesh(new THREE.SphereGeometry(q[3], 16, 12), mat(0xdfe5f1, { roughness: 1, transparent: true, opacity: 0.95 })); m.position.set(q[0], q[1], q[2]); c.add(m); });
         const p = sunDir.clone().multiplyScalar(4.9 + k * 0.25).add(new V3(0, PY + 0.2, (k - 1) * 1.5)); c.position.copy(p); c.userData.k = k; clouds.add(c);
       }
+      if (PHN) clouds.traverse((o) => { if (o.isMesh) o.userData.v3bg = true; });   // 휴대폰: 좁은 화면에서 패널이 잘리지 않게 구름은 맞춤에서 빼요
       const labSun = label('☀ 햇빛', sunM, { size: 12.5, offset: [0, 1.2, 0] });
       const labPanel = label('태양광 패널', [0, PY + 0.2, 0], { size: 12.5, offset: [1.9, -0.2, 0] });
       const labNorm = label('수직선', pivot, { size: 11.5, offset: [0, 2.7, 0] });

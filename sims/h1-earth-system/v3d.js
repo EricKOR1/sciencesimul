@@ -121,7 +121,7 @@
       const moon = new THREE.Mesh(new THREE.SphereGeometry(0.55, 40, 28), std(0xffffff, { map: new THREE.CanvasTexture(mcv), roughness: 0.95 })); moonG.add(moon);
       { const N = 260, pos = new Float32Array(N * 3); for (let i = 0; i < N; i++) { const u = Math.random() * 2 - 1, a = Math.random() * 6.283, r = 22 + Math.random() * 14, q = Math.sqrt(1 - u * u); pos[i * 3] = Math.cos(a) * q * r; pos[i * 3 + 1] = u * r; pos[i * 3 + 2] = Math.sin(a) * q * r; }
         const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); root.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: 0.14, transparent: true, opacity: 0.85, depthWrite: false }))); }
-      const orbitRing = new THREE.Mesh(new THREE.TorusGeometry(5.4, 0.012, 6, 120), new THREE.MeshBasicMaterial({ color: 0x8fa3c8, transparent: true, opacity: 0.4 })); orbitRing.rotation.x = Math.PI / 2; orbitRing.position.y = 0.9; moonG.add(orbitRing);
+      const orbitRing = new THREE.Mesh(new THREE.TorusGeometry(5.4, 0.012, 6, 120), new THREE.MeshBasicMaterial({ color: 0x8fa3c8, transparent: true, opacity: 0.4 })); orbitRing.rotation.x = Math.PI / 2; orbitRing.position.y = 0.9; moonG.add(orbitRing); orbitRing.userData.v3bg = true;   // 궤도선은 배경: 자동 맞춤이 지구에 맞춰요
       const sat = new THREE.Group(); { const bd = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.22), std(0xd7dbe3, { metalness: 0.6, roughness: 0.3 })); sat.add(bd); [-1, 1].forEach((sg) => { const pn = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.01, 0.16), std(0x1e40af, { metalness: 0.5, roughness: 0.25, emissive: 0x0a1f66, emissiveIntensity: 0.4 })); pn.position.x = sg * 0.28; sat.add(pn); }); }
       root.add(sat);
       function arrow(from, to, col, rad) {
@@ -152,7 +152,8 @@
         cloud.visible = m === 'all' || m === 'bio'; sAtm.visible = m === 'all' || m === 'bio'; halo.forEach((h) => { h.visible = m === 'all' || m === 'bio'; });
         cutRock.visible = m === 'geo'; cutOcn.visible = m === 'hyd'; baseOcn.visible = m === 'hyd'; cutAtm.visible = m === 'atm'; bio.visible = m === 'bio';
         en.visible = m === 'all'; lOut.show(m === 'all');
-        orbit.dist = (PHN ? 15 : 14.5) * (m === 'all' ? 0.92 : 0.72);
+        orbit.dist = (PHN ? 15 : 14.5) * (m === 'all' ? (PHN ? 1.02 : 0.92) : 0.72);   // 휴대폰 '전체': 달까지 화면에 들어오게
+        if (ctx.refit) ctx.refit(0.3);
         if (isCut || m === 'all' || m === 'bio') { orbit.theta = isCut ? -2.35 : 0.2; }
         if (m === 'geo') { ROCK.forEach((ly, i) => lab(i, ly.n, [0, 0, 0], [-(ly.r0 + ly.r1) / 2 * (i === 3 ? 1.0 : 1), (i % 2 ? 0.28 : -0.28) * (i === 3 ? 0 : 1) + (i === 3 ? 0.55 : 0), 0.05])); info('<b>지권</b>: 지각 · 맨틀 · 외핵 · 내핵으로 이루어져요. 외핵만 액체예요.'); }
         else if (m === 'hyd') { OCN.slice(1).forEach((ly, i) => lab(i, ly.n, [0, 0, 0], [-(ly.r0 + ly.r1) / 2, 0.2 * (i % 2 ? 1 : -1) , 0.05])); info('<b>수권</b>: 바다는 깊이에 따라 혼합층 · 수온 약층 · 심해층으로 나뉘어요. (두께는 크게 그렸어요)'); }

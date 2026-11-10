@@ -15,7 +15,7 @@
 
   window.SciSim3D.attach({
     title: '번역: 리보솜과 tRNA 3D',
-    camera: { dist: PHN ? 15 : 10.5, theta: 0.1, phi: 1.4, target: [0, 1.1, 0], min: 6, max: 24 },
+    camera: { dist: PHN ? 12 : 10.5, theta: 0.1, phi: 1.4, target: [0, 1.1, 0], min: 6, max: 24 },
     levels: [2],   // 2단계(단백질 합성): 화면 아래 tRNA 단추로 2D의 tRNA 놓기(syAttempt)를 해요. 리보솜 장착 · 코돈표 · 변이 카드는 2D
     autoRotate: 0,
     build(ctx) {

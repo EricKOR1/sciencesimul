@@ -41,7 +41,7 @@
     levels: [2],             // 2단계(은하의 특징): 3D에서 유형을 고르면 2D와 같은 값(성간 물질 · 푸른 별 · 별 형성)을 보여 줘요. 0 · 1 · 3단계(사진 묶기 · a·b 재기와 소리굽쇠 칸 · AI 이름표)는 2D 화면에서 해요
     title: '은하 모양 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 25 * FIT, theta: 0.4, phi: 1.2, fov: 42, min: 12, max: 120 },
+    camera: { dist: 18 * Math.pow(FIT, 0.56), theta: 0.4, phi: 1.2, fov: 42, min: 10, max: 120 },   // 점(별)은 자동 맞춤이 재지 못해서 거리를 직접 정해요: 별이 촘촘한 반지름 7 정도가 화면의 약 80 %
     autoRotate: 0.18,
     build(ctx) {
       const { THREE, root, camera, label, info, controls, orbit, renderer } = ctx;

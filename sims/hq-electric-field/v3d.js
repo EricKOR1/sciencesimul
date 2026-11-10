@@ -275,8 +275,8 @@
       /* ================= ④ 전기장의 합 (a·b·c 배치, 잉크젯) ================= */
       const SU = 6, SEc = { a: 0.4, b: 1.65 }, SEMAX = { a: 3.2, b: 2.8 };
       const sg = new THREE.Group(); gS.add(sg);
-      for (let x = -0.6; x <= 1.4001; x += 0.1) dash(sg, new V3(x * SU, -0.3 * SU, 0), new V3(x * SU, 0.9 * SU, 0), Math.abs(x) < 1e-6 ? 0x8da2c4 : 0x5b6b8c, Math.abs(x) < 1e-6 ? 0.8 : 0.3);
-      for (let y = -0.3; y <= 0.9001; y += 0.1) dash(sg, new V3(-0.6 * SU, y * SU, 0), new V3(1.4 * SU, y * SU, 0), Math.abs(y) < 1e-6 ? 0x8da2c4 : 0x5b6b8c, Math.abs(y) < 1e-6 ? 0.8 : 0.3);
+      for (let x = -0.6; x <= 1.4001; x += 0.1) dash(sg, new V3(x * SU, -0.3 * SU, 0), new V3(x * SU, 0.9 * SU, 0), Math.abs(x) < 1e-6 ? 0x8da2c4 : 0x5b6b8c, Math.abs(x) < 1e-6 ? 0.8 : 0.3).userData.v3bg = PHN;   // 휴대폰: 모눈은 배경 (자동 맞춤이 전하 · 벡터를 크게) · PC는 x축 눈금이 다 보이게 모눈까지 맞춰요
+      for (let y = -0.3; y <= 0.9001; y += 0.1) dash(sg, new V3(-0.6 * SU, y * SU, 0), new V3(1.4 * SU, y * SU, 0), Math.abs(y) < 1e-6 ? 0x8da2c4 : 0x5b6b8c, Math.abs(y) < 1e-6 ? 0.8 : 0.3).userData.v3bg = PHN;
       const xl = []; for (let x = -0.4; x <= 1.001; x += 0.2) xl.push(L('sum', (Math.round(x * 10) / 10).toFixed(1), anchor(sg, x * SU, -0.3 * SU - 0.3, 0), { color: '#8da2c4', size: 10.5 }));
       L('sum', 'x (m)', anchor(sg, 1.4 * SU, -0.3 * SU - 0.3, 0), { color: '#516079', size: 11 });
       const sA = charge(gS, 1, 0.3), sB = charge(gS, 1, 0.3);
@@ -379,7 +379,7 @@
 
       const labelSets = { force: 'force', field: 'field', graph: 'graph', sum: 'sum', ink: 'ink' };
       function scene(S) { return S.mode === 'graph' ? 'graph' : S.mode === 'field' ? 'field' : S.mode === 'sum' ? (S.f4.pre === 'd' ? 'ink' : 'sum') : 'force'; }
-      const camD = { force: 11, field: 12.5, graph: 15, sum: 13, ink: 17 };
+      const camD = { force: 11, field: 12.5, graph: 15, sum: PHN ? 13 : 10.5, ink: 17 };
       function showScene(sc, S) {
         gF.visible = sc === 'force'; gE.visible = sc === 'field'; gG.visible = sc === 'graph'; gS.visible = sc === 'sum'; gI.visible = sc === 'ink';
         Object.keys(labs).forEach((k) => labs[k].forEach((l) => l.show(k === sc)));

@@ -106,7 +106,7 @@
       const led2L = label('LED 2', [0, BY, -0.95], { size: 11.5, offset: [0, -0.6, -0.2] });
 
       /* ---------- 바닥 ---------- */
-      const base = new THREE.Mesh(new THREE.CylinderGeometry(5.4, 5.6, 0.3, 48), new THREE.MeshLambertMaterial({ color: 0x2d3547 })); base.position.y = -3.4; base.receiveShadow = true; root.add(base);
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(5.4, 5.6, 0.3, 48), new THREE.MeshLambertMaterial({ color: 0x2d3547 })); base.position.y = -3.4; base.receiveShadow = true; root.add(base); base.userData.v3bg = true;   // 바닥은 배경: 자동 맞춤이 코일·자석에 맞춰요
 
       /* ---------- 조작 (2D를 대신 눌러 줘요) ---------- */
       const L2 = () => (ctx.lesson && ctx.lesson()) || null;
@@ -136,6 +136,9 @@
         magN.show(mag); magS.show(mag); coilLab.show(true);
         genN.show(!mag); genLab.show(!mag); led1L.show(!mag); led2L.show(!mag); galL.show(mag);
         gMag1.forEach((e) => { e.style.display = mag ? '' : 'none'; }); gGen1.forEach((e) => { e.style.display = mag ? 'none' : ''; });
+        // 자석 장면: 왼쪽에 놓인 자석까지 한 화면에 크게 들어오게 가운데를 왼쪽으로 옮기고 가까이 봐요
+        const o = ctx.orbit; o.dist = mag ? (PHN ? 14.5 : 7.6) : (PHN ? 16 : 10.5); o.tx = mag ? (PHN ? -1.9 : -0.8) : 0;
+        if (ctx.refit) ctx.refit(0.3);
       }
       mB.visible = false; const mC = bar(2.6, 0.8); mC.visible = false; gMag.add(mC);
       showScene();

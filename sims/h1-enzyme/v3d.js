@@ -44,6 +44,7 @@
       const floor = new THREE.Mesh(new THREE.CylinderGeometry(6.2, 6.4, 0.25, 72), std(0x12203a, { roughness: 0.7, metalness: 0.1 })); floor.position.set(1.1, -3.0, 0); root.add(floor);
       const fring = new THREE.Mesh(new THREE.TorusGeometry(6.0, 0.03, 8, 96), new THREE.MeshBasicMaterial({ color: 0x4fd1c5 })); fring.rotation.x = Math.PI / 2; fring.position.set(1.1, -2.86, 0); root.add(fring);
       const fring2 = new THREE.Mesh(new THREE.TorusGeometry(4.2, 0.02, 8, 96), new THREE.MeshBasicMaterial({ color: 0x3b6ea8 })); fring2.rotation.x = Math.PI / 2; fring2.position.set(1.1, -2.86, 0); root.add(fring2);
+      [floor, fring, fring2].forEach((o) => { o.userData.v3bg = true; });   // 받침은 배경: 자동 맞춤이 효소·기질에 맞춰요
       const NP = 140, dust = new THREE.InstancedMesh(new THREE.SphereGeometry(0.05, 8, 6), new THREE.MeshBasicMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.5 }), NP); root.add(dust);
       const dd = []; for (let i = 0; i < NP; i++) dd.push({ x: (Math.random() - 0.3) * 12, y: -2.2 + Math.random() * 6, z: (Math.random() - 0.5) * 7, s: 0.4 + Math.random() * 1.2, p: Math.random() * 6.28 });
       const dm = new THREE.Object3D();

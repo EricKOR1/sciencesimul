@@ -74,6 +74,7 @@
         for (let i = 0; i < 140; i++) { const a = rr() * 6.283, r = 3 + rr() * 9, y = (rr() - 0.3) * 9; pos.push(Math.cos(a) * r, y, Math.sin(a) * r); }
         const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
         const pts = new THREE.Points(bg, new THREE.PointsMaterial({ color: 0x9fc0ff, size: 3, sizeAttenuation: false, transparent: true, opacity: 0.5 })); pts.position.y = 2; root.add(pts); }
+      stage.traverse((o) => { if (o.isMesh) o.userData.v3bg = true; });   // 받침판은 배경: 자동 맞춤이 분자에 맞춰 크게 보여 줘요
       function floorAt(y) { stage.position.y = y; }
       function place(m, a, b) {
         const d = b.clone().sub(a), len = Math.max(1e-4, d.length());
@@ -156,7 +157,7 @@
       }
       let pl = null, ctlEl = null, pmode = false, pP = 0;
       function playerRow(on) { if (!ctlEl) ctlEl = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl'); const r = ctlEl && ctlEl.querySelector('.v3-player'); if (r) r.style.display = on ? '' : 'none'; const ri = ctlEl && [...ctlEl.querySelectorAll('input[type=range]')].find((x) => !x.closest('.v3-player')); if (ri) { ri.style.display = on ? '' : 'none'; if (ri.previousElementSibling) ri.previousElementSibling.style.display = on ? '' : 'none'; } }
-      function setKey(k) { key = k; split = 0; sl.set(0); fitCamera(); build(); playerRow(MOLS[k].kind === 'mol'); }
+      function setKey(k) { key = k; split = 0; sl.set(0); fitCamera(); build(); playerRow(MOLS[k].kind === 'mol'); if (ctx.refit) ctx.refit(0.3); }
       // 관찰 단추: 2D 입자 현미경에 그 시료를 넣어 관찰하는 것과 같아요
       const segLab = controls.text('<b>관찰</b>');
       const seg = controls.segment('', KEYS.map((k) => ({ value: k, label: MOLS[k].name })), key, (v) => { const l = DBG(); if (l.observe && l.S && l.S.scene === 'scope') l.observe(ID2D[v]); setKey(v); });
@@ -261,7 +262,7 @@
         const CT = l && l.CT; if (!CT) return;
         const mols = CT.mols.map((m) => m.key), freeA = CT.atoms.filter((a) => a.state === 'in').map((a) => a.sym);
         const sig = mols.join() + '|' + freeA.join();
-        if (sig !== cnSig) { cnSig = sig; buildCount(mols, freeA); const asp = ctx.renderer.domElement.clientWidth / Math.max(1, ctx.renderer.domElement.clientHeight); ctx.orbit.dist = (mols.length > 4 ? 12 : mols.length > 1 ? 10 : 7) * (asp < 1 ? Math.min(2, Math.pow(1 / asp, 0.7)) : 1); }
+        if (sig !== cnSig) { cnSig = sig; buildCount(mols, freeA); const asp = ctx.renderer.domElement.clientWidth / Math.max(1, ctx.renderer.domElement.clientHeight); ctx.orbit.dist = (mols.length > 4 ? 12 : mols.length > 1 ? 10 : 7) * (asp < 1 ? Math.min(2, Math.pow(1 / asp, 0.7)) : 1); if (ctx.refit) ctx.refit(0.3); }
         const lens = pmode ? (pP < 0.34 ? 'mol' : pP < 0.67 ? 'atom' : 'elem') : (CT.lens || 'mol');
         const cnt = {}; let na = 0; cnObj.atoms.forEach((o) => { cnt[o.sym] = (cnt[o.sym] || 0) + 1; na++; });
         // 렌즈별 보여 주기: 분자(분자마다 둥근 테두리) · 원자(원자마다 번호) · 원소(원소별 같은 색 + 이름)

@@ -23,7 +23,7 @@
     title: '에크만 나선 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [1],
-    camera: { dist: PHONE ? 15 : 12, theta: 0.55, phi: 1.1, target: [0, -2.2, 0], min: 5, max: 30 },
+    camera: { dist: PHONE ? 16.5 : 13.5, theta: 0.55, phi: 1.1, target: [0, -2.2, 0], min: 5, max: 30 },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
@@ -33,6 +33,7 @@
       const top = new THREE.Mesh(new THREE.PlaneGeometry(W, W), new THREE.MeshBasicMaterial({ color: 0x3b9be0, transparent: true, opacity: 0.3, side: THREE.DoubleSide, depthWrite: false }));
       top.rotation.x = -Math.PI / 2; root.add(top);
       const box = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(W, H, W)), new THREE.LineBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.7 })); box.position.y = -H / 2; root.add(box);
+      { const fit = new THREE.Mesh(new THREE.BoxGeometry(W, H + 1.2, W), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); fit.position.y = -H / 2 + 0.6; root.add(fit); }   // 자동 맞춤용 보이지 않는 상자: 물기둥 전체(깊이 눈금 포함)가 잘리지 않게
       LAYS.slice(1).forEach((z) => { const p = new THREE.Mesh(new THREE.PlaneGeometry(W, W), new THREE.MeshBasicMaterial({ color: layCol(z), transparent: true, opacity: 0.12, side: THREE.DoubleSide, depthWrite: false })); p.rotation.x = -Math.PI / 2; p.position.y = -z * YS; root.add(p); });
       const axis = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(0, 1.2, 0), V(0, -H, 0)]), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 })); root.add(axis);
       /* 방위 */

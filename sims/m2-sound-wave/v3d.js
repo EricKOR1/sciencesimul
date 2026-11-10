@@ -12,7 +12,7 @@
     host: (window.matchMedia && window.matchMedia('(max-width: 599px)').matches) ? '.sc-tall' : '.sc-wide',
     title: '소리 전달 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 22 : 16, theta: 0.5, phi: 1.15, min: 6, max: 34, target: [1.3, 0, 0] },
+    camera: { dist: PHN ? 16.5 : 16, theta: PHN ? 0.85 : 0.5, phi: 1.15, min: 6, max: 34, target: [PHN ? 0.4 : 1.3, 0, 0] },   // 휴대폰: 줄이 화면 안쪽으로 비스듬히 놓여 더 크게 보여요
     autoRotate: 0,
     levels: [0],                     // 1단계(줄 · 공기 · 진공 종): 공기 입자의 움직임을 입체로. 2~4단계는 소리 화면(오실로스코프)의 눈금과 점선 파형을 읽는 미션이라 2D
     build(ctx) {
@@ -96,7 +96,7 @@
         const woodT = cTex(512, 256, (c, w, h) => { c.fillStyle = '#3d2a1b'; c.fillRect(0, 0, w, h); for (let i = 0; i < 60; i++) { c.strokeStyle = 'rgba(' + (20 + (i * 23) % 30) + ',12,4,' + (0.15 + (i % 4) * 0.05) + ')'; c.lineWidth = 1 + (i % 3); c.beginPath(); const y = i / 60 * h; c.moveTo(0, y); for (let x = 0; x <= w; x += 32) c.lineTo(x, y + Math.sin(x * 0.04 + i) * 2.5); c.stroke(); } }); woodT.repeat.set(4, 1);
         const tb = new THREE.Mesh(new THREE.BoxGeometry(26, 0.3, 8), mat(0xffffff, { map: woodT, roughness: 0.55 })); tb.position.set(0.5, -2.95, 0); tb.receiveShadow = true; root.add(tb);
         const wallT = cTex(8, 256, (c, w, h) => { const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#27375a'); g.addColorStop(1, '#0e1830'); c.fillStyle = g; c.fillRect(0, 0, w, h); });
-        const wl = new THREE.Mesh(new THREE.PlaneGeometry(100, 50), new THREE.MeshBasicMaterial({ map: wallT })); wl.position.set(0, 8, -16); root.add(wl); }
+        const wl = new THREE.Mesh(new THREE.PlaneGeometry(100, 50), new THREE.MeshBasicMaterial({ map: wallT })); wl.position.set(0, 8, -16); root.add(wl); tb.userData.v3bg = wl.userData.v3bg = true; }
       const RNn = 120, RX0 = -5.2, RX1 = 5.6;
       const gR = new THREE.Group(); gR.visible = false; root.add(gR);
       const beads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.15, 12, 10), mat(0xc58a4b, { roughness: 0.7 }), RNn); beads.frustumCulled = false; gR.add(beads);

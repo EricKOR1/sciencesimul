@@ -35,7 +35,8 @@
       const metalM = mat(0x9aa6ba, { metalness: 0.85, roughness: 0.3 });
       // 받침 수레 (레일 위를 오가는 홀더)
       function carriage(h) { const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.22, 1.1), metalM); b.position.y = -1.65; const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.16, 12), mat(0x222a38, { roughness: 0.6 })); knob.position.set(0.0, -1.72, 0.62); knob.rotation.x = Math.PI / 2; const p = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, h, 10), metalM); p.position.y = -1.54 + h / 2; g.add(b, knob, p); return g; }
-      { const ax = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 20, 6), new THREE.MeshBasicMaterial({ color: 0x8aa0d0, transparent: true, opacity: 0.6 })); ax.rotation.z = Math.PI / 2; ax.position.set(1, 0, 0); root.add(ax); }
+      { const ax = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 20, 6), new THREE.MeshBasicMaterial({ color: 0x8aa0d0, transparent: true, opacity: 0.6 })); ax.rotation.z = Math.PI / 2; ax.position.set(1, 0, 0); ax.userData.v3bg = true; root.add(ax); }
+      [bench, rail, wallM].forEach((m) => { m.userData.v3bg = true; });   // 자동 맞춤은 광학대 대신 물체·거울(렌즈)·상에 맞춰요
 
       // 물체 (화살표): 밑은 광축 위, 끝에서 빛이 나가요
       function arrowObj(col, op) {
@@ -51,6 +52,7 @@
         hd.position.y = s * (a - hl / 2); hd.scale.set(1, hl / 0.32, 1); hd.rotation.z = s > 0 ? 0 : Math.PI;
       }
       const obj = arrowObj(0xff5a5f, 1), img = arrowObj(0x7ee0ff, 1); root.add(obj, img);
+      const fitBox = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); root.add(fitBox);
       obj.add(carriage(1.55)); { const gh = carriage(1.55); gh.traverse((m) => { if (m.material) { m.material = m.material.clone(); m.material.transparent = true; m.material.opacity = 0.4; } }); img.add(gh); }
       const lobj = label('물체 (촛불)', obj, { offset: [0, 1.25, 0] }), limg = label('상', img, { offset: [0, 1.3, 0], color: 'rgba(40,120,170,.9)' });
 
@@ -149,6 +151,12 @@
         if (show) {
           img.position.set(c.Q.x, 0, 0); setArrow(img, c.Q.y);
           img.children.forEach((q) => { if (q.material) { q.material.transparent = !c.real; q.material.opacity = c.real ? 1 : 0.5; q.material.depthWrite = c.real; q.material.needsUpdate = true; } });
+        }
+        { // 자동 맞춤용 보이지 않는 상자: 물체 · 거울(렌즈) · 상 · 초점을 한 덩어리로 재서 모두 화면 안에 크게
+          const xs = [-c.d, 0, -F, F]; if (show) xs.push(c.Q.x);
+          const x0 = Math.max(-12, Math.min.apply(null, xs)) - 0.7, x1 = Math.min(12, Math.max.apply(null, xs)) + 0.7;
+          const qy = show ? Math.max(-6, Math.min(6, c.Q.y)) : 0, yT = Math.max(HO, qy, 1.4) + 0.9, yB = Math.min(-1.9, qy - 0.4);
+          fitBox.scale.set(x1 - x0, yT - yB, Math.max(1.3, 0.14 * (x1 - x0)));   // (얇으면 바닥판으로 여겨 빠지니 두께를 줘요) fitBox.position.set((x0 + x1) / 2, (yT + yB) / 2, 0);
         }
         // 초점 점
         const mir = c.isMirror;

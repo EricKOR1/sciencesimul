@@ -9,7 +9,8 @@
     title: '마찰력과 부력 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [1],   // 2단계(마찰력 재기: 접촉면 칩 · 도막 쌓기 · ✊ 당기기 · 표)만 3D. 도막 튕기기 · 공 누르기 · 원기둥 손잡이 · 카드 끌기는 2D
-    camera: { dist: 15 * (PHN0 ? 1.05 : 1), theta: 0.3, phi: 1.38, fov: 45, target: [0.4, 1.9, 0], min: 6, max: 34 },
+    camera: { dist: PHN0 ? 5.4 : 9.5, theta: 0.3, phi: 1.38, fov: 45, target: PHN0 ? [-0.5, 2.1, 0] : [-1.3, 2.8, 0], min: 4, max: 34 },
+    autofit: false,   // 3D는 한 단계(마찰력의 크기)뿐: 도막 · 용수철저울 · 눈금판이 크게 보이도록 시점을 직접 맞춰 두었어요 (긴 접촉면은 오른쪽으로 이어져요)
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;

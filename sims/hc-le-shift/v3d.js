@@ -18,7 +18,7 @@
       const SR = { N2O4: [0.2, 0.14], NO2: [0.14, 0.14], H2: [0.1, 0.1], I2: [0.2, 0.17], HI: [0.15, 0.13] };
       const mats = {}; const matOf = (k) => mats[k] || (mats[k] = new THREE.MeshStandardMaterial({ color: SPC[k] || 0xffffff, roughness: 0.4 }));
       const pool = []; for (let i = 0; i < 140; i++) { const m = new THREE.Mesh(SG, matOf('NO2')); m.visible = false; root.add(m); pool.push(m); }
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.scale.set(15, 0.1, 9); floor.position.y = -0.06; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.scale.set(15, 0.1, 9); floor.position.y = -0.06; root.add(floor); floor.userData.v3bg = true;
       const glassMat = new THREE.MeshStandardMaterial({ color: 0x9ec5ff, transparent: true, opacity: 0.1, roughness: 0.15, depthWrite: false });
       const edgeMat = new THREE.LineBasicMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.75 });
       const unit = new THREE.BoxGeometry(1, 1, 1), unitE = new THREE.EdgesGeometry(unit);

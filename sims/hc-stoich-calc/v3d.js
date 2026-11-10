@@ -80,7 +80,7 @@
   window.SciSim3D.attach({
     title: '남는 반응물 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 산소의 양을 바꾸고 반응시켜 봐요',
-    camera: { dist: phone ? 11.5 : 10.5, theta: 0.45, phi: 1.12, min: 5, max: 24, target: [0, 1.5, 0] },
+    camera: { dist: phone ? 14 : 13, theta: 0.45, phi: 1.12, min: 5, max: 24, target: [0, 1.5, 0] },
     autoRotate: 0.08,
     levels: [3],
     build(ctx) {
@@ -89,7 +89,8 @@
       const clamp = (x, a, b) => Math.max(a, Math.min(b, x)), sm = L.sstep;
       const W = 6.8, H = 3.2, D = 3.6, UNIT = 0.25;
       const box = L.glassBox(W, H, D, 0x9ec5ff, 0.1); box.position.y = H / 2; root.add(box);
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.scale.set(W + 1, 0.14, D + 1); floor.position.y = -0.08; root.add(floor);
+      const fitBox = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.2, colorWrite: false, depthWrite: false })); fitBox.position.copy(box.position); root.add(fitBox);   // 화면 맞춤용 보이지 않는 상자(유리 상자 크기)
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.scale.set(W + 1, 0.14, D + 1); floor.position.y = -0.08; root.add(floor); floor.userData.v3bg = true;
       const KS = 0.8, LIM = [W / 2 - 0.9, H / 2 - 0.7, D / 2 - 0.7];
       const mk = (key, n) => { const a = []; for (let i = 0; i < n; i++) { const g = L.mol(L.MOLS[key], KS); g.visible = false; root.add(g); g.userData = { p: new THREE.Vector3(L.rnd(-LIM[0], LIM[0]), L.rnd(-LIM[1], LIM[1]), L.rnd(-LIM[2], LIM[2])), v: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)).normalize(), w: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)) }; a.push(g); } return a; };
       const P = { H2: mk('H2', 8), O2: mk('O2', 8), H2O: mk('H2O', 8) };

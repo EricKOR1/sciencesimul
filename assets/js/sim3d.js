@@ -281,8 +281,29 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       const T3 = THREE; if (!autoTmp) autoTmp = { b: new T3.Box3(), v: new T3.Vector3(), s: new T3.Sphere(), c: new T3.Vector3() };
       const items = [];
       root.updateMatrixWorld(true);
+      const mI = new T3.Matrix4(), mW = new T3.Matrix4();
       root.traverse((o) => {
-        if (!o.isMesh || o.isInstancedMesh || !o.geometry || o.userData.v3bg) return;
+        if (!(o.isMesh || o.isPoints || o.isLine) || !o.geometry || o.userData.v3bg) return;
+        // 입자(인스턴스) · 점 · 선으로 된 모형도 함께 재요 (작은 공 하나에만 확대되지 않게)
+        if (o.isInstancedMesh || o.isPoints || o.isLine) {
+          for (let n = o; n; n = n.parent) { if (n.visible === false) return; if (n === root) break; }
+          const mm = Array.isArray(o.material) ? o.material[0] : o.material;
+          if (mm && mm.transparent && mm.opacity < 0.1) return;
+          if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+          const gb = o.geometry.boundingBox; if (!gb || gb.isEmpty()) return;
+          if (o.isInstancedMesh) {
+            const n = o.count || 0, step = Math.max(1, Math.floor(n / 150));
+            for (let i = 0; i < n; i += step) {
+              o.getMatrixAt(i, mI); mW.multiplyMatrices(o.matrixWorld, mI);
+              autoTmp.b.copy(gb).applyMatrix4(mW); autoTmp.b.getBoundingSphere(autoTmp.s);
+              if (isFinite(autoTmp.s.radius)) items.push({ o, r: autoTmp.s.radius, c: autoTmp.s.center.clone(), flat: false, box: autoTmp.b.clone() });
+            }
+          } else {
+            autoTmp.b.copy(gb).applyMatrix4(o.matrixWorld); autoTmp.b.getBoundingSphere(autoTmp.s);
+            if (isFinite(autoTmp.s.radius) && autoTmp.s.radius > 0) items.push({ o, r: autoTmp.s.radius, c: autoTmp.s.center.clone(), flat: false, box: autoTmp.b.clone(), thin: true });
+          }
+          return;
+        }
         for (let n = o; n; n = n.parent) { if (n.visible === false) return; if (n === root) break; }
         const m = Array.isArray(o.material) ? o.material[0] : o.material;
         if (!m || m.side === T3.BackSide || (m.transparent && m.opacity < 0.15) || m.visible === false) return;
@@ -298,15 +319,15 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
         items.push({ o, r: autoTmp.s.radius, c: autoTmp.s.center.clone(), flat });
       });
       if (items.length < 1) return;
-      const rs = items.map((q) => q.r).sort((a, b) => a - b), med = rs[Math.floor(rs.length / 2)];
+      const rs = items.filter((q) => !q.thin).map((q) => q.r).sort((a, b) => a - b), med = rs.length ? rs[Math.floor(rs.length / 2)] : items[0].r;
       // 배경으로 보는 것: 카메라를 감쌀 만큼 큰 공(하늘), 아주 넓은 바닥판(평면·원판). 큰 주인공(지구본 등)은 그대로 넣어요
       const camD = orbit.dist * fitK;
       const isBg = (q) => q.r > camD * 0.9 || (q.flat && q.r > med * 6 && items.length > 3);
       let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, n = 0; const cw = new T3.Vector3(); let wsum = 0;
       for (const q of items) {
         if (isBg(q)) continue;
-        q.o.geometry.boundingBox || q.o.geometry.computeBoundingBox();
-        autoTmp.b.copy(q.o.geometry.boundingBox).applyMatrix4(q.o.matrixWorld);
+        if (q.box) autoTmp.b.copy(q.box);
+        else { q.o.geometry.boundingBox || q.o.geometry.computeBoundingBox(); autoTmp.b.copy(q.o.geometry.boundingBox).applyMatrix4(q.o.matrixWorld); }
         const bb = autoTmp.b;
         for (let i = 0; i < 8; i++) {
           autoTmp.v.set(i & 1 ? bb.max.x : bb.min.x, i & 2 ? bb.max.y : bb.min.y, i & 4 ? bb.max.z : bb.min.z).project(camera);

@@ -40,7 +40,7 @@
   window.SciSim3D.attach({
     title: '감수 분열 3D (염색체 4개)',
     hint: '슬라이더로 시기를 옮겨 보세요 · 붉은색=어머니, 푸른색=아버지 쪽 염색체',
-    camera: { dist: narrow ? 14.5 : 10.5, theta: 0.35, phi: 0.95, min: 6, max: 22 },
+    camera: { dist: narrow ? 17 : 10.5, theta: 0.35, phi: 0.95, min: 6, max: 22 },
     levels: [2],
     autoRotate: 0.08,
     build(ctx) {
@@ -66,6 +66,7 @@
         const rim = new THREE.Mesh(new THREE.TorusGeometry(6.8, 0.1, 10, 90), new THREE.MeshPhysicalMaterial({ color: 0xe8f1ff, roughness: 0.15, clearcoat: 1, transparent: true, opacity: 0.8 })); rim.rotation.x = Math.PI / 2; rim.position.y = -5.45; root.add(rim);
         const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); const gr = x.createRadialGradient(128, 128, 4, 128, 128, 126); gr.addColorStop(0, 'rgba(160,215,255,.38)'); gr.addColorStop(1, 'rgba(40,70,140,0)'); x.fillStyle = gr; x.fillRect(0, 0, 256, 256);
         const gl = new THREE.Mesh(new THREE.CircleGeometry(6.4, 64), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false })); gl.rotation.x = -Math.PI / 2; gl.position.y = -5.0; root.add(gl);
+        [dish, med, rim, gl].forEach((o) => { o.userData.v3bg = true; });   // 배양 접시는 배경: 자동 맞춤이 세포에 맞춰요
         const N = 70, dots = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshBasicMaterial({ color: 0xb8dcff, transparent: true, opacity: 0.3 }), N), dm = new THREE.Object3D();
         const P0 = Array.from({ length: N }, (_, i) => { const r = (k) => { const v = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return v - Math.floor(v); }; return { x: (r(1) - 0.5) * 16, y: -3.5 + r(2) * 9, z: (r(3) - 0.5) * 16, s: 0.03 + r(4) * 0.06, ph: r(5) * 6.28, sp: 0.15 + r(6) * 0.3 }; });
         dots.frustumCulled = false; root.add(dots);

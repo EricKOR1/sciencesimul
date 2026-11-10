@@ -14,7 +14,7 @@
     title: '행성의 겉보기 운동 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [0, 3],          // 1단계(금성의 위상 짝짓기) · 2단계(배치 그림 카드)는 2D 화면의 그림을 보고 해요
-    camera: { dist: PHONE ? 19 : 12.5, theta: 0.5, phi: 0.95, min: 5, max: 30 },
+    camera: { dist: PHONE ? 24 : 14, theta: 0.5, phi: 0.95, min: 5, max: 34 },
     autoRotate: 0,
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
@@ -75,7 +75,7 @@
         while (orbG.children.length) { const c = orbG.children.pop(); c.geometry.dispose(); }
         orbit(1, k, 0x6fa8ff); orbit(a, k, new THREE.Color(s.PL[p].col).getHex());
         pl.material.color.set(s.PL[p].col); pl.scale.setScalar(p === 'jupiter' || p === 'saturn' ? 1.5 : p === 'mercury' ? 0.7 : 1);
-        pLab.set(NAMES[p]); mkLab.set(NAMES[p]);
+        pLab.set(NAMES[p]); mkLab.set(NAMES[p]); ctx.refit(0.3);
       }
       let lastSim = null, syncing = false, ready = false;
       /* ▶ 한 번 재생 = 2D 시간 슬라이더의 한 바퀴 (보기마다 범위가 달라요) */
@@ -121,7 +121,7 @@
         const t = r.t;
         const he = s.helio(s.PL.earth, t), hp = s.helio(s.PL[id], t);
         a3.copy(w3(he)); b3.copy(w3(hp)); earth.position.copy(a3); pl.position.copy(b3); sky.position.copy(a3);
-        if (ctx.level === 3) { const o = ctx.orbit; o.tx = a3.x * 0.75; o.ty = 0; o.tz = a3.z * 0.75; if (!zoomed) { zoomed = true; o.dist = PHONE ? 11 : 7.5; o.phi = 0.8; } } else if (zoomed) { zoomed = false; const o = ctx.orbit; o.tx = o.ty = o.tz = 0; o.dist = PHONE ? 19 : 12.5; }   // 역행 단계: 지구와 하늘 고리를 가까이서 봐요
+        if (ctx.level === 3) { const o = ctx.orbit; o.tx = a3.x * 0.75; o.ty = 0; o.tz = a3.z * 0.75; if (!zoomed) { zoomed = true; o.dist = PHONE ? 13.5 : 8.5; o.phi = 0.8; } } else if (zoomed) { zoomed = false; const o = ctx.orbit; o.tx = o.ty = o.tz = 0; o.dist = PHONE ? 24 : 14; }   // 역행 단계: 지구와 하늘 고리를 가까이서 봐요
         d3.subVectors(b3, a3); d3.y = 0; const dist = d3.length(); d3.normalize();
         sight.position.copy(a3).addScaledVector(d3, (dist + RING) / 2); sight.scale.set(1, dist + RING, 1); sight.quaternion.setFromUnitVectors(up, d3);
         const g = s.geo(id, t), retro = s.dlam(id, t) < 0;

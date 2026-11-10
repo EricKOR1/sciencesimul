@@ -9,7 +9,7 @@
     title: '확산과 증발 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [0, 1, 2],   // 잉크 · 향수 · 온도 · 증발은 3D, 사례 카드 분류(4단계)는 2D
-    camera: { dist: 10.5 * (PHN0 ? 1.1 : 1), theta: 0.18, phi: 1.25, fov: 45, target: [0, -0.2, 0], min: 5, max: 26 },
+    camera: { dist: PHN0 ? 13.1 : 9.4, theta: 0.18, phi: 1.25, fov: 45, target: [0, PHN0 ? -0.2 : 0.55, 0], min: 5, max: 26 },
     autoRotate: 0.05,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -35,7 +35,7 @@
       function makeBox(color) {
         const g = new THREE.Group();
         const geo = new THREE.BoxGeometry(2, 2, 2);
-        g.add(new THREE.Mesh(geo, glass(0xbfe0ff, 0.1)));
+        g.add(new THREE.Mesh(geo, glass(0xbfe0ff, 0.15)));
         g.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0x9cc3ff })));
         const w = new THREE.Mesh(new THREE.BoxGeometry(1.98, 1.8, 1.98), glass(color || 0x4aa8ff, 0.22, { side: THREE.FrontSide })); w.position.y = -0.1; g.add(w);
         g.userData.water = w; root.add(g); return g;
@@ -60,7 +60,7 @@
       const evBox = new THREE.Group();
       { const geo = new THREE.BoxGeometry(2 * EW, 2 * EH, 2 * EW);
         evBox.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0x9cc3ff })));
-        const liq = new THREE.Mesh(new THREE.BoxGeometry(2 * EW - 0.04, 1.7, 2 * EW - 0.04), glass(0x4aa8ff, 0.2, { side: THREE.FrontSide })); liq.position.y = -EH + 0.85; evBox.add(liq); evBox.userData.liq = liq; }
+        const liq = new THREE.Mesh(new THREE.BoxGeometry(2 * EW - 0.04, 1.7, 2 * EW - 0.04), glass(0x4aa8ff, 0.2, { side: THREE.FrontSide })); liq.position.y = -EH + 0.85; evBox.add(liq); evBox.userData.liq = liq;  }
       root.add(evBox);
       const evL = spheres(NL, 0.12, 0x4aa8ff, 12), evG = spheres(NE, 0.1, 0xbfe6ff, 10);
       const evLab = label('', [0, EH + 0.45, 0], { size: 13, color: 'rgba(30,64,175,.92)' });

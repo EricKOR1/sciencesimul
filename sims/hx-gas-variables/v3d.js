@@ -32,9 +32,9 @@
 
       /* 용기 */
       const glass = new THREE.MeshStandardMaterial({ color: 0xbfe3ff, transparent: true, opacity: 0.16, roughness: 0.1, metalness: 0, depthWrite: false, side: THREE.DoubleSide });
-      const body = new THREE.Mesh(new THREE.BoxGeometry(HW * 2, 1, HW * 2), glass); root.add(body);
+      const body = new THREE.Mesh(new THREE.BoxGeometry(HW * 2, 5, HW * 2), glass); root.add(body);   // 높이 5로 만들고 h/5로 늘여요 (자동 맞춤이 크기를 바르게 재도록)
       const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: 0x9fc8ee, transparent: true, opacity: 0.8 }));
-      edges.scale.set(HW * 2, 1, HW * 2); body.add(edges);
+      edges.scale.set(HW * 2, 5, HW * 2); body.add(edges);
       const base = new THREE.Mesh(new THREE.BoxGeometry(HW * 2 + 0.4, 0.3, HW * 2 + 0.4), new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.5, metalness: 0.4 }));
       base.position.y = FLOOR - 0.15; root.add(base);
       /* 피스톤 */
@@ -77,7 +77,7 @@
       function layout(dt) {
         const c = read(), th = Math.max(0.9, c.V * 0.4);
         h += (th - h) * Math.min(1, dt * 6);
-        body.scale.set(1, h, 1); body.position.y = FLOOR + h / 2;
+        body.scale.set(1, h / 5, 1); body.position.y = FLOOR + h / 2;
         pis.position.y = FLOOR + h + 0.14;
         arrM.forEach((a, i) => {
           const ang = (i / 4) * Math.PI * 2 + 0.78, rx = Math.cos(ang) * 1.1, rz = Math.sin(ang) * 1.1;

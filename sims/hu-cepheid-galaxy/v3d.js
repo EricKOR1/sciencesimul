@@ -18,6 +18,7 @@
     levels: [2],
     camera: { dist: 58 * FIT, theta: 0.9, phi: 1.0, fov: 42, target: [5, 0, 0], min: 14, max: 180 },
     autoRotate: 0.1,
+    autofit: false,   // 성단(처음 0개)과 거리 고리(선)는 자동 맞춤이 재지 못해 태양만 크게 당겨져요 → 차시의 시점(은하 전체)을 그대로 써요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const sim = window.__sim;

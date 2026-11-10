@@ -9,7 +9,7 @@
     title: '합력과 힘의 평형 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [3],   // 줄다리기(− / + 단추와 ▶ 시작)만 3D. 찰흙 · 수레 · 힘 손잡이를 캔버스에서 끄는 1~3단계는 2D
-    camera: { dist: 10.5 * (PHN0 ? 1.12 : 1), theta: 0.25, phi: 0.95, fov: 45, target: [0, -0.2, 0], min: 6, max: 28 },
+    camera: { dist: 10.5 * (PHN0 ? 1.12 : 1), theta: PHN0 ? 0.7 : 0.25, phi: 0.95, fov: 45, target: [0, -0.2, 0], min: 6, max: 28 },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -101,7 +101,7 @@
       /* ===== 장면 A · 옆에서 본 「힘 실험대」: 찰흙 · 수레 · 멈춤대 (2D 1 px = 0.01 그림 단위) ===== */
       const gA = new THREE.Group(); gA.visible = false; root.add(gA);
       const gT = new THREE.Group(); gT.visible = false; root.add(gT);
-      gA.scale.setScalar(PHN0 ? 0.72 : 1); gT.scale.setScalar(PHN0 ? 0.58 : 0.68);
+      gA.scale.setScalar(PHN0 ? 0.72 : 1); gT.scale.setScalar(PHN0 ? 0.8 : 0.68);
       gA.position.y = -0.2;
       const WP = 800, UNIT = 0.01, KA3 = 0.34;   // 힘 1 N당 화살표 길이 0.34
       const xray = (g) => g.children.forEach((c) => { c.material.depthTest = false; c.renderOrder = 8; });
@@ -180,7 +180,7 @@
       const TS = 1 / 70, TRY = 0;         // 2D px → 그림 단위
       { const f = new THREE.Mesh(new THREE.BoxGeometry(12, 0.1, 4.6), mat(0x86c97a, { roughness: 0.9 })); f.position.y = -0.05; f.receiveShadow = true; gT.add(f);
         const c = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.02, 4.6), mat(0xffffff)); c.position.y = 0.01; gT.add(c);
-        [-1, 1].forEach((s) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.02, 4.6), mat(0xe8f5e3)); m.position.set(s * 84 * TS, 0.012, 0); gT.add(m); }); }
+        [-1, 1].forEach((s) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.02, 4.6), mat(0xe8f5e3)); m.position.set(s * 84 * TS, 0.012, 0); m.userData.v3bg = true; gT.add(m); }); f.userData.v3bg = c.userData.v3bg = true; }   // 잔디 운동장은 배경: 자동 맞춤은 줄다리기 선수 · 줄 · 화살표에 맞춰요
       const ropeM = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1, 12), mat(0xb8864b, { roughness: 0.8 })); ropeM.rotation.z = Math.PI / 2; ropeM.position.y = 0.8; gT.add(ropeM);
       const flag = new THREE.Group(); { const f1 = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.34, 0.14), mat(0xef4444)); f1.position.y = 0.8; flag.add(f1); const f2 = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.4, 3), mat(0xdc2626)); f2.rotation.x = Math.PI; f2.position.y = 0.5; flag.add(f2); } gT.add(flag);
       const KID = [];

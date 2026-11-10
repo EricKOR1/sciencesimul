@@ -8,6 +8,7 @@
   if (!window.SciSim3D) return;
   const PHN0 = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
   window.SciSim3D.attach({
+    host: PHN0 ? '.sc-tall' : '.sc-wide',   // 휴대폰에서는 세로 화면(.sc-tall)을 덮어요 (.sc-wide는 휴대폰에서 숨겨져 3D가 안 보였어요)
     title: '열평형 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [0, 2],   // 온도와 입자 · 열평형은 3D, 그래프 그리기 · 읽기(2단계)와 생활 속 카드(4단계)는 2D

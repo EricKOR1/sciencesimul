@@ -26,7 +26,7 @@
   window.SciSim3D.attach({
     title: '분자 간 힘 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHONE ? 17 : 12, theta: 0.5, phi: 1.2, min: 5, max: 26, target: [0, -1, 0] },
+    camera: { dist: PHONE ? 12.5 : 12, theta: 0.5, phi: 1.2, min: 5, max: 26, target: [0, 0.1, 0] },
     autoRotate: 0.15,
     levels: [1],   // 2단계 '세 가지 분자 간 힘' (분류하기는 3D 막대의 단추로). 1·3·4단계는 2D 화면의 열운동 · 그래프 · 예측이에요
     build(ctx) {
@@ -57,7 +57,7 @@
       FX.dome('#070d1c', '#10203d', '#1b3556', 160);
       { const gt = FX.mk(256, 256, (c, w, h) => { c.fillStyle = '#0f1b33'; c.fillRect(0, 0, w, h); c.strokeStyle = 'rgba(120,170,255,.28)'; c.lineWidth = 1.4; for (let r = 24; r <= 128; r += 24) { c.beginPath(); c.arc(128, 128, r, 0, 6.283); c.stroke(); } for (let a = 0; a < 12; a++) { c.beginPath(); c.moveTo(128, 128); c.lineTo(128 + Math.cos(a * 0.5236) * 128, 128 + Math.sin(a * 0.5236) * 128); c.stroke(); } });
         const stage = new THREE.Mesh(new THREE.CylinderGeometry(5.6, 5.8, 0.3, 72), [new THREE.MeshStandardMaterial({ color: 0x1c2a47, roughness: 0.4, metalness: 0.6 }), new THREE.MeshStandardMaterial({ map: gt, roughness: 0.35, metalness: 0.4 }), new THREE.MeshStandardMaterial({ color: 0x1c2a47, roughness: 0.4, metalness: 0.6 })]); stage.position.y = -3.3; stage.receiveShadow = true; root.add(stage);
-        const rim = new THREE.Mesh(new THREE.TorusGeometry(5.65, 0.06, 10, 96), new THREE.MeshStandardMaterial({ color: 0x66b8ff, emissive: 0x3b8bff, emissiveIntensity: 0.9, roughness: 0.3 })); rim.rotation.x = Math.PI / 2; rim.position.y = -3.15; root.add(rim); }
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(5.65, 0.06, 10, 96), new THREE.MeshStandardMaterial({ color: 0x66b8ff, emissive: 0x3b8bff, emissiveIntensity: 0.9, roughness: 0.3 })); rim.rotation.x = Math.PI / 2; rim.position.y = -3.15; root.add(rim); stage.userData.v3bg = rim.userData.v3bg = true; }
       const labs = [];
       let kind = 'disp', hbKey = 'h2o', sizeKey = 'ar', lastInfo = '', demo = null;
 
@@ -273,7 +273,7 @@
         if (on === sortOn) return; sortOn = on; gS.visible = on; g.visible = !on;
         sortM.forEach((s) => s.lab.show(on)); labs.forEach((l) => l.show(!on && true));
         ctlEls.forEach((e) => { e.style.display = on ? 'none' : ''; }); sortEls.forEach((e) => { e.style.display = on ? '' : 'none'; });
-        const o = ctx.orbit; if (on) { o.dist = PHONE ? 18 : 16; o.ty = 0; } else { o.dist = PHONE ? 17 : 12; o.ty = -1; }
+        const o = ctx.orbit; if (on) { o.dist = PHONE ? 18 : 16; o.ty = 0; } else { o.dist = PHONE ? 12.5 : 12; o.ty = 0.1; }
         lastInfo = '';
         if (!on) { build(); }
       }

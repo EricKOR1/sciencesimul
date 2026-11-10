@@ -25,7 +25,7 @@
   window.SciSim3D.attach({
     title: '세포 소기관 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: narrow ? 12 : 8.6, theta: 0.5, phi: 1.2, target: [0, 0, 0], min: 4, max: 18 },
+    camera: { dist: narrow ? 10 : 8.6, theta: 0.5, phi: 1.2, target: [0, 0, 0], min: 4, max: 18 },
     autoRotate: 0.22,
     levels: [1],   // 2단계(세포 단면 · 기능 연결 · 막 개수: 3D 막대의 소기관 · 기능 · 막 단추로). 1단계(현미경 · 보이는 것 분류)와 3~4단계(원심분리 · 세포 분획)는 2D 화면이에요
     build(ctx) {

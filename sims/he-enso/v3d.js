@@ -16,7 +16,7 @@
     title: '적도 태평양 단면 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [0, 1],          // 2단계(Niño 3.4 그래프 판정) · 3단계(기압차 · 되먹임 · 영향 지도)는 2D 화면에서 해요
-    camera: { dist: PHONE ? 20 : 13.8, theta: 0.42, phi: 1.2, min: 7, max: 30, target: [0, -0.2, 0] },
+    camera: { dist: PHONE ? 26 : 16, theta: 0.42, phi: 1.2, min: 7, max: 30, target: [0, -0.2, 0] },
     autoRotate: 0,
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
@@ -143,7 +143,8 @@
         view = v; walkG.visible = v === 'walk'; coastG.visible = v === 'coast';
         Object.values(L).forEach((l) => l.show(v === 'walk')); Object.values(cl).forEach((l) => l.show(v === 'coast'));
         ctx.orbit.tx = v === 'walk' ? 0 : -0.8; ctx.orbit.ty = v === 'walk' ? -0.2 : -1.0;
-        if (v === 'coast') { ctx.orbit.theta = 0.75; ctx.orbit.phi = 1.15; ctx.orbit.dist = PHONE ? 23 : 15.5; } else { ctx.orbit.theta = 0.42; ctx.orbit.phi = 1.2; ctx.orbit.dist = PHONE ? 20 : 13.8; }
+        if (v === 'coast') { ctx.orbit.theta = 0.75; ctx.orbit.phi = 1.15; ctx.orbit.dist = PHONE ? 30 : 18; } else { ctx.orbit.theta = 0.42; ctx.orbit.phi = 1.2; ctx.orbit.dist = PHONE ? 26 : 16; }
+        ctx.refit(0.3);
         infoKey = '';
       }
       function updInfo() {

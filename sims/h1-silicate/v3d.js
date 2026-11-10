@@ -11,7 +11,7 @@
     island: { name: '독립형', mineral: '감람석', share: 0, cleave: '사면체가 따로따로라서 쪼개짐 없이 알갱이처럼 깨져요.', how: '어느 방향으로든 연결이 없어요', cam: 8.5, phi: 1.1 },
     chain:  { name: '사슬형', mineral: '휘석', share: 2, cleave: '사슬 사이가 약해서 두 방향으로 쪼개져 기둥 모양이 돼요.', how: '사면체가 산소 2개를 함께 써서 줄로 이어져요', cam: 14, phi: 1.2 },
     sheet:  { name: '판상형', mineral: '흑운모', share: 3, cleave: '판과 판 사이가 약해서 한 방향으로 얇게 쪼개져요.', how: '사면체가 산소 3개를 함께 써서 얇은 판으로 이어져요', cam: 14, phi: 1.38 },
-    frame:  { name: '망상형', mineral: '석영', share: 4, cleave: '모든 방향으로 이어져 있어 쪼개짐 없이 깨지고 매우 단단해요.', how: '사면체가 산소 4개를 모두 함께 써서 3차원 그물이 돼요', cam: 11, phi: 1.1 },
+    frame:  { name: '망상형', mineral: '석영', share: 4, cleave: '모든 방향으로 이어져 있어 쪼개짐 없이 깨지고 매우 단단해요.', how: '사면체가 산소 4개를 모두 함께 써서 3차원 그물이 돼요', cam: 13, phi: 1.1 },
   };
   const KEYS = ['island', 'chain', 'sheet', 'frame'];
 
@@ -104,6 +104,7 @@
       const mFace = new THREE.MeshStandardMaterial({ color: SI, transparent: true, opacity: 0.2, roughness: 0.6, side: THREE.DoubleSide, depthWrite: false });
       const mEdge = new THREE.LineBasicMaterial({ color: 0xb8860b, transparent: true, opacity: 0.8 });
       const mGhost = new THREE.LineBasicMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.35 });   // 아직 놓지 않은 블록 자리 (2D의 점선 자리)
+      const mProxy = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });   // 보이지 않는 면: 자동 맞춤이 완성될 모양(흐린 선)까지 재도록
       let ghostOn = false, buildCnt = null;
       const labSi = label('규소 Si 1개', [0, 0, 0], { color: 'rgba(180,120,10,.95)' });
       const labSh = label('함께 쓰는 산소', [0, 0, 0], { color: 'rgba(200,40,40,.95)' });
@@ -134,6 +135,8 @@
         if (ghostOn) ST.all.filter((t) => t.idx >= nVis).forEach((t) => {
           const ed = []; for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) ed.push(...t.os[i], ...t.os[j]);
           const eg = new THREE.BufferGeometry(); eg.setAttribute('position', new THREE.Float32BufferAttribute(ed, 3)); unitGroups[t.unit].add(new THREE.LineSegments(eg, mGhost));
+          const fp = []; [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]].forEach((tri) => tri.forEach((i) => fp.push(...t.os[i])));
+          const fg = new THREE.BufferGeometry(); fg.setAttribute('position', new THREE.Float32BufferAttribute(fp, 3)); unitGroups[t.unit].add(new THREE.Mesh(fg, mProxy));
         });
         let shared = 0;
         omap.forEach((m, k) => {
@@ -164,7 +167,7 @@
         const cl = gap > 0.15 ? '<br><b style="color:#fbbf24">' + (type === 'frame' ? '벌어지는 곳이 없어요.' : '벌어지는 곳이 약한 면이에요.') + '</b> ' + T.cleave : '';
         info((specTxt ? specTxt + '<br>' : '') + '<b>' + T.name + '</b> · ' + T.mineral + '<br>' + T.how + '<br>' + (buildCnt ? '놓은 블록 ' + buildCnt + (ghostOn ? ' (흐린 선: 완성될 모양)' : '') : '사면체 ' + n + '개') + ' · 함께 쓰는 산소(<span style="color:#ff8a8a">밝은 빨강</span>) ' + shared + '개' + cl);
       }
-      function fitK() { const v = ctx.renderer.domElement, asp = Math.max(0.3, v.clientWidth / Math.max(1, v.clientHeight)); return asp < 1 ? Math.min(2, Math.pow(1 / asp, 1)) : 1; }
+      function fitK() { const v = ctx.renderer.domElement, asp = Math.max(0.3, v.clientWidth / Math.max(1, v.clientHeight)); return asp < 1 ? Math.min(2, Math.pow(1 / asp, 0.5)) : 1; }   // 엔진도 세로 화면에서 물러서므로 반만
       function pack(els) { const w = document.createElement('span'); w.style.cssText = 'display:inline-flex;align-items:center;gap:6px;white-space:nowrap'; els[0].parentNode.insertBefore(w, els[0]); els.forEach((e) => w.appendChild(e)); return w; }
       function setType(v) {
         type = v; ST = makeStruct(type); nVis = ST.all.length; gap = 0;
@@ -219,7 +222,7 @@
         pl.pause(); gap = 0; gSl.set(0);
         nVis = n >= tot ? ST.all.length : n > 0 ? Math.max(1, Math.round(ST.all.length * n / tot)) : 0;
         ghostOn = n < tot; buildCnt = n + ' / ' + tot;
-        nSl.set(Math.max(1, nVis)); rebuild();
+        nSl.set(Math.max(1, nVis)); rebuild(); if (ctx.refit) ctx.refit(0.3);
       }
       // 2D 단계에 맞춰: ② 사면체 단계에서는 사슬형의 사면체 2개(산소 1개를 함께 써요)를 보여 줘요
       ctx.onLevel((li) => { if (li === 1) { pl.pause(); setType('chain'); typeSeg.set('chain'); nVis = 2; nSl.set(2); rebuild(); } else { lastT2 = null; } });

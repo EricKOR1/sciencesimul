@@ -81,13 +81,13 @@
     title: '중화 반응 이온 모형 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [1],   // 완전 중화(뷰렛 · BTB 색 · 이온 입자). 이온 누르기 · 남은 이온 표 · 폐수 처리 단계는 2D
-    camera: { dist: phone ? 13 : 11, theta: 0.5, phi: 1.15, min: 5, max: 24, target: [0, 1.5, 0.4] },
+    camera: { dist: phone ? 15 : 14, theta: 0.5, phi: 1.15, min: 5, max: 24, target: [0, phone ? 1.5 : 2.4, 0.4] },
     autoRotate: 0.08,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const L = makeLib(THREE);
       const clamp = (x, a, b) => Math.max(a, Math.min(b, x)), sm = L.sstep;
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.scale.set(15, 0.1, 10); floor.position.y = -0.06; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.scale.set(15, 0.1, 10); floor.position.y = -0.06; root.add(floor); floor.userData.v3bg = true;
       const KC = { 'H+': 0xe2464b, 'OH-': 0x3867f4, 'Na+': 0xf59e0b, 'Cl-': 0x14a058, 'Ca2+': 0x8b5cf6, SO4: 0xc2410c, H2O: 0x9ee7ff };
       const KR = { 'H+': 0.14, 'OH-': 0.19, 'Na+': 0.17, 'Cl-': 0.19, 'Ca2+': 0.2, SO4: 0.22, H2O: 0.19 };
       const mats = {}; const matOf = (k) => mats[k] || (mats[k] = new THREE.MeshStandardMaterial({ color: KC[k] || 0xffffff, roughness: 0.35, emissive: KC[k] || 0, emissiveIntensity: 0.18 }));

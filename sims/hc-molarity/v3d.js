@@ -94,7 +94,7 @@
         for (let i = 0; i < 240; i++) { x.strokeStyle = 'rgba(40,22,8,' + (0.05 + Math.random() * 0.1) + ')'; x.lineWidth = 0.6 + Math.random(); const y = Math.random() * 512; x.beginPath(); x.moveTo(0, y); x.bezierCurveTo(150, y + Math.random() * 6 - 3, 350, y + Math.random() * 6 - 3, 512, y + Math.random() * 4 - 2); x.stroke(); }
         const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2.4, 1.4); return t;
       })();
-      const bench = new THREE.Mesh(new THREE.BoxGeometry(18, 0.5, 10), new THREE.MeshStandardMaterial({ map: wood, color: 0x9a7d62, roughness: 0.6 })); bench.position.y = -0.31; root.add(bench);
+      const bench = new THREE.Mesh(new THREE.BoxGeometry(18, 0.5, 10), new THREE.MeshStandardMaterial({ map: wood, color: 0x9a7d62, roughness: 0.6 })); bench.position.y = -0.31; root.add(bench); bench.userData.v3bg = true;
       const gradTex = (function () {
         const c = document.createElement('canvas'); c.width = 256; c.height = 512; const x = c.getContext('2d');
         x.strokeStyle = 'rgba(255,255,255,.9)';
@@ -153,7 +153,7 @@
         update(dt, t) {
           const Z = ctx.lesson(); if (!Z) return;
           const S = Z.S, mode = S.mode;
-          if (mode !== lastMode) { lastMode = mode; ctx.orbit.dist = mode === 'cmp' ? (phone ? 15 : 11.5) : (phone ? 12 : 10); }
+          if (mode !== lastMode) { lastMode = mode; ctx.orbit.dist = mode === 'cmp' ? (phone ? 15 : 11.5) : (phone ? 12 : 10); ctx.refit(0.3); }
           const sg = [mode, S.sub.cmp, S.calc.k, S.dil.V, S.ion.k].join('|'); if (sg !== sig) { sig = sg; if (own) { const k = own === 'dil' ? plD : plI; own = null; k.pause(); k.set(0); } }
           rowD.style.display = mode === 'dil' ? '' : 'none'; rowI.style.display = mode === 'ion' ? '' : 'none';
           if (mode !== 'dil' && plD.playing) plD.pause(); if (mode !== 'ion' && plI.playing) plI.pause();

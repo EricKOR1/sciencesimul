@@ -12,7 +12,8 @@
   window.SciSim3D.attach({
     title: '말이집 전도 3D',
     hint: '🏁 출발 · 말이집 상태 단추로 모형이 움직여요 · 드래그: 돌리기',
-    camera: { dist: narrow ? 18 : 13.5, theta: 0.2, phi: 1.15, min: 6, max: 28, target: [0, 0, 0] },
+    camera: { dist: narrow ? 21 : 13.5, theta: narrow ? 0.8 : 0.2,   // 휴대폰: 긴 축삭을 비스듬히 봐서 크게
+      phi: 1.15, min: 6, max: 28, target: [0, 0, 0] },
     autoRotate: 0,
     levels: [1],
     build(ctx) {

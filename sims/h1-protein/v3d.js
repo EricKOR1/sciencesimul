@@ -169,7 +169,7 @@
       { const cv = document.createElement('canvas'); cv.width = 256; cv.height = 128; const g = cv.getContext('2d'); const gr = g.createLinearGradient(0, 0, 0, 128); gr.addColorStop(0, '#6b2f3c'); gr.addColorStop(1, '#3a1824'); g.fillStyle = gr; g.fillRect(0, 0, 256, 128);
         for (let i = 0; i < 160; i++) { g.strokeStyle = 'rgba(255,170,160,' + (0.05 + Math.random() * 0.12) + ')'; g.lineWidth = 1 + Math.random() * 2; g.beginPath(); g.arc(Math.random() * 256, Math.random() * 128, 4 + Math.random() * 10, 0, 6.283); g.stroke(); }
         const tx = new THREE.CanvasTexture(cv); const bg = new THREE.Mesh(new THREE.PlaneGeometry(17, 7), new THREE.MeshStandardMaterial({ map: tx, roughness: 0.9, color: 0x9a8a8a })); bg.position.set(0, 0, -2.2); gS.add(bg);
-        const fl2 = new THREE.Mesh(new THREE.BoxGeometry(17, 0.2, 4.4), std(0x120a10, { roughness: 0.9 })); fl2.position.set(0, -2.6, -0.1); gS.add(fl2); }
+        const fl2 = new THREE.Mesh(new THREE.BoxGeometry(17, 0.2, 4.4), std(0x120a10, { roughness: 0.9 })); fl2.position.set(0, -2.6, -0.1); gS.add(fl2); bg.userData.v3bg = fl2.userData.v3bg = true; }   // 뒷벽·바닥은 배경: 자동 맞춤이 혈관에 맞춰요
       for (let k = 0; k < 16; k++) { const x = -6.6 + k * 0.88, r = vh(VWv / 2 + x / SX) * SX; const rg = new THREE.Mesh(new THREE.TorusGeometry(r + 0.01, 0.018, 8, 40), new THREE.MeshBasicMaterial({ color: 0xffa8a0, transparent: true, opacity: 0.35 })); rg.rotation.y = Math.PI / 2; rg.position.x = x; gS.add(rg); }
       const NPS = 90, dustS = new THREE.InstancedMesh(new THREE.SphereGeometry(0.04, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffd9c9, transparent: true, opacity: 0.55 }), NPS); gS.add(dustS);
       const ddS = []; for (let i = 0; i < NPS; i++) ddS.push({ x: Math.random() * 14 - 7, y: (Math.random() - 0.5) * 0.7, z: (Math.random() - 0.5) * 0.7, s: 0.3 + Math.random() * 0.8 });
@@ -214,8 +214,9 @@
         if (sc === 'fold') plF.pause();
         bl.forEach((l) => l.show(false)); keyLab.show(false); cupLab.show(false); tLab.show(false); hbLab.show(sc === 'sick');
         lastKey = '';
-        orbit.dist = sc === 'fold' ? (PHN ? 12 : 8.8) : (PHN ? 20 : 14);
-        if (sc === 'sick') { orbit.theta = 0.0; orbit.phi = 1.35; }
+        orbit.dist = sc === 'fold' ? (PHN ? 12 : 8.8) : (PHN ? 15 : 14);
+        if (sc === 'sick') { orbit.theta = PHN ? -1.1 : 0.0; orbit.phi = PHN ? 1.15 : 1.35; }   // 휴대폰: 긴 혈관을 입구 쪽에서 비스듬히 봐서 좁은 화면에 크게
+        ctx.refit && ctx.refit();
       }
       ctx.onLevel((li) => { setTimeout(() => showScene(sceneOf(li)), 0); });
       showScene(scene);

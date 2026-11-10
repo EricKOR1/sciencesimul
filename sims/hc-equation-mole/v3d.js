@@ -81,7 +81,7 @@
     title: '반응식 입자 모형 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 계수를 바꾸면 입자 수가 바뀌어요',
     levels: [0],   // 반응식 쓰기(계수 · 입자 모형). 몰 상자 · 질량 표 · 저울 단계는 2D
-    camera: { dist: phone ? 21 : 15.5, theta: 0.15, phi: 0.8, min: 6, max: 34, target: [0, -0.2, 0] },
+    camera: { dist: phone ? 27 : 15.5, theta: 0.15, phi: 0.8, min: 6, max: 34, target: [0, -0.2, 0] },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -111,7 +111,7 @@
         for (let i = 0; i < 8; i++) { x.fillStyle = i % 2 ? 'rgba(60,35,15,.10)' : 'rgba(255,220,170,.07)'; x.fillRect(0, i * 64, 512, 64); x.fillStyle = 'rgba(40,22,8,.55)'; x.fillRect(0, i * 64, 512, 2); }
         for (let i = 0; i < 260; i++) { x.strokeStyle = 'rgba(50,28,10,' + (0.05 + Math.random() * 0.09) + ')'; x.lineWidth = 0.6 + Math.random(); const y = Math.random() * 512; x.beginPath(); x.moveTo(0, y); x.bezierCurveTo(150, y + Math.random() * 6 - 3, 350, y + Math.random() * 6 - 3, 512, y + Math.random() * 4 - 2); x.stroke(); }
         const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(2, 1.4);
-        const bench = new THREE.Mesh(new THREE.BoxGeometry(24, 0.5, 13), new THREE.MeshStandardMaterial({ map: tex, color: 0x9a7d62, roughness: 0.65, metalness: 0.02 })); bench.position.set(0, -1.75, 0); root.add(bench);
+        const bench = new THREE.Mesh(new THREE.BoxGeometry(24, 0.5, 13), new THREE.MeshStandardMaterial({ map: tex, color: 0x9a7d62, roughness: 0.65, metalness: 0.02 })); bench.position.set(0, -1.75, 0); root.add(bench); bench.userData.v3bg = true;
       })();
       const glassM = new THREE.MeshPhysicalMaterial({ color: 0xcfe6ff, transparent: true, opacity: 0.3, roughness: 0.05, metalness: 0, clearcoat: 1, depthWrite: false });
       const tray = (x, col) => {

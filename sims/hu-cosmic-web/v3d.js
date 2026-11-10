@@ -29,6 +29,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [2, 3],
     camera: { dist: 480 * FIT, theta: 0.55, phi: 0.95, fov: 42, target: [0, 0, -160], min: 80, max: 1800 },
+    autofit: false,   // 점 구름(그물 구조)은 자동 맞춤이 재지 못해 관측자 공만 크게 당겨져요 → 상자 전체가 보이는 차시의 시점을 써요
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, camera, label, info, controls, orbit, renderer } = ctx;

@@ -9,7 +9,7 @@
   window.SciSim3D.attach({
     title: '전기 회로 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 13.5 : 12, theta: 0.3, phi: 1.0, min: 6, max: 24, target: [0, 0, 0] },
+    camera: { dist: PHN ? 15 : 12, theta: PHN ? 1.2 : 0.3, phi: PHN ? 0.9 : 1.0, min: 6, max: 24, target: PHN ? [0.3, 0, -0.6] : [0, 0, 0] },   // 휴대폰(세로 화면): 회로판의 긴 쪽이 화면 위아래로 놓이게 옆에서 봐요
     autoRotate: 0,
     levels: [0, 1, 2, 3],            // 모든 단계를 3D로: 전류계 ⓐⓑⓒ(3단계) · 물의 흐름 모형(4단계)
     build(ctx) {
@@ -181,8 +181,10 @@
           // 3단계 도구: 전류계 · 물의 흐름 모형
           const TT = sm() && sm().T, amOn = !!(TT && TT.am_a > 0.5), waOn = !!(TT && TT.water > 0.5), waK = TT ? Math.max(0, Math.min(1, TT.water)) : 0;
           AMP.forEach((o, i) => { o.g.visible = amOn; o.lab.show(amOn && labs); ampBtns[i].style.display = amOn && !(s && s.read && s.read[o.k]) ? '' : 'none'; if (amOn) { const rd = s && s.read && s.read[o.k], tg2 = rd ? I : 0; o.v += (tg2 - o.v) * Math.min(1, dt * 6); o.dial.userData.set(o.v); o.lab.set(o.tag + ' ' + o.cap + ' <b>' + (rd ? I.toFixed(2) + ' A' : '?') + '</b>'); } });
-          const sc = 1 - 0.38 * waK; gCir.scale.setScalar(sc); gCir.position.set(-4.2 * waK, 0, 0);
-          gW.visible = waK > 0.02; gW.scale.setScalar(0.85); gW.position.set(3.4 * waK + 1.2 * (1 - waK), -0.4, 0);
+          const sc = 1 - 0.38 * waK; gCir.scale.setScalar(sc);
+          gW.visible = waK > 0.02; gW.scale.setScalar(0.85);
+          if (PHN) { gCir.position.set(1.6 * waK, -1.0 * waK, 0); gW.rotation.y = 1.2; gW.position.set(-2.4 * waK, 0.9 + 0.4 * waK, 0); }   // 휴대폰: 회로(앞 아래) · 물의 흐름 모형(뒤 위)을 위아래로
+          else { gCir.position.set(-4.2 * waK, 0, 0); gW.position.set(3.4 * waK + 1.2 * (1 - waK), -0.4, 0); }
           wLab.forEach((l) => l.show(gW.visible && labs)); hLab.show(gW.visible && labs);
           if (gW.visible) {
             const Vd = s ? (s.Vd != null ? s.Vd : V) : V;
@@ -194,7 +196,7 @@
             wheelG.rotation.z -= dt * flow * 5; wheelG.position.set(WR, top * 0.5, 0);
             valve.material.color.setHex(closed ? 0x16a34a : 0xdc2626);
             hAr.position.set(WL - 0.85, WB, 0); setArrow2(hAr, top);
-            const wsc = gW.scale.x; hLab.obj = [gW.position.x + (WL - 1.0) * wsc, gW.position.y + top * 0.5 * wsc, 0]; hLab.off = [-0.2, 0, 0]; hLab.set('높이 차 = 전압 ' + V.toFixed(1) + ' V');
+            const wsc = gW.scale.x, wr = gW.rotation.y; hLab.obj = [gW.position.x + (WL - 1.0) * wsc * Math.cos(wr), gW.position.y + top * 0.5 * wsc, gW.position.z - (WL - 1.0) * wsc * Math.sin(wr)]; hLab.off = [-0.2, 0, 0]; hLab.set('높이 차 = 전압 ' + V.toFixed(1) + ' V');
           }
           const ci = circuitInfo(closed, V, showE, showI, amOn && !waOn, waOn);
           if (ci) { if (ci !== wLast) { wLast = ci; info(ci); lastInfo = ''; } } else { wLast = ''; inf(closed, V, showE, showI); }

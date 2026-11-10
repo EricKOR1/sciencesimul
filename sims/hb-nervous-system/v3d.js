@@ -111,7 +111,8 @@
         Object.keys(Lb).forEach((k) => Lb[k].show(SETS[m].indexOf(k) >= 0));
         body.visible = m === 'body'; cord.visible = m === 'body'; cordS.visible = m !== 'body';
         tgt = m === 'body' ? { s: 0.42, y: 2.65 } : { s: 1, y: 0.4 };
-        if (m === 'body') { orbit.dist = narrow ? 15.5 : 12; orbit.ty = 0.5; } else { orbit.dist = narrow ? 13 : 9.5; orbit.ty = 0.8; }
+        if (m === 'body') { orbit.dist = narrow ? 13.5 : 12; orbit.ty = 0.5; } else { orbit.dist = narrow ? 13 : 9.5; orbit.ty = 0.8; }
+        if (ctx.refit) ctx.refit(1.2);   // 장면이 바뀌면 (크기 바뀜이 끝난 뒤) 다시 화면에 맞춰요
         subCtl.forEach((e) => { e.style.display = m === 'body' ? '' : 'none'; });
         infoKey = '';
       }
@@ -142,7 +143,7 @@
         const P = tabPl(); tabEls.forEach((e) => { e.style.display = P ? '' : 'none'; });
         // 폰에서 비교표(정보 상자)가 커지면 몸 모형의 위쪽 이름표를 가려요: 표가 보이는 동안 모형을 아래로 내려 보여요
         const wantCam = !!P && narrow && mode === 'body';
-        if (wantCam !== tabCam) { tabCam = wantCam; orbit.ty = wantCam ? 3.4 : (mode === 'body' ? 0.5 : 0.8); orbit.dist = wantCam ? 16.5 : (mode === 'body' ? (narrow ? 15.5 : 12) : (narrow ? 13 : 9.5)); }
+        if (wantCam !== tabCam) { tabCam = wantCam; orbit.ty = wantCam ? 3.4 : (mode === 'body' ? 0.5 : 0.8); orbit.dist = wantCam ? 16.5 : (mode === 'body' ? (narrow ? 13.5 : 12) : (narrow ? 13 : 9.5)); if (ctx.refit) ctx.refit(0.3); }
         subCtl.forEach((e) => { e.style.display = mode === 'body' && !P ? '' : 'none'; });   // 비교표에서는 자율 신경 단추를 숨겨요
         if (!P) return;
         const L = L2(), ids = P.chips.map((q) => q.id).sort(), cur = P.chips.find((q) => q.id === ids[cardI % ids.length]);

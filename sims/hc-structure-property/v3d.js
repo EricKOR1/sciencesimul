@@ -146,6 +146,9 @@
           netLab.set(tot.length() > 0.05 ? '합 = 0이 아니에요' : '합 = 0 (서로 상쇄)'); netLab.show(true);
           sumNote = tot.length() > 0.05 ? '<br>이어 붙이면 출발점으로 돌아오지 못해요 → 알짜 쌍극자가 남아요.' : '<br>이어 붙이면 출발점으로 돌아와요 → 서로 상쇄돼요.';
         }
+        // 화면 맞춤용 보이지 않는 상자: 분자가 돌아도 늘 들어가는 크기 (돌 때마다 화면이 커졌다 작아졌다 하지 않게)
+        { g.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(g); let rh = 0.5; M.A.forEach((a) => { rh = Math.max(rh, Math.hypot(a.p[0], a.p[2]) + RAD[a.e]); }); rh = Math.max(rh, Math.abs(bb.min.x), Math.abs(bb.max.x), Math.abs(bb.min.z), Math.abs(bb.max.z));
+          const h = Math.max(bb.max.y - bb.min.y, rh * 0.5), fb = new THREE.Mesh(new THREE.BoxGeometry(rh * 1.6, h, rh * 1.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.2, colorWrite: false, depthWrite: false })); fb.position.y = (bb.min.y + bb.max.y) / 2; g.add(fb); }
         text(M, dp, nlen, sumNote);
       }
       const netLab = label('', [0, 0, 0], { color: 'rgba(236,72,153,.95)' }); netLab.show(false);

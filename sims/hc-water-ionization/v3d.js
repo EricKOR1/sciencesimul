@@ -80,7 +80,7 @@
   window.SciSim3D.attach({
     title: '물의 자동 이온화 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 14.5 : 13.5, theta: 0.3, phi: 1.2, min: 5, max: 24, target: [0, 0.6, 0] },
+    camera: { dist: phone ? 18 : 13.5, theta: 0.3, phi: 1.2, min: 5, max: 24, target: [0, 0.6, 0] },
     autoRotate: 0.08,
     levels: [1, 2],          // 0단계(전구 회로·측정기)와 3단계(용액 카드·시소)는 2D 화면에서 해요
     build(ctx) {
@@ -89,7 +89,8 @@
       const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
       const BW = 9.6, BH = 4.2, BD = 4.8;
       const box = L.glassBox(BW, BH, BD, 0x7fb6ff, 0.08); box.position.y = 0; root.add(box);
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.scale.set(BW + 1, 0.12, BD + 1); floor.position.y = -BH / 2 - 0.08; root.add(floor);
+      const fitBox = new THREE.Mesh(new THREE.BoxGeometry(BW, BH, BD), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.2, colorWrite: false, depthWrite: false })); fitBox.position.copy(box.position); root.add(fitBox);   // 화면 맞춤용 보이지 않는 상자(유리 상자 크기)
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.scale.set(BW + 1, 0.12, BD + 1); floor.position.y = -BH / 2 - 0.08; root.add(floor); floor.userData.v3bg = true;
       const SC = { w: 0.45, h: 0.5, o: 0.5 };
       const rw = () => ({ p: new THREE.Vector3(), v: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)).normalize(), w: new THREE.Vector3(L.rnd(-1, 1), L.rnd(-1, 1), L.rnd(-1, 1)) });
       const mk = (key, n) => { const a = []; for (let i = 0; i < n; i++) { const g = L.mol(L.MOLS[key], SC[key === 'H2O' ? 'w' : key === 'H3O' ? 'h' : 'o']); g.visible = false; g.userData = rw(); root.add(g); a.push(g); } return a; };

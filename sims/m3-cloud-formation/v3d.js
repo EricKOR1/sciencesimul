@@ -43,7 +43,10 @@
       const skyC = document.createElement('canvas'); skyC.width = 4; skyC.height = 256; { const x = skyC.getContext('2d'), g = x.createLinearGradient(0, 0, 0, 256); g.addColorStop(0, '#2563b8'); g.addColorStop(0.45, '#7fbdee'); g.addColorStop(0.56, '#dff0fb'); g.addColorStop(1, '#dff0fb'); x.fillStyle = g; x.fillRect(0, 0, 4, 256); }
       const sky = new THREE.Mesh(new THREE.SphereGeometry(48, 24, 16), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(skyC), side: THREE.BackSide, depthWrite: false })); sky.renderOrder = -10; root.add(sky);
       const farG = new THREE.Mesh(new THREE.CircleGeometry(45, 48), sm(0x234d25, { roughness: 1 })); farG.rotation.x = -Math.PI / 2; farG.position.y = -0.06; root.add(farG);
-      for (let i = 0; i < 8; i++) { const a = -0.3 - i * 0.55, r = 24 + (i % 3) * 3, hh = 1.6 + (i % 4) * 0.6; const m = new THREE.Mesh(new THREE.ConeGeometry(4 + (i % 3) * 1.4, hh * 2, 7), sm(i % 2 ? 0x33495f : 0x3d566e, { roughness: 1, flatShading: true })); m.position.set(Math.cos(a) * r, hh - 0.2, Math.sin(a) * r - 8); root.add(m); }
+      for (let i = 0; i < 8; i++) { const a = -0.3 - i * 0.55, r = 24 + (i % 3) * 3, hh = 1.6 + (i % 4) * 0.6; const m = new THREE.Mesh(new THREE.ConeGeometry(4 + (i % 3) * 1.4, hh * 2, 7), sm(i % 2 ? 0x33495f : 0x3d566e, { roughness: 1, flatShading: true })); m.position.set(Math.cos(a) * r, hh - 0.2, Math.sin(a) * r - 8); m.userData.v3bg = true; root.add(m); }
+      [sky, farG, terrain].forEach((m) => { m.userData.v3bg = true; });
+      // 자동 맞춤용 보이지 않는 상자: 먼 산 · 넓은 들판 대신 가운데 산과 공기 덩어리가 오르내리는 곳에 맞춰요
+      { const fb = new THREE.Mesh(new THREE.BoxGeometry(9, 5.2, 1.3), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); fb.position.set(-0.5, 2.5, 0); root.add(fb); }
       const NT = 110, trunkI = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.03, 0.045, 0.22, 5), sm(0x6b4423), NT), leafI = new THREE.InstancedMesh(new THREE.ConeGeometry(0.2, 0.55, 7), sm(0x2d7a3c, { roughness: 0.9 }), NT), tseed = [];
       { let rr = 3; const rn = () => { rr = (rr * 16807) % 2147483647; return rr / 2147483647; }; for (let i = 0; i < NT; i++) tseed.push([(rn() - 0.5) * (GW - 1), (rn() - 0.5) * (GD - 1), 0.7 + rn() * 0.7]); }
       root.add(trunkI, leafI);
@@ -75,7 +78,7 @@
       const conv2 = []; for (let i = 0; i < 6; i++) { const m = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.45, 10), new THREE.MeshBasicMaterial({ color: 0x2f7de1 })); root.add(m); conv2.push(m); }
       const lowL = label('공기가 모여드는 곳 (저기압)', [0, 0.25, 3.3], { color: 'rgba(3,105,161,.92)', size: 13 });
       /* 구름 밑면 */
-      const base = new THREE.Mesh(new THREE.PlaneGeometry(GW - 1, 6), new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false })); base.rotation.x = -Math.PI / 2; base.position.y = LCL / HM * PK + 0.25; root.add(base);
+      const base = new THREE.Mesh(new THREE.PlaneGeometry(GW - 1, 6), new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false })); base.rotation.x = -Math.PI / 2; base.position.y = LCL / HM * PK + 0.25; root.add(base); base.userData.v3bg = true;
       const baseL = label('구름 밑면 1000 m', base, { offset: [-GW / 2 + 1.7, 0, 2.5], color: 'rgba(3,105,161,.92)', size: 13 });
       /* 구름 방울들 (길을 따라 생겨요) */
       const NP = 56, puffG = new THREE.SphereGeometry(1, 20, 14), puffs = [];
@@ -87,7 +90,7 @@
       /* 해, 바람 */
       const sun = new THREE.Mesh(new THREE.SphereGeometry(0.6, 28, 20), new THREE.MeshBasicMaterial({ color: 0xffd34d })); sun.position.set(-3.8, 5.6, -1.5); root.add(sun);
       const glow = new THREE.Mesh(new THREE.SphereGeometry(1.1, 24, 16), new THREE.MeshBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.25, depthWrite: false })); sun.add(glow);
-      const winds = []; for (let i = 0; i < 5; i++) { const m = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.4, 10), new THREE.MeshBasicMaterial({ color: 0xcbd5e1, transparent: true, opacity: 0.8 })); m.rotation.z = -Math.PI / 2; root.add(m); winds.push(m); }
+      const winds = []; for (let i = 0; i < 5; i++) { const m = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.4, 10), new THREE.MeshBasicMaterial({ color: 0xcbd5e1, transparent: true, opacity: 0.8 })); m.rotation.z = -Math.PI / 2; m.userData.v3bg = true; root.add(m); winds.push(m); }
       const airLab = label('', air, { color: 'rgba(15,23,42,.9)', size: 13, offset: [0, 1.2, 0] });
       function setMode(m) { mode = m; shape(); sun.visible = m === 'conv'; winds.forEach((w) => { w.visible = m === 'mtn'; });
         wedge.visible = coldL.visible = warmL.visible = m === 'front'; conv2.forEach((c) => { c.visible = m === 'meet'; }); lowL.visible = m === 'meet'; lift(0); h = 0; refresh(); }

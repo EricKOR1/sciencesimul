@@ -76,6 +76,8 @@
         const sh = new THREE.Mesh(new THREE.BoxGeometry(7, 0.12, 0.8), sm(0x8b6a45, { roughness: 0.7, map: woodTex })); sh.position.set(6, 5.2, -5.5); expG.add(sh);
         [[4.2, 0x38bdf8], [5.4, 0xfb923c], [6.6, 0x4ade80], [7.6, 0xf472b6]].forEach((q, i) => { const bt = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 0.9 + (i % 2) * 0.3, 16), sm(q[1], { transparent: true, opacity: 0.6, roughness: 0.1 })); bt.position.set(q[0] + 0.4, 5.26 + 0.5 + (i % 2) * 0.15, -5.5); expG.add(bt); });
       }
+      // 실험실 책상 · 벽 · 창문 · 선반은 배경: 자동 맞춤이 컵 · 페트병 · 유리관에 맞춰요
+      expG.children.forEach((o) => { if (o !== cupG && o !== btG && o !== tbG) o.traverse((m) => { if (m.isMesh) m.userData.v3bg = true; }); });
       const ARM = { shaft: new THREE.CylinderGeometry(1, 1, 1, 10).rotateX(Math.PI / 2).translate(0, 0, 0.5), head: new THREE.ConeGeometry(1, 1, 14).rotateX(Math.PI / 2).translate(0, 0, 0.5) };
       function mkArr(col, parent) { const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({ color: col, roughness: 0.5, transparent: true }); g.add(new THREE.Mesh(ARM.shaft, m), new THREE.Mesh(ARM.head, m)); g.userData.m = m; parent.add(g); return g; }
       function setArr(g, from, to, w, al) { const d = to.clone().sub(from), L = d.length(); g.position.copy(from); if (L > 1e-4) g.lookAt(to); const hl = Math.min(L * 0.5, 0.15 + w * 4); g.children[0].scale.set(w, w, Math.max(0.001, L - hl)); g.children[1].position.z = L - hl; g.children[1].scale.set(w * 2.6, w * 2.6, hl); g.userData.m.opacity = al; g.visible = al > 0.02 && L > 0.02; }
@@ -232,7 +234,7 @@
             if (isE !== expG.visible || lastExp === null || (isE && sc0 !== lastExp)) {
               expG.visible = isE; mainG.visible = !isE; lastExp = isE ? sc0 : ''; expSig = ''; expUI(isE ? sc0 : ''); cupG.visible = sc0 === 'cup'; btG.visible = sc0 === 'bottle'; tbG.visible = sc0 === 'tube';
               expLabs.forEach((l) => l.show(false)); if (isE) mainLabs.forEach((l) => l.show(false)); else sig = '';
-              orbit.tx = 0; orbit.ty = isE ? (sc0 === 'tube' ? 3.1 : sc0 === 'bottle' ? 2.2 : 2.6) : 1.4; orbit.dist = isE ? (sc0 === 'tube' ? (PHN ? 24 : 17) : (PHN ? 16 : 8.8)) : (PHN ? 19 : 14.5);
+              orbit.tx = 0; orbit.ty = isE ? (sc0 === 'tube' ? 3.1 : sc0 === 'bottle' ? 2.2 : 2.6) : 1.4; orbit.dist = isE ? (sc0 === 'tube' ? (PHN ? 24 : 17) : (PHN ? 16 : 8.8)) : (PHN ? 19 : 14.5); if (ctx.refit) ctx.refit(0.4);
             }
             if (isE) { sky.material.color.copy(skyLab); expFrame(S0, sc0, dt, t); return; } }
           const n = read(), ns = [n.k, n.warm, Math.round(n.Tl), Math.round(n.Ts), n.str > 0, n.hide, n.day, n.snow, n.smoke].join('|');

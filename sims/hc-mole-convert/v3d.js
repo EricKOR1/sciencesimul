@@ -91,7 +91,7 @@
       const KEY = { h2: 'H2', o2: 'O2', co2: 'CO2', n2: 'N2', ch4: 'CH4' };
       const COLN = { h2: 0x60a5fa, o2: 0xf87171, co2: 0xa78bfa, n2: 0x34d399, ch4: 0xfbbf24 };
       const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 }));
-      floor.scale.set(15, 0.1, 12); floor.position.set(0, -0.06, 0); root.add(floor);
+      floor.scale.set(15, 0.1, 12); floor.position.set(0, -0.06, 0); root.add(floor); floor.userData.v3bg = true;
 
       /* 풍선(투명 공) + 안에서 움직이는 분자 */
       function makeBall(max, k) {
@@ -213,7 +213,7 @@
       const PD = mkP('dens', { duration: 9, label: 'CO₂ 붓기', phases: [[0, '빈 수조'], [0.05, '붓는 중'], [0.7, '촛불이 꺼져요'], [0.9, '비우기']] }, (p) => { pD = p; });
       const PL = { temp: PT, hub: PH, dry: PS, dens: PD };
       let lastKind = '';
-      const DIST = phone ? { bal: 17, temp: 14, hub: 14, dry: 14, dens: 14 } : { bal: 13, temp: 11, hub: 11.5, dry: 11, dens: 11 };
+      const DIST = phone ? { bal: 21, temp: 14, hub: 14, dry: 14, dens: 14 } : { bal: 15, temp: 11, hub: 11.5, dry: 11, dens: 11 };
 
       return {
         update(dt, t) {
@@ -222,7 +222,7 @@
           const kind = S.mode === 'balloon' ? (S.sub.balloon === 'bal' ? 'bal' : 'temp') : S.mode === 'final' ? (S.sub.final === 'dry' ? 'dry' : 'dens') : 'hub';
           const s = [kind, bw.T, hbs.gas, hbs.m, fn.T, fn.run, fn.levelT].join('|');
           if (s !== sig) { sig = s; if (own) { const k = own; own = null; PL[k].pl.pause(); PL[k].pl.set(0); } }
-          if (kind !== lastKind) { lastKind = kind; ctx.orbit.dist = DIST[kind]; }
+          if (kind !== lastKind) { lastKind = kind; ctx.orbit.dist = DIST[kind]; ctx.refit(0.3); }
           Object.keys(PL).forEach((k) => { PL[k].row.style.display = k === kind ? '' : 'none'; if (k !== kind && PL[k].pl.playing) PL[k].pl.pause(); });
           [bal[0], bal[1], bal[2], tb, hb, dry].forEach((b) => b.show(false));
           ghost.visible = therm.visible = thLab.visible = false; thLab.show(false);

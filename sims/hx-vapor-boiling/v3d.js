@@ -17,7 +17,7 @@
   window.SciSim3D.attach({
     title: '증기압과 끓음 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHONE ? 16 : 13, theta: 0.5, phi: 1.2, min: 6, max: 26, target: [0, 0.4, 0] },
+    camera: { dist: PHONE ? 16 : 13, theta: 0.5, phi: 1.2, min: 6, max: 26, target: [0, PHONE ? 0.4 : 0.9, 0] },
     autoRotate: 0.12,
     levels: [0, 2],   // 1단계(증기압), 3단계(압력과 끓는점). 2·4단계는 그래프(증기압 곡선 · 상평형 그림)를 읽거나 점을 끄는 2D 화면이에요. #bMore는 액체 높이를 바꿔서 data-v3="keep"
     build(ctx) {
@@ -230,7 +230,7 @@
         const o = ctx.orbit;
         if (md === 'curve') { o.dist = PHONE ? 22 : 19; o.tx = 0; o.ty = PHONE ? 1.6 : 0.2; o.theta = 0.15; o.phi = 1.4; }
         else if (md === 'phase') { o.dist = PHONE ? 20 : 15; o.tx = 0; o.ty = 0.6; o.theta = 0.4; o.phi = 1.3; }
-        else { o.dist = PHONE ? 16 : 13; o.tx = 0; o.ty = 0.4; }
+        else { o.dist = PHONE ? 16 : 13; o.tx = 0; o.ty = PHONE ? 0.4 : 0.9; }
         if (md === 'vap' || md === 'press') { tl.show(true); pl.show(true); } else { tl.show(false); pl.show(false); }
       }
 

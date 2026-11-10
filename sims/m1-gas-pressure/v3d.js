@@ -10,7 +10,7 @@
     title: '기체 입자와 압력 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [0, 3],   // 벽돌과 눈 · 풍선 부풀리기는 3D, 입자 따라가기 · 고무막과 압력계는 2D
-    camera: { dist: 10.5 * (PHN0 ? 1.05 : 1), theta: 0.6, phi: 1.1, fov: 45, target: [1.7, 0.1, 0], min: 6, max: 30 },
+    camera: { dist: 10.5 * (PHN0 ? 1.05 : 1), theta: 0.6, phi: 1.1, fov: 45, target: [PHN0 ? 2.4 : 1.7, 0.1, 0], min: 6, max: 30 },
     autoRotate: 0.15,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
@@ -149,6 +149,7 @@
         const gr = new THREE.Mesh(new THREE.BoxGeometry(SNX + 2.4, 0.2, SNZ + 2.4), mat(0x3a2e24, { roughness: 0.95 })); gr.position.y = -0.7; gB.add(gr);
         const gd = new THREE.Mesh(new THREE.CircleGeometry(16, 48), mat(0x1c2533, { roughness: 1 })); gd.rotation.x = -Math.PI / 2; gd.position.y = -0.82; gB.add(gd);
         for (let i = 0; i < 9; i++) { const tr = new THREE.Group(); for (let j = 0; j < 3; j++) { const co = new THREE.Mesh(new THREE.ConeGeometry(1.1 - j * 0.28, 1.5, 12), mat(j ? 0x1d4a33 : 0x153a28, { roughness: 0.9 })); co.position.y = 0.9 + j * 0.8; const sn = new THREE.Mesh(new THREE.ConeGeometry(0.7 - j * 0.2, 0.5, 12), mat(0x9fb2c9, { roughness: 0.9 })); sn.position.y = 1.35 + j * 0.8; tr.add(co, sn); } tr.position.set(-9 + i * 2.4 + (i % 2) * 0.8, -0.8, -9 - (i % 3) * 1.6); tr.scale.setScalar(0.8 + (i % 3) * 0.2); gB.add(tr); } }
+      gB.children.slice(1).forEach((o) => o.traverse((m) => { if (m.isMesh) m.userData.v3bg = true; }));   // 땅 · 나무는 배경: 자동 맞춤은 눈 · 벽돌에 맞춰요
       const snowGeo = new THREE.PlaneGeometry(SNX, SNZ, SGX, SGZ); snowGeo.rotateX(-Math.PI / 2);
       const snowMesh = new THREE.Mesh(snowGeo, mat(0x8196b0, { roughness: 0.95 })); snowMesh.receiveShadow = true; gB.add(snowMesh);
       const BR = { wide: [2.16, 0.72, 0.72], narrow: [0.72, 2.16, 0.72] };

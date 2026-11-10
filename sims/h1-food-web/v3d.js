@@ -51,7 +51,7 @@
       const L2 = () => (ctx.lesson && ctx.lesson()) || null;
       const st = { names: true, t: 0, demo: false, sig: '' };
       const clamp01 = (x) => Math.max(0, Math.min(1, x));
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.4, 0.25, 56), new THREE.MeshLambertMaterial({ color: 0x2d3547 })); floor.position.y = -0.2; floor.receiveShadow = true; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.4, 0.25, 56), new THREE.MeshLambertMaterial({ color: 0x2d3547 })); floor.position.y = -0.2; floor.receiveShadow = true; root.add(floor); floor.userData.v3bg = true;   // 바닥은 배경
       const gW = new THREE.Group(), gP = new THREE.Group(), gF = new THREE.Group(); root.add(gW, gP, gF);
       const LH = 1.35;
 

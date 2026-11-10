@@ -25,7 +25,7 @@
     title: '관입과 부정합 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [1, 2],                 // 0단계(퇴적 상자 · 퇴적 속도)와 3단계(층서 대비: 지층 기둥을 눌러 잇기)는 2D 화면에서 해요
-    camera: { dist: PHONE ? 16 : 11.5, theta: 0.55, phi: 1.12, min: 5, max: 26, target: [0, 1.4, 0] },
+    camera: { dist: PHONE ? 19 : 11.5, theta: 0.55, phi: 1.12, min: 5, max: 26, target: [0, 1.4, 0] },
     autoRotate: 0,
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
@@ -53,6 +53,7 @@
       FX.dome('#1c2c4a', '#33507a', '#5a7aa3', 0);
       const floor = new THREE.Mesh(new THREE.CylinderGeometry(6.4, 6.6, 0.3, 64), std(0x6b5a48, { map: FX.grain([5, 5], 0.6) })); floor.position.y = -3.3; floor.receiveShadow = true; root.add(floor);
       { const rim = new THREE.Mesh(new THREE.TorusGeometry(6.45, 0.08, 10, 96), new THREE.MeshStandardMaterial({ color: 0xc9a14a, roughness: 0.35, metalness: 0.8 })); rim.rotation.x = Math.PI / 2; rim.position.y = 0.15; floor.add(rim); }
+      floor.traverse((o) => { if (o.isMesh) o.userData.v3bg = true; });   // 바닥 · 테두리는 화면 맞춤에서 빼요
       const gI = new THREE.Group(), gU = new THREE.Group(); root.add(gI, gU);
       const ext = (pts, col, depth) => {
         const sh = new THREE.Shape(); pts.forEach((p, i) => (i ? sh.lineTo(p[0], p[1]) : sh.moveTo(p[0], p[1]))); sh.closePath();

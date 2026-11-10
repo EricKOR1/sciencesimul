@@ -12,7 +12,7 @@
   window.SciSim3D.attach({
     title: '효소 저해 3D 모형',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: narrow ? 13 : 10.8, theta: 0.15, phi: 1.3, target: narrow ? [-0.8, 0, 0] : [0, 0.5, 0], min: 6, max: 22 },
+    camera: { dist: narrow ? 13 : 10.8, theta: 0.15, phi: 1.3, target: narrow ? [0.4, 0, 0] : [0, 0.5, 0], min: 6, max: 22 },
     autoRotate: 0,
     levels: [1],   // 1단계(저해제 실험 · 그래프)와 3단계(되먹임 · 카드뉴스)는 2D 화면, 2단계 '저해 모형'에서 3D로 시작
     build(ctx) {

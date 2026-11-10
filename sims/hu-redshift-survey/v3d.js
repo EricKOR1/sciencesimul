@@ -36,6 +36,7 @@
       const wedgeFill = (() => { const sh = new THREE.Shape(); sh.moveTo(0, 0); for (let i = 0; i <= 40; i++) { const th = (-THMAX + (2 * THMAX * i) / 40) * DEG; sh.lineTo(RMAX * UNIT * Math.sin(th), RMAX * UNIT * Math.cos(th)); } sh.lineTo(0, 0);
         const m = new THREE.Mesh(new THREE.ShapeGeometry(sh), new THREE.MeshBasicMaterial({ color: 0x6366f1, transparent: true, opacity: 0.1, side: THREE.DoubleSide, depthWrite: false })); m.rotation.x = Math.PI / 2; root.add(m); return m; })();
       const obs = new THREE.Mesh(new THREE.SphereGeometry(0.1, 20, 14), new THREE.MeshBasicMaterial({ color: 0x60a5fa })); root.add(obs);
+      { const fit = new THREE.Mesh(new THREE.BoxGeometry(2 * RMAX * UNIT * Math.sin(THMAX * DEG) + 0.6, 0.8, RMAX * UNIT + 0.3), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); fit.position.set(0, 0, RMAX * UNIT / 2); root.add(fit); }   // 자동 맞춤용 보이지 않는 상자: 쐐기 전체가 화면에 크게 들어오게
       label('우리 (관측자)', obs, { offset: [0, 0.4, 0], color: 'rgba(30,64,140,.92)' });
 
       /* 은하 400개 (2D의 GAL) */

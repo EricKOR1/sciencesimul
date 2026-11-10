@@ -19,7 +19,7 @@
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
       const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.3 }, o || {}));
-      const gnd = new THREE.Mesh(new THREE.BoxGeometry(17, 0.3, 5), sm(0x3d6f3a, { roughness: 0.95, metalness: 0 })); gnd.position.set(1.0, -0.15, 0); root.add(gnd);
+      const gnd = new THREE.Mesh(new THREE.BoxGeometry(17, 0.3, 5), sm(0x3d6f3a, { roughness: 0.95, metalness: 0 })); gnd.position.set(1.0, -0.15, 0); gnd.userData.v3bg = true; root.add(gnd);   // 바닥은 배경: 자동 맞춤이 진자(코스터)와 에너지 막대에 맞춰요
       const pendG = new THREE.Group(), coasterG = new THREE.Group(); root.add(pendG, coasterG);
       /* ---------- 진자 ---------- */
       const beam = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.14, 0.5), sm(0x64748b)); beam.position.set(0, 4.3 + 0.1, 0); pendG.add(beam);
@@ -71,6 +71,12 @@
       function setScene(sc) {
         scene = sc; pendG.visible = sc === 'pend'; coasterG.visible = sc === 'coaster';
         cLab.show(sc === 'coaster'); bLab.show(sc === 'pend'); hPL.show(sc === 'pend'); hSL.show(sc === 'coaster'); railKey = '';
+        // 진자 장면은 폭이 좁아서 에너지 막대를 진자 가까이 옮겨요 (장면 전체가 화면에 더 크게 들어와요)
+        // (휴대폰 세로 화면: 진자 오른쪽 뒤에 놓아 폭을 더 줄여요)
+        const bx = sc === 'pend' ? (PHN ? 2.1 : 4.0) : BX, bz = sc === 'pend' && PHN ? -2.6 : -1.4;
+        [['ep', 0], ['ek', 1.3], ['me', 2.6]].forEach(([k, dx]) => { bars[k].m.position.set(bx + dx, bars[k].m.position.y, bz); bars[k].L.obj = [bx + dx, -0.45, bz + 0.45]; });
+        base.position.set(bx + 1.3, base.position.y, bz); topLine.position.set(bx + 1.3, topLine.position.y, bz);
+        if (ctx.refit) ctx.refit(0.3);
       }
       /* ▶ 놓기 / 출발 (2D 화면의 버튼과 같이 움직여요) */
       let prevP = false, prevR = false;

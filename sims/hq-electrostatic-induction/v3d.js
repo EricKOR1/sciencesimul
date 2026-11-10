@@ -259,12 +259,12 @@
       const rodHalo = new THREE.Mesh(new THREE.SphereGeometry(0.6, 20, 14), glass(NEG, 0.0)); gPa.add(rodHalo);
       const rodCh = []; for (let i = 0; i < 7; i++) { const m = sphere(0.12, NEG, { emissive: NEG, emissiveIntensity: 0.6 }); m.position.set(-1.8 + i * 0.6, 0.0, 0.32); rodP.parent.add(m); rodCh.push(m); }
       const paper = new THREE.Group(); gPa.add(paper);
-      const paperB = box(4.4, 0.4, 2.4, 0xf4f1e8, { roughness: 0.8, transparent: true, opacity: 0.55, depthWrite: false }); paper.add(paperB);
+      const paperB = box(4.4, 0.56, 2.4, 0xf4f1e8, { roughness: 0.8, transparent: true, opacity: 0.55, depthWrite: false }); paper.add(paperB);
       const pT = box(4.4, 0.03, 2.4, POS, { transparent: true, opacity: 0, depthWrite: false, emissive: POS, emissiveIntensity: 0.7 }), pBt = box(4.4, 0.03, 2.4, NEG, { transparent: true, opacity: 0, depthWrite: false, emissive: NEG, emissiveIntensity: 0.7 });
-      pT.position.y = 0.2; pBt.position.y = -0.2; paper.add(pT, pBt);
+      pT.position.y = 0.28; pBt.position.y = -0.28; paper.add(pT, pBt);
       const pm = []; for (let i = 0; i < 6; i++) for (let j = 0; j < 3; j++) {
         const g = new THREE.Group(); g.position.set(-1.8 + i * 0.72, 0, -0.8 + j * 0.8);
-        const bar = cyl(0.03, 0.03, 0.26, 0xaab4c8, {}, 8), a = sphere(0.075, POS, { emissive: POS, emissiveIntensity: 0.4 }), b = sphere(0.075, NEG, { emissive: NEG, emissiveIntensity: 0.4 }); a.position.y = 0.13; b.position.y = -0.13; g.add(bar, a, b);
+        const bar = cyl(0.03, 0.03, 0.26, 0xaab4c8, {}, 8), a = sphere(0.075, POS, { emissive: POS, emissiveIntensity: 0.4 }), b = sphere(0.075, NEG, { emissive: NEG, emissiveIntensity: 0.4 }); a.position.y = 0.13; b.position.y = -0.13; g.add(bar, a, b); g.traverse((o) => { if (o.isMesh) o.userData.v3bg = true; });   // 작은 분자는 자동 맞춤에서 빼요 (종이 판 · 막대로 가운데를 잡아요)
         g.userData = { rnd: new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.random() * 6.28, Math.random() * 6.28, Math.random() * 6.28)), ph: Math.random() * 6.28 }; paper.add(g); pm.push(g);
       }
       const fUp = mkArrow(0xf26b3a, 0.06), fDn = mkArrow(0x2f6df6, 0.05); gPa.add(fUp, fDn);
@@ -283,10 +283,10 @@
         const tq = new THREE.Quaternion(), q0 = new THREE.Quaternion();
         pm.forEach((g) => { const wob = new THREE.Quaternion().copy(g.userData.rnd).multiply(tq.setFromAxisAngle(new V3(0.3, 1, 0.2).normalize(), t * 0.8 + g.userData.ph)); g.quaternion.copy(wob).slerp(q0.identity(), al); });
         const up = 0.4 + 1.3 * fo, dn = 0.25 + 0.4 * fo;
-        setArrow(fUp, new V3(-1.2, py + 0.25, 0.9), new V3(-1.2, py + 0.25 + up, 0.9)); fUp.visible = fo > 0.05 && rise < 0.5;
-        setArrow(fDn, new V3(1.2, py - 0.25, 0.9), new V3(1.2, py - 0.25 - dn * 0.5, 0.9)); fDn.visible = fo > 0.05 && rise < 0.5;
+        setArrow(fUp, new V3(-1.2, py + 0.3, 0.9), new V3(-1.2, py + 0.3 + up, 0.9)); fUp.visible = fo > 0.05 && rise < 0.5;
+        setArrow(fDn, new V3(1.2, py - 0.3, 0.9), new V3(1.2, py - 0.3 - dn * 0.5, 0.9)); fDn.visible = fo > 0.05 && rise < 0.5;
         aFu.position.set(-1.2, py + 0.5 + up, 0.9); aFd.position.set(1.2, py - 0.8, 0.9); lFu.set('가까운 (+)가 받는 인력 ↑ (큼)'); lFd.set('먼 (−)가 받는 반발력 ↓ (작음)');
-        aPap.position.set(0, py - 0.65, 1.3); aPT.position.set(2.7, py + 0.2, 0); aPB.position.set(2.7, py - 0.2, 0);
+        aPap.position.set(0, py - 0.65, 1.3); aPT.position.set(2.7, py + 0.28, 0); aPB.position.set(2.7, py - 0.28, 0);
         lFu.show(fUp.visible && labs.paper.on); lFd.show(fDn.visible && labs.paper.on); lPT.show(surf > 0.5 && labs.paper.on); lPB.show(surf > 0.5 && labs.paper.on);
         info('<b>🧻 종이 조각이 끌려오는 과정</b><br>' + PCAP[Math.min(4, Math.round(sF))] + '<br>진행 ' + Math.min(4, Math.round(sF)) + ' / 4 단계');
       }

@@ -11,13 +11,13 @@
   const wide = (window.innerWidth || 1000) >= 600;
   const phaseName = (th) => { th = norm(th); return th < 8 || th >= 352 ? '삭' : Math.abs(th - 180) <= 8 ? '망' : Math.abs(th - 90) <= 8 ? '상현' : Math.abs(th - 270) <= 8 ? '하현' : th < 180 ? '차오르는 달' : '기우는 달'; };
   const VIEWS = wide ? { top: { dist: 20, theta: 0, phi: 0.3 }, obl: { dist: 19, theta: 0.3, phi: 0.95 }, side: { dist: 18, theta: 0, phi: Math.PI / 2 } }
-    : { top: { dist: 26, theta: -Math.PI / 2, phi: 0.3 }, obl: { dist: 27, theta: -0.5, phi: 0.95 }, side: { dist: 28, theta: 0, phi: Math.PI / 2, tx: 1.0 } };
+    : { top: { dist: 26, theta: -Math.PI / 2, phi: 0.3 }, obl: { dist: 22, theta: -0.8, phi: 0.95, tx: 1.6 }, side: { dist: 28, theta: 0, phi: Math.PI / 2, tx: 1.0 } };
 
   window.SciSim3D.attach({
     host: '.stage-card',
     title: '3D 달 궤도와 그림자',
     hint: ' ',
-    camera: Object.assign({ fov: 45, target: [2.2, 0, 0], min: 4, max: 45 }, VIEWS.obl),
+    camera: Object.assign({ fov: 45, target: [wide ? 2.2 : 1.6, 0, 0], min: 4, max: 45 }, VIEWS.obl),
     autoRotate: 0,
     levels: [3],   // 4단계(매달 일어나지 않는 까닭: 기울어진 궤도)만 3D — 그림자 · 일식 지역 · 월식은 2D 화면에서 달을 끌어요
     build(ctx) {

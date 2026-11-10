@@ -33,7 +33,7 @@
   window.SciSim3D.attach({
     title: '촉매 표면 반응 3D · H₂O₂ 분해',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHONE ? 22 : 16.5, theta: 0.3, phi: 1.3, min: 8, max: 36, target: [-1.2, 3.9, 0] },
+    camera: { dist: PHONE ? 25 : 20, theta: 0.3, phi: 1.3, min: 8, max: 36, target: [-1.2, 5.4, 0] },   // 에너지 곡선 왼쪽이 설명 상자에 가리지 않게 조금 아래로
     autoRotate: 0.08,
     levels: [1],   // 2단계(에너지 도표 · 평형)만 3D예요. 1단계(촉매 실험 장치·그래프·저울)와 3~5단계는 2D 화면이에요
     build(ctx) {
@@ -57,6 +57,7 @@
       lO.show(false);
       /* 에너지 도표 (위) */
       const mk = (ea, col) => { const p = []; for (let i = 0; i <= 90; i++) { const x = -3 + 6 * i / 90; p.push(new V3(x * SX, OY + curveE(x, ea), 0)); } return new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(p), 180, 0.07, 10, false), mat(col, { transparent: true, emissive: col, emissiveIntensity: 0.5 })); };
+      { const fit = new THREE.Mesh(new THREE.BoxGeometry(13.2, OY + 2.3 + 1.6, 2.4), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); fit.position.set(0, (OY + 2.3 - 1.6) / 2, 0); root.add(fit); }   // 자동 맞춤용 보이지 않는 상자: 촉매 표면(입자 묶음)과 에너지 곡선이 함께 들어오게
       const cNo = mk(E0, 0x8a94a8), cCat = mk(E1, 0xff9a3c); root.add(cNo, cCat);
       const bead = new THREE.Mesh(new THREE.SphereGeometry(0.27, 24, 18), mat(0xffd34d, { emissive: 0xffa500, emissiveIntensity: 0.6 })); root.add(bead);
       const baseLine = new THREE.Mesh(new THREE.BoxGeometry(2.6 * SX, 0.03, 0.03), mat(0x5c6b8a, { transparent: true, opacity: 0.6 })); baseLine.position.set(-3 * SX + 1.3 * SX - 0.2, OY, 0); root.add(baseLine);
