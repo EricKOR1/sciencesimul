@@ -274,7 +274,7 @@
         else if (mode === 'ladder') Object.assign(orbit, { tx: 0, ty: -0.5, tz: 0, phi: 1.35, theta: 0.1, dist: 15 * KD });
         else if (mode === 'bohr') Object.assign(orbit, { tx: 3, ty: -2.0, tz: 0, phi: 1.3, theta: 0.15, dist: 22 * KD });
         else if (mode === 'cloud') Object.assign(orbit, { tx: 2.8, ty: 0, tz: 0, phi: 1.2, theta: 0.3, dist: 13 * KD });
-        else if (mode === 'he' || mode === 'abs') Object.assign(orbit, PHN ? { tx: 1.5, ty: 3.0, tz: 0, phi: 1.4, theta: 0.0, dist: 21 * KD } : { tx: 0.9, ty: 4.2, tz: 0, phi: 1.4, theta: 0.0, dist: 19.3 });   // PC: 처음부터 크게, 설명 상자 아래 오른쪽으로 비켜 보여요
+        else if (mode === 'he' || mode === 'abs') Object.assign(orbit, PHN ? { tx: 1.5, ty: 3.0, tz: 0, phi: 1.4, theta: 0.0, dist: 21 * KD } : { tx: 0.9, ty: 5.0, tz: 0, phi: 1.4, theta: 0.0, dist: 20 });   // PC: 처음부터 크게, 설명 상자 아래 오른쪽으로 비켜 보여요
         heKey = '';
       }
       return {

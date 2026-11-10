@@ -361,7 +361,7 @@
         [lW, lAx, lSupW, lTq, lAng].forEach((l) => l.show(gTp.visible)); lBook.show(false);
         if (pl && pl.row) pl.row.style.display = spl ? '' : 'none';
         if (plC && plC.row) plC.row.style.display = mode === 'couple' ? '' : 'none'; if (plP && plP.row) plP.row.style.display = mode === 'plank' ? '' : 'none'; if (plR && plR.row) plR.row.style.display = mode === 'crane' ? '' : 'none';
-        if (mode === 'spanner') { Object.assign(orbit, { tx: PHN ? 2.3 : 2.0, ty: PHN ? 0.3 : 0.75, tz: 0, phi: 0.7, theta: 0.0, dist: PHN ? 9 * KD : 5.9 }); }
+        if (mode === 'spanner') { Object.assign(orbit, { tx: PHN ? 2.3 : 2.0, ty: PHN ? 0.3 : 0.75, tz: 0, phi: 0.7, theta: 0.0, dist: PHN ? 9 * KD : 6.5 }); }
         else if (mode === 'seesaw') { Object.assign(orbit, { tx: 0, ty: 1.3, tz: 0, phi: 1.3, theta: 0.3, dist: 7.6 * KD }); }
         else if (mode === 'tilt') { Object.assign(orbit, { tx: -0.6, ty: 0.7, tz: 0, phi: 1.25, theta: 0.2, dist: 4.6 * KD }); bodyKey = ''; }
         else if (mode === 'load') { Object.assign(orbit, { tx: -0.4, ty: 1.0, tz: 0, phi: 1.3, theta: 0.25, dist: 7 * KD }); bodyKey = ''; }
