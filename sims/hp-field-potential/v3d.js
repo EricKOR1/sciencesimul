@@ -379,7 +379,7 @@
         [lE, lMi, lPl, lQ].concat(rulerL).forEach((l) => l.show(mode === 'plates'));
         plM.row.style.display = mode === 'field' ? '' : 'none'; plC.row.style.display = mode === 'plates' && kind !== 'electron' ? '' : 'none'; plE.row.style.display = mode === 'plates' && kind === 'electron' ? '' : 'none';
         if (mode !== 'field') { plM.pause(); plM.set(0); } if (!(mode === 'plates' && kind !== 'electron')) { plC.pause(); plC.set(0); } if (!(mode === 'plates' && kind === 'electron')) { plE.pause(); plE.set(0); }
-        if (mode === 'force') Object.assign(orbit, { tx: 1.5, ty: 0, tz: 0, phi: 0.85, theta: 0.1, dist: 10 * KD });
+        if (mode === 'force') Object.assign(orbit, PHN ? { tx: 1.5, ty: 0, tz: 0, phi: 0.85, theta: 0.1, dist: 10 * KD } : { tx: 1.5, ty: 1.0, tz: 0, phi: 0.85, theta: 0.1, dist: 6.6 });   // PC: 처음부터 크게, 두 전하가 설명 상자 아래로 오게
         else if (mode === 'field') Object.assign(orbit, { tx: 0, ty: 0, tz: 0, phi: 0.7, theta: 0.0, dist: 14.5 * KD });
         else if (mode === 'plates') Object.assign(orbit, { tx: 3, ty: 1.2, tz: 0, phi: 1.2, theta: 0.15, dist: 10 * KD });
         else if (gAc.visible) Object.assign(orbit, { tx: 0, ty: 0.8, tz: 0, phi: 1.0, theta: 0.2, dist: 12 * KD * (PHN ? 1.15 : 1) });

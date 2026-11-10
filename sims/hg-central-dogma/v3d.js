@@ -14,7 +14,7 @@
   window.SciSim3D.attach({
     title: '전사 · 번역 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: narrow ? 12 : 8.8, theta: 0.22, phi: 1.3, target: narrow ? [-0.7, 0, 0] : [0, 0.7, 0], min: 5, max: 20 },
+    camera: { dist: narrow ? 10.5 : 8.8, theta: 0.22, phi: 1.3, target: narrow ? [-0.7, 0, 0] : [0, 0.7, 0], min: 5, max: 20 },
     autoRotate: 0,
     levels: [2],   // 번역 단계만 3D(tRNA 고르기 · 사슬 방출은 3D 조작 줄의 단추로). 화살표 이름 · 주형 가닥 서열 · RNA 가공 · 모의실험은 캔버스에서 해요
     build(ctx) {
@@ -89,7 +89,7 @@
       const aaCol = (k) => (k === 0 ? 0x22c55e : AAC[(k * 3) % 8]);
       const mr = new THREE.InstancedMesh(new THREE.SphereGeometry(0.115, 12, 10), std(0xffffff, { roughness: 0.35 }), NCOD * 3);
       for (let k = 0; k < NCOD; k++) for (let j = 0; j < 3; j++) mr.setColorAt(k * 3 + j, cc.setHex(codCol(KC0 + k)));
-      mr.instanceColor.needsUpdate = true; mr.userData.v3bg = true; tlG.add(mr);   // 긴 mRNA 가닥은 화면 밖까지 이어져요: 자동 맞춤은 리보솜 쪽을 크게
+      mr.instanceColor.needsUpdate = true; tlG.add(mr);
       const MY = -0.62;
       // 리보솜
       const big = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), std(0xa78bfa, { transparent: true, opacity: 0.4, depthWrite: false, roughness: 0.35 })); big.scale.set(2.2, 1.2, 1.4); big.position.set(0.1, 0.6, 0); tlG.add(big); big.renderOrder = 2;

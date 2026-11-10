@@ -11,7 +11,7 @@
   window.SciSim3D.attach({
     title: '떨어뜨린 공 · 던진 공 3D',
     camera: PHN ? { dist: 21, theta: 0.85, phi: 1.25, target: [-3.0, 2.6, 0], min: 8, max: 34 }   // 휴대폰: 비스듬히 봐서 긴 바닥이 좁은 화면에 들어오게
-      : { dist: 16, theta: 0.15, phi: 1.32, target: [-0.2, 3.0, 0], min: 8, max: 34 },
+      : { dist: 16.5, theta: 0.15, phi: 1.32, target: [-0.2, 3.9, 0], min: 8, max: 34 },
     levels: [3],
     autoRotate: 0,
     build(ctx) {

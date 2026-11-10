@@ -62,9 +62,9 @@
       skyTex.wrapS = skyTex.wrapT = THREE.ClampToEdgeWrapping;
       const sky = new THREE.Mesh(new THREE.SphereGeometry(180, 32, 20), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false, depthWrite: false })); sky.position.set(5, 0, 0); sky.renderOrder = -10; root.add(sky);
       const hillM = [M(0x2f5a3a, { roughness: 1, metalness: 0 }), M(0x3b6b43, { roughness: 1, metalness: 0 }), M(0x274d36, { roughness: 1, metalness: 0 })];
-      for (let i = 0; i < 9; i++) { const hl = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 14, 0, TAU, 0, Math.PI / 2), hillM[i % 3]); const r = 5 + (i * 37 % 7), x = -18 + i * 7.5; hl.scale.set(r * 1.6, 2.2 + (i * 13 % 5) * 0.5, r * 0.8); hl.position.set(x, -0.1, -15 - (i % 3) * 3.5); hl.userData.v3bg = true; root.add(hl); }   // 먼 산 · 구름 · 나무는 배경 (자동 맞춤은 트랙 · 대포 · 궤적을 크게)
+      for (let i = 0; i < 9; i++) { const hl = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 14, 0, TAU, 0, Math.PI / 2), hillM[i % 3]); const r = 5 + (i * 37 % 7), x = -18 + i * 7.5; hl.scale.set(r * 1.6, 2.2 + (i * 13 % 5) * 0.5, r * 0.8); hl.position.set(x, -0.1, -15 - (i % 3) * 3.5); root.add(hl); }
       const cloudM = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, fog: false }); const clouds = [];
-      for (let i = 0; i < 6; i++) { const cg = new THREE.Group(); for (let k = 0; k < 4; k++) { const b = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), cloudM); b.scale.set(1.6 + k * 0.2, 0.7, 0.8); b.position.set(k * 1.3 - 2, (k % 2) * 0.3, 0); cg.add(b); } cg.position.set(-12 + i * 9, 11 + (i % 3) * 2.2, -22 - (i % 2) * 6); cg.userData.sp = 0.15 + (i % 3) * 0.05; cg.traverse((o) => { if (o.isMesh) o.userData.v3bg = true; }); root.add(cg); clouds.push(cg); }
+      for (let i = 0; i < 6; i++) { const cg = new THREE.Group(); for (let k = 0; k < 4; k++) { const b = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), cloudM); b.scale.set(1.6 + k * 0.2, 0.7, 0.8); b.position.set(k * 1.3 - 2, (k % 2) * 0.3, 0); cg.add(b); } cg.position.set(-12 + i * 9, 11 + (i % 3) * 2.2, -22 - (i % 2) * 6); cg.userData.sp = 0.15 + (i % 3) * 0.05; root.add(cg); clouds.push(cg); }
       /* 잔디 운동장 + 달리기 트랙 */
       const grassTex = ctex(256, 256, (g, w, h) => { g.fillStyle = '#4f8f4a'; g.fillRect(0, 0, w, h); for (let i = 0; i < 2600; i++) { const l = 30 + rnd() * 30; g.fillStyle = 'hsla(' + (95 + rnd() * 30) + ',45%,' + l + '%,0.55)'; g.fillRect(rnd() * w, rnd() * h, 1.5, 3 + rnd() * 4); } }, 48, 18);
       const ground = new THREE.Mesh(new THREE.BoxGeometry(160, 0.3, 70), M(0xffffff, { map: grassTex, roughness: 1, metalness: 0 })); ground.position.set(5, -0.17, 8); ground.receiveShadow = true; root.add(ground);
@@ -77,7 +77,6 @@
       // 나무
       const treeG = new THREE.Group(); root.add(treeG); const trM = M(0x6b4a2b, { roughness: 1 }), lfM = [M(0x1f5f2c, { roughness: 0.95, metalness: 0 }), M(0x2b7438, { roughness: 0.95, metalness: 0 })];
       for (let i = 0; i < 12; i++) { const tr = new THREE.Group(); const tk = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.9, 8), trM); tk.position.y = 0.45; tr.add(tk); for (let k = 0; k < 3; k++) { const lf = new THREE.Mesh(new THREE.ConeGeometry(0.62 - k * 0.14, 0.9, 10), lfM[(i + k) % 2]); lf.position.y = 1.0 + k * 0.5; lf.castShadow = true; tr.add(lf); } const sc = 0.9 + (i * 7 % 5) * 0.18; tr.scale.setScalar(sc); tr.position.set(-6 + i * 3.1 + (i % 2) * 0.8, 0, -6.2 - (i % 3) * 1.4); treeG.add(tr); }
-      treeG.traverse((o) => { if (o.isMesh) o.userData.v3bg = true; });
       // 대포 (포신 · 바퀴 · 포가)
       const cannon = new THREE.Group(); root.add(cannon);
       const iron = M(0x3b4250, { metalness: 0.75, roughness: 0.32 }), brass = M(0xc89b3c, { metalness: 0.85, roughness: 0.3 }), woodM = M(0x8a5a2b, { roughness: 0.8 });
