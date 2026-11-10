@@ -135,7 +135,7 @@
       // ---- 환경: 세포 속 바닥판 · 떠다니는 알갱이 (접힘 장면)
       { const fl = new THREE.Mesh(new THREE.CylinderGeometry(4.6, 4.8, 0.22, 72), std(0x13213b, { roughness: 0.7, metalness: 0.1 })); fl.position.set(0, -3.3, 0); gF.add(fl);
         [4.5, 3.1, 1.7].forEach((r, k) => { const t = new THREE.Mesh(new THREE.TorusGeometry(r, 0.025, 8, 96), new THREE.MeshBasicMaterial({ color: k % 2 ? 0x3b6ea8 : 0x4fd1c5 })); t.rotation.x = Math.PI / 2; t.position.set(0, -3.17, 0); gF.add(t); }); }
-      const NPD = 120, dustF = new THREE.InstancedMesh(new THREE.SphereGeometry(0.05, 8, 6), new THREE.MeshBasicMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.5 }), NPD); gF.add(dustF);
+      const NPD = 120, dustF = new THREE.InstancedMesh(new THREE.SphereGeometry(0.05, 8, 6), new THREE.MeshBasicMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.5 }), NPD); gF.add(dustF); dustF.userData.v3bg = true;
       const ddF = []; for (let i = 0; i < NPD; i++) ddF.push({ x: (Math.random() - 0.5) * 12, y: -2 + Math.random() * 6.5, z: (Math.random() - 0.5) * 6, s: 0.4 + Math.random() * 1.2, p: Math.random() * 6.28 });
       const dmF = new THREE.Object3D();
 
@@ -171,7 +171,7 @@
         const tx = new THREE.CanvasTexture(cv); const bg = new THREE.Mesh(new THREE.PlaneGeometry(17, 7), new THREE.MeshStandardMaterial({ map: tx, roughness: 0.9, color: 0x9a8a8a })); bg.position.set(0, 0, -2.2); gS.add(bg);
         const fl2 = new THREE.Mesh(new THREE.BoxGeometry(17, 0.2, 4.4), std(0x120a10, { roughness: 0.9 })); fl2.position.set(0, -2.6, -0.1); gS.add(fl2); bg.userData.v3bg = fl2.userData.v3bg = true; }   // 뒷벽·바닥은 배경: 자동 맞춤이 혈관에 맞춰요
       for (let k = 0; k < 16; k++) { const x = -6.6 + k * 0.88, r = vh(VWv / 2 + x / SX) * SX; const rg = new THREE.Mesh(new THREE.TorusGeometry(r + 0.01, 0.018, 8, 40), new THREE.MeshBasicMaterial({ color: 0xffa8a0, transparent: true, opacity: 0.35 })); rg.rotation.y = Math.PI / 2; rg.position.x = x; gS.add(rg); }
-      const NPS = 90, dustS = new THREE.InstancedMesh(new THREE.SphereGeometry(0.04, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffd9c9, transparent: true, opacity: 0.55 }), NPS); gS.add(dustS);
+      const NPS = 90, dustS = new THREE.InstancedMesh(new THREE.SphereGeometry(0.04, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffd9c9, transparent: true, opacity: 0.55 }), NPS); gS.add(dustS); dustS.userData.v3bg = true;
       const ddS = []; for (let i = 0; i < NPS; i++) ddS.push({ x: Math.random() * 14 - 7, y: (Math.random() - 0.5) * 0.7, z: (Math.random() - 0.5) * 0.7, s: 0.3 + Math.random() * 0.8 });
       const dmS = new THREE.Object3D();
       const ghosts = []; for (let i = 0; i < 6; i++) { const m = new THREE.Mesh(dGeo, new THREE.MeshStandardMaterial({ color: 0xe53935, roughness: 0.4, transparent: true, opacity: 0.55 })); m.scale.setScalar(0.4); gS.add(m); ghosts.push(m); }

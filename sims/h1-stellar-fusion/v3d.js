@@ -44,7 +44,7 @@
       const granTex = mkTex((g, w) => { g.fillStyle = '#d0d0d0'; g.fillRect(0, 0, w, w); for (let i = 0; i < 900; i++) { const v = 150 + Math.random() * 105 | 0; g.fillStyle = 'rgba(' + v + ',' + v + ',' + v + ',.6)'; g.beginPath(); g.arc(Math.random() * w, Math.random() * w, 3 + Math.random() * 9, 0, 6.283); g.fill(); } for (let i = 0; i < 60; i++) { g.fillStyle = 'rgba(110,110,110,.25)'; g.beginPath(); g.arc(Math.random() * w, Math.random() * w, 4 + Math.random() * 10, 0, 6.283); g.fill(); } }, 256);
       { const sa = [], sc = []; for (let i = 0; i < 700; i++) { const v = new V(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).normalize().multiplyScalar(30 + rnd() * 6); sa.push(v.x, v.y, v.z); const c = 0.5 + rnd() * 0.5; sc.push(c * 0.9, c * 0.92, c); }
         const sgm = new THREE.BufferGeometry(); sgm.setAttribute('position', new THREE.Float32BufferAttribute(sa, 3)); sgm.setAttribute('color', new THREE.Float32BufferAttribute(sc, 3));
-        root.add(new THREE.Points(sgm, new THREE.PointsMaterial({ size: 0.16, vertexColors: true, sizeAttenuation: true, transparent: true, opacity: 0.85, depthWrite: false }))); }
+        root.add(new THREE.Points(sgm, new THREE.PointsMaterial({ size: 0.16, vertexColors: true, sizeAttenuation: true, transparent: true, opacity: 0.85, depthWrite: false }))); root.children[root.children.length - 1].userData.v3bg = true;   /* 별·먼지는 배경 */ }
       const mkGlow = (col, op) => new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: col, transparent: true, opacity: op, blending: THREE.AdditiveBlending, depthWrite: false }));
       const sceneOf = (lv) => (lv === 0 ? 'life' : lv === 1 ? 'core' : 'onion');
       let scene = sceneOf(ctx.level);

@@ -52,7 +52,7 @@
         const f = new THREE.Mesh(new THREE.CircleGeometry(4.6, 64), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false })); f.rotation.x = -Math.PI / 2; f.position.y = -2.65; root.add(f); zoomPlat = f;
         const N = 70, dots = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffc3cf, transparent: true, opacity: 0.35 }), N), dm = new THREE.Object3D();
         const P0 = Array.from({ length: N }, (_, i) => { const r = rng(i * 77 + 5); return { x: (r() - 0.5) * 12, y: -2.2 + r() * 7, z: (r() - 0.5) * 8 - 1.5, s: 0.025 + r() * 0.05, ph: r() * 6.28, sp: 0.2 + r() * 0.4 }; });
-        dots.frustumCulled = false; root.add(dots); zoomDots = dots;
+        dots.frustumCulled = false; root.add(dots); zoomDots = dots; dots.userData.v3bg = true;   // 떠다니는 알갱이는 배경
         zoomEnv = (t) => { P0.forEach((q, i) => { dm.position.set(q.x + Math.sin(t * q.sp + q.ph) * 0.4, q.y + Math.cos(t * q.sp * 1.3 + q.ph) * 0.3, q.z); dm.scale.setScalar(q.s); dm.updateMatrix(); dots.setMatrixAt(i, dm.matrix); }); dots.instanceMatrix.needsUpdate = true; }; }
       /* 0 개체 : 사람 (달리는 사람) */
       { const g = mkz(0), body = new THREE.Group(); g.add(body);

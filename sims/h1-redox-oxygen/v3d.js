@@ -96,7 +96,7 @@
       const dome = new THREE.Mesh(new THREE.SphereGeometry(6.2, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshPhysicalMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.1, roughness: 0.05, side: THREE.DoubleSide, depthWrite: false })); dome.scale.y = 0.7; dome.position.y = -2.4; root.add(dome);
       const drim = new THREE.Mesh(new THREE.TorusGeometry(6.2, 0.07, 10, 72), new THREE.MeshStandardMaterial({ color: 0xe6f0fa, roughness: 0.1, metalness: 0.2 })); drim.rotation.x = Math.PI / 2; drim.position.y = -2.4; root.add(drim);
       [floor, dome, drim].forEach((o) => { o.userData.v3bg = true; });   // 받침·유리 종은 배경: 자동 맞춤이 분자에 맞춰요
-      const NPG = 130, dustG = new THREE.InstancedMesh(new THREE.SphereGeometry(0.045, 8, 6), new THREE.MeshBasicMaterial({ color: 0xd8ecff, transparent: true, opacity: 0.45 }), NPG); root.add(dustG);
+      const NPG = 130, dustG = new THREE.InstancedMesh(new THREE.SphereGeometry(0.045, 8, 6), new THREE.MeshBasicMaterial({ color: 0xd8ecff, transparent: true, opacity: 0.45 }), NPG); root.add(dustG); dustG.userData.v3bg = true;
       const ddG = []; for (let i = 0; i < NPG; i++) { const a = Math.random() * 6.28, r = Math.sqrt(Math.random()) * 5.4; ddG.push({ x: Math.cos(a) * r, z: Math.sin(a) * r * 0.6, y: -2.2 + Math.random() * 4.4, s: 0.3 + Math.random(), p: Math.random() * 6.28 }); }
       const dmG = new THREE.Object3D();
       const grp = new THREE.Group(); root.add(grp);

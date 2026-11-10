@@ -145,7 +145,7 @@
       { const sa = [], sc = []; let sd = 4242; const rr = () => { sd = (sd * 1664525 + 1013904223) >>> 0; return sd / 4294967296; };
         for (let i = 0; i < 600; i++) { const v = new V3(rr() - 0.5, rr() - 0.5, rr() - 0.5).normalize().multiplyScalar(28 + rr() * 6); sa.push(v.x, v.y, v.z); const c = 0.5 + rr() * 0.5; sc.push(c, c * 0.95, c * 0.85); }
         const sgm = new THREE.BufferGeometry(); sgm.setAttribute('position', new THREE.Float32BufferAttribute(sa, 3)); sgm.setAttribute('color', new THREE.Float32BufferAttribute(sc, 3));
-        root.add(new THREE.Points(sgm, new THREE.PointsMaterial({ size: 0.15, vertexColors: true, sizeAttenuation: true, transparent: true, opacity: 0.85, depthWrite: false }))); }
+        root.add(new THREE.Points(sgm, new THREE.PointsMaterial({ size: 0.15, vertexColors: true, sizeAttenuation: true, transparent: true, opacity: 0.85, depthWrite: false }))); root.children[root.children.length - 1].userData.v3bg = true;   /* 별·먼지는 배경 */ }
       function plate(grp, y, r) { const p = new THREE.Mesh(new THREE.CylinderGeometry(r, r + 0.2, 0.22, 72), mat(0x141c30, { roughness: 0.6, metalness: 0.3 })); p.position.y = y; grp.add(p);
         [r - 0.1, r * 0.66, r * 0.33].forEach((rad, k) => { const t = new THREE.Mesh(new THREE.TorusGeometry(rad, 0.025, 8, 96), new THREE.MeshBasicMaterial({ color: k % 2 ? 0xff9a3c : 0xffd24a })); t.rotation.x = Math.PI / 2; t.position.y = y + 0.12; grp.add(t); }); }
       plate(gFu, -BOX - 0.5, 2.6); plate(gMa, -2.7, 3.3);

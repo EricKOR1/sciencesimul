@@ -28,7 +28,7 @@
         const pts = [];
         for (let y = 0; y <= H + 1e-6; y += GY) { pts.push(new THREE.Vector3(-6, y * KY, -2.38), new THREE.Vector3(9, y * KY, -2.38)); }
         for (let x = 0; x * KX <= 14.5; x += GX) { pts.push(new THREE.Vector3(-5 + x * KX, 0, -2.38), new THREE.Vector3(-5 + x * KX, H * KY, -2.38)); }
-        gridG.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), lm));
+        const gl = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), lm); gl.userData.v3bg = PHN; gridG.add(gl);
       }
       // 발사대
       const tower = new THREE.Mesh(new THREE.BoxGeometry(0.9, H * KY, 1.8), std(0x39425a, { roughness: 0.8 })); tower.position.set(-5.6, H * KY / 2, 0.2); root.add(tower);

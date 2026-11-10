@@ -240,6 +240,7 @@
       const wallM = new THREE.Mesh(new THREE.PlaneGeometry(90, 40), new THREE.MeshBasicMaterial({ map: wallT })); wallM.position.set(0, 8, -16); root.add(wallM);
       const bench = new THREE.Mesh(new THREE.CylinderGeometry(7, 7, 0.3, 64), mat(0xffffff, { map: woodT, roughness: 0.55 })); bench.position.y = TY - 0.15; bench.receiveShadow = true; root.add(bench);
       const mRing = new THREE.Mesh(new THREE.TorusGeometry(7, 0.05, 8, 96), mat(0xd9b45a, { metalness: 0.9, roughness: 0.3 })); mRing.rotation.x = Math.PI / 2; mRing.position.y = TY; root.add(mRing);
+      [bench, mRing, wallM].forEach((m) => { m.userData.v3bg = true; });   // 실험대 · 테두리 · 벽은 배경: 자동 맞춤이 실험 장치에 맞춰요
       const metalM = mat(0xffffff, { map: metalT, metalness: 0.7, roughness: 0.35 });
       const envCoil = new THREE.Group(), envMag = new THREE.Group(), envSwing = new THREE.Group(), envMotor = new THREE.Group(); root.add(envCoil, envMag, envSwing, envMotor);
       const post = (g, x, z, y0, y1, r) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(r || 0.09, r || 0.09, y1 - y0, 14), metalM); p.position.set(x, (y0 + y1) / 2, z); g.add(p); const b = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.45, 0.14, 24), metalM); b.position.set(x, y0 + 0.07, z); g.add(b); };

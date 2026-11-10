@@ -69,7 +69,7 @@
         [dish, med, rim, gl].forEach((o) => { o.userData.v3bg = true; });   // 배양 접시는 배경: 자동 맞춤이 세포에 맞춰요
         const N = 70, dots = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshBasicMaterial({ color: 0xb8dcff, transparent: true, opacity: 0.3 }), N), dm = new THREE.Object3D();
         const P0 = Array.from({ length: N }, (_, i) => { const r = (k) => { const v = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return v - Math.floor(v); }; return { x: (r(1) - 0.5) * 16, y: -3.5 + r(2) * 9, z: (r(3) - 0.5) * 16, s: 0.03 + r(4) * 0.06, ph: r(5) * 6.28, sp: 0.15 + r(6) * 0.3 }; });
-        dots.frustumCulled = false; root.add(dots);
+        dots.frustumCulled = false; root.add(dots); dots.userData.v3bg = true;   // 떠다니는 알갱이는 배경
         envUpd = (t) => { P0.forEach((q, i) => { dm.position.set(q.x + Math.sin(t * q.sp + q.ph) * 0.5, q.y + Math.cos(t * q.sp * 1.3 + q.ph) * 0.4, q.z); dm.scale.setScalar(q.s); dm.updateMatrix(); dots.setMatrixAt(i, dm.matrix); }); dots.instanceMatrix.needsUpdate = true; };
       })();
       const nuc = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), std(0xd6b6ff, { transparent: true, opacity: 0.2, depthWrite: false, roughness: 0.2 })); nuc.renderOrder = 1; root.add(nuc);

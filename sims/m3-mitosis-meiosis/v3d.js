@@ -46,7 +46,7 @@
       const orgRnd = (() => { let a = 7; return () => { a = (a * 16807) % 2147483647; return a / 2147483647; }; })();
       const mitoG = new THREE.CapsuleGeometry(0.035, 0.07, 4, 8), erG = new THREE.TorusGeometry(0.06, 0.012, 6, 14), ribG = new THREE.SphereGeometry(0.014, 6, 5);
       for (let i = 0; i < 4; i++) {
-        const m = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), new THREE.MeshPhysicalMaterial({ color: 0x93c5fd, transparent: true, opacity: 0.14, roughness: 0.08, clearcoat: 1, depthWrite: false })); root.add(m);
+        const m = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), new THREE.MeshPhysicalMaterial({ color: 0x93c5fd, transparent: true, opacity: 0.16, roughness: 0.08, clearcoat: 1, depthWrite: false })); root.add(m);
         const rim = new THREE.Mesh(new THREE.SphereGeometry(1.025, 40, 28), new THREE.MeshBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.1, side: THREE.BackSide, depthWrite: false })); m.add(rim);
         const org = new THREE.Group(); m.add(org);
         const mmat = sm(0xfb923c, { roughness: 0.35, emissive: 0xc2410c, emissiveIntensity: 0.25, transparent: true }), emat = sm(0xa78bfa, { roughness: 0.4, transparent: true }), rmat = sm(0x38bdf8, { roughness: 0.4, transparent: true });
@@ -56,7 +56,7 @@
         org.add(rib);
         for (let k = 0; k < 9; k++) { const mt = new THREE.Mesh(mitoG, mmat); mt.position.copy(dir3()).multiplyScalar(0.55 + orgRnd() * 0.3); mt.rotation.set(orgRnd() * 3, orgRnd() * 3, orgRnd() * 3); org.add(mt); }
         for (let k = 0; k < 6; k++) { const er = new THREE.Mesh(erG, emat); er.position.copy(dir3()).multiplyScalar(0.6 + orgRnd() * 0.25); er.rotation.set(orgRnd() * 3, orgRnd() * 3, 0); er.scale.set(1.2, 1, 1); org.add(er); }
-        cells.push({ m, rim, org, mats: [mmat, emat, rmat], x: 0, y: 0, r: 3.3, o: 0, sx: 1, tx: 0, ty: 0, tr: 3.3, to: 0.14, tsx: 1 });
+        cells.push({ m, rim, org, mats: [mmat, emat, rmat], x: 0, y: 0, r: 3.3, o: 0, sx: 1, tx: 0, ty: 0, tr: 3.3, to: 0.16, tsx: 1 });
       }
       /* 핵막 */
       const envs = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), sm(0xfde68a, { transparent: true, opacity: 0.0, roughness: 0.2, depthWrite: false })); root.add(m); return { m, x: 0, r: 1.9, o: 0, tx: 0, tr: 1.9, to: 0 }; });
@@ -82,15 +82,15 @@
         // 세포막
         for (let i = 0; i < 4; i++) setCell(i, cells[i].tx, cells[i].ty, cells[i].tr, 0, 1);
         if (mito) {
-          if (st <= 3) { setCell(0, 0, 0, 3.3, 0.14, st === 3 ? 1.15 : 1); setCell(1, 0, 0, 3.3, 0); }
-          else if (st === 4) { setCell(0, -1.2, 0, 3.0, 0.14); setCell(1, 1.2, 0, 3.0, 0.14); }
-          else if (st === 5) { setCell(0, -2.0, 0, 2.65, 0.14); setCell(1, 2.0, 0, 2.65, 0.14); }
-          else { setCell(0, -2.75, 0, 2.4, 0.14); setCell(1, 2.75, 0, 2.4, 0.14); }
+          if (st <= 3) { setCell(0, 0, 0, 3.3, 0.16, st === 3 ? 1.15 : 1); setCell(1, 0, 0, 3.3, 0); }
+          else if (st === 4) { setCell(0, -1.2, 0, 3.0, 0.16); setCell(1, 1.2, 0, 3.0, 0.16); }
+          else if (st === 5) { setCell(0, -2.0, 0, 2.65, 0.16); setCell(1, 2.0, 0, 2.65, 0.16); }
+          else { setCell(0, -2.75, 0, 2.4, 0.16); setCell(1, 2.75, 0, 2.4, 0.16); }
           setCell(2, 0, 0, 2, 0); setCell(3, 0, 0, 2, 0);
         } else {
-          if (st <= 3) { setCell(0, 0, 0, 3.3, 0.14, st === 3 ? 1.2 : 1); setCell(1, 0, 0, 3.3, 0); setCell(2, 0, 0, 3.3, 0); setCell(3, 0, 0, 3.3, 0); }
-          else if (st <= 5) { setCell(0, -2.7, 0, 2.5, 0.14); setCell(1, 2.7, 0, 2.5, 0.14); setCell(2, -2.7, 0, 2.5, 0); setCell(3, 2.7, 0, 2.5, 0); }
-          else { setCell(0, -2.7, 1.95, 1.75, 0.14); setCell(1, 2.7, 1.95, 1.75, 0.14); setCell(2, -2.7, -1.95, 1.75, 0.14); setCell(3, 2.7, -1.95, 1.75, 0.14); }
+          if (st <= 3) { setCell(0, 0, 0, 3.3, 0.16, st === 3 ? 1.2 : 1); setCell(1, 0, 0, 3.3, 0); setCell(2, 0, 0, 3.3, 0); setCell(3, 0, 0, 3.3, 0); }
+          else if (st <= 5) { setCell(0, -2.7, 0, 2.5, 0.16); setCell(1, 2.7, 0, 2.5, 0.16); setCell(2, -2.7, 0, 2.5, 0); setCell(3, 2.7, 0, 2.5, 0); }
+          else { setCell(0, -2.7, 1.95, 1.75, 0.16); setCell(1, 2.7, 1.95, 1.75, 0.16); setCell(2, -2.7, -1.95, 1.75, 0.16); setCell(3, 2.7, -1.95, 1.75, 0.16); }
         }
         // 핵막
         if (st === 0) { setEnv(0, 0, 1.95, 0.22); setEnv(1, 0, 1.95, 0); }
@@ -147,7 +147,7 @@
       /* 배경: 현미경 시야처럼 은은한 그라데이션과 떠다니는 세포 속 알갱이 */
       const bgc = document.createElement('canvas'); bgc.width = 4; bgc.height = 256; { const x = bgc.getContext('2d'), g = x.createLinearGradient(0, 0, 0, 256); g.addColorStop(0, '#0e2a4a'); g.addColorStop(0.5, '#1b4a6b'); g.addColorStop(1, '#0a1a30'); x.fillStyle = g; x.fillRect(0, 0, 4, 256); }
       const bgs = new THREE.Mesh(new THREE.SphereGeometry(32, 24, 16), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(bgc), side: THREE.BackSide, depthWrite: false })); bgs.renderOrder = -10; root.add(bgs);
-      const dust = new THREE.InstancedMesh(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.28, depthWrite: false }), 90), dseed = [];
+      const dust = new THREE.InstancedMesh(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.28, depthWrite: false }), 90), dseed = []; dust.userData.v3bg = true;   // 떠다니는 알갱이는 배경 (세포막은 불투명도 0.16으로 자동 맞춤에 들어가요)
       { const d0 = new THREE.Object3D(); for (let i = 0; i < 90; i++) { const a = orgRnd() * 6.283, u = orgRnd() * 2 - 1, r = 7 + orgRnd() * 8, q = Math.sqrt(1 - u * u); dseed.push([Math.cos(a) * q * r, u * r * 0.7, Math.sin(a) * q * r - 2, 0.5 + orgRnd()]); d0.position.set(dseed[i][0], dseed[i][1], dseed[i][2]); d0.scale.setScalar(dseed[i][3]); d0.updateMatrix(); dust.setMatrixAt(i, d0.matrix); } }
       root.add(dust);
       const chromLabs = [labChr, labSp, labEnv, labCell];

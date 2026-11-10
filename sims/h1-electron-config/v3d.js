@@ -33,7 +33,7 @@
         nuI.instanceMatrix.needsUpdate = true; nuI.instanceColor.needsUpdate = true; nGlow.scale.setScalar(0.5 + R * 1.0);
       }
       { const N = 140, pos = new Float32Array(N * 3); for (let i = 0; i < N; i++) { const u = Math.random() * 2 - 1, a = Math.random() * 6.283, r = 7 + Math.random() * 9, q = Math.sqrt(1 - u * u); pos[i * 3] = Math.cos(a) * q * r; pos[i * 3 + 1] = u * r; pos[i * 3 + 2] = Math.sin(a) * q * r; }
-        const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); root.add(new THREE.Points(pg, new THREE.PointsMaterial({ color: 0xbcd0ff, size: 0.08, transparent: true, opacity: 0.55, depthWrite: false }))); }
+        const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); root.add(new THREE.Points(pg, new THREE.PointsMaterial({ color: 0xbcd0ff, size: 0.08, transparent: true, opacity: 0.55, depthWrite: false }))); root.children[root.children.length - 1].userData.v3bg = true;   /* 별·먼지는 배경 */ }
       const nlab = label('원자핵 (+)', nuc, { offset: [0, -0.95, 0] });
       const outLab = label('', [0, 0, 0], { color: 'rgba(255,211,77,.92)' }); outLab.el.style.color = '#1b2333';
       const shellMeshes = [], elecs = [], shellLabs = [];

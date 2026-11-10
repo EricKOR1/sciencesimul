@@ -58,7 +58,7 @@
         const sa = [], sc = []; const rr = (() => { let a = 777; return () => { a = (a * 1664525 + 1013904223) >>> 0; return a / 4294967296; }; })();
         for (let i = 0; i < 700; i++) { const v = new V(rr() - 0.5, rr() - 0.5, rr() - 0.5).normalize().multiplyScalar(30 + rr() * 6); sa.push(v.x, v.y, v.z); const c = 0.5 + rr() * 0.5; sc.push(c * 0.85, c * 0.9, c); }
         const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(sa, 3)); sg.setAttribute('color', new THREE.Float32BufferAttribute(sc, 3));
-        const stars = new THREE.Points(sg, new THREE.PointsMaterial({ size: 0.16, vertexColors: true, sizeAttenuation: true, transparent: true, opacity: 0.85, depthWrite: false })); root.add(stars);
+        const stars = new THREE.Points(sg, new THREE.PointsMaterial({ size: 0.16, vertexColors: true, sizeAttenuation: true, transparent: true, opacity: 0.85, depthWrite: false })); root.add(stars); stars.userData.v3bg = true;
         const plat = new THREE.Mesh(new THREE.CylinderGeometry(4.3, 4.5, 0.2, 72), new THREE.MeshStandardMaterial({ color: 0x18264a, roughness: 0.35, metalness: 0.6 })); plat.position.y = -3.4; root.add(plat); plat.userData.v3bg = true;   // 받침은 배경: 자동 맞춤이 물체에 맞춰요
         [4.2, 3.0, 1.8].forEach((r, k) => { const t = new THREE.Mesh(new THREE.TorusGeometry(r, 0.025, 8, 96), new THREE.MeshBasicMaterial({ color: k % 2 ? 0x3b6ea8 : 0x4fd1c5 })); t.rotation.x = Math.PI / 2; t.position.y = -3.28; t.userData.v3bg = true; root.add(t); }); }
       const BUILD = {

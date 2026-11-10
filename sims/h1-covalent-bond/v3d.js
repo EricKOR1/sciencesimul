@@ -46,7 +46,7 @@
         const fl = new THREE.Mesh(new THREE.CircleGeometry(5.5, 64), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(cv), roughness: 0.95, metalness: 0 })); fl.rotation.x = -Math.PI / 2; fl.position.y = -2.6; fl.receiveShadow = true; root.add(fl);
         const rim = new THREE.Mesh(new THREE.TorusGeometry(5.5, 0.04, 8, 80), new THREE.MeshBasicMaterial({ color: 0x60a5fa })); rim.rotation.x = Math.PI / 2; rim.position.y = -2.6; root.add(rim); fl.userData.v3bg = rim.userData.v3bg = true;   // 바닥은 배경: 자동 맞춤이 원자에 맞춰요
         const N = 80, pos = new Float32Array(N * 3); for (let i = 0; i < N; i++) { pos[i * 3] = (Math.random() - 0.5) * 16; pos[i * 3 + 1] = -2 + Math.random() * 8; pos[i * 3 + 2] = (Math.random() - 0.5) * 16; }
-        const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); dustP = new THREE.Points(pg, new THREE.PointsMaterial({ color: 0xa5c8ff, size: 0.06, transparent: true, opacity: 0.5, depthWrite: false })); root.add(dustP); }
+        const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); dustP = new THREE.Points(pg, new THREE.PointsMaterial({ color: 0xa5c8ff, size: 0.06, transparent: true, opacity: 0.5, depthWrite: false })); root.add(dustP); dustP.userData.v3bg = true; }
       function sphere(r, col, opa, tag) {
         return new THREE.Mesh(new THREE.SphereGeometry(r, 36, 24), new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.28, clearcoat: 0.7, clearcoatRoughness: 0.2, transparent: opa < 1, opacity: opa, depthWrite: opa >= 1 }));
       }
