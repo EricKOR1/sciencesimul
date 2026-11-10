@@ -198,7 +198,9 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
   const instances = [];
   function attach(opts) {
     injectCSS();
-    const host = typeof opts.host === 'string' ? doc.querySelector(opts.host) : (opts.host || doc.querySelector('.stage-canvas'));
+    // 차시가 자리를 정하지 않으면 지금 보이는 실험 화면을 써요 (휴대폰에서 넓은 화면을 숨기고 세로 화면을 쓰는 차시)
+    const visStage = () => Array.from(doc.querySelectorAll('.stage-canvas')).find((e) => getComputedStyle(e).display !== 'none') || doc.querySelector('.stage-canvas');
+    const host = typeof opts.host === 'string' ? doc.querySelector(opts.host) : (opts.host || visStage());
     if (!host) return null;
     if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
 
