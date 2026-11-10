@@ -14,7 +14,7 @@
     title: '뇌우(적란운) 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [0],
-    camera: { dist: PHONE ? 15 : 12.5, theta: 0.5, phi: 1.3, min: 6, max: 30, target: [1.1, 2.9, 0] },
+    camera: { dist: PHONE ? 15 : 12.5, theta: 0.5, phi: 1.3, min: 6, max: 30, target: [0.6, 2.9, 0] },
     autoRotate: 0.08,
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요

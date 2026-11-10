@@ -21,7 +21,7 @@
       // 별 배경
       const NS = 500, sp = new Float32Array(NS * 3);
       for (let i = 0; i < NS; i++) { const a = Math.random() * 6.283, b = Math.acos(2 * Math.random() - 1), r = 60; sp[i * 3] = r * Math.sin(b) * Math.cos(a); sp[i * 3 + 1] = r * Math.cos(b); sp[i * 3 + 2] = r * Math.sin(b) * Math.sin(a); }
-      const sgm = new THREE.BufferGeometry(); sgm.setAttribute('position', new THREE.BufferAttribute(sp, 3)); root.add(new THREE.Points(sgm, new THREE.PointsMaterial({ color: 0xdfe8ff, size: 0.18, sizeAttenuation: true, transparent: true, opacity: 0.8 })));
+      const sgm = new THREE.BufferGeometry(); sgm.setAttribute('position', new THREE.BufferAttribute(sp, 3)); { const st = new THREE.Points(sgm, new THREE.PointsMaterial({ color: 0xdfe8ff, size: 0.18, sizeAttenuation: true, transparent: true, opacity: 0.8 })); st.userData.v3bg = true; root.add(st); }   // 별은 배경
       const ring = (r, col, op) => { const m = new THREE.Mesh(new THREE.TorusGeometry(r, 0.012, 6, 160), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: op })); m.rotation.x = Math.PI / 2; return m; };
       function earthTex() {
         const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d');

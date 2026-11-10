@@ -9,7 +9,7 @@
     host: '.stage-card',
     title: '눈과 귀의 구조 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 17 : 12.5, theta: 0.0, phi: 1.3, min: 5, max: 26, target: [-1.2, 0, 0] },
+    camera: { dist: PHN ? 15 : 12.5, theta: 0.0, phi: 1.3, min: 5, max: 26, target: [-1.2, 0, 0] },
     autoRotate: 0,
     levels: [1],              // 2단계(눈의 조절: 밝기 · 거리 슬라이더)만 3D. 맹점 실험(● 끌기) · 감각 세포 이름표 누르기 · 감각 기관 칸 고르기는 2D. 3D 단계에서는 맹점 장면 단추를 숨겨요(only2d)
     build(ctx) {
@@ -219,7 +219,7 @@
         if (pk !== pSig) { pSig = pk; info('<b>자극의 전달</b>: 자극 → <b>감각 기관</b> → <b>감각 세포</b> → <b>감각 신경</b> → <b>대뇌</b><br>감각 기관·세포를 맞게 고른 길(' + nok + ' / 5)만 이어져요. ⚡ 자극 보내기로 신호를 보내 봐요.'); }
       }
 
-      function setMode(m) { mode = m; eye.visible = m === 'eye'; ear.visible = m === 'ear'; orbit.tx = m === 'eye' ? -1.2 : 0.2; orbit.dist = m === 'eye' ? (PHN ? 17 : 12.5) : (PHN ? 20 : 15); showNames(); m === 'eye' ? eyeUpdate() : earUpdate(); sl.style.display = ''; }
+      function setMode(m) { mode = m; eye.visible = m === 'eye'; ear.visible = m === 'ear'; orbit.tx = m === 'eye' ? -1.2 : 0.2; orbit.dist = m === 'eye' ? (PHN ? 15 : 12.5) : (PHN ? 20 : 15); showNames(); m === 'eye' ? eyeUpdate() : earUpdate(); sl.style.display = ''; }
       function showNames() { labs.eye.forEach((l) => l.show(names && mode === 'eye')); labs.ear.forEach((l) => l.show(names && mode === 'ear')); }
       /* 2D 차시와 같은 값을 읽어요: 눈의 조절(주변 밝기 · 물체까지 거리) · 귀(소리 전달) */
       let sig = '', infoK = '';
@@ -246,7 +246,7 @@
       const host = nb.parentNode, rows = Array.from(host.querySelectorAll('.v3-player')); const eyeRow = rows[1], earRow = rows[2];
       const allEls = () => Array.from(ctx.controls.text('').parentNode.children);
       function setMode(m) { mode = m; eye.visible = m === 'eye'; ear.visible = m === 'ear'; nsG.visible = m === 'nose'; skG.visible = m === 'skin'; paG.visible = m === 'path';
-        orbit.tx = m === 'eye' ? -1.2 : m === 'ear' ? 0.2 : m === 'nose' ? 0 : 0; orbit.ty = m === 'skin' ? 0.5 : m === 'path' ? -0.7 : 0; orbit.dist = m === 'eye' ? (PHN ? 17 : 12.5) : m === 'ear' ? (PHN ? 20 : 15) : m === 'nose' ? (PHN ? 14 : 10.5) : m === 'skin' ? (PHN ? 20 : 15) : (PHN ? 14 : 11);
+        orbit.tx = m === 'eye' ? -1.2 : m === 'ear' ? 0.2 : m === 'nose' ? 0 : 0; orbit.ty = m === 'skin' ? 0.5 : m === 'path' ? -0.7 : 0; orbit.dist = m === 'eye' ? (PHN ? 15 : 12.5) : m === 'ear' ? (PHN ? 20 : 15) : m === 'nose' ? (PHN ? 14 : 10.5) : m === 'skin' ? (PHN ? 20 : 15) : (PHN ? 14 : 11);
         showNames(); eyeRow.style.display = m === 'eye' ? '' : 'none'; earRow.style.display = m === 'ear' ? '' : 'none'; sig = ''; infoK = '';
         nlabs.forEach((l) => l.show(false)); slabs.forEach((l) => l.show(false)); plabs.forEach((l) => l.show(false));
         noseEls.concat(noseP_).forEach((e) => { e.style.display = m === 'nose' ? '' : 'none'; }); skinEls.concat(gapEls).forEach((e) => { e.style.display = m === 'skin' ? '' : 'none'; }); sendB.forEach((e) => { e.style.display = m === 'path' ? '' : 'none'; });

@@ -35,7 +35,7 @@
       const NS = 260, sp = new Float32Array(NS * 3);
       for (let i = 0; i < NS; i++) { const a = Math.random() * Math.PI * 2, b = Math.acos(0.15 + Math.random() * 0.85), r = DOME; sp[i * 3] = r * Math.sin(b) * Math.cos(a); sp[i * 3 + 1] = r * Math.cos(b) + 1; sp[i * 3 + 2] = r * Math.sin(b) * Math.sin(a); }
       const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
-      root.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xcdd9ff, size: 0.14, sizeAttenuation: true, transparent: true, opacity: 0.85 })));
+      { const st = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xcdd9ff, size: 0.14, sizeAttenuation: true, transparent: true, opacity: 0.85 })); st.userData.v3bg = true; root.add(st); }   // 먼 별은 배경
       // 시선 (지구 → 별 → 배경)
       const cyl = (col, r, op) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 1, 8), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: op, depthWrite: false })); root.add(m); return m; };
       const lineJan = cyl(0x9fe8ff, 0.025, 0.85), lineJul = cyl(0x9fe8ff, 0.025, 0.85), lineNow = cyl(0xffd34d, 0.04, 0.95);

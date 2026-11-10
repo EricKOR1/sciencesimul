@@ -160,7 +160,7 @@
         Object.keys(G).forEach((k) => (G[k].visible = k === mode)); Object.keys(LAB).forEach((k) => LAB[k].forEach((l) => l.show(k === mode)));
         lSun.show(mode !== 'graph' && mode !== 'moon'); sun.visible = halo.visible = mode !== 'graph' && mode !== 'moon'; pl.visible = mode !== 'graph';
         plM.row.style.display = mode === 'mars' ? '' : 'none'; if (mode !== 'mars') { plM.pause(); plM.set(0); }
-        const cams = { sys: { tx: 0, ty: 0, tz: 0, phi: 0.85, theta: 0.2, dist: 13 }, mars: { tx: 0, ty: 0, tz: 0, phi: 0.8, theta: 0.2, dist: 11 }, area: { tx: 0, ty: 0, tz: 0, phi: 0.85, theta: 0.2, dist: 12 }, graph: { tx: 4.5, ty: 4.5, tz: 0, phi: 1.5, theta: 0.0, dist: 17 }, force: { tx: 0, ty: 0, tz: 0, phi: 0.85, theta: 0.2, dist: PHN ? 14 : 11.5 }, moon: { tx: 0, ty: 0, tz: 0, phi: 0.95, theta: 0.2, dist: 15 } };
+        const cams = { sys: { tx: 0, ty: 0, tz: 0, phi: 0.85, theta: 0.2, dist: 13 }, mars: { tx: 0, ty: 0, tz: 0, phi: 0.8, theta: 0.2, dist: 11 }, area: { tx: 0, ty: 0, tz: 0, phi: 0.85, theta: 0.2, dist: 12 }, graph: { tx: 4.5, ty: 4.5, tz: 0, phi: 1.5, theta: 0.0, dist: 17 }, force: { tx: 0, ty: 0, tz: 0, phi: 0.85, theta: 0.2, dist: PHN ? 14 : 12.5 }, moon: { tx: 0, ty: 0, tz: 0, phi: 0.95, theta: 0.2, dist: 15 } };
         const c = cams[mode]; if (c) Object.assign(orbit, c, { dist: c.dist * KDX });
       }
       return {

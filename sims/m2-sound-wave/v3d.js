@@ -12,7 +12,7 @@
     host: (window.matchMedia && window.matchMedia('(max-width: 599px)').matches) ? '.sc-tall' : '.sc-wide',
     title: '소리 전달 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 16.5 : 16, theta: PHN ? 0.85 : 0.5, phi: 1.15, min: 6, max: 34, target: [PHN ? 0.4 : 1.3, 0, 0] },   // 휴대폰: 줄이 화면 안쪽으로 비스듬히 놓여 더 크게 보여요
+    camera: { dist: PHN ? 16.5 : 16, theta: PHN ? 0.85 : 0.5, phi: 1.15, min: 6, max: 34, target: [PHN ? -0.2 : 1.3, 0, 0] },   // 휴대폰: 줄이 화면 안쪽으로 비스듬히 놓여 더 크게 보여요
     autoRotate: 0,
     levels: [0],                     // 1단계(줄 · 공기 · 진공 종): 공기 입자의 움직임을 입체로. 2~4단계는 소리 화면(오실로스코프)의 눈금과 점선 파형을 읽는 미션이라 2D
     build(ctx) {

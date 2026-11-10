@@ -143,7 +143,7 @@
 
       /* ===== 장면 block · 벽돌과 눈: 같은 벽돌(같은 무게)을 넓은 면 / 좁은 면으로 눈 위에 놓아요 (2D 1 px = 0.01 그림 단위) ===== */
       const gB = new THREE.Group(); gB.visible = false; root.add(gB);
-      gB.position.x = 1.7; gB.scale.setScalar(PHN0 ? 0.66 : 1.3);
+      gB.position.x = 1.7; gB.scale.setScalar(PHN0 ? 0.8 : 1.3);
       const SNX = 7.2, SNZ = 2.8, SGX = 144, SGZ = 28;
       { const sb = new THREE.Mesh(new THREE.BoxGeometry(SNX, 0.6, SNZ), [mat(0x7d90a8), mat(0x7d90a8), new THREE.MeshBasicMaterial({ visible: false }), mat(0x6c7f97), mat(0x7d90a8), mat(0x7d90a8)]); sb.position.y = -0.3; gB.add(sb);
         const gr = new THREE.Mesh(new THREE.BoxGeometry(SNX + 2.4, 0.2, SNZ + 2.4), mat(0x3a2e24, { roughness: 0.95 })); gr.position.y = -0.7; gB.add(gr);

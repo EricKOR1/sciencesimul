@@ -17,7 +17,7 @@
   window.SciSim3D.attach({
     title: '세포 3D 모형 (잘라 본 모습)',
     hint: '드래그: 돌리기 · 구조를 눌러 이름 알아보기',
-    camera: { dist: narrow ? 9.2 : 6.8, theta: 0.75, phi: 1.12, min: 4, max: 18 },
+    camera: { dist: narrow ? 7.8 : 6.8, theta: 0.75, phi: 1.12, min: 4, max: 18 },
     autoRotate: 0,
     levels: [1],   // 2단계(세포 구조 찾기)만 3D — 현미경 · 하는 일 · 카드 놓기 단계는 2D
     build(ctx) {

@@ -9,7 +9,7 @@
     title: '확산과 증발 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [0, 1, 2],   // 잉크 · 향수 · 온도 · 증발은 3D, 사례 카드 분류(4단계)는 2D
-    camera: { dist: PHN0 ? 13.1 : 9.4, theta: 0.18, phi: 1.25, fov: 45, target: [0, PHN0 ? -0.2 : 0.55, 0], min: 5, max: 26 },
+    camera: { dist: PHN0 ? 13.1 : 10.5, theta: 0.18, phi: 1.25, fov: 45, target: [0, PHN0 ? -0.2 : 0.55, 0], min: 5, max: 26 },
     autoRotate: 0.05,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;

@@ -12,7 +12,7 @@
   window.SciSim3D.attach({
     title: '3D 핵융합과 태양 에너지',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 13 : 9, theta: 0.3, phi: 1.2, min: 5, max: 30 },
+    camera: { dist: PHN ? 13 : 10.5, theta: 0.3, phi: 1.2, min: 5, max: 30 },
     autoRotate: 0.12,
     levels: [0],
     build(ctx) {

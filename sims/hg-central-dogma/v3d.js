@@ -89,7 +89,7 @@
       const aaCol = (k) => (k === 0 ? 0x22c55e : AAC[(k * 3) % 8]);
       const mr = new THREE.InstancedMesh(new THREE.SphereGeometry(0.115, 12, 10), std(0xffffff, { roughness: 0.35 }), NCOD * 3);
       for (let k = 0; k < NCOD; k++) for (let j = 0; j < 3; j++) mr.setColorAt(k * 3 + j, cc.setHex(codCol(KC0 + k)));
-      mr.instanceColor.needsUpdate = true; tlG.add(mr);
+      mr.instanceColor.needsUpdate = true; mr.userData.v3bg = true; tlG.add(mr);   // 긴 mRNA 가닥은 화면 밖까지 이어져요: 자동 맞춤은 리보솜 쪽을 크게
       const MY = -0.62;
       // 리보솜
       const big = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), std(0xa78bfa, { transparent: true, opacity: 0.4, depthWrite: false, roughness: 0.35 })); big.scale.set(2.2, 1.2, 1.4); big.position.set(0.1, 0.6, 0); tlG.add(big); big.renderOrder = 2;

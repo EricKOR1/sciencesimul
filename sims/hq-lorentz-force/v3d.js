@@ -93,7 +93,7 @@
         ball.material.color.setHex(s.col); ball.material.emissive.setHex(s.col === 0xff5a5f ? 0x661b1b : 0x1b2f66);
         labQ.set(s.sgn > 0 ? '+ ' + s.name : '− ' + s.name);
         const hMid = Math.min(6, pu * nTurns / 2);
-        ctx.orbit.ty = Math.max(0.5, hMid); ctx.orbit.tz = s.sgn * ru; ctx.orbit.tx = 0; ctx.orbit.dist = Math.max(6, 5.5 + pu * nTurns * 0.9, ru * 4.2) * KD;   // 입자 · 궤도가 크게 보이게 가까이
+        ctx.orbit.ty = Math.max(0.5, hMid); ctx.orbit.tz = s.sgn * ru; ctx.orbit.tx = 0; ctx.orbit.dist = Math.max(6, 5.5 + pu * nTurns * 0.9, ru * 4.2) * (PHN ? 1.15 : 1);   // 입자 · 궤도가 크게 보이게 가까이
         text();
       }
       function posAt(t, ru, pu) { // t = 보이는 시간(초): x = r sin ωt, z = s·r(1−cos ωt), y = 피치 · t/T

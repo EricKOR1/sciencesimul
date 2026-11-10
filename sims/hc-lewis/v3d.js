@@ -244,8 +244,9 @@
       }
       const coreRings = [], coreE = [];
       const shell = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), new THREE.MeshStandardMaterial({ color: 0x9ec5ff, transparent: true, opacity: 0.07, roughness: 0.1, depthWrite: false, side: THREE.DoubleSide })); ga.add(shell);
-      const eq = new THREE.Mesh(new THREE.TorusGeometry(1, 0.008, 6, 90), new THREE.MeshBasicMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.55 })); eq.rotation.x = Math.PI / 2; ga.add(eq);
-      [0.5, 0.78].forEach((rad) => { const t = new THREE.Mesh(new THREE.TorusGeometry(rad, 0.007, 6, 80), new THREE.MeshBasicMaterial({ color: 0x8fb4e8, transparent: true, opacity: 0.5 })); t.rotation.x = Math.PI / 2; t.visible = false; ga.add(t); coreRings.push(t); });
+      const eq = new THREE.Mesh(new THREE.TorusGeometry(1, 0.008, 6, 90), new THREE.MeshBasicMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.55 })); eq.rotation.x = Math.PI / 2; ga.add(eq); eq.userData.v3bg = true;
+      { const fb = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.2, colorWrite: false, depthWrite: false })); ga.add(fb); }   // 화면 맞춤용 보이지 않는 상자: 둥근 껍질 고리는 상자로 재면 실제보다 커 보여서, 고리 대신 이 상자로 재요
+      [0.5, 0.78].forEach((rad) => { const t = new THREE.Mesh(new THREE.TorusGeometry(rad, 0.007, 6, 80), new THREE.MeshBasicMaterial({ color: 0x8fb4e8, transparent: true, opacity: 0.5 })); t.rotation.x = Math.PI / 2; t.visible = false; t.userData.v3bg = true; ga.add(t); coreRings.push(t); });
       for (let i = 0; i < 10; i++) { const e = dot(V(0, 0, 0), 1); e.visible = false; ga.add(e); coreE.push(e); }
       const slotM = new THREE.MeshStandardMaterial({ color: 0xffd34d, transparent: true, opacity: 0.22, depthWrite: false, roughness: 0.3 });
       const SLOT = [[1, 1, 1], [-1, 1, 1], [1, -1, 1], [-1, -1, 1], [1, 1, -1], [-1, 1, -1], [1, -1, -1], [-1, -1, -1]].map((s) => V(s[0], s[1], s[2]).normalize());
@@ -270,7 +271,7 @@
         update(dt, t) {
           const Z = ctx.lesson(); if (!Z) return; Z0 = Z; dt = Math.min(dt, 0.05);
           const S = Z.S, sc = S.scene;
-          if (sc !== lastSc) { lastSc = sc; if (orbit) orbit.dist = sc === 'atom' ? (phone ? 5.2 : 4.3) : sc === 'ionic' ? (phone ? 10 : 8.2) : (phone ? 6.4 : 5.8); ctx.refit(0.3); }
+          if (sc !== lastSc) { lastSc = sc; if (orbit) orbit.dist = sc === 'atom' ? (phone ? 4.6 : 3.6) : sc === 'ionic' ? (phone ? 10 : 8.2) : (phone ? 6.4 : 5.8); ctx.refit(0.3); }
           g.visible = sc === 'mol' || sc === 'wizard'; gi.visible = sc === 'ionic'; ga.visible = sc === 'atom';
           elTxt.style.display = sc === 'atom' ? '' : 'none'; elBtns.forEach(([z, b]) => { b.style.display = sc === 'atom' ? '' : 'none'; b.classList.toggle('on', Z.A && Z.A.z === z); });
           rowP.style.display = sc === 'ionic' ? '' : 'none'; if (sc !== 'ionic' && pl.playing) pl.pause();

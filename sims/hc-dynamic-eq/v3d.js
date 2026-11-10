@@ -49,6 +49,7 @@
         return B;
       }
       const boxes = [makeBox(), makeBox()];
+      const fitP = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.2, colorWrite: false, depthWrite: false })); root.add(fitP);   // 화면 맞춤용 보이지 않는 상자: 용기보다 조금 크게 (돌아가도 모서리가 잘리지 않게)
       function layout(B, x, z, W, H, D) {
         B.W = W; B.H = H; B.Dp = D; B.g.position.set(x, 0, z);
         B.glass.scale.set(W, H, D); B.glass.position.y = H / 2; B.edge.scale.copy(B.glass.scale); B.edge.position.y = H / 2;
@@ -87,6 +88,7 @@
           rowP.style.display = conc ? '' : 'none'; if (!conc && pl.playing) pl.pause();
           const sg = [mode, S.cc.A.run, S.cc.B.run, S.cc.A.ts, S.cc.B.ts].join('|'); if (sg !== sig) { sig = sg; if (own) { own = false; pl.pause(); pl.set(0); } }
           const fade = own ? (pC < 0.93 ? sm(pC / 0.04) : 1 - sm((pC - 0.93) / 0.07)) : 1;
+          fitP.visible = !conc; fitP.scale.set(5.4 * 1.18, 3.4 * 1.18, 4.2 * 1.18); fitP.position.set(0, 1.7, 0);
           if (conc) {
             const lay = phone ? [[0, -2.6], [0, 2.4]] : [[-3.4, 0], [3.4, 0]], W = phone ? 4.4 : 4.4;
             const names = ['㉠ N₂O₄만 넣고 시작', '㉡ NO₂만 넣고 시작'];

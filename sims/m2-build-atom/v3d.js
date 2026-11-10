@@ -42,7 +42,7 @@
       const clouds = R.map((r) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 40, 28), new THREE.MeshBasicMaterial({ color: 0x6f95ff, transparent: true, opacity: 0.035, depthWrite: false, side: THREE.BackSide, blending: THREE.AdditiveBlending })); shells.add(m); return m; });
       { const pos = []; let sd = 5; const rr = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
         for (let i = 0; i < 160; i++) { const u = rr() * 2 - 1, a = rr() * 6.283, r = 6 + rr() * 6, q = Math.sqrt(1 - u * u); pos.push(Math.cos(a) * q * r, u * r, Math.sin(a) * q * r); }
-        const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); root.add(new THREE.Points(bg, new THREE.PointsMaterial({ color: 0x9fc0ff, size: 3, sizeAttenuation: false, transparent: true, opacity: 0.5 }))); }
+        const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); { const bgp = new THREE.Points(bg, new THREE.PointsMaterial({ color: 0x9fc0ff, size: 3, sizeAttenuation: false, transparent: true, opacity: 0.5 })); bgp.userData.v3bg = true; root.add(bgp); }; }
       let shellsShown = -1;
       let tiny = false, labs = true;
       let cur = { p: -1, n: -1, e: -1 }, sNuc = 1;

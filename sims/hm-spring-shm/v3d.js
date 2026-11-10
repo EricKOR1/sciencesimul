@@ -53,7 +53,7 @@
       const { V3, M, mkArrow, setArrow } = tools(THREE);
       const sim = () => ctx.lesson();
       const U = 10;
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(14, 0.1, 3), M(0x1c2b3a, { roughness: 1 })); floor.position.set(0, -0.06, 0); root.add(floor);
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(14, 0.1, 3), M(0x1c2b3a, { roughness: 1 })); floor.position.set(0, -0.06, 0); floor.userData.v3bg = true; root.add(floor);   // 긴 바닥판은 배경: 자동 맞춤은 벽 · 용수철 · 추를 크게
       const wall = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.8, 1.4), M(0x64748b, { metalness: 0.4 })); root.add(wall);
       const ceil = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.25, 1.4), M(0x64748b, { metalness: 0.4 })); root.add(ceil);
       const blk = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), M(0xf59e0b, { roughness: 0.4, metalness: 0.2 })); blk.castShadow = true; root.add(blk);

@@ -99,7 +99,7 @@
       const satMkOld = (col, g) => { const s = new THREE.Group(); s.add(new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), M(col, { roughness: 0.4, metalness: 0.4 }))); s.add(new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.015, 0.2), M(0x3b82f6, { metalness: 0.5, emissive: 0x1d4ed8, emissiveIntensity: 0.4 }))); g.add(s); return s; };
       const arrowMk = (g, col) => { const a = new THREE.ArrowHelper(new V3(1, 0, 0), new V3(), 1, col, 0.3, 0.2); g.add(a); return a; };
       const lineMk = (g, col, op) => { const l = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: col, transparent: op != null, opacity: op == null ? 1 : op })); l.frustumCulled = false; g.add(l); return l; };
-      const ringLine = (g, col, op) => { const l = lineMk(g, col, op); l.setR = (r, inc) => { const p = []; const i = (inc || 0) * D2R; for (let k = 0; k <= 120; k++) { const u = k / 120 * TAU; p.push(new V3(r * Math.cos(u), r * Math.sin(u) * Math.sin(i), -r * Math.sin(u) * Math.cos(i))); } l.geometry.setFromPoints(p); }; return l; };
+      const ringLine = (g, col, op) => { const l = lineMk(g, col, op); l.setR = (r, inc) => { const p = []; const i = (inc || 0) * D2R; for (let k = 0; k <= 120; k++) { const u = k / 120 * TAU; p.push(new V3(r * Math.cos(u), r * Math.sin(u) * Math.sin(i), -r * Math.sin(u) * Math.cos(i))); } l.geometry.setFromPoints(p); l.geometry.boundingBox = l.geometry.boundingSphere = null; }; return l; };   // 크기가 바뀌면 경계를 다시 재게 (자동 맞춤이 궤도까지 화면에 넣어요)
       /* ================= 🛰️ 궤도 · 📏 측정 (중심 천체 둘레 원 궤도 만들기) ================= */
       const body = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 44), planetMat('#3b82f6')); G.orbit.add(body); const bodyAtmo = atmo(G.orbit, 1.07, 0x6db3ff);
       const oSat = satMk(0xe8edf6, G.orbit), oTrail = lineMk(G.orbit, 0xffd34d, 0.9), oRing = ringLine(G.orbit, 0xffffff, 0.35);
@@ -161,7 +161,7 @@
       function massScene(A, S) {
         const ms = S.ms, p = A.MASSES[ms.i], hide = A.eff('hideAns'), R = 4.2;
         setPlanet(mC, p.c, p.col); mC.scale.setScalar(p.cs / 34 * 1.6); mS.scale.setScalar(p.ss / 34 * 1.6); setPlanet(mS, p.sat, p.sat === '이오' ? '#f2d45c' : p.sat === '지구' ? '#3b82f6' : '#d9dde6'); mAtmo.scale.setScalar(p.cs / 34 * 1.6 * 1.07); mAtmo.visible = p.c !== '달'; mC.material.emissive.set(p.c === '태양' ? 0xff8a00 : 0x000000); mC.material.emissiveIntensity = p.c === '태양' ? 0.85 : 0; mAtmo.material.uniforms.c.value.set(p.c === '태양' ? 0xffc84a : p.c === '지구' ? 0x6db3ff : 0xffd9a8);
-        mRing.setR(R, 0); mS.position.set(R * Math.cos(ms.ang), 0, -R * Math.sin(ms.ang)); mRod.geometry.setFromPoints([new V3(), mS.position.clone()]);
+        mRing.setR(R, 0); mS.position.set(R * Math.cos(ms.ang), 0, -R * Math.sin(ms.ang)); mRod.geometry.setFromPoints([new V3(), mS.position.clone()]); mRod.geometry.boundingBox = mRod.geometry.boundingSphere = null;
         lmC.set(p.c); lmS.set(p.sat); lmC.off = [0, p.cs / 34 * 1.6 + 0.4, 0]; lmS.off = [0, 0.5, 0];
         info('<b>⚖️ 위성으로 천체의 질량 재기: ' + p.name + '</b><br>관측한 r = <b>' + sci(p.r, 2) + ' m</b> · 관측한 T = <b>' + sci(p.T, 2) + ' s</b> (' + p.Tt + ')<br>' + (hide ? 'r³ = ' + sci(p.r * p.r * p.r, 2) + ' m³ · T² = ' + sci(p.T * p.T, 2) + ' s²<br>중심 천체의 질량 M = 4π²r³ / (GT²)을 계산해 옆 조작판에 입력해요.' : p.c + '의 질량 M = ' + sci(A.massOf(p), 2) + ' kg') + '<br>중력이 구심력 → GMm/r² = m(2πr/T)² → 위성의 질량은 약분돼요.<br><span style="opacity:.8">어느 천체인지는 옆 조작판에서 골라요.</span>');
       }

@@ -9,7 +9,7 @@
     title: '주사기 속 기체 3D',
     levels: [0, 2, 3],   // 관찰 · 입자 모형 · 생활 퀴즈는 3D, 표와 그래프를 읽는 2단계(측정 기록)는 2D
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: 13 * (PHN0 ? 1.05 : 1), theta: 0.55, phi: 1.2, fov: 45, target: [PHN0 ? 1.7 : 0.8, 0.7, 0], min: 6, max: 32 },
+    camera: { dist: 13 * (PHN0 ? 1.05 : 1), theta: 0.55, phi: 1.2, fov: 45, target: [PHN0 ? 1.7 : -0.1, 0.7, 0], min: 6, max: 32 },
     autoRotate: 0.12,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;

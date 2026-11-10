@@ -50,7 +50,7 @@
     levels: [0],             // 0단계: 부이 단추로 고른 바다의 기둥에 ARGO 부이가 내려가요. 1~3단계(손잡이 끌기 · 포화 용존 산소 그래프 · 두 해역 표)는 2D 화면에서 해요
     title: '수온·용존 산소 3D 기둥',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHONE ? 17 : 12.5, theta: 0.35, phi: 1.28, min: 6, max: 26, target: [0, -2.5, 0] },
+    camera: { dist: PHONE ? 17 : 12.5, theta: 0.35, phi: 1.28, min: 6, max: 26, target: [0, PHONE ? -2.5 : -1.9, 0] },
     autoRotate: 0,
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
@@ -66,6 +66,7 @@
         nlab[i] = label(r.name, [XS[i], 0.2, 0], { size: 12.5, offset: [0, 0.2, 0] });
       });
       const base = new THREE.Mesh(new THREE.BoxGeometry(9.2, 0.14, 2.6), std(0x2a3550, { roughness: 0.9 })); base.position.set(0, -HS - 0.1, 0); root.add(base);
+      if (!PHONE) { const fb = new THREE.Mesh(new THREE.BoxGeometry(9.2, 1.6, 2.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.2, colorWrite: false, depthWrite: false })); fb.position.set(0, 0.8, 0); root.add(fb); }   // 화면 맞춤용 보이지 않는 상자: 기둥 위 이름표 자리까지 넣어 설명 상자에 가리지 않게
       /* 수심 판 */
       const plane = new THREE.Mesh(new THREE.BoxGeometry(9.0, 0.05, 2.3), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.4, depthWrite: false })); root.add(plane);
       const rimM = new THREE.MeshBasicMaterial({ color: 0xffffff }), rim = new THREE.Mesh(new THREE.BoxGeometry(9.0, 0.03, 0.03), rimM); rim.position.z = 1.15; plane.add(rim);

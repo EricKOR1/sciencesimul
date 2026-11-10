@@ -16,7 +16,7 @@
     title: '활동성 은하·은하 충돌 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [1],             // 1단계(활동성 은하: 보는 각도와 토러스)만 3D예요. 카드 설명은 오른쪽 조작판에도 나와요. 0 · 2 · 3단계(파장별 모습 · 스펙트럼 · 적외선 그래프)는 2D 화면에서 해요
-    camera: { dist: PHONE ? 17 : 12, theta: 0.5, phi: 0.9, min: 4, max: 30 },
+    camera: { dist: PHONE ? 17 : 17, theta: 0.5, phi: 0.9, min: 4, max: 30 },
     autoRotate: 0,
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
@@ -128,7 +128,7 @@
         view = v; gA.visible = v === 'agn'; gB.visible = v === 'col'; segV.set(v);
         agnEls.forEach((e) => (e.style.display = v === 'agn' ? '' : 'none')); colEls.forEach((e) => (e.style.display = v === 'col' ? '' : 'none'));
         Object.values(LA).forEach((l) => l.show(v === 'agn')); Object.values(LC).forEach((l) => l.show(v === 'col'));
-        if (v === 'col') { orbit.dist = PHONE ? 21 : 15; orbit.phi = 0.95; } else { orbit.dist = PHONE ? 17 : 12; orbit.phi = clamp(rA.value * Math.PI / 180, 0.06, 1.55); }
+        if (v === 'col') { orbit.dist = PHONE ? 21 : 20; orbit.phi = 0.95; } else { orbit.dist = PHONE ? 17 : 17; orbit.phi = clamp(rA.value * Math.PI / 180, 0.06, 1.55); }
         applyBand(); txt();
       }
       /* 충돌 시각의 적외선 밝기(별 생성률): 2D 그래프 · 읽음값과 같은 값 */

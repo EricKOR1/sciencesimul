@@ -10,7 +10,7 @@
 
   window.SciSim3D.attach({
     title: '떨어뜨린 공 · 던진 공 3D',
-    camera: PHN ? { dist: 21, theta: 0.85, phi: 1.25, target: [-0.6, 2.6, 0], min: 8, max: 34 }   // 휴대폰: 비스듬히 봐서 긴 바닥이 좁은 화면에 들어오게
+    camera: PHN ? { dist: 21, theta: 0.85, phi: 1.25, target: [-3.0, 2.6, 0], min: 8, max: 34 }   // 휴대폰: 비스듬히 봐서 긴 바닥이 좁은 화면에 들어오게
       : { dist: 16, theta: 0.15, phi: 1.32, target: [-0.2, 3.0, 0], min: 8, max: 34 },
     levels: [3],
     autoRotate: 0,
@@ -65,7 +65,7 @@
           dm.position.copy(b); dm.updateMatrix(); gB.setMatrixAt(k, dm.matrix);
           if (show) lp.push(a, b);
         }
-        for (let k = 0; k < NG; k++) if (k === 0 || k * DT >= T + 1e-6) { dm.position.set(0, -9, 0); dm.scale.setScalar(0.0001); dm.updateMatrix(); gA.setMatrixAt(k, dm.matrix); gB.setMatrixAt(k, dm.matrix); }
+        for (let k = 0; k < NG; k++) if (k === 0 || k * DT >= T + 1e-6) { dm.position.copy(posA(0)); dm.scale.setScalar(0.0001);   /* 안 쓰는 잔상은 출발점에 숨겨요 (자동 맞춤이 먼 곳까지 재지 않게) */ dm.updateMatrix(); gA.setMatrixAt(k, dm.matrix); gB.setMatrixAt(k, dm.matrix); }
         gA.instanceMatrix.needsUpdate = gB.instanceMatrix.needsUpdate = true;
         links.geometry.dispose(); links.geometry = new THREE.BufferGeometry().setFromPoints(lp);
         timeLab.set('시간 ' + tc.toFixed(1) + ' 초');

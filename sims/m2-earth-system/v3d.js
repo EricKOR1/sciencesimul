@@ -101,7 +101,7 @@
       moon.position.set(5.6, 1.3, -2.6); space.add(moon);
       const pts = []; for (let i = 0; i < 450; i++) { const u = Math.random() * 2 - 1, a = Math.random() * 6.283, s = Math.sqrt(1 - u * u), r = 26 + Math.random() * 6; pts.push(r * s * Math.cos(a), r * u, r * s * Math.sin(a)); }
       const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
-      space.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: 0.16, sizeAttenuation: true })));
+      { const st = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: 0.16, sizeAttenuation: true })); st.userData.v3bg = true; space.add(st); }   // 별은 배경
       const moonLab = label('달 (외권)', moon, { offset: [0, 0.62, 0], color: 'rgba(123,108,240,.9)' });
       const on = { geo: true, hydro: true, atmo: true, bio: true, space: true };
 

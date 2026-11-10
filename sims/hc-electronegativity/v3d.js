@@ -80,7 +80,7 @@
   window.SciSim3D.attach({
     title: '전기 음성도 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: phone ? 9.6 : 9, theta: 0.4, phi: 1.2, min: 4, max: 20 },
+    camera: { dist: phone ? 11.5 : 9.5, theta: 0.4, phi: 1.2, min: 4, max: 20 },
     autoRotate: 0.12,
     levels: [0, 2],
     build(ctx) {

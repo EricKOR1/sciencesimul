@@ -9,7 +9,7 @@
     title: '합력과 힘의 평형 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [3],   // 줄다리기(− / + 단추와 ▶ 시작)만 3D. 찰흙 · 수레 · 힘 손잡이를 캔버스에서 끄는 1~3단계는 2D
-    camera: { dist: 10.5 * (PHN0 ? 1.12 : 1), theta: PHN0 ? 0.7 : 0.25, phi: 0.95, fov: 45, target: [0, -0.2, 0], min: 6, max: 28 },
+    camera: { dist: 10.5 * (PHN0 ? 1.12 : 1), theta: PHN0 ? 0.8 : 0.25, phi: 0.95, fov: 45, target: [0, -0.2, 0], min: 6, max: 28 },
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
@@ -101,7 +101,7 @@
       /* ===== 장면 A · 옆에서 본 「힘 실험대」: 찰흙 · 수레 · 멈춤대 (2D 1 px = 0.01 그림 단위) ===== */
       const gA = new THREE.Group(); gA.visible = false; root.add(gA);
       const gT = new THREE.Group(); gT.visible = false; root.add(gT);
-      gA.scale.setScalar(PHN0 ? 0.72 : 1); gT.scale.setScalar(PHN0 ? 0.8 : 0.68);
+      gA.scale.setScalar(PHN0 ? 0.72 : 1); gT.scale.setScalar(0.68);
       gA.position.y = -0.2;
       const WP = 800, UNIT = 0.01, KA3 = 0.34;   // 힘 1 N당 화살표 길이 0.34
       const xray = (g) => g.children.forEach((c) => { c.material.depthTest = false; c.renderOrder = 8; });

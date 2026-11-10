@@ -157,7 +157,7 @@
       /* ================= ⚡ 자기장 속 도선이 받는 힘 (위에서 본 모습, 1 m = 6칸) ================= */
       const fG = new THREE.Group(); root.add(fG);
       const UF = 6, LPX = 600;
-      const floorF = new THREE.Mesh(new THREE.BoxGeometry(8, 0.1, 5.2), mat(0x2a3550, { roughness: 1 })); floorF.position.set(-0.4, -0.08, 0); fG.add(floorF);
+      const floorF = new THREE.Mesh(new THREE.BoxGeometry(8, 0.1, 5.2), mat(0x2a3550, { roughness: 1 })); floorF.position.set(-0.4, -0.08, 0); floorF.userData.v3bg = true; fG.add(floorF);   // 바닥판은 배경: 레일 · 도선 · 자기장에 맞춰요
       [-1.2, 1.2].forEach((z) => { const r = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 4.6, 10), mat(0x8a95a8, { metalness: 0.6 })); r.rotation.z = Math.PI / 2; r.position.set(0.1, 0.05, z); fG.add(r); });
       const fieldBox = new THREE.Mesh(new THREE.BoxGeometry(1, 0.06, 1), new THREE.MeshBasicMaterial({ color: 0x7c5cff, transparent: true, opacity: 0.22, depthWrite: false })); fG.add(fieldBox);
       const fieldArr = []; for (let i = 0; i < 40; i++) { const a = mkArrow(0xb79bff, 0.03); fG.add(a); fieldArr.push(a); }

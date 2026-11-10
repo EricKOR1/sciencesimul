@@ -150,7 +150,7 @@
       const fl = new THREE.Mesh(new THREE.CircleGeometry(15, 64), new THREE.MeshStandardMaterial({ map: t, roughness: 0.6, metalness: 0.3 })); fl.rotation.x = -Math.PI / 2; fl.position.y = -1.62; fl.receiveShadow = true; root.add(fl);
       const N = 90, pos = new Float32Array(N * 3); for (let i = 0; i < N; i++) { pos[i * 3] = (Math.random() - 0.5) * 20; pos[i * 3 + 1] = -1.4 + Math.random() * 7; pos[i * 3 + 2] = (Math.random() - 0.5) * 12; }
       const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-      const pts = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0x9fc4ff, size: 0.06, transparent: true, opacity: 0.45, depthWrite: false })); root.add(pts);
+      const pts = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0x9fc4ff, size: 0.06, transparent: true, opacity: 0.45, depthWrite: false })); pts.userData.v3bg = true; root.add(pts);
       return { update(t) { pts.rotation.y = t * 0.02; pts.position.y = Math.sin(t * 0.3) * 0.1; } };
     }
     return { stage, COL, RAD, NAME, SP, smooth, mat, molGroup, makeRxn, atomMesh, setBond, bondMat, sphG, cylG };
@@ -172,7 +172,7 @@
     host: '.stage-card',
     title: '화학 반응식 3D 모형',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
-    camera: { dist: PHN ? 21 : 11.5, theta: 0.12, phi: 1.1, min: 5, max: 30, target: [0, 0.2, 0] },
+    camera: { dist: PHN ? 19.5 : 11.5, theta: 0.12, phi: 1.1, min: 5, max: 30, target: [0, 0.2, 0] },
     autoRotate: 0,
     levels: [1, 3],            // 2단계(원자 수 맞추기)·4단계(계수의 비)는 3D. 점화·낱말 카드·반응식 계수 칸은 2D
     build(ctx) {

@@ -264,7 +264,7 @@
       pT.position.y = 0.28; pBt.position.y = -0.28; paper.add(pT, pBt);
       const pm = []; for (let i = 0; i < 6; i++) for (let j = 0; j < 3; j++) {
         const g = new THREE.Group(); g.position.set(-1.8 + i * 0.72, 0, -0.8 + j * 0.8);
-        const bar = cyl(0.03, 0.03, 0.26, 0xaab4c8, {}, 8), a = sphere(0.075, POS, { emissive: POS, emissiveIntensity: 0.4 }), b = sphere(0.075, NEG, { emissive: NEG, emissiveIntensity: 0.4 }); a.position.y = 0.13; b.position.y = -0.13; g.add(bar, a, b); g.traverse((o) => { if (o.isMesh) o.userData.v3bg = true; });   // 작은 분자는 자동 맞춤에서 빼요 (종이 판 · 막대로 가운데를 잡아요)
+        const bar = cyl(0.03, 0.03, 0.26, 0xaab4c8, {}, 8), a = sphere(0.075, POS, { emissive: POS, emissiveIntensity: 0.4 }), b = sphere(0.075, NEG, { emissive: NEG, emissiveIntensity: 0.4 }); a.position.y = 0.13; b.position.y = -0.13; g.add(bar, a, b); g.scale.setScalar(1.45); g.traverse((o) => { if (o.isMesh) o.userData.v3bg = true; });   // 분자는 잘 보이게 크게(크기는 과장) · 자동 맞춤에서는 빼요 (종이 판 · 막대로 가운데를 잡아요)
         g.userData = { rnd: new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.random() * 6.28, Math.random() * 6.28, Math.random() * 6.28)), ph: Math.random() * 6.28 }; paper.add(g); pm.push(g);
       }
       const fUp = mkArrow(0xf26b3a, 0.06), fDn = mkArrow(0x2f6df6, 0.05); gPa.add(fUp, fDn);

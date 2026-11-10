@@ -42,14 +42,14 @@
   const RM = 4.3, RE = 0.45, SD = 9, PLANE = 6.4;
   const LU_ = { r: 384400, dS: KM.dS, vmin: 3670 / 60 }; LU_.rU = KM.Re - LU_.r * (KM.Rs - KM.Re) / LU_.dS; LU_.rP = KM.Re + LU_.r * (KM.Rs + KM.Re) / LU_.dS;
   const VIEWS = wide ? { top: { dist: 17, theta: 0, phi: 0.3 }, obl: { dist: 16, theta: 0.5, phi: 0.95 }, side: { dist: 15, theta: 0.4, phi: 1.42 } }
-    : { top: { dist: 24, theta: 0, phi: 0.3 }, obl: { dist: 24, theta: 0.5, phi: 0.95 }, side: { dist: 22, theta: 0.4, phi: 1.42 } };
+    : { top: { dist: 27, theta: 0, phi: 0.3 }, obl: { dist: 27, theta: 0.5, phi: 0.95 }, side: { dist: 25, theta: 0.4, phi: 1.42 } };
 
   window.SciSim3D.attach({
     host: '.stage-canvas',
     button: wide ? undefined : null,
     levels: [0],            // 1단계(궤도 모형)만 3D예요. 일식 종류(눈금 그래프) · 그림자 궤적(정보 판 읽기) · 월식(시각 표 읽기)은 2D 화면에서 해요
     title: '3D 달 궤도·교점·식 계절',
-    hint: ' ',
+    hint: '크기와 거리는 과장했어요',
     camera: Object.assign({ fov: 45, target: [0, 0, 0], min: 4, max: 40 }, VIEWS.obl),
     autoRotate: 0.08,
     build(ctx) {
@@ -109,7 +109,7 @@
       const foot = new THREE.Mesh(new THREE.CircleGeometry(0.18, 20), new THREE.MeshBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.5, side: THREE.DoubleSide })); foot.rotation.x = -Math.PI / 2; root.add(foot);
       const moonTex = (() => { const c = document.createElement('canvas'); c.width = 256; c.height = 128; const g = c.getContext('2d'); g.fillStyle = '#cfcbc0'; g.fillRect(0, 0, 256, 128); g.fillStyle = 'rgba(95,95,105,.55)';
         [[118, 50, 22, 14], [140, 66, 18, 12], [105, 78, 13, 9], [150, 44, 12, 8], [128, 92, 10, 6]].forEach((b) => { g.beginPath(); g.ellipse(b[0], b[1], b[2], b[3], 0.3, 0, 7); g.fill(); }); return new THREE.CanvasTexture(c); })();
-      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.17, 24, 16), new THREE.MeshStandardMaterial({ map: moonTex, roughness: 0.95 })); root.add(moon);
+      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.24, 24, 16), new THREE.MeshStandardMaterial({ map: moonTex, roughness: 0.95 })); root.add(moon);
       const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, color: 0xf97316 })); halo.scale.set(1.6, 1.6, 1); halo.visible = false; root.add(halo);
 
       /* 식이 일어날 수 있는 범위: 황도면 위·아래 약 1.5° (달 거리에서 얇은 띠) */

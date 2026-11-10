@@ -222,7 +222,7 @@
           const kind = S.mode === 'balloon' ? (S.sub.balloon === 'bal' ? 'bal' : 'temp') : S.mode === 'final' ? (S.sub.final === 'dry' ? 'dry' : 'dens') : 'hub';
           const s = [kind, bw.T, hbs.gas, hbs.m, fn.T, fn.run, fn.levelT].join('|');
           if (s !== sig) { sig = s; if (own) { const k = own; own = null; PL[k].pl.pause(); PL[k].pl.set(0); } }
-          if (kind !== lastKind) { lastKind = kind; ctx.orbit.dist = DIST[kind]; ctx.refit(0.3); }
+          if (kind !== lastKind) { lastKind = kind; ctx.orbit.dist = DIST[kind]; if (phone) ctx.orbit.phi = kind === 'bal' ? 0.8 : 1.12; ctx.refit(0.3); }   // 휴대폰: 풍선 세 개가 앞뒤로 겹치지 않게 조금 위에서 봐요
           Object.keys(PL).forEach((k) => { PL[k].row.style.display = k === kind ? '' : 'none'; if (k !== kind && PL[k].pl.playing) PL[k].pl.pause(); });
           [bal[0], bal[1], bal[2], tb, hb, dry].forEach((b) => b.show(false));
           ghost.visible = therm.visible = thLab.visible = false; thLab.show(false);

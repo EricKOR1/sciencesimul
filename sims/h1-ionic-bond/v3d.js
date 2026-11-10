@@ -9,7 +9,7 @@
 
   window.SciSim3D.attach({
     title: '이온 결합과 NaCl 결정 3D',
-    camera: { dist: PHN ? 17 : 12.5, theta: 0.7, phi: 1.1, min: 6, max: 26 },
+    camera: { dist: PHN ? 17 : 12.5, theta: 0.7, phi: 1.25, min: 6, max: 26 },
     levels: [0],
     autoRotate: 0.22,
     build(ctx) {
@@ -82,7 +82,7 @@
         ctlLat.forEach((e) => { e.style.display = m === 'lattice' ? '' : 'none'; });
         ctlTr.forEach((e) => { e.style.display = m === 'transfer' ? '' : 'none'; });
         plT.pause(); plL.pause();
-        if (m === 'transfer') { orbit.dist = PHN ? 15 : 11.5; naLab.show(true); clLab.show(true); lastInfo = ''; plT.set(0); }
+        if (m === 'transfer') { orbit.dist = PHN ? 16.5 : 11.5; naLab.show(true); clLab.show(true); lastInfo = ''; plT.set(0); }
         else {
           orbit.dist = PHN ? 17 : 12.5; grow = -1; layoutLattice(); tagLattice(); lNa.show(true); lCl.show(true);
           info('<b>NaCl 결정</b>: Na⁺와 Cl⁻가 번갈아 규칙적으로 쌓여요.<br>같은 전하끼리는 밀어내고, 반대 전하끼리는 끌어당겨요. 이온 하나는 반대 전하의 이온 6개에 둘러싸여 있어요.');
