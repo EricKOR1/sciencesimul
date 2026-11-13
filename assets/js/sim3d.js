@@ -25,6 +25,10 @@
    ctx.level / ctx.onLevel(fn)         // 지금 학습 단계 / 단계가 바뀔 때 → 2D와 같은 장면으로 맞추기
    ctx.lesson()                        // 2D 실험 상태(window.__sim) — 2D와 3D가 같은 값을 보여 주도록
    label(text, obj, { tap: fn }) / L.tap(fn)  // 이름표를 눌러도 물체를 누른 것과 같게 (작거나 움직이는 물체)
+   ctx.mats                            // 실제 같은 재질: glass() liquid(c) metal('steel'|'brass'|'copper'|'gold'…, {brushed}) plastic(c) rubber(c)
+                                       //   wood(c) stone(c, {cracks}) ceramic(c) organic(c, {opacity}) fabric(c) ice() emissive(c, 세기)
+   ctx.halo(obj, color, size)          // 빛나는 물체(전구·불꽃·별·뜨거운 것)에 부드러운 빛 번짐 붙이기
+   ctx.refit()                         // 장면이 크게 바뀌면 다시 화면에 맞추기 · 배경 물체는 userData.v3bg = true
    ※ 한 단계에는 한 가지 화면만 나와요: levels에 든 단계는 3D, 나머지 단계는 2D (2D↔3D 전환 버튼 없음).
      기기 사양이 낮거나 3D가 너무 느리면 3D 단계도 2D로 보여 줘요. 첫 화면 '3D 끄기'(localStorage 'sciencesimul:view' = '2d')도 같아요.
    ========================================================= */
@@ -128,6 +132,33 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
 .v3-msg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center; font-weight: 800; }
 .v3-wrap.full { position: fixed; inset: 0; z-index: 200; }
 .v3-wrap.full ~ .v3-seg.float, .v3-wrap.full + .v3-seg { position: fixed; z-index: 201; }
+/* ---------- 겉모습 (스튜디오 느낌): 깊이 있는 배경 · 유리 같은 막대 · 또렷한 버튼 ---------- */
+.v3-wrap { background:
+    linear-gradient(to top, rgba(96,128,210,.13) 0%, rgba(96,128,210,0) 34%),
+    radial-gradient(120% 86% at 50% 36%, #2b3c66 0%, #18233f 46%, #0a0e1c 100%);
+  font-feature-settings: "tnum" 1; }
+.v3-vig { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 46%, rgba(4,6,14,0) 56%, rgba(4,6,14,.4) 100%); }
+.v3-head, .v3-ctl { background: linear-gradient(180deg, rgba(22,31,58,.9), rgba(13,19,38,.86)); -webkit-backdrop-filter: blur(12px) saturate(1.2); backdrop-filter: blur(12px) saturate(1.2); }
+.v3-head { border-bottom: 1px solid rgba(255,255,255,.08); box-shadow: 0 1px 0 rgba(0,0,0,.25); position: relative; z-index: 3; }
+.v3-ctl { border-top: 1px solid rgba(255,255,255,.08); position: relative; z-index: 3; }
+.v3-title { letter-spacing: -0.015em; color: #f3f6ff; }
+.v3-head button, .v3-ctl button { border-radius: 11px; border: 1px solid rgba(255,255,255,.16); background: linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.06)); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 1px 2px rgba(0,0,0,.28); color: #f1f5ff; letter-spacing: -0.01em; transition: background .15s, transform .08s, box-shadow .15s, border-color .15s; }
+.v3-head button:hover, .v3-ctl button:hover { background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.1)); border-color: rgba(255,255,255,.3); }
+.v3-head button:active, .v3-ctl button:active { transform: translateY(1px); }
+.v3-head button:focus-visible, .v3-ctl button:focus-visible { outline: 2px solid #8fc1ff; outline-offset: 2px; }
+.v3-ctl button.on, .v3-ctl .v3-play { background: linear-gradient(180deg, #ffe489, #ffc83a); border-color: rgba(255,255,255,.35); color: #1a2233; box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 2px 10px rgba(255,196,48,.32); }
+.v3-ctl .v3-play.on { background: linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.08)); border-color: rgba(255,255,255,.28); color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 1px 2px rgba(0,0,0,.28); }
+.v3-ctl .lab { color: #c4d0ee; font-weight: 700; }
+.v3-player .v3-ph { color: #ffd76a; }
+.v3-info { background: linear-gradient(180deg, rgba(20,28,54,.8), rgba(12,17,34,.74)); -webkit-backdrop-filter: blur(10px) saturate(1.25); backdrop-filter: blur(10px) saturate(1.25); border: 1px solid rgba(255,255,255,.1); border-radius: 14px; box-shadow: 0 10px 28px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.07); color: #e9eefc; padding: 9px 12px; }
+.v3-info b { color: #fff; }
+.v3-lab { border-radius: 999px; padding: 3px 10px; background: rgba(15,21,42,.76); border: 1px solid rgba(255,255,255,.2); box-shadow: 0 4px 14px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.1); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); text-shadow: 0 1px 1px rgba(0,0,0,.35); }
+.v3-lab.tap { border-color: rgba(255,215,106,.6); }
+.v3-lab.tap:hover { border-color: #ffd76a; box-shadow: 0 4px 16px rgba(255,200,60,.35); }
+.v3-hint { border-radius: 999px; padding: 3px 10px; background: rgba(12,17,34,.6); border: 1px solid rgba(255,255,255,.08); color: #cfd9f2; transition: opacity 1.2s; }
+.v3-hint.dim { opacity: .28; }
+.v3-view:hover .v3-hint.dim { opacity: .7; }
+.v3-ctl input[type=range] { accent-color: #ffd34d; }
 @media (max-width: 599px) {
   .v3-info { pointer-events: auto; cursor: pointer; font-size: 11.5px; line-height: 1.4; max-width: 72%; max-height: 38%; overflow: auto; padding: 6px 8px; }
   .v3-head .v3-full { display: inline-block; }
@@ -155,12 +186,13 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
     if (envCache) return envCache;
     const pm = new THREE.PMREMGenerator(renderer);
     const es = new THREE.Scene();
+    // 사진 스튜디오: 어두운 벽 + 밝은 소프트박스 여러 개 (금속·유리에 또렷한 반사가 생겨요)
     const g = new THREE.SphereGeometry(10, 48, 24);
     const pos = g.attributes.position, cols = [];
     for (let i = 0; i < pos.count; i++) {
       const t = pos.getY(i) / 10 * 0.5 + 0.5; // 아래 0 → 위 1
-      const c = new THREE.Color().setRGB(0.05 + 0.16 * t, 0.06 + 0.17 * t, 0.09 + 0.20 * t);
-      cols.push(c.r, c.g, c.b);
+      const k = 0.045 + 0.2 * t;   // 벽은 어둡게 (색이 바래지 않게), 조명판만 밝게
+      cols.push(k * (t < 0.5 ? 1.06 : 0.94), k, k * (t < 0.5 ? 0.92 : 1.14));
     }
     g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
     es.add(new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide })));
@@ -168,13 +200,86 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(tint || 0xffffff).multiplyScalar(k), side: THREE.DoubleSide }));
       m.position.set(x, y, z); m.lookAt(0, 0, 0); es.add(m);
     };
-    box(0, 8.5, 2, 9, 6, 1.25);                // 위쪽 큰 조명
-    box(7.5, 2.5, 5, 4, 7, 0.8);               // 오른쪽 앞
-    box(-8, 1.5, -2, 3.5, 6, 0.45, 0xbcd4ff);  // 왼쪽 푸른 보조광
-    const tex = pm.fromScene(es, 0.035).texture;
+    // 작고 밝은 조명판: 전체 밝기는 그대로 두고, 금속·유리에 맺히는 반사만 또렷하게
+    box(1, 9, 2, 6.5, 4.2, 2.7);                 // 위쪽 소프트박스 (주광)
+    box(8, 3.5, 5, 2.8, 6, 2.0, 0xfff1e0);       // 오른쪽 앞 (따뜻한 주광)
+    box(-8.5, 2.5, 1, 2.6, 6, 0.9, 0xb4ceff);    // 왼쪽 (푸른 보조광)
+    box(-3, 4.5, -9, 8, 1.1, 1.7, 0xdfe9ff);     // 뒤쪽 띠 조명 (윤곽선)
+    box(5, 0.5, -8.5, 1.6, 4, 0.9, 0xffe6c8);    // 뒤 오른쪽 낮은 조명
+    const tex = pm.fromScene(es, 0.03).texture;
     pm.dispose();
     envCache = tex;
     return tex;
+  }
+
+  /* ---------- 재질 모음 (ctx.mats): 실제 물건처럼 보이는 재질을 한 줄로 ----------
+     ※ 색(16진수)은 이 엔진에서 화면에 조금 밝고 옅게 나와요. 진한 색을 원하면 더 어두운 값을 주세요.
+     유리·액체·금속·플라스틱·고무·나무·돌·도자기·생체 조직 등. 무늬(나뭇결·결·잔무늬)는 작은 캔버스로 직접 그려요. */
+  const texCache = {};
+  function procTex(THREE, kind) {
+    if (texCache[kind]) return texCache[kind];
+    const c = doc.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
+    let seed = kind.length * 7919 + kind.charCodeAt(0) * 31; const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+    if (kind === 'wood') {
+      g.fillStyle = '#b98a5a'; g.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 90; i++) { const y = rnd() * 256, a = 0.05 + rnd() * 0.16; g.strokeStyle = 'rgba(' + (rnd() < 0.5 ? '70,40,15' : '235,200,150') + ',' + a + ')'; g.lineWidth = 0.6 + rnd() * 2.2; g.beginPath(); g.moveTo(0, y); for (let x = 0; x <= 256; x += 16) g.lineTo(x, y + Math.sin(x * 0.03 + i) * 3 + (rnd() - 0.5) * 2); g.stroke(); }
+      for (let i = 0; i < 3; i++) { const x = rnd() * 256, y = rnd() * 256; for (let r = 14; r > 2; r -= 2.5) { g.strokeStyle = 'rgba(70,40,15,' + (0.10 + rnd() * 0.1) + ')'; g.lineWidth = 1; g.beginPath(); g.ellipse(x, y, r * 2.2, r, 0, 0, 6.3); g.stroke(); } }
+    } else if (kind === 'brushed') {   // 결 있는 금속: 거칠기 지도
+      g.fillStyle = '#8a8a8a'; g.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 900; i++) { const y = rnd() * 256, x = rnd() * 256, w = 30 + rnd() * 120, v = Math.round(90 + rnd() * 110); g.strokeStyle = 'rgba(' + v + ',' + v + ',' + v + ',0.35)'; g.lineWidth = 0.5 + rnd(); g.beginPath(); g.moveTo(x, y); g.lineTo(x + w, y); g.stroke(); }
+    } else if (kind === 'noise' || kind === 'stone') {   // 잔무늬: 돌·흙·거친 면
+      const id = g.createImageData(256, 256); for (let i = 0; i < 256 * 256; i++) { const v = 110 + Math.round(rnd() * 90); id.data[i * 4] = id.data[i * 4 + 1] = id.data[i * 4 + 2] = v; id.data[i * 4 + 3] = 255; } g.putImageData(id, 0, 0);
+      g.globalAlpha = 0.5; g.drawImage(c, 0, 0, 64, 64, 0, 0, 256, 256); g.globalAlpha = 0.35; g.drawImage(c, 0, 0, 16, 16, 0, 0, 256, 256); g.globalAlpha = 1;
+      if (kind === 'stone') for (let i = 0; i < 26; i++) { g.strokeStyle = 'rgba(40,40,40,' + (0.08 + rnd() * 0.12) + ')'; g.lineWidth = 0.6 + rnd(); g.beginPath(); let x = rnd() * 256, y = rnd() * 256; g.moveTo(x, y); for (let k = 0; k < 6; k++) { x += (rnd() - 0.5) * 50; y += (rnd() - 0.5) * 50; g.lineTo(x, y); } g.stroke(); }
+    } else if (kind === 'fabric') {
+      g.fillStyle = '#9a9a9a'; g.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 256; i += 4) { g.fillStyle = 'rgba(255,255,255,0.10)'; g.fillRect(i, 0, 2, 256); g.fillStyle = 'rgba(0,0,0,0.10)'; g.fillRect(0, i, 256, 2); }
+    } else if (kind === 'glow') {   // 빛 번짐(후광)용 둥근 그라데이션
+      const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.18, 'rgba(255,255,255,0.55)'); gr.addColorStop(0.45, 'rgba(255,255,255,0.16)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
+    }
+    const t = new THREE.CanvasTexture(c);
+    if (kind !== 'glow') { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; }
+    if (kind === 'wood' && 'encoding' in t) t.encoding = THREE.sRGBEncoding;
+    texCache[kind] = t; return t;
+  }
+  function makeMats(THREE) {
+    const P = (o) => new THREE.MeshPhysicalMaterial(o), S = (o) => new THREE.MeshStandardMaterial(o);
+    const rep = (t, n) => { const c = t.clone(); c.needsUpdate = true; c.repeat.set(n, n); return c; };
+    const METAL = { steel: [0xc9ced6, 0.32], iron: [0x6f7480, 0.5], aluminium: [0xdde2e8, 0.3], chrome: [0xf2f4f7, 0.08], brass: [0xd9b35a, 0.3], copper: [0xc87a4a, 0.3], gold: [0xf0c14a, 0.22], silver: [0xe9ecef, 0.18], zinc: [0xaeb6bf, 0.45], lead: [0x7c8088, 0.55], magnesium: [0xcfd4d8, 0.42] };
+    return {
+      /* 유리: 얇고 맑게, 반사는 또렷하게 (tint: 색, opacity: 0.12~0.3) */
+      glass: (o) => { o = o || {}; return P(Object.assign({ color: o.tint || 0xeaf6ff, roughness: 0.04, metalness: 0, transparent: true, opacity: o.opacity == null ? 0.2 : o.opacity, clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 2.2, side: THREE.DoubleSide, depthWrite: false }, o.extra || {})); },
+      /* 액체: 색이 비치고 표면이 반짝여요 */
+      liquid: (color, o) => { o = o || {}; return P(Object.assign({ color: color == null ? 0x7fc4f0 : color, roughness: 0.06, metalness: 0, transparent: true, opacity: o.opacity == null ? 0.72 : o.opacity, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 1.6, depthWrite: false }, o.extra || {})); },
+      /* 금속: 'steel' | 'iron' | 'aluminium' | 'chrome' | 'brass' | 'copper' | 'gold' | 'silver' | 'zinc' | 'lead' | 'magnesium' 또는 색 (brushed: 결) */
+      metal: (kind, o) => { o = o || {}; const m = METAL[kind] || [kind == null ? 0xc9ced6 : kind, 0.32]; const q = { color: m[0], metalness: 1, roughness: o.roughness == null ? m[1] : o.roughness, envMapIntensity: 1.35 }; if (o.brushed) { q.roughnessMap = rep(procTex(THREE, 'brushed'), o.repeat || 2); q.roughness = Math.min(1, q.roughness * 1.9); } return S(Object.assign(q, o.extra || {})); },
+      /* 플라스틱: 매끈하고 은은한 광택 */
+      plastic: (color, o) => { o = o || {}; return P(Object.assign({ color, roughness: o.roughness == null ? 0.36 : o.roughness, metalness: 0, clearcoat: 0.45, clearcoatRoughness: 0.25, envMapIntensity: 1 }, o.extra || {})); },
+      /* 고무·무광 표면 */
+      rubber: (color, o) => S(Object.assign({ color: color == null ? 0x0f1114 : color, roughness: 0.92, metalness: 0, envMapIntensity: 0.5 }, (o && o.extra) || {})),
+      /* 나무: 나뭇결 무늬 (색을 주면 그 색으로 물들여요) */
+      wood: (color, o) => { o = o || {}; return S(Object.assign({ color: color == null ? 0xffffff : color, map: rep(procTex(THREE, 'wood'), o.repeat || 1), roughness: 0.62, metalness: 0, envMapIntensity: 0.7 }, o.extra || {})); },
+      /* 돌·암석·흙: 거친 잔무늬 */
+      stone: (color, o) => { o = o || {}; const t = rep(procTex(THREE, o.cracks ? 'stone' : 'noise'), o.repeat || 2); return S(Object.assign({ color: color == null ? 0x55585f : color, roughness: 0.94, metalness: 0, bumpMap: t, bumpScale: o.bump == null ? 0.03 : o.bump, roughnessMap: t, envMapIntensity: 0.45 }, o.extra || {})); },
+      /* 도자기·에나멜: 매끈하고 반짝임 */
+      ceramic: (color, o) => P(Object.assign({ color: color == null ? 0xf4f1ea : color, roughness: 0.22, metalness: 0, clearcoat: 0.9, clearcoatRoughness: 0.12, envMapIntensity: 1.1 }, (o && o.extra) || {})),
+      /* 생체 조직(세포·기관): 부드럽고 촉촉한 느낌 (opacity를 주면 비쳐 보여요) */
+      organic: (color, o) => { o = o || {}; const c = new THREE.Color(color); const q = { color, roughness: 0.5, metalness: 0, sheen: 0.35, sheenRoughness: 0.5, sheenColor: c.clone().lerp(new THREE.Color(0xffffff), 0.25), clearcoat: 0.18, clearcoatRoughness: 0.55, envMapIntensity: 0.7 }; if (o.opacity != null && o.opacity < 1) { q.transparent = true; q.opacity = o.opacity; q.depthWrite = false; } return P(Object.assign(q, o.extra || {})); },
+      /* 천·종이 */
+      fabric: (color, o) => S(Object.assign({ color, roughness: 0.95, metalness: 0, bumpMap: rep(procTex(THREE, 'fabric'), (o && o.repeat) || 6), bumpScale: 0.01, envMapIntensity: 0.35 }, (o && o.extra) || {})),
+      /* 얼음 */
+      ice: (o) => P(Object.assign({ color: 0xdff3ff, roughness: 0.18, metalness: 0, transparent: true, opacity: 0.78, clearcoat: 1, clearcoatRoughness: 0.2, envMapIntensity: 1.5 }, (o && o.extra) || {})),
+      /* 스스로 빛나는 것 (전구·불꽃·별): 색 + 세기 */
+      emissive: (color, k, o) => S(Object.assign({ color, emissive: color, emissiveIntensity: k == null ? 1.2 : k, roughness: 0.5, metalness: 0 }, (o && o.extra) || {})),
+      tex: (kind) => procTex(THREE, kind),
+    };
+  }
+  /* 빛 번짐(후광): 빛나는 물체에 붙이는 부드러운 빛무리. mesh에 붙어 함께 움직여요. */
+  function makeHalo(THREE, color, size, opacity) {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: procTex(THREE, 'glow'), color: color == null ? 0xfff2c4 : color, transparent: true, opacity: opacity == null ? 0.75 : opacity, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+    sp.scale.setScalar(size || 2); sp.userData.v3bg = true; sp.raycast = () => {}; sp.renderOrder = 2;
+    return sp;
   }
 
   /* 둥근 도형을 더 매끄럽게: 너무 적은 분할 수는 최소값으로 올려요 (모든 3D 화면 공통) */
@@ -241,7 +346,10 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
     info.addEventListener('pointerdown', (e) => { if (isPhone()) e.stopPropagation(); });   // 돌리기 대신 접기
     info.addEventListener('click', () => { if (isPhone()) info.classList.toggle('mini'); });
     info.title = '눌러서 접기/펴기';
-    view.append(labels, info, hint);
+    const vig = el('div', 'v3-vig');   // 가장자리를 살짝 어둡게: 가운데 모형에 눈이 가요
+    view.append(vig, labels, info, hint);
+    // 조작 안내는 잠깐 보여 주고 흐리게 (화면을 덜 가리게)
+    setTimeout(() => hint.classList.add('dim'), 7000);
     const ctl = el('div', 'v3-ctl');
     wrap.append(head, view, ctl);
     host.insertBefore(wrap, btn.parentNode === host ? btn : null);
@@ -253,7 +361,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
     });
 
     let THREE = null, renderer = null, scene = null, camera = null, root = null, user = null;
-    let failed = false;   // three.js를 못 불러오면 이 차시는 2D로만 보여 줘요
+    let failed = false, studioOn = false;   // three.js를 못 불러오면 이 차시는 2D로만 보여 줘요
     let raf = 0, last = 0, isOpen = false, touched = false, built = false, frameN = 0;
     const cam0 = Object.assign({ dist: 8, theta: 0.6, phi: 1.15, fov: 45, target: [0, 0, 0], min: 2, max: 40 }, opts.camera || {});
     const orbit = { dist: cam0.dist, theta: cam0.theta, phi: cam0.phi, tx: cam0.target[0], ty: cam0.target[1], tz: cam0.target[2] };
@@ -574,7 +682,9 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
       renderer.setPixelRatio(perf.stage ? 1 : Math.min(global.devicePixelRatio || 1, 2));
       if ('outputEncoding' in renderer) renderer.outputEncoding = THREE.sRGBEncoding;
-      view.insertBefore(renderer.domElement, labels);
+      // (선택) 영화 같은 색감 tone: true — 밝은 곳이 부드럽게 이어지지만 색이 조금 옅어져서, 기본은 선명한 색 그대로예요
+      if (opts.tone === true && THREE.ACESFilmicToneMapping != null) { renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = opts.exposure || 1.15; }
+      view.insertBefore(renderer.domElement, vig);
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(cam0.fov, 1, 0.05, 2000);
       // 스튜디오 조명 반사(환경광): 표면에 부드러운 하이라이트와 입체감이 생겨요
@@ -591,14 +701,18 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
         onLevel(f) { lvHooks.push(f); },                                                      // 단계가 바뀔 때 (2D와 같은 장면으로 맞추기)
         lesson: () => global.__sim || null,                                                    // 2D 실험 상태 (sim.js의 window.__sim)
         refit: (delay) => refit(delay),                                                        // 장면이 크게 바뀌었을 때 다시 화면에 맞추기
+        mats: makeMats(THREE),                                                                 // 실제 같은 재질 모음: mats.glass(), mats.metal('steel'), mats.wood() …
+        halo: (obj, color, size, opacity) => { const h = makeHalo(THREE, color, size, opacity); if (obj) obj.add(h); return h; },   // 빛나는 물체의 빛 번짐
       }) || {} : {};
       // 차시가 직접 조명(태양 등)을 두면 낮·밤 대비가 중요하므로 환경 반사를 쓰지 않아요
       // (차시가 기본 조명을 바꾸거나 새 조명을 더했으면 그 조명을 그대로 존중해요)
       let ownLight = hemi.intensity !== 0.85 || sun.intensity !== 0.9 || sun.position.x !== 5 || sun.position.y !== 8 || sun.position.z !== 6;
       scene.traverse((o) => { if (o.isLight && !o.userData.v3engine) ownLight = true; });
       if (!ownLight && opts.studio !== false) {
-        if (env) { scene.environment = env; hemi.intensity = 0.7; }
-        const rim = new THREE.DirectionalLight(0x9fc4ff, 0.3); rim.position.set(-6, 3, -7); rim.userData.v3engine = true; scene.add(rim);
+        // 스튜디오 조명: 환경 반사가 은은한 채움빛을 맡고, 따뜻한 주광 + 푸른 윤곽빛으로 입체감을 줘요
+        if (env) { scene.environment = env; hemi.intensity = 0.62; sun.intensity = 1.0; sun.color.set(0xfff6ea); }
+        const rim = new THREE.DirectionalLight(0xa9c8ff, 0.5); rim.position.set(-6, 4, -7); rim.userData.v3engine = true; scene.add(rim);
+        studioOn = true;
         if (opts.shadows !== false) { if (!perf.stage) setupShadows(); setupContact(); }
       }
       // 조작 도구 정리: 버튼·슬라이더는 한 줄(휴대폰에서는 옆으로 밀어 보기), ▶ 재생 막대는 그 아래 줄
@@ -607,7 +721,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       pack();
       if (global.MutationObserver) new MutationObserver((ms) => { if (ms.some((m) => Array.from(m.addedNodes).some((n) => n !== row && n.parentNode === ctl && !(n.classList && n.classList.contains('v3-player'))))) pack(); }).observe(ctl, { childList: true });
       built = true;
-      wrap.__v3 = () => ({ THREE, scene, root, camera, labs, orbit, auto, measure: () => { const u = auto.user; auto.user = false; const k = auto.kT; measureFit(false); auto.kT = k; auto.user = u; return { fill: auto.fill, k: auto.k, cx: auto.cx, cy: auto.cy }; } });   // 점검 도구용 (화면에는 영향 없음)
+      wrap.__v3 = () => ({ THREE, scene, root, camera, labs, orbit, auto, mats: makeMats(THREE), halo: (c, z, o) => makeHalo(THREE, c, z, o), measure: () => { const u = auto.user; auto.user = false; const k = auto.kT; measureFit(false); auto.kT = k; auto.user = u; return { fill: auto.fill, k: auto.k, cx: auto.cx, cy: auto.cy }; } });   // 점검 도구용 (화면에는 영향 없음)
       if (global.ResizeObserver) new ResizeObserver(resize).observe(view);
       resize();
     }
@@ -631,7 +745,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
     function setupContact() {
       const c = doc.createElement('canvas'); c.width = c.height = 128;
       const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
-      gr.addColorStop(0, 'rgba(0,0,0,0.55)'); gr.addColorStop(0.55, 'rgba(0,0,0,0.18)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+      gr.addColorStop(0, 'rgba(0,0,0,0.62)'); gr.addColorStop(0.3, 'rgba(0,0,0,0.34)'); gr.addColorStop(0.62, 'rgba(0,0,0,0.11)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
       g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
       const tex = new THREE.CanvasTexture(c);
       contact = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0.6 }));
@@ -673,6 +787,12 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
         const m = Array.isArray(o.material) ? o.material[0] : o.material;
         const solid = m && (m.isMeshStandardMaterial || m.isMeshPhongMaterial || m.isMeshLambertMaterial) && !m.transparent;
         if (solid) { o.castShadow = true; o.receiveShadow = true; }
+        // 재질 다듬기 (스튜디오 조명일 때): 아무 설정 없는 밋밋한 표면에 은은한 광택을, 반투명한 면은 반사가 살도록
+        if (studioOn) (Array.isArray(o.material) ? o.material : [o.material]).forEach((q) => {
+          if (!q || !q.isMeshStandardMaterial || q.userData.v3pol) return; q.userData.v3pol = true;
+          if (q.roughness === 1 && q.metalness === 0 && !q.roughnessMap) q.roughness = 0.66;
+          if (q.transparent && q.opacity < 0.5 && !q.isMeshPhysicalMaterial && q.envMapIntensity === 1) q.envMapIntensity = 1.5;
+        });
       });
     }
 
