@@ -112,9 +112,9 @@
       })();
 
       /* ---------- 그리기 도구 ---------- */
-      const mO = new THREE.MeshStandardMaterial({ color: 0xe23b3b, roughness: 0.4 }), mH = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.4 });
-      const mS = new THREE.MeshStandardMaterial({ color: 0xd5deee, roughness: 0.6 });
-      const gO = new THREE.SphereGeometry(0.2, 22, 16), gH = new THREE.SphereGeometry(0.11, 16, 12), gC = new THREE.CylinderGeometry(1, 1, 1, 8);
+      const mO = ctx.mats.plastic(0xcf2626, { roughness: 0.22 }), mH = ctx.mats.plastic(0xf4f6fa, { roughness: 0.25 });   // 공 · 막대 모형: 매끈한 플라스틱 (O 빨강 · H 흰색)
+      const mS = ctx.mats.plastic(0xaab6c8, { roughness: 0.35 });
+      const gO = new THREE.SphereGeometry(0.2, 32, 22), gH = new THREE.SphereGeometry(0.11, 24, 16), gC = new THREE.CylinderGeometry(1, 1, 1, 12);
       const mols = P0.map(() => { const o = new THREE.Mesh(gO, mO), h = [0, 1].map(() => new THREE.Mesh(gH, mH)), s = [0, 1].map(() => new THREE.Mesh(gC, mS)); g.add(o, ...h, ...s); return { o, h, s }; });
       const MAXD = 480, dashes = new THREE.InstancedMesh(gC, new THREE.MeshBasicMaterial({ color: HB_C }), MAXD); dashes.frustumCulled = false; g.add(dashes);
       const dummy = new THREE.Object3D();
@@ -136,7 +136,7 @@
         ring = bestR;
       })();
       let ringMesh = null;
-      const ringMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, transparent: true, opacity: 0.55, roughness: 0.3, emissive: 0x7a5d00 });
+      const ringMat = new THREE.MeshStandardMaterial({ color: 0xf2b90a, transparent: true, opacity: 0.6, roughness: 0.25, emissive: 0x7a5d00, emissiveIntensity: 0.8 });
       const anchorHB = new THREE.Object3D(); g.add(anchorHB);
       const labMol = label('물 분자 1개', mols[0].o, { color: 'rgba(30,64,175,.95)' }), labHB = label('수소 결합 (점선)', anchorHB, { color: 'rgba(200,40,50,.95)' }), labRing = label('6각 고리', [0, 0, 0], { color: 'rgba(161,98,7,.95)' });
       let hbCount = 0, innerAvg = 0;

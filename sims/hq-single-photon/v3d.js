@@ -10,7 +10,7 @@
     const V3 = THREE.Vector3, Yax = new V3(0, 1, 0);
     const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.1 }, o || {}));
     const basic = (c, o) => new THREE.MeshBasicMaterial(Object.assign({ color: c }, o || {}));
-    const glass = (c, op, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.25, metalness: 0.0, transparent: true, opacity: op, depthWrite: false, side: THREE.DoubleSide }, o || {}));
+    const glass = (c, op, o) => ctx.mats.glass({ tint: c, opacity: op, extra: o });
     /* 화살표 하나: setArrow(g, 시작점, 끝점) */
     function mkArrow(col, rad, o) {
       const g = new THREE.Group(); const m = (o && o.basic) ? basic(col) : mat(col, { roughness: 0.4, emissive: col, emissiveIntensity: 0.12 });
@@ -117,22 +117,22 @@
       const XS = -6.2, XB = -1.2, XD = 5.8, ZS = 0.6;                         // 총 · 슬릿벽 · 스크린 위치, 슬릿 위치(±)
       const NB = 60, ZR = 3.0, BW = 2 * ZR / NB, SH = 2.4;                      // 막대 수 · 스크린 반폭 · 막대 폭 · 스크린 반높이
       /* 총 */
-      const gun = new THREE.Group(); const gb = cyl(0.55, 0.7, 1.6, 0x4b5563, { metalness: 0.6, roughness: 0.35 }, 28); gb.rotation.z = Math.PI / 2; const gt = sphere(0.32, 0xffffff, { emissive: 0xffe9a8, emissiveIntensity: 0.9 }); gt.position.x = 0.85; gun.add(gb, gt); [0.2, 0.55, -0.15].forEach((x, i) => { const cl = new THREE.Mesh(new THREE.TorusGeometry(0.76 - i * 0.02, 0.06, 8, 28), mat(0xc9894a, { metalness: 0.85, roughness: 0.3 })); cl.rotation.y = Math.PI / 2; cl.position.x = x - 0.1; gun.add(cl); }); { const cb = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(-0.9, 0.2, 0), new V3(-1.6, 0.9, 0.8), new V3(-2.4, -1.4, 1.4), new V3(-3.0, -SH - 0.6 + 0.9, 1.4)]), 30, 0.07, 8, false), mat(0x111827, { roughness: 0.6 })); gun.add(cb); }
+      const gun = new THREE.Group(); const gb = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.7, 1.6, 40), ctx.mats.metal(0x5b6472, { brushed: true })); gb.rotation.z = Math.PI / 2; const gt = sphere(0.32, 0xffffff, { emissive: 0xffe9a8, emissiveIntensity: 1.2 }); gt.position.x = 0.85; ctx.halo(gt, 0xffe9a8, 2.2, 0.6); gun.add(gb, gt); { const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.74, 0.74, 0.14, 40), ctx.mats.metal('steel')); cap.rotation.z = Math.PI / 2; cap.position.x = -0.82; const noz = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.55, 0.22, 40, 1, true), ctx.mats.metal('steel')); noz.rotation.z = -Math.PI / 2; noz.position.x = 0.86; gun.add(cap, noz); } [0.2, 0.55, -0.15].forEach((x, i) => { const cl = new THREE.Mesh(new THREE.TorusGeometry(0.76 - i * 0.02, 0.06, 14, 56), ctx.mats.metal('copper')); cl.rotation.y = Math.PI / 2; cl.position.x = x - 0.1; gun.add(cl); }); { const cb = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(-0.9, 0.2, 0), new V3(-1.6, 0.9, 0.8), new V3(-2.4, -1.4, 1.4), new V3(-3.0, -SH - 0.6 + 0.9, 1.4)]), 30, 0.07, 8, false), ctx.mats.rubber(0x0c0f15)); gun.add(cb); }
       gun.position.set(XS - 0.8, 0, 0); root.add(gun);
       /* ----- 실험 환경: 광학 테이블 · 진공관 · 받침 ----- */
       const ctex = (w, hh, draw, rx, ry) => { const c = document.createElement('canvas'); c.width = w; c.height = hh; draw(c.getContext('2d'), w, hh); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; if (rx) t.repeat.set(rx, ry || rx); if ('encoding' in t) t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t; };
       const holeTex = ctex(64, 64, (g, w, hh) => { g.fillStyle = '#39414f'; g.fillRect(0, 0, w, hh); g.fillStyle = '#12161d'; for (let x = 8; x < w; x += 16) for (let y = 8; y < hh; y += 16) { g.beginPath(); g.arc(x, y, 3, 0, 6.3); g.fill(); } g.strokeStyle = 'rgba(255,255,255,.08)'; g.strokeRect(0, 0, w, hh); }, 14, 6);
       const TY = -SH - 0.6;
-      const otab = new THREE.Mesh(new THREE.BoxGeometry(20, 0.4, 8.5), mat(0xffffff, { map: holeTex, metalness: 0.6, roughness: 0.45 })); otab.position.set(-0.2, TY - 0.2, 0); otab.receiveShadow = true; root.add(otab);
+      const otab = new THREE.Mesh(new THREE.BoxGeometry(20, 0.4, 8.5), mat(0xffffff, { map: holeTex, metalness: 0.85, roughness: 0.38, envMapIntensity: 1.2 })); otab.position.set(-0.2, TY - 0.2, 0); otab.receiveShadow = true; root.add(otab);
       const oedge = new THREE.Mesh(new THREE.BoxGeometry(20.1, 0.12, 8.6), mat(0x1e293b, { metalness: 0.5, roughness: 0.5 })); oedge.position.set(-0.2, TY - 0.32, 0); root.add(oedge);
-      [[-8.6, 3.4], [8.2, 3.4], [-8.6, -3.4], [8.2, -3.4]].forEach((q) => { const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 2.2, 14), mat(0x475569, { metalness: 0.6, roughness: 0.4 })); lg.position.set(q[0], TY - 1.4, q[1]); root.add(lg); });
-      { const pm = mat(0xcbd5e1, { metalness: 0.85, roughness: 0.28 });
+      [[-8.6, 3.4], [8.2, 3.4], [-8.6, -3.4], [8.2, -3.4]].forEach((q) => { const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 2.2, 24), ctx.mats.metal(0x475569, { brushed: true })); lg.position.set(q[0], TY - 1.4, q[1]); root.add(lg); });
+      { const pm = ctx.mats.metal('steel');
         const post = (x, z, top) => { const pst = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, top - TY, 14), pm); pst.position.set(x, (top + TY) / 2, z); root.add(pst); const bs = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.12, 1.0), mat(0x1f2937, { metalness: 0.6, roughness: 0.4 })); bs.position.set(x, TY + 0.06, z); root.add(bs); };
         post(XS - 0.8, 0, -0.75); post(XB, ZR + 0.3, -SH - 0.4); post(XB, -ZR - 0.3, -SH - 0.4); post(XD + 0.1, ZR + 0.15, -SH - 0.1); post(XD + 0.1, -ZR - 0.15, -SH - 0.1); }
-      const tubeG = new THREE.Mesh(new THREE.CylinderGeometry(3.7, 3.7, XD - XS + 1.4, 40, 1, true), new THREE.MeshStandardMaterial({ color: 0xbfd8ff, transparent: true, opacity: 0.05, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false })); tubeG.rotation.z = Math.PI / 2; tubeG.position.set((XD + XS) / 2 - 0.1, 0, 0); root.add(tubeG);
-      [XS - 0.6, XD - 0.2].forEach((x) => { const fl = new THREE.Mesh(new THREE.TorusGeometry(3.7, 0.05, 8, 56), mat(0x94a3b8, { metalness: 0.85, roughness: 0.3 })); fl.rotation.y = Math.PI / 2; fl.position.set(x, 0, 0); root.add(fl); });
+      const tubeG = new THREE.Mesh(new THREE.CylinderGeometry(3.7, 3.7, XD - XS + 1.4, 40, 1, true), ctx.mats.glass({ tint: 0xbfd8ff, opacity: 0.07 })); tubeG.rotation.z = Math.PI / 2; tubeG.position.set((XD + XS) / 2 - 0.1, 0, 0); root.add(tubeG);
+      [XS - 0.6, XD - 0.2].forEach((x) => { const fl = new THREE.Mesh(new THREE.TorusGeometry(3.7, 0.07, 12, 96), ctx.mats.metal('chrome')); fl.rotation.y = Math.PI / 2; fl.position.set(x, 0, 0); root.add(fl); });
       /* 슬릿벽 (틈 두 개) */
-      const wallM = mat(0x8793a8, { metalness: 0.5, roughness: 0.4 });
+      const wallM = ctx.mats.metal(0x7d8799, { brushed: true });
       const sw = 0.3;
       const wall = new THREE.Group();
       const addW = (z0, z1) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.25, 2 * SH + 0.8, z1 - z0), wallM); m.position.set(XB, 0, (z0 + z1) / 2); wall.add(m); };
@@ -140,7 +140,7 @@
       const cover = [0, 1].map((i) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.28, 2 * SH + 0.8, sw), mat(0x3b4252, { roughness: 0.6 })); m.position.set(XB, 0, i ? ZS : -ZS); m.visible = false; root.add(m); return m; });
       /* 스크린 */
       const screen = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2 * SH, 2 * ZR), mat(0x1e2740, { roughness: 0.8, emissive: 0x16203a, emissiveIntensity: 0.6 })); screen.position.set(XD, 0, 0); root.add(screen);
-      const frame = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2 * SH + 0.15, 2 * ZR + 0.15), mat(0x64748b, { roughness: 0.5, metalness: 0.4 })); frame.position.set(XD + 0.08, 0, 0); root.add(frame);
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2 * SH + 0.15, 2 * ZR + 0.15), ctx.mats.metal(0x4f5a6b, { roughness: 0.4 })); frame.position.set(XD + 0.08, 0, 0); root.add(frame);
       { const pl = new THREE.Mesh(new THREE.PlaneGeometry(2 * ZR, 2 * SH), new THREE.MeshBasicMaterial({ color: 0x9fb6ff, transparent: true, opacity: 0.05, depthWrite: false, side: THREE.DoubleSide })); pl.rotation.y = Math.PI / 2; pl.position.set(XD - 0.08, 0, 0); root.add(pl); }
       /* 점과 막대그래프 */
       const MAXD = 2200, dots = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 10, 8), mat(0xfff0a0, { emissive: 0xffd24d, emissiveIntensity: 0.9, roughness: 0.3 }), MAXD); dots.count = 0; root.add(dots);
@@ -154,7 +154,7 @@
       const rings = []; const ringG = new THREE.RingGeometry(0.965, 1, 72, 1, -Math.PI / 2, Math.PI); ringG.rotateX(-Math.PI / 2);
       for (let s = 0; s < 2; s++) for (let k = 0; k < 3; k++) { const m = new THREE.Mesh(ringG, new THREE.MeshBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide })); m.userData = { s, k }; root.add(m); rings.push(m); }
       /* 비행 중인 입자 */
-      const fly = []; for (let i = 0; i < 8; i++) { const m = sphere(0.2, 0xfff0a0, { emissive: 0xffd24d, emissiveIntensity: 1, transparent: true, opacity: 0.95 }); m.visible = false; root.add(m); fly.push({ m, on: false, t: 0, hz: 0, hy: 0, sz: 0 }); }
+      const fly = []; for (let i = 0; i < 8; i++) { const m = sphere(0.2, 0xfff0a0, { emissive: 0xffd24d, emissiveIntensity: 1, transparent: true, opacity: 0.95 }); m.visible = false; root.add(m); ctx.halo(m, 0xffe08a, 1.5, 0.5); fly.push({ m, on: false, t: 0, hz: 0, hy: 0, sz: 0 }); }
       const flash = sphere(0.3, 0xffffff, { emissive: 0xffffff, emissiveIntensity: 1, transparent: true, opacity: 0 }); root.add(flash); let flashT = 0;
       /* 이름표 */
       const lG = label('전자총', gun, { color: '#475569', size: 12, offset: [0, 1.1, 0] });
@@ -238,7 +238,7 @@
         lDet.show(st.det && st.slits === 'both');
         const ph = st.kind === 'ph'; lG.set(ph ? '레이저 (광자)' : '전자총');
         dots.material.color.set(ph ? 0xffc2b0 : 0xfff0a0); dots.material.emissive.set(ph ? 0xff5a3c : 0xffd24d);
-        fly.forEach((f) => { f.m.material.color.set(ph ? 0xffc2b0 : 0xfff0a0); f.m.material.emissive.set(ph ? 0xff5a3c : 0xffd24d); });
+        fly.forEach((f) => { f.m.material.color.set(ph ? 0xffc2b0 : 0xfff0a0); f.m.material.emissive.set(ph ? 0xff5a3c : 0xffd24d); if (f.m.children[0]) f.m.children[0].material.color.set(ph ? 0xff8a6c : 0xffe08a); });
         recomputePdf(); reset();
       }
       /* =====================================================================

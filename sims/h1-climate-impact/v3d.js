@@ -15,7 +15,7 @@
     autoRotate: 0,
     levels: [0],
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, mats } = ctx;
       const V3 = THREE.Vector3, Y = new V3(0, 1, 0);
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.6, metalness: 0.03 }, o || {}));
       const W = 12, H = 3.4, D = 3.2, NX = 60;
@@ -42,27 +42,30 @@
       // 바다 표면 (색: 표층 수온)
       const surfGeo = new THREE.PlaneGeometry(W, D, NX, 8); surfGeo.rotateX(-Math.PI / 2);
       const surfCol = new Float32Array(surfGeo.attributes.position.count * 3); surfGeo.setAttribute('color', new THREE.BufferAttribute(surfCol, 3));
-      const surf = new THREE.Mesh(surfGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.25, metalness: 0.05, transparent: true, opacity: 0.92 }));
+      const surf = new THREE.Mesh(surfGeo, new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.16, metalness: 0, clearcoat: 0.6, clearcoatRoughness: 0.1, envMapIntensity: 0.7, transparent: true, opacity: 0.93 }));   // 물결치는 수면: 반짝이는 물
       surf.position.y = 0; surf.receiveShadow = true; root.add(surf);
       // 바닥과 양쪽 옆면
       const floor = new THREE.Mesh(new THREE.BoxGeometry(W + 0.2, 0.3, D + 0.2), new THREE.MeshLambertMaterial({ color: 0x35405a })); floor.position.y = -H - 0.15; root.add(floor);
-      const side = (x) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.25, H + 0.3, D + 0.2), mat(0x7a6a4a, { roughness: 1 })); m.position.set(x, -H / 2 + 0.05, 0); root.add(m); return m; };
+      const side = (x) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.25, H + 0.3, D + 0.2), mats.stone(0x6a5a40, { cracks: true, repeat: 2, bump: 0.05 })); m.position.set(x, -H / 2 + 0.05, 0); root.add(m); return m; };
       side(-W / 2 - 0.12); side(W / 2 + 0.12);
       // 동·서 육지 (해안)
-      const land = (x, c, s) => { const g = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2), mat(c, { roughness: 1 })); g.scale.set(1.4, 0.9 * s, D * 0.5); g.position.set(x, 0, 0); root.add(g); return g; };
-      land(-W / 2 - 0.2, 0x5f9a4a, 1.0); const andes = land(W / 2 + 0.15, 0x8a7d62, 0.45);
+      const land = (x, c, s) => { const g = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 18, 0, Math.PI * 2, 0, Math.PI / 2), mats.stone(c, { repeat: 3, bump: 0.05 })); g.castShadow = true; g.scale.set(1.4, 0.9 * s, D * 0.5); g.position.set(x, 0, 0); root.add(g); return g; };
+      land(-W / 2 - 0.2, 0x4a8a3a, 1.0); const andes = land(W / 2 + 0.15, 0x7a6c52, 0.45);
+      { const beach = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 12, 0, Math.PI * 2, 0, Math.PI / 2), mats.stone(0xcdb98a, { repeat: 4, bump: 0.02 })); beach.scale.set(1.62, 0.34, D * 0.5); beach.position.set(-W / 2 - 0.2, 0, 0); root.add(beach); }   // 서쪽 해안의 모래사장
 
       // ---- 환경: 하늘 배경 · 받침대 · 모래 바닥 · 수조 테두리 · 안데스 산맥과 열대 나무 · 일렁이는 수면 · 용승 거품
       const mkc = (w, h, fn) => { const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); return t; };
       { const sky = mkc(16, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#16275a'); gr.addColorStop(0.5, '#3a5ea0'); gr.addColorStop(0.62, '#8fb8e6'); gr.addColorStop(1, '#27385f'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }); if (THREE.sRGBEncoding) sky.encoding = THREE.sRGBEncoding;
         const dome = new THREE.Mesh(new THREE.SphereGeometry(45, 32, 20), new THREE.MeshBasicMaterial({ map: sky, side: THREE.BackSide, depthWrite: false })); dome.renderOrder = -2; root.add(dome);
-        const bench = new THREE.Mesh(new THREE.CylinderGeometry(11, 11.3, 0.4, 72), mat(0x1c2742, { roughness: 0.6, metalness: 0.2 })); bench.position.y = -H - 0.55; root.add(bench); }
+        const bench = new THREE.Mesh(new THREE.CylinderGeometry(11, 11.3, 0.4, 96), mats.ceramic(0x18223c, { extra: { roughness: 0.4, clearcoat: 0.5 } })); bench.userData.v3bg = true; bench.position.y = -H - 0.55; root.add(bench); }
       { const sand = mkc(256, 256, (g, w, h) => { g.fillStyle = '#b9a577'; g.fillRect(0, 0, w, h); for (let i = 0; i < 1500; i++) { const v = 120 + Math.random() * 90 | 0; g.fillStyle = 'rgba(' + v + ',' + (v - 20) + ',' + (v - 60) + ',.35)'; g.fillRect(Math.random() * w, Math.random() * h, 2, 2); } });
         floor.material = new THREE.MeshStandardMaterial({ map: sand, roughness: 1 }); }
       { const fr = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(W + 0.2, H + 0.3, D + 0.2)), new THREE.LineBasicMaterial({ color: 0xdfeaf7, transparent: true, opacity: 0.8 })); fr.position.y = -H / 2 - 0.1; root.add(fr); }
-      { const rock = mat(0x8a7d62, { roughness: 1, flatShading: true }), snow = mat(0xf4f8ff, { roughness: 0.6, flatShading: true });
-        [[0, 0, 0, 1.1, 2.4], [-0.5, 0, 0.9, 0.8, 1.7], [0.2, 0, -0.9, 0.9, 1.9], [-0.9, 0, -0.2, 0.6, 1.2]].forEach((c) => { const m = new THREE.Mesh(new THREE.ConeGeometry(c[3], c[4], 7), rock); m.position.set(W / 2 + 0.55 + c[0], c[4] / 2 - 0.1, c[2]); root.add(m); if (c[4] > 1.8) { const cap = new THREE.Mesh(new THREE.ConeGeometry(c[3] * 0.38, c[4] * 0.32, 7), snow); cap.position.set(m.position.x, c[4] * 0.84 - 0.1, m.position.z); root.add(cap); } });
-        const trunk = mat(0x7a5a38), leaf = mat(0x2e9a4a, { roughness: 0.8 });
+      { const rock = mats.stone(0x7a6c52, { cracks: true, repeat: 2, bump: 0.06, extra: { flatShading: true } }), snow = mat(0xf4f8ff, { roughness: 0.5, flatShading: true });
+        const hsh = (x, y, z) => { const q = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453; return q - Math.floor(q); };
+        const crag = (g, k) => { const pa = g.attributes.position; for (let i = 0; i < pa.count; i++) { const x = pa.getX(i), y = pa.getY(i), z = pa.getZ(i), rx = Math.round(x * 50), ry = Math.round(y * 50), rz = Math.round(z * 50); if (Math.hypot(x, z) < 1e-4) continue; const j = 1 + (hsh(rx, ry, rz) - 0.5) * k; pa.setXYZ(i, x * j, y + (hsh(rz, rx, ry) - 0.5) * k * 0.25, z * j); } g.computeVertexNormals(); return g; };   // 울퉁불퉁한 바위산
+        [[0, 0, 0, 1.1, 2.4], [-0.5, 0, 0.9, 0.8, 1.7], [0.2, 0, -0.9, 0.9, 1.9], [-0.9, 0, -0.2, 0.6, 1.2]].forEach((c) => { const m = new THREE.Mesh(crag(new THREE.ConeGeometry(c[3], c[4], 14, 5), 0.34), rock); m.castShadow = true; m.position.set(W / 2 + 0.55 + c[0], c[4] / 2 - 0.1, c[2]); root.add(m); if (c[4] > 1.8) { const cap = new THREE.Mesh(crag(new THREE.ConeGeometry(c[3] * 0.4, c[4] * 0.32, 14, 2), 0.3), snow); cap.position.set(m.position.x, c[4] * 0.84 - 0.1, m.position.z); root.add(cap); } });
+        const trunk = mats.wood(0x8a6a44, { repeat: 1 }), leaf = mat(0x1f7a38, { roughness: 0.75 });
         [[0.0, 0.5], [-0.4, -0.6], [0.4, -0.2], [-0.2, 0.9], [0.5, 0.8]].forEach((c, i) => { const g = new THREE.Group(); const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.5 + (i % 2) * 0.15, 6), trunk); tr.position.y = 0.3; g.add(tr); for (let k = 0; k < 5; k++) { const l = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.4, 5), leaf); l.position.set(Math.cos(k * 1.26) * 0.14, 0.62 + (i % 2) * 0.1, Math.sin(k * 1.26) * 0.14); l.rotation.set(Math.sin(k * 1.26) * 1.0, 0, -Math.cos(k * 1.26) * 1.0); g.add(l); } g.position.set(-W / 2 - 0.05 + c[0] * 1.2, 0.1, c[1]); root.add(g); }); }
       const NB = 40, bubbles = new THREE.InstancedMesh(new THREE.SphereGeometry(0.035, 8, 6), new THREE.MeshBasicMaterial({ color: 0xcfe9ff, transparent: true, opacity: 0.6 }), NB); root.add(bubbles);
       const bbD = []; for (let i = 0; i < NB; i++) bbD.push({ x: 3.9 + Math.random() * 2.4, z: (Math.random() - 0.5) * (D - 0.4), y0: Math.random(), sp: 0.15 + Math.random() * 0.2 });
@@ -137,7 +140,8 @@
 
       /* ---------- 구름 (따뜻한 물 위에서 비구름) ---------- */
       const cloud = new THREE.Group(); root.add(cloud);
-      [[0, 0, 0, 0.7], [0.7, 0.1, 0.2, 0.55], [-0.7, 0, -0.1, 0.5], [0.3, 0.45, 0, 0.5], [1.3, -0.05, 0, 0.4], [-1.3, -0.05, 0.1, 0.38]].forEach((c) => { const m = new THREE.Mesh(new THREE.SphereGeometry(c[3], 20, 14), mat(0xdfe6f3, { roughness: 0.9, transparent: true, opacity: 0.96 })); m.position.set(c[0], c[1], c[2]); cloud.add(m); });
+      const cloudM = new THREE.MeshStandardMaterial({ color: 0xe9eef7, roughness: 1, metalness: 0, envMapIntensity: 0.25, emissive: 0x7f8aa3, emissiveIntensity: 0.22 });   // 뽀얀 뭉게구름 (반사 없이 부드럽게)
+      [[0, 0, 0, 0.7], [0.7, 0.1, 0.2, 0.55], [-0.7, 0, -0.1, 0.5], [0.3, 0.45, 0, 0.5], [1.3, -0.05, 0, 0.4], [-1.3, -0.05, 0.1, 0.38], [-0.3, 0.3, 0.3, 0.42], [0.9, 0.3, -0.25, 0.36], [0.1, -0.1, 0.45, 0.45], [-0.95, 0.22, -0.3, 0.33]].forEach((c) => { const m = new THREE.Mesh(new THREE.SphereGeometry(c[3], 20, 14), cloudM); m.position.set(c[0], c[1], c[2]); cloud.add(m); });
       const rain = []; for (let i = 0; i < 16; i++) { const r = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.35, 5), new THREE.MeshBasicMaterial({ color: 0x9fd0ff, transparent: true, opacity: 0.8 })); r.userData = { ox: (Math.random() - 0.5) * 2, oz: (Math.random() - 0.5) * 1.2, ph: Math.random() }; cloud.add(r); rain.push(r); }
       const cloudLab = label('비구름', cloud, { size: 12, offset: [0, 0.9, 0] });
 
@@ -150,9 +154,10 @@
       const upLab = label('용승 (찬 물이 올라와요)', ups[1], { size: 12, offset: [0.1, 1.9, 0.1] });
       const fishes = [];
       const fishGeo = (() => { const g = new THREE.SphereGeometry(0.11, 12, 8); g.scale(1.8, 0.8, 0.6); return g; })();
-      const tailGeo = new THREE.ConeGeometry(0.09, 0.2, 8);
+      const tailGeo = (() => { const g = new THREE.ConeGeometry(0.1, 0.2, 8); g.scale(1, 1, 0.25); return g; })();
+      const fishM = mats.metal(0xc4d2e2, { roughness: 0.24 });   // 은빛 멸치
       for (let i = 0; i < 26; i++) {
-        const f = new THREE.Group(), b = new THREE.Mesh(fishGeo, mat(0xe8eef7, { roughness: 0.3, metalness: 0.5 })), tl = new THREE.Mesh(tailGeo, b.material); tl.rotation.z = Math.PI / 2; tl.position.x = -0.22; f.add(b, tl);
+        const f = new THREE.Group(), b = new THREE.Mesh(fishGeo, fishM), tl = new THREE.Mesh(tailGeo, fishM); tl.rotation.z = Math.PI / 2; tl.position.x = -0.22; f.add(b, tl);
         f.userData = { ph: Math.random() * 6.28, rx: 0.5 + Math.random() * 1.2, ry: 0.15 + Math.random() * 0.25, cx: 4.9 + (Math.random() - 0.5) * 1.8, cy: -0.7 - Math.random() * 0.8, cz: D / 2 + 0.2 + Math.random() * 0.5, sp: 0.6 + Math.random() * 0.6, idx: i };
         root.add(f); fishes.push(f);
       }

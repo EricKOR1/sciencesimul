@@ -22,24 +22,36 @@
       const V = THREE.Vector3, M4 = new THREE.Matrix4(), cc = new THREE.Color();
       if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 눕혀 둔 모형을 세워서 보여 줘요
       let mode = 'tx';
-      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.04 }, o || {}));
+      /* 재질: 색은 2D와 같은 색이 화면에 그대로 나오도록 맞추고(lin), 구슬·모형은 매끈한 플라스틱, 단백질은 촉촉한 생체 조직 느낌 */
+      const lin = (h) => new THREE.Color(h).convertSRGBToLinear();
+      const std = (c, o) => ctx.mats.plastic(lin(c), { roughness: 0.3, extra: o });
+      const bio = (c, op, o) => ctx.mats.organic(lin(c), { opacity: op, extra: o });
+      /* 단백질 덩어리처럼 울퉁불퉁한 공 */
+      const lumpy = (geo, amp, f) => {
+        const p = geo.attributes.position, v = new V(), n = new V();
+        for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); n.copy(v).normalize(); v.multiplyScalar(1 + amp * (Math.sin(n.x * f + 1.3) * Math.cos(n.y * f * 1.3 + 0.4) + 0.6 * Math.sin(n.z * f * 1.7 + n.x * 2.1) + 0.4 * Math.cos((n.x + n.y - n.z) * f * 2.3))); p.setXYZ(i, v.x, v.y, v.z); }
+        geo.computeVertexNormals(); const nm = geo.attributes.normal, map = {};
+        for (let i = 0; i < p.count; i++) { const k = Math.round(p.getX(i) * 500) + ',' + Math.round(p.getY(i) * 500) + ',' + Math.round(p.getZ(i) * 500); (map[k] = map[k] || []).push(i); }
+        Object.keys(map).forEach((k) => { const a = map[k]; if (a.length < 2) return; let x = 0, y = 0, z = 0; a.forEach((i) => { x += nm.getX(i); y += nm.getY(i); z += nm.getZ(i); }); const l = Math.hypot(x, y, z) || 1; a.forEach((i) => nm.setXYZ(i, x / l, y / l, z / l)); });
+        return geo;
+      };
       const txG = new THREE.Group(), tlG = new THREE.Group(); root.add(txG, tlG);
       const An = (g, x, y, z) => { const o = new THREE.Object3D(); o.position.set(x, y, z); g.add(o); return o; };
 
       /* ===================== 전사 ===================== */
       const TL = 11, X0 = -5.5, DBS = 0.13, TRAD = 0.5, TPITCH = 2.6;
       const dnaN = Math.floor(TL / DBS);
-      const dna = new THREE.InstancedMesh(new THREE.SphereGeometry(0.095, 12, 10), std(0xffffff, { roughness: 0.3 }), dnaN * 2);
-      for (let k = 0; k < 2; k++) for (let i = 0; i < dnaN; i++) dna.setColorAt(k * dnaN + i, cc.setHex(k === 0 ? 0x3b82f6 : 0x93c5fd));
+      const dna = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.095, 3), std(0xffffff, { roughness: 0.3 }), dnaN * 2);
+      for (let k = 0; k < 2; k++) for (let i = 0; i < dnaN; i++) dna.setColorAt(k * dnaN + i, cc.setHex(k === 0 ? 0x3b82f6 : 0x93c5fd).convertSRGBToLinear());
       dna.instanceColor.needsUpdate = true; txG.add(dna);
       const rungN = Math.floor(TL / 0.3);
       const rungs = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.03, 0.03, 1, 6), std(0xe2e8f0, { roughness: 0.4 }), rungN);
       txG.add(rungs);
-      const rnaMax = 70, rna = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 12, 10), std(0xfb923c, { roughness: 0.35, emissive: 0x3a1a00 }), rnaMax);
+      const rnaMax = 70, rna = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.1, 3), std(0xfb923c, { roughness: 0.35, emissive: 0x1a0c00 }), rnaMax);
       txG.add(rna);
       const pol = new THREE.Group(); txG.add(pol);
-      { const b = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), std(0x14b8a6, { transparent: true, opacity: 0.45, depthWrite: false, roughness: 0.3 })); b.scale.set(1.15, 1.1, 1.0); pol.add(b);
-        const c1 = new THREE.Mesh(new THREE.SphereGeometry(0.55, 24, 18), std(0x0d9488, { roughness: 0.35 })); c1.position.set(0.35, 0.35, -0.2); pol.add(c1); }
+      { const b = new THREE.Mesh(lumpy(new THREE.SphereGeometry(1, 48, 32), 0.07, 3.2), bio(0x14b8a6, 0.5)); b.scale.set(1.15, 1.1, 1.0); pol.add(b);
+        const c1 = new THREE.Mesh(lumpy(new THREE.SphereGeometry(0.55, 32, 22), 0.08, 3.6), bio(0x0d9488)); c1.position.set(0.35, 0.35, -0.2); pol.add(c1); }
       const Yv = new V(0, 1, 0), Q = new THREE.Quaternion(), S3 = new V(), PT = new V(), PB = new V();
       function dnaPos(strand, x, px, out) {
         const a = 2 * Math.PI * x / TPITCH + (strand ? Math.PI : 0), bump = Math.exp(-Math.pow((x - px) / 0.65, 2));
@@ -87,13 +99,15 @@
       const STOP = 6;
       const codCol = (k) => (k < 0 || k > STOP ? 0x94a3b8 : k === 0 ? 0x22c55e : k === STOP ? 0xef4444 : AAC[(k * 3) % 8]);
       const aaCol = (k) => (k === 0 ? 0x22c55e : AAC[(k * 3) % 8]);
-      const mr = new THREE.InstancedMesh(new THREE.SphereGeometry(0.115, 12, 10), std(0xffffff, { roughness: 0.35 }), NCOD * 3);
-      for (let k = 0; k < NCOD; k++) for (let j = 0; j < 3; j++) mr.setColorAt(k * 3 + j, cc.setHex(codCol(KC0 + k)));
+      const mr = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.115, 4), std(0xffffff, { roughness: 0.28 }), NCOD * 3);
+      for (let k = 0; k < NCOD; k++) for (let j = 0; j < 3; j++) mr.setColorAt(k * 3 + j, cc.setHex(codCol(KC0 + k)).convertSRGBToLinear());
       mr.instanceColor.needsUpdate = true; tlG.add(mr);
       const MY = -0.62;
+      /* mRNA의 당–인산 뼈대: 염기 구슬을 꿰는 가는 줄 */
+      const mrod = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, SP * NCOD - 0.1, 6, 12), std(0xc2410c, { roughness: 0.45 })); mrod.rotation.z = Math.PI / 2; mrod.position.y = MY - 0.07; tlG.add(mrod);
       // 리보솜
-      const big = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), std(0xa78bfa, { transparent: true, opacity: 0.4, depthWrite: false, roughness: 0.35 })); big.scale.set(2.2, 1.2, 1.4); big.position.set(0.1, 0.6, 0); tlG.add(big); big.renderOrder = 2;
-      const small = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), std(0xf9a8d4, { transparent: true, opacity: 0.5, depthWrite: false, roughness: 0.35 })); small.scale.set(1.8, 0.62, 1.15); small.position.set(0.1, -1.17, 0); tlG.add(small); small.renderOrder = 2;
+      const big = new THREE.Mesh(lumpy(new THREE.SphereGeometry(1, 64, 44), 0.05, 4.2), bio(0x8b5cf6, 0.42)); big.scale.set(2.2, 1.2, 1.4); big.position.set(0.1, 0.6, 0); tlG.add(big); big.renderOrder = 2;
+      const small = new THREE.Mesh(lumpy(new THREE.SphereGeometry(1, 64, 44), 0.05, 3.6), bio(0xec4899, 0.5)); small.scale.set(1.8, 0.62, 1.15); small.position.set(0.1, -1.17, 0); tlG.add(small); small.renderOrder = 2;
       // tRNA 풀
       function makeT() {
         const g = new THREE.Group();
@@ -104,10 +118,10 @@
         g.userData = { aa, ac, stem }; tlG.add(g); g.userData.lab = label('', aa, { color: 'rgba(15,23,42,.85)', size: 12, offset: [0.38, 0.0, 0] }); return g;
       }
       const pool = [0, 1, 2, 3].map(makeT);
-      function paint(g, k) { if (g.userData.k === k) return; g.userData.k = k; g.userData.lab.set(AA3[k] || ''); g.userData.aa.material.color.setHex(aaCol(k)); g.userData.aa.material.emissive.setHex(0x000000); g.userData.ac.forEach((b) => b.material.color.setHex(codCol(k))); }
+      function paint(g, k) { if (g.userData.k === k) return; g.userData.k = k; g.userData.lab.set(AA3[k] || ''); g.userData.aa.material.color.setHex(aaCol(k)).convertSRGBToLinear(); g.userData.aa.material.emissive.setHex(0x000000); g.userData.ac.forEach((b) => b.material.color.setHex(codCol(k)).convertSRGBToLinear()); }
       const chainM = new THREE.InstancedMesh(new THREE.SphereGeometry(0.17, 18, 14), std(0xffffff, { roughness: 0.3 }), 12); tlG.add(chainM);
       const bondM = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.04, 8, 24), std(0xfacc15, { emissive: 0xfacc15, emissiveIntensity: 0.8, transparent: true, opacity: 0 })); tlG.add(bondM);
-      const rf = new THREE.Mesh(new THREE.SphereGeometry(0.35, 22, 16), std(0xef4444, { roughness: 0.4 })); rf.visible = false; tlG.add(rf);
+      const rf = new THREE.Mesh(lumpy(new THREE.SphereGeometry(0.35, 28, 20), 0.08, 3.4), bio(0xdc2626)); rf.visible = false; tlG.add(rf);
       const XA = SP, XP = 0, XE = -SP, TY = -0.1;      // 슬롯 위치 (tRNA 몸통 가운데)
             const ease = (k) => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
       const lerp = (a, b, k) => a + (b - a) * k;
@@ -145,7 +159,7 @@
         bondM.material.opacity = (A && c >= 0.35 && c < 0.55) ? 1 - Math.abs((c - 0.45) / 0.1) : 0; bondM.position.set((XP + XA) / 2, TY + 0.55, 0); bondM.rotation.y = Math.PI / 2;
         const mshift = cyc + (noTrans ? 0 : trans);
         for (let k = 0; k < NCOD; k++) for (let j = 0; j < 3; j++) { const kk = KC0 + k; M4.makeTranslation(SP * (kk - mshift) + (j - 1) * DB2, MY, 0); mr.setMatrixAt(k * 3 + j, M4); }
-        mr.instanceMatrix.needsUpdate = true;
+        mr.instanceMatrix.needsUpdate = true; mrod.position.x = SP * (KC0 + (NCOD - 1) / 2 - mshift);
         codLabs.forEach((l) => { const x = SP * (l.k - mshift); l.a.position.set(x, MY - 0.38, 0); l.show(mode === 'tl' && x > -3.6 && x < 3.9); });
         // 폴리펩타이드 사슬
         const bonded = !!A && c >= 0.45, joined = ini ? 0 : bonded ? cyc + 2 : cyc + 1;
@@ -158,7 +172,7 @@
         for (let i = 0; i < 12; i++) {
           if (i >= n) { M4.makeScale(0, 0, 0); chainM.setMatrixAt(i, M4); continue; }
           chainCurve.getPointAt(Math.min(1, (i * 0.34) / tot), p);
-          M4.makeTranslation(p.x, p.y, p.z); chainM.setMatrixAt(i, M4); chainM.setColorAt(i, cc.setHex(aaCol(joined - 1 - i)));
+          M4.makeTranslation(p.x, p.y, p.z); chainM.setMatrixAt(i, M4); chainM.setColorAt(i, cc.setHex(aaCol(joined - 1 - i)).convertSRGBToLinear());
         }
         chainM.instanceMatrix.needsUpdate = true; if (chainM.instanceColor) chainM.instanceColor.needsUpdate = true;
         let m2;

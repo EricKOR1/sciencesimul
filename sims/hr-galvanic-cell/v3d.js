@@ -25,35 +25,39 @@
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.05 }, o || {}));
+      const MT = ctx.mats;
+      const rbox = (w, h, d, r) => { r = Math.min(r, w / 2 - 1e-3, h / 2 - 1e-3, d / 2 - 1e-3); const s = new THREE.Shape(), x = w / 2 - r, y = h / 2 - r; s.absarc(x, y, r, 0, Math.PI / 2); s.absarc(-x, y, r, Math.PI / 2, Math.PI); s.absarc(-x, -y, r, Math.PI, 1.5 * Math.PI); s.absarc(x, -y, r, 1.5 * Math.PI, 2 * Math.PI); const g = new THREE.ExtrudeGeometry(s, { depth: d - 2 * r, bevelEnabled: true, bevelThickness: r, bevelSize: r, bevelOffset: -r, bevelSegments: 3, curveSegments: 6 }); g.translate(0, 0, -(d - 2 * r) / 2); return g; };   // 모서리가 둥근 상자
+      const rslab = (w, d, t, r) => { const g = rbox(w, d, t, r); g.rotateX(Math.PI / 2); return g; };   // 눕힌 판 (윗면에 무늬가 고르게)
+      const rimOf = (g, x, y, r) => { const rim = new THREE.Mesh(new THREE.TorusGeometry(r + 0.03, 0.055, 12, 80), MT.glass({ tint: 0xe6f3ff, opacity: 0.5 })); rim.rotation.x = Math.PI / 2; rim.position.set(x, y, 0); g.add(rim); };   // 비커 입술
       let on = true, showLab = true, wear = 0, bridgeOut = false, negLeft = true, A = 'Zn', B = 'Cu', cfgSig = '', demo = false, nMol = null;
 
       /* 비커와 용액 */
       const liqs = [];
       [[-BX, 0xd9dfe8, 0.5], [BX, 0x4aa8ff, 0.7]].forEach(([x, c, o], i) => {
-        const gl = new THREE.Mesh(new THREE.CylinderGeometry(BR, BR, BH, 48, 1, true), new THREE.MeshStandardMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.16, roughness: 0.08, side: THREE.DoubleSide, depthWrite: false }));
-        gl.position.set(x, FY + BH / 2, 0); root.add(gl);
-        const bt = new THREE.Mesh(new THREE.CylinderGeometry(BR, BR, 0.12, 48), mat(0xbcd0e6, { transparent: true, opacity: 0.5 })); bt.position.set(x, FY, 0); root.add(bt);
-        const li = new THREE.Mesh(new THREE.CylinderGeometry(BR - 0.04, BR - 0.04, BH * 0.78, 48), mat(c, { transparent: true, opacity: i ? 0.42 : 0.22, roughness: 0.15, depthWrite: false }));
+        const gl = new THREE.Mesh(new THREE.CylinderGeometry(BR, BR, BH, 64, 1, true), MT.glass({ tint: 0xcfe8ff, opacity: 0.2 }));
+        gl.position.set(x, FY + BH / 2, 0); root.add(gl); rimOf(root, x, FY + BH, BR);
+        const bt = new THREE.Mesh(new THREE.CylinderGeometry(BR, BR, 0.12, 64), MT.glass({ tint: 0xcfe2f5, opacity: 0.42 })); bt.position.set(x, FY, 0); root.add(bt);
+        const li = new THREE.Mesh(new THREE.CylinderGeometry(BR - 0.04, BR - 0.04, BH * 0.78, 64), MT.liquid(c, { opacity: i ? 0.42 : 0.22 }));
         li.position.set(x, FY + BH * 0.39, 0); root.add(li); liqs.push(li);
       });
       /* 금속판 */
-      const zn = new THREE.Mesh(new THREE.BoxGeometry(0.3, 4.4, 1.6), mat(0x9aa4b2, { metalness: 0.85, roughness: 0.32 })); zn.position.set(-BX - 0.3, FY + 1.6, 0); root.add(zn);
-      const cu = new THREE.Mesh(new THREE.BoxGeometry(0.3, 4.4, 1.6), mat(0xd9824c, { metalness: 0.85, roughness: 0.3 })); cu.position.set(BX + 0.3, FY + 1.6, 0); root.add(cu);
+      const zn = new THREE.Mesh(rbox(0.3, 4.4, 1.6, 0.05), MT.metal(0x9aa4b2, { brushed: true })); zn.position.set(-BX - 0.3, FY + 1.6, 0); root.add(zn);
+      const cu = new THREE.Mesh(rbox(0.3, 4.4, 1.6, 0.05), MT.metal(0xd9824c, { brushed: true })); cu.position.set(BX + 0.3, FY + 1.6, 0); root.add(cu);
       const znTop = FY + 1.6 + 2.2, cuTop = znTop;
       /* 염다리 (U자 관) */
       const sbPts = [new V3(-BX + 0.7, FY + 1.0, 0.0), new V3(-BX + 0.9, PY - 0.6, 0.0), new V3(-BX * 0.45, PY + 0.1, 0.0), new V3(BX * 0.45, PY + 0.1, 0.0), new V3(BX - 0.9, PY - 0.6, 0.0), new V3(BX - 0.7, FY + 1.0, 0.0)];
       const sbCurve = new THREE.CatmullRomCurve3(sbPts, false, 'catmullrom', 0.3);
-      const sb = new THREE.Mesh(new THREE.TubeGeometry(sbCurve, 80, 0.42, 20, false), new THREE.MeshStandardMaterial({ color: 0xfff1b8, transparent: true, opacity: 0.42, roughness: 0.2, depthWrite: false })); root.add(sb);
+      const sb = new THREE.Mesh(new THREE.TubeGeometry(sbCurve, 96, 0.42, 28, false), MT.glass({ tint: 0xfff4cc, opacity: 0.32 })); root.add(sb);
       const sbIn = new THREE.Mesh(new THREE.TubeGeometry(sbCurve, 80, 0.32, 16, false), mat(0xfde68a, { transparent: true, opacity: 0.7, roughness: 0.6 })); root.add(sbIn);
       /* 도선 (Zn → 전구/전압계 → Cu) */
       const WY = PY + 1.6;
       const wp = [new V3(-BX - 0.3, znTop, 0), new V3(-BX - 0.3, WY, 0), new V3(-1.1, WY, 0), new V3(1.1, WY, 0), new V3(BX + 0.3, WY, 0), new V3(BX + 0.3, cuTop, 0)];
       const wcurve = new THREE.CatmullRomCurve3(wp, false, 'catmullrom', 0.02);
-      const wire = new THREE.Mesh(new THREE.TubeGeometry(wcurve, 100, 0.07, 10, false), mat(0xd18a3a, { metalness: 0.7, roughness: 0.35 })); root.add(wire);
-      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.55, 28, 22), mat(0xfff3c4, { transparent: true, opacity: 0.8, emissive: 0xffc83d, emissiveIntensity: 0.9, roughness: 0.2 })); bulb.position.set(0, WY + 0.55, 0); root.add(bulb);
-      const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.35, 20), mat(0x64748b, { metalness: 0.6, roughness: 0.4 })); sock.position.set(0, WY + 0.05, 0); root.add(sock);
-      const bulbL = new THREE.PointLight(0xffc83d, 0.9, 7); bulbL.position.copy(bulb.position); root.add(bulbL);
-      const swb = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.18, 0.5), mat(0xef6a5b)); swb.position.set(-2.0, WY + 0.09, 0); root.add(swb);
+      const wire = new THREE.Mesh(new THREE.TubeGeometry(wcurve, 100, 0.07, 12, false), MT.metal('copper')); root.add(wire);
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.55, 40, 28), MT.glass({ tint: 0xfff3c4, opacity: 0.8, extra: { emissive: 0xffc83d, emissiveIntensity: 0.9, side: THREE.FrontSide } })); bulb.position.set(0, WY + 0.55, 0); root.add(bulb);
+      const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.4, 0.35, 28), MT.metal('brass')); sock.position.set(0, WY + 0.05, 0); root.add(sock);
+      const bulbL = ctx.halo(bulb, 0xffcf5a, 4.4, 0.7);   // 전구 빛 번짐 (밝기는 전류를 따라가요)
+      const swb = new THREE.Mesh(rbox(0.6, 0.18, 0.5, 0.05), MT.plastic(0xd9483a)); swb.position.set(-2.0, WY + 0.09, 0); root.add(swb);
 
       /* 전자 */
       const NE = 14, em = new THREE.InstancedMesh(new THREE.SphereGeometry(0.15, 14, 10), mat(0x42e8ff, { emissive: 0x00a9c0, emissiveIntensity: 0.9 }), NE); em.frustumCulled = false; root.add(em);
@@ -91,6 +95,7 @@
       const demoOn = () => pl.playing || pl.p > 0.0005;
 
       /* ================= 1단계 '한 비커 반응'(2D의 beaker · one): Zn판을 CuSO₄ 용액에 담그면 ================= */
+      { const bn = new THREE.Mesh(rslab(13.5, 6.4, 0.36, 0.08), MT.wood(0xa88962, { repeat: 0.22 })); bn.position.set(0, FY - 0.26, 0); bn.userData.v3bg = true; root.add(bn); }   // 실험대
       const gMain = new THREE.Group(); while (root.children.length) gMain.add(root.children[0]); root.add(gMain);
       const gB = new THREE.Group(); root.add(gB); gB.visible = false;
       const probe = controls.text(''); probe.style.display = 'none'; const ctlEl = probe.parentElement;
@@ -99,19 +104,20 @@
       const oneRst = controls.button('↺ 다시 하기', () => { const w = window.__sim; if (w && w.bkReset) w.bkReset(); });
       const oneEls = [oneBtn, oneRst];
       const B1X = -4.6, B1R = 1.9, B1H = 3.8, B1Y = -2.3, LV1 = 0.64;
-      { const gl = new THREE.Mesh(new THREE.CylinderGeometry(B1R, B1R, B1H, 48, 1, true), new THREE.MeshStandardMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.16, roughness: 0.08, side: THREE.DoubleSide, depthWrite: false })); gl.position.set(B1X, B1Y + B1H / 2, 0); gB.add(gl);
-        const bt = new THREE.Mesh(new THREE.CylinderGeometry(B1R, B1R, 0.12, 48), mat(0xbcd0e6, { transparent: true, opacity: 0.5 })); bt.position.set(B1X, B1Y, 0); gB.add(bt); }
-      const sol1 = new THREE.Mesh(new THREE.CylinderGeometry(B1R - 0.04, B1R - 0.04, B1H * LV1, 48), mat(0x3b9be0, { transparent: true, opacity: 0.6, roughness: 0.15, depthWrite: false })); sol1.position.set(B1X, B1Y + B1H * LV1 / 2, 0); gB.add(sol1);
+      { const gl = new THREE.Mesh(new THREE.CylinderGeometry(B1R, B1R, B1H, 64, 1, true), MT.glass({ tint: 0xcfe8ff, opacity: 0.2 })); gl.position.set(B1X, B1Y + B1H / 2, 0); gB.add(gl); rimOf(gB, B1X, B1Y + B1H, B1R);
+        const bn = new THREE.Mesh(rslab(9, 5.6, 0.3, 0.07), MT.wood(0xa88962, { repeat: 0.24 })); bn.position.set(-3.4, B1Y - 0.5, 0); bn.userData.v3bg = true; gB.add(bn);
+        const bt = new THREE.Mesh(new THREE.CylinderGeometry(B1R, B1R, 0.12, 64), MT.glass({ tint: 0xcfe2f5, opacity: 0.42 })); bt.position.set(B1X, B1Y, 0); gB.add(bt); }
+      const sol1 = new THREE.Mesh(new THREE.CylinderGeometry(B1R - 0.04, B1R - 0.04, B1H * LV1, 64), MT.liquid(0x3b9be0, { opacity: 0.6 })); sol1.position.set(B1X, B1Y + B1H * LV1 / 2, 0); gB.add(sol1);
       const surf1 = B1Y + B1H * LV1;
-      const rod = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.12, 0.12), mat(0x94a3b8, { metalness: 0.6 })); rod.position.set(B1X, B1Y + B1H + 1.0, 0); gB.add(rod);
+      const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.6, 16).rotateZ(Math.PI / 2), MT.metal('steel')); rod.position.set(B1X, B1Y + B1H + 1.0, 0); gB.add(rod);
       const PLH = 3.0, plate1 = new THREE.Group(); gB.add(plate1);
-      const znP = new THREE.Mesh(new THREE.BoxGeometry(0.36, PLH, 1.3), mat(0xaab4c2, { metalness: 0.85, roughness: 0.32 })); znP.position.y = -PLH / 2; plate1.add(znP);
+      const znP = new THREE.Mesh(rbox(0.36, PLH, 1.3, 0.05), MT.metal(0xaab4c2, { brushed: true })); znP.position.y = -PLH / 2; plate1.add(znP);
       const cuC = new THREE.Mesh(new THREE.BoxGeometry(0.5, PLH, 1.42), mat(0xb45f2a, { metalness: 0.5, roughness: 0.55, transparent: true, opacity: 0 })); cuC.position.y = -PLH / 2; plate1.add(cuC);
       const wire1 = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1, 6), mat(0x64748b)); gB.add(wire1);
       /* 온도계 */
       const TX1 = -1.5, TH1 = 4.2;
-      const thT = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, TH1, 16), new THREE.MeshStandardMaterial({ color: 0xdbe7ff, transparent: true, opacity: 0.3, roughness: 0.15, depthWrite: false })); thT.position.set(TX1, B1Y + TH1 / 2, 0); gB.add(thT);
-      const thB = new THREE.Mesh(new THREE.SphereGeometry(0.3, 18, 14), mat(0xe2464b)); thB.position.set(TX1, B1Y - 0.1, 0); gB.add(thB);
+      const thT = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, TH1, 24), MT.glass({ tint: 0xdbe7ff, opacity: 0.3 })); thT.position.set(TX1, B1Y + TH1 / 2, 0); gB.add(thT);
+      const thB = new THREE.Mesh(new THREE.SphereGeometry(0.3, 28, 20), MT.liquid(0xd3262c, { opacity: 0.95 })); thB.position.set(TX1, B1Y - 0.1, 0); gB.add(thB);
       const thF = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1, 12), mat(0xe2464b, { emissive: 0x7a1010, emissiveIntensity: 0.5 })); gB.add(thF);
       for (let v = 20; v <= 40; v += 5) { const tk = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.03, 0.03), mat(0x94a3b8)); tk.position.set(TX1 + 0.3, B1Y + (v - 20) / 20 * (TH1 - 0.5) + 0.2, 0); gB.add(tk); }
       const lT1 = label('', [TX1, B1Y + TH1 + 0.5, 0], { color: 'rgba(30,41,59,.92)' }); lT1.show(false);
@@ -121,13 +127,13 @@
       const IXC = 4.3, IW = 5.4, IHt = 4.6, IY0 = 0.4, SLX = IXC - IW / 2 + 1.0;
       { const pn = new THREE.Mesh(new THREE.BoxGeometry(IW, IHt, 0.08), new THREE.MeshStandardMaterial({ color: 0xb6c8ea, transparent: true, opacity: 0.12, roughness: 0.4, depthWrite: false })); pn.position.set(IXC, IY0, -0.35); gB.add(pn);
         const fr = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(IW, IHt, 0.08)), new THREE.LineBasicMaterial({ color: 0xa78bfa })); fr.position.copy(pn.position); gB.add(fr);
-        const sl = new THREE.Mesh(new THREE.BoxGeometry(1.2, IHt - 0.1, 0.6), mat(0xaab4c2, { metalness: 0.7, roughness: 0.4 })); sl.position.set(IXC - IW / 2 + 0.65, IY0, -0.1); gB.add(sl); }
+        const sl = new THREE.Mesh(rbox(1.2, IHt - 0.1, 0.6, 0.06), MT.metal(0xaab4c2, { brushed: true })); sl.position.set(IXC - IW / 2 + 0.65, IY0, -0.1); gB.add(sl); }
       const lIn = label('🔍 입자 모형으로 보기 (Zn판 표면)', [IXC, IY0 + IHt / 2 + 0.5, 0], { color: 'rgba(91,33,182,.92)' }), lInZ = label('Zn판', [IXC - IW / 2 + 0.65, IY0 - IHt / 2 - 0.45, 0], { color: 'rgba(100,116,139,.92)' }), lInS = label('CuSO₄ 용액', [IXC + IW / 2 - 0.9, IY0 - IHt / 2 - 0.45, 0], { color: 'rgba(30,100,170,.92)' });
       const lInD = label('', [IXC, IY0 + IHt / 2 - 0.35, 0.6], { color: 'rgba(122,74,0,.95)' });
       [lIn, lInZ, lInS, lInD].forEach((l) => l.show(false));
       const EVN = 5, evZn = [], evCu = [], evE = [];
       for (let j = 0; j < EVN; j++) {
-        const a = new THREE.Mesh(new THREE.SphereGeometry(0.3, 22, 16), mat(0x94a3b8)); const c2 = new THREE.Mesh(new THREE.SphereGeometry(0.3, 22, 16), mat(0x3b82c4)); const e = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 8), mat(0xfbbf24, { emissive: 0xfbbf24, emissiveIntensity: 0.9 }));
+        const a = new THREE.Mesh(new THREE.SphereGeometry(0.3, 32, 22), mat(0x94a3b8, { roughness: 0.28, metalness: 0.35 })); const c2 = new THREE.Mesh(new THREE.SphereGeometry(0.3, 32, 22), mat(0x3b82c4, { roughness: 0.25 })); const e = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 8), mat(0xfbbf24, { emissive: 0xfbbf24, emissiveIntensity: 0.9 }));
         gB.add(a); gB.add(c2); gB.add(e); evZn.push(a); evCu.push(c2); evE.push(e);
       }
       const smo = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
@@ -210,7 +216,7 @@
           negPl.scale.x = 1 - 0.55 * wear; posPl.scale.x = 1 + 0.9 * wear;
           { const sz = md === 'combo' && S2.cb && S2.cb.size === 'big' ? 1.35 : 1; zn.scale.y = zn.scale.z = cu.scale.y = cu.scale.z = sz; }   // “판의 크기” 크게: 넓이만 커지고 전압은 그대로
           wearBtn.style.display = nTarget != null ? 'none' : '';   // 석출 분석에서는 판의 변화가 이동한 전자의 양으로 정해져요
-          bulb.material.emissiveIntensity = 0.1 + 0.9 * flow; bulbL.intensity = 0.9 * flow; bulb.material.opacity = 0.5 + 0.3 * flow;
+          bulb.material.emissiveIntensity = 0.1 + 0.9 * flow; bulbL.material.opacity = 0.75 * flow; bulb.material.opacity = 0.5 + 0.3 * flow;
           swb.position.y = WY + (on ? 0.09 : 0.45); swb.rotation.z = on ? 0 : 0.5;
           labs[0].set(A + (cbWait ? '판 · (−)극? (+)극?' : negLeft ? '판 (−)극 · 산화' : '판 (+)극 · 환원'));
           labs[1].set(B + (cbWait ? '판 · (−)극? (+)극?' : negLeft ? '판 (+)극 · 환원' : '판 (−)극 · 산화'));

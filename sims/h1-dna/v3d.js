@@ -4,7 +4,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   /* ---------- DNA 이중 나선 공용 모형 (염기쌍 N개, 10염기쌍/바퀴, 0.34 nm/염기쌍, 지름 2 nm) ---------- */
-  const BCOL = { A: 0x22c55e, T: 0xef4444, G: 0xeab308, C: 0x3b82f6 };   // 2D 차시와 같은 색
+  const BCOL = { A: 0x16a34a, T: 0xdc2626, G: 0xdba507, C: 0x2563eb };   // 2D 차시와 같은 색
   const BHEX = { A: '#22c55e', T: '#ef4444', G: '#eab308', C: '#3b82f6' };
   const BTXT = { A: '#fff', T: '#fff', G: '#3b2f00', C: '#fff' };
   const BNAME = { A: '아데닌', T: '타이민', G: '구아닌', C: '사이토신' };
@@ -16,15 +16,20 @@
     const seq = o.seq, sec = seq.split('').map((c) => COMP[c]).join('');
     const Yv = new THREE.Vector3(0, 1, 0), v3 = new THREE.Vector3();
     const g = new THREE.Group(); root.add(g);
-    const M = (c, ex) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.05, transparent: true }, ex || {}));
-    const matP = M(0xfb923c), matS = M(0x38bdf8), matSt = o.strandCols.map((c) => M(c, { roughness: 0.6 }));
+    const M = (c, ex) => new THREE.MeshPhysicalMaterial(Object.assign({ color: c, roughness: 0.3, metalness: 0, clearcoat: 0.6, clearcoatRoughness: 0.2, envMapIntensity: 1.1 }, ex || {}));   // 매끈한 플라스틱 분자 모형
+    /* 모서리를 둥글린 조각들: 오각형 당 블록, 둥근 염기 막대 */
+    const bevel = (sh, h) => { const b = Math.min(0.025, h * 0.25), g2 = new THREE.ExtrudeGeometry(sh, { depth: h - 2 * b, bevelEnabled: true, bevelThickness: b, bevelSize: b, bevelSegments: 2, steps: 1, curveSegments: 6 }); g2.translate(0, 0, -(h - 2 * b) / 2); g2.rotateX(Math.PI / 2); return g2; };
+    const prism = (n, r, h) => { const sh = new THREE.Shape(); for (let q = 0; q < n; q++) { const a = Math.PI / 2 - q / n * Math.PI * 2, x = (r - 0.025) * Math.cos(a), y = (r - 0.025) * Math.sin(a); if (q) sh.lineTo(x, y); else sh.moveTo(x, y); } sh.closePath(); return bevel(sh, h); };
+    const slab = (w, h, d) => { const x = w / 2 - 0.025, y = d / 2 - 0.025, r = Math.min(0.07, x, y), sh = new THREE.Shape(); sh.moveTo(-x + r, -y); sh.lineTo(x - r, -y); sh.quadraticCurveTo(x, -y, x, -y + r); sh.lineTo(x, y - r); sh.quadraticCurveTo(x, y, x - r, y); sh.lineTo(-x + r, y); sh.quadraticCurveTo(-x, y, -x, y - r); sh.lineTo(-x, -y + r); sh.quadraticCurveTo(-x, -y, -x + r, -y); return bevel(sh, h); };
+    const sugarGeo = prism(5, 0.19, 0.13), slabGeo = {};
+    const matP = M(0xf57c1a, { roughness: 0.22, clearcoat: 1 }), matS = M(0x1aa6ea), matSt = o.strandCols.map((c) => M(c, { roughness: 0.45 }));
     const backMats = [matP, matS, matSt[0], matSt[1]];
     let tw = 1, focus = 'all', sel = -1;
     const yOf = (i) => (i - (N - 1) / 2) * RISE;
     const ang = (y) => tw * (2 * Math.PI / 3.4) * y;
     const off = [-A, Math.PI + A];
     const pos = (k, y, r, out) => { const p = ang(y) + off[k]; return out.set(r * Math.cos(p), y, -r * Math.sin(p)); };
-    const stickGeo = (r) => new THREE.CylinderGeometry(r, r, 1, 8);
+    const stickGeo = (r) => new THREE.CylinderGeometry(r, r, 1, 12);
     function place(m, a, b) { v3.subVectors(b, a); const L = Math.max(1e-4, v3.length()); m.position.addVectors(a, b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(Yv, v3.multiplyScalar(1 / L)); m.scale.set(1, L, 1); }
     function localStick(grp, p, q, r, mat) { const m = new THREE.Mesh(stickGeo(r), mat); place(m, new THREE.Vector3(...p), new THREE.Vector3(...q)); grp.add(m); return m; }
 
@@ -40,16 +45,16 @@
         const len = lens[k], c = L[k], baseG = new THREE.Group(); grp.add(baseG);
         const xAt = (d) => side * (0.75 - d);                         // 바깥 끝에서 안쪽으로 d
         if (o.rings) {
-          const hex = (d, rr) => { const h = new THREE.Mesh(new THREE.CylinderGeometry(rr, rr, 0.1, 6), m); h.position.x = xAt(d); baseG.add(h); };
-          if (PUR[c]) { const pent = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.1, 5), m); pent.position.x = xAt(0.2); pent.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2; baseG.add(pent); hex(len - 0.25, 0.25); }
+          const hex = (d, rr) => { const h = new THREE.Mesh(prism(6, rr, 0.1), m); h.position.x = xAt(d); baseG.add(h); };
+          if (PUR[c]) { const pent = new THREE.Mesh(prism(5, 0.2, 0.1), m); pent.position.x = xAt(0.2); pent.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2; baseG.add(pent); hex(len - 0.25, 0.25); }
           else hex(0.25, 0.25);
         } else {
-          const b = new THREE.Mesh(new THREE.BoxGeometry(len, 0.13, 0.4), m); b.position.x = xAt(len / 2); baseG.add(b);
+          const b = new THREE.Mesh(slabGeo[len] || (slabGeo[len] = slab(len, 0.13, 0.4)), m); b.position.x = xAt(len / 2); baseG.add(b);
           if (PUR[c]) { const peg = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.13, 0.16), m); peg.position.x = xAt(len + 0.03); peg.visible = false; baseG.add(peg); }
         }
         // 당 (오각형 블록) — 로컬에 고정
         const sp = [side * R * Math.cos(A), 0, R * Math.sin(A)];
-        const s = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.12, 5), matS);
+        const s = new THREE.Mesh(sugarGeo, matS);
         s.position.set(...sp); s.quaternion.setFromUnitVectors(Yv, new THREE.Vector3(sp[0], 0, sp[2]).normalize()); grp.add(s); sugars[k][i] = s;
         // 당 – 염기 연결
         const cm = M(0x94a3b8, { roughness: 0.6 }); mats.push(cm);
@@ -68,7 +73,7 @@
     }
 
     /* 뼈대: 인산(원) – 당(오각형) 사슬, 5′→3′ */
-    const chains = [[], []];
+    const chains = [[], []], pGeo = new THREE.SphereGeometry(0.14, 28, 20);
     for (let k = 0; k < 2; k++) {
       const ord = [];
       if (k === 0) for (let i = 0; i < N; i++) { ord.push({ kind: 'P', i, y: yOf(i) - HALF }); ord.push({ kind: 'S', i, y: yOf(i) }); }
@@ -76,7 +81,7 @@
       const ch = chains[k]; ch.sticks = [];
       ord.forEach((n) => {
         n.k = k; n.p = new THREE.Vector3();
-        if (n.kind === 'P') { n.mesh = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 12), matP); g.add(n.mesh); }
+        if (n.kind === 'P') { n.mesh = new THREE.Mesh(pGeo, matP); g.add(n.mesh); }
         else n.mesh = sugars[k][n.i];
         ch.push(n);
       });
@@ -101,7 +106,7 @@
         v3.subVectors(q, p).normalize(); a.mesh.quaternion.setFromUnitVectors(Yv, v3);
       });
     }
-    function setOp(m, op) { m.opacity = op; m.depthWrite = op >= 1; }
+    function setOp(m, op) { const tr = op < 1; if (m.transparent !== tr) { m.transparent = tr; m.needsUpdate = true; } m.opacity = op; m.depthWrite = op >= 1; }
     function applyFocus() {
       const kOp = focus === 'bases' ? 0.1 : 1;
       backMats.forEach((m) => setOp(m, kOp)); arrowMats.forEach((m) => setOp(m, kOp));
@@ -155,6 +160,9 @@
       const { THREE, root, label, info, controls, orbit } = ctx;
       const H = makeHelix(THREE, root, { N: 20, seq: SEQ20, a: 0, rings: false, strandCols: [0x94a3b8, 0x94a3b8] });
       let showTurn = false, selI = 2, animDir = 0, faceT = 0;
+      /* 받침대: 책상 위 DNA 모형처럼 둥근 받침 */
+      { const y0 = H.yOf(0) - 0.55, base = new THREE.Mesh(new THREE.CylinderGeometry(1.55, 1.7, 0.16, 64), ctx.mats.ceramic(0x1c2436, { extra: { roughness: 0.35 } })); base.position.y = y0 - 0.08; base.userData.v3bg = true; base.receiveShadow = true; root.add(base);
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(1.56, 0.03, 10, 80), ctx.mats.metal('aluminium', { brushed: true })); ring.rotation.x = Math.PI / 2; ring.position.y = y0; ring.userData.v3bg = true; root.add(ring); }
 
       /* 한 바퀴 표시: 염기쌍 10개 눈금 */
       const dim = dimTools(THREE, root); dim.grp.visible = false;

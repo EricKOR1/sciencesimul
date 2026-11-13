@@ -22,14 +22,15 @@
       renderer.localClippingEnabled = true;
       const cutPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 0);       // z>0 쪽을 잘라 내요
       let cut = false;
-      const cloudMat = (o) => { const m = new THREE.MeshStandardMaterial(Object.assign({ color: 0xf4f7fb, roughness: 0.95, metalness: 0 }, o || {})); m.clippingPlanes = []; return m; };
+      const cloudTex = ctx.mats.tex('noise');
+      const cloudMat = (o) => { const m = new THREE.MeshStandardMaterial(Object.assign({ color: 0xf6f8fc, roughness: 0.97, metalness: 0, bumpMap: cloudTex, bumpScale: 0.012, emissive: 0x1c2532, envMapIntensity: 0.35 }, o || {})); m.clippingPlanes = []; return m; };
       const clouds = [];
 
       /* 바다 */
       const SEA = 14, sg = new THREE.PlaneGeometry(SEA, SEA, 70, 70); sg.rotateX(-Math.PI / 2);
-      const sea = new THREE.Mesh(sg, new THREE.MeshStandardMaterial({ color: 0x0c3f78, roughness: 0.35, metalness: 0.15, transparent: true, opacity: 0.97 })); root.add(sea);
+      const sea = new THREE.Mesh(sg, ctx.mats.plastic(0x0a3a70, { roughness: 0.34, extra: { clearcoat: 0.6, clearcoatRoughness: 0.32, envMapIntensity: 0.6 } })); root.add(sea);   // 반짝이는 바닷물 (구름 그림자가 드리워요)
       const sp = sg.attributes.position, sx0 = Float32Array.from(sp.array);
-      const base = new THREE.Mesh(new THREE.BoxGeometry(SEA, 0.12, SEA), new THREE.MeshStandardMaterial({ color: 0x1a2b4a, roughness: 0.9 })); base.position.y = -0.4; root.add(base);
+      const base = new THREE.Mesh(new THREE.BoxGeometry(SEA, 0.5, SEA), ctx.mats.liquid(0x08294f, { opacity: 0.9, extra: { roughness: 0.3, depthWrite: true } })); base.position.y = -0.27; root.add(base);   // 바닷물의 두께
 
       /* 눈벽 · 눈 */
       const wall = new THREE.Mesh(new THREE.BufferGeometry(), cloudMat({ side: THREE.DoubleSide, transparent: true, opacity: 0.96 })); root.add(wall); clouds.push(wall);
@@ -39,8 +40,11 @@
         const m = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, side: THREE.DoubleSide }); m.clippingPlanes = []; return m; })());
       canopy.rotation.x = -Math.PI / 2; root.add(canopy); clouds.push(canopy);
       /* 나선 구름 띠 */
-      const NA = 4, NPA = 26, puffs = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 16, 12), cloudMat({ roughness: 1 }), NA * NPA); clouds.push(puffs);
+      const puffGeo = new THREE.IcosahedronGeometry(1, 3);                     // 뭉게구름 한 덩이 (가볍게)
+      const NA = 4, NPA = 26, NSUB = 3, puffs = new THREE.InstancedMesh(puffGeo, cloudMat(), NA * NPA * NSUB); clouds.push(puffs);
       const spin = new THREE.Group(); spin.add(puffs); root.add(spin);
+      /* 눈벽 겉면과 꼭대기의 뭉게구름 (적란운처럼 울퉁불퉁하게) */
+      const NW = 84, wpuffs = new THREE.InstancedMesh(puffGeo, cloudMat(), NW); wall.add(wpuffs); clouds.push(wpuffs);
       /* 풍속 곡선 (잘린 면) */
       const prof = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: 0xffd34d })); root.add(prof);
       const profBase = new THREE.Mesh(new THREE.PlaneGeometry(SEA - 1, 2.0), new THREE.MeshBasicMaterial({ color: 0x0b1a33, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false })); profBase.position.set(0, 1.05, 0); root.add(profBase);
@@ -49,7 +53,7 @@
       const danger = half(-Math.PI / 2, 0xe03a3a), safe = half(Math.PI / 2, 0x3b82f6);
       const trk = new THREE.Group(); { const m = new THREE.MeshStandardMaterial({ color: 0xffd34d, emissive: 0xffa500, emissiveIntensity: 0.4 }), s = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.6, 12), m), h = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 16), m); s.rotation.x = Math.PI / 2; h.rotation.x = -Math.PI / 2; h.position.z = -0.95; trk.add(s, h); trk.position.set(0, 0.2, -4.9); root.add(trk); }
       /* 공기 흐름 입자 */
-      const NP = 70, flow = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }), NP); root.add(flow);
+      const NP = 70, flow = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.075, 2), new THREE.MeshBasicMaterial({ color: 0xffffff }), NP); root.add(flow);
       const fc = [new THREE.Color(0x8be9ff), new THREE.Color(0xff9d6c), new THREE.Color(0xc9b8ff)];
 
       const LB = {
@@ -83,9 +87,20 @@
         const dm = new THREE.Object3D(); let k = 0; let sd = 7; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
         for (let a = 0; a < NA; a++) for (let i = 0; i < NPA; i++) {
           const f = i / (NPA - 1), r = lerp(P.rE + 1.5, 5.8, Math.pow(f, 0.9)), th = a * Math.PI / 2 - 2.5 * Math.log(r / (P.rE + 1.0)) * 1.0 + (rnd() - 0.5) * 0.18, hgt = lerp(1.0, 0.25, f) * (0.8 + rnd() * 0.5);
-          dm.position.set(Math.cos(th) * r, hgt * 0.5 + 0.05, -Math.sin(th) * r); const sz = lerp(0.42, 0.24, f) * (0.8 + rnd() * 0.5); dm.scale.set(sz * 1.3, hgt * 0.55 + 0.1, sz * 1.3); dm.updateMatrix(); puffs.setMatrixAt(k++, dm.matrix);
+          const px = Math.cos(th) * r, pz = -Math.sin(th) * r;
+          dm.position.set(px, hgt * 0.5 + 0.05, pz); const sz = lerp(0.42, 0.24, f) * (0.8 + rnd() * 0.5); dm.scale.set(sz * 1.3, hgt * 0.55 + 0.1, sz * 1.3); dm.updateMatrix(); puffs.setMatrixAt(k++, dm.matrix);
+          for (let j = 1; j < NSUB; j++) {          // 큰 덩이 옆에 붙은 작은 덩이들
+            const a2 = rnd() * 6.283, d2 = sz * (0.75 + rnd() * 0.5), s2 = sz * (0.5 + rnd() * 0.35), h2 = hgt * (0.3 + rnd() * 0.5);
+            dm.position.set(px + Math.cos(a2) * d2, h2 * 0.5 + 0.04, pz + Math.sin(a2) * d2); dm.scale.set(s2 * 1.25, h2 * 0.5 + 0.08, s2 * 1.25); dm.updateMatrix(); puffs.setMatrixAt(k++, dm.matrix);
+          }
         }
         puffs.instanceMatrix.needsUpdate = true;
+        for (let i = 0; i < NW; i++) {
+          const top = i >= NW - 26, f = top ? 1 : (i + 0.5) / (NW - 26), y = top ? P.top - 0.12 : P.top * (0.05 + 0.9 * f), th = i * 2.399963;
+          const tk = 0.35 + 0.45 * (1 - y / P.top) + 0.15, r = top ? rWall(y) + tk * (0.3 + 0.5 * rnd()) : rWall(y) + tk - 0.2, sz = (top ? 0.3 : 0.4) + 0.2 * rnd();
+          dm.position.set(Math.cos(th) * r, y, Math.sin(th) * r); dm.scale.set(sz, sz * (top ? 0.7 : 1.05), sz); dm.updateMatrix(); wpuffs.setMatrixAt(i, dm.matrix);
+        }
+        wpuffs.instanceMatrix.needsUpdate = true;
         /* 풍속 곡선 */
         const pts = []; for (let i = -40; i <= 40; i++) { const x = i / 40 * 6.2, v = wprof(Math.abs(x)); pts.push(new THREE.Vector3(x, 0.15 + v / P.v * 1.7, 0)); }
         prof.geometry.dispose(); prof.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 100, 0.04, 6, false);
@@ -122,8 +137,9 @@
       OBS.forEach((o) => {
         o.g = new THREE.Group(); root.add(o.g);
         const col = o.id === 'A' ? 0xff5a4a : o.id === 'B' ? 0x4aa8ff : 0xb78bff;
-        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.0, 8), obsStd(col)); pole.position.y = 0.5; o.g.add(pole);
-        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), obsStd(col)); ball.position.y = 1.05; o.g.add(ball);
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.0, 8), ctx.mats.metal('steel')); pole.position.y = 0.5; o.g.add(pole);
+        const buoy = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.14, 20), ctx.mats.plastic(0xd9dde4)); buoy.position.y = 0.03; o.g.add(buoy);      // 관측 부표
+        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), obsStd(col)); ball.position.y = 1.05; o.g.add(ball); ctx.halo(ball, col, 0.9, 0.5);
         const ln = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.02, 2 * 10 * ZU), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.5 })); ln.position.set(o.x, 0.12, 0); root.add(ln); o.ln = ln;
         o.lab = label('', o.g, { size: 12, color: 'rgba(30,20,70,.92)', offset: [0, 2.3, 0] });
         /* 풍향 화살표: 바람이 불어 가는 쪽을 가리켜요 (북 = −z, 동 = +x) */

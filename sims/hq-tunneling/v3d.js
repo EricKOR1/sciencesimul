@@ -10,7 +10,7 @@
     const V3 = THREE.Vector3, Yax = new V3(0, 1, 0);
     const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.1 }, o || {}));
     const basic = (c, o) => new THREE.MeshBasicMaterial(Object.assign({ color: c }, o || {}));
-    const glass = (c, op, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.25, metalness: 0.0, transparent: true, opacity: op, depthWrite: false, side: THREE.DoubleSide }, o || {}));
+    const glass = (c, op, o) => ctx.mats.glass({ tint: c, opacity: op, extra: o });
     /* 화살표 하나: setArrow(g, 시작점, 끝점) */
     function mkArrow(col, rad, o) {
       const g = new THREE.Group(); const m = (o && o.basic) ? basic(col) : mat(col, { roughness: 0.4, emissive: col, emissiveIntensity: 0.12 });
@@ -174,11 +174,11 @@
       }
       /* 입자 (확률로 통과) */
       const LANE = 3.1, balls = [];
-      for (let i = 0; i < 40; i++) { const m = sphere(0.24, 0x7dd3fc, { emissive: 0x38bdf8, emissiveIntensity: 0.8, transparent: true, opacity: 0.95 }); m.visible = false; root.add(m); balls.push({ m, on: false, x: 0, v: 1, dir: 1, pass: false, decided: false }); }
+      for (let i = 0; i < 40; i++) { const m = sphere(0.24, 0x7dd3fc, { emissive: 0x38bdf8, emissiveIntensity: 0.8, transparent: true, opacity: 0.95, roughness: 0.25 }); m.visible = false; root.add(m); ctx.halo(m, 0x6fd0ff, 1.5, 0.45); balls.push({ m, on: false, x: 0, v: 1, dir: 1, pass: false, decided: false }); }
       let spawn = 0.4, tries = 0, passes = 0, T2d = null, lsig = '';
       function resetCount() { tries = passes = 0; balls.forEach((b) => { b.on = false; b.m.visible = false; }); }
       /* 고전 입자(공): 2D의 “공 굴리기”와 함께 굴러가 장벽 앞에서 되돌아와요 */
-      const cBall = sphere(0.42, 0xf59e0b, { roughness: 0.45, emissive: 0xb45309, emissiveIntensity: 0.25 }); cBall.visible = false; root.add(cBall);
+      const cBall = new THREE.Mesh(new THREE.SphereGeometry(0.42, 40, 28), ctx.mats.plastic(0xe08a06, { extra: { emissive: 0xb45309, emissiveIntensity: 0.2 } })); cBall.visible = false; root.add(cBall);
       let cRef = null, cT = 0;
       /* 전자: 2D의 “전자 1개 / 100개”로 쏜 전자(S.cq.shots)를 그대로 따라가요 */
       function mirrorShots(Q) {
@@ -205,9 +205,11 @@
          ===================================================================== */
       const sceneKey = () => { const L = window.__sim; const S = L && L.S; if (!S) return 'barrier'; if (S.mode === 'stm') return 'stm'; if (S.mode === 'dev') return S.dv.sub || 'leak'; return 'barrier'; };
       const LB = 'rgba(8,12,24,.78)', Yv = h.Yax;
+      const MT = ctx.mats;
+      const rbox = (w, h, d, r) => { r = Math.min(r, w / 2 - 1e-3, h / 2 - 1e-3, d / 2 - 1e-3); const s = new THREE.Shape(), x = w / 2 - r, y = h / 2 - r; s.absarc(x, y, r, 0, Math.PI / 2); s.absarc(-x, y, r, Math.PI / 2, Math.PI); s.absarc(-x, -y, r, Math.PI, 1.5 * Math.PI); s.absarc(x, -y, r, 1.5 * Math.PI, 2 * Math.PI); const g = new THREE.ExtrudeGeometry(s, { depth: d - 2 * r, bevelEnabled: true, bevelThickness: r, bevelSize: r, bevelOffset: -r, bevelSegments: 3, curveSegments: 6 }); g.translate(0, 0, -(d - 2 * r) / 2); return g; };   // 모서리가 둥근 상자
       const stdM = (w, hh, d, c, o) => new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), mat(c, o));
       const sphM = (r, c, o) => new THREE.Mesh(new THREE.SphereGeometry(r, 22, 16), mat(c, o));
-      const eM = () => sphM(0.14, 0xffb400, { emissive: 0xffb400, emissiveIntensity: 1 });
+      const eM = () => { const m = sphM(0.14, 0xffb400, { emissive: 0xffb400, emissiveIntensity: 1 }); ctx.halo(m, 0xffc23a, 0.9, 0.5); return m; };
       const lerp = (a, b, u) => a + (b - a) * u, cl = (v, a, b) => Math.min(b, Math.max(a, v));
       const mmM = (g, m) => { g.add(m); return m; };
 
@@ -215,21 +217,21 @@
       const gT = newScene('stm'); CAMS.stm = { dist: PHN ? 21 : 15, theta: 0.5, phi: 1.2, min: 6, max: 34, tx: 0, ty: 2.0, tz: 0 };
       const SCN = 4, AT = (window.__sim && window.__sim.AT) || { cols: 7, rows: 4, sp: 0.25, ox: 0.125, oy: 0.125, W: 1.75, H: 1.0, hA: 0.10 };
       const SX = (nm) => (nm - AT.W / 2) * SCN, SZ = (nm) => (nm - AT.H / 2) * SCN, rA = 0.085;
-      const slab = mmM(gT, stdM(AT.W * SCN + 0.9, 0.8, AT.H * SCN + 0.9, 0x4a5878, { roughness: 0.7 })); slab.position.set(0, -0.4 - 0.0, 0);
+      const slab = mmM(gT, new THREE.Mesh(rbox(AT.W * SCN + 0.9, 0.8, AT.H * SCN + 0.9, 0.06), MT.metal(0x3f4c69, { brushed: true }))); slab.position.set(0, -0.4 - 0.0, 0);
       const stAt = [];
       for (let i = 0; i < AT.cols; i++) for (let j = 0; j < AT.rows; j++) {
         const vac = window.__sim && i === window.__sim.VAC[0] && j === window.__sim.VAC[1];
-        const m = vac ? new THREE.Mesh(new THREE.SphereGeometry(rA * SCN, 14, 10), h.basic(0x9aa6b8, { transparent: true, opacity: 0.22, wireframe: true })) : sphM(rA * SCN, 0x5b7bd4, { roughness: 0.3, metalness: 0.2 });
+        const m = vac ? new THREE.Mesh(new THREE.SphereGeometry(rA * SCN, 14, 10), h.basic(0x9aa6b8, { transparent: true, opacity: 0.22, wireframe: true })) : new THREE.Mesh(new THREE.SphereGeometry(rA * SCN, 32, 22), MT.plastic(0x4a6cc8, { roughness: 0.25 }));
         m.position.set(SX(AT.ox + AT.sp * i), (AT.hA - rA) * SCN, SZ(AT.oy + AT.sp * j)); gT.add(m); stAt.push(m);
       }
       const tipG = new THREE.Group(); gT.add(tipG);
-      const tipCone = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.8, 24), mat(0xe8edf5, { metalness: 0.8, roughness: 0.25 })); tipCone.rotation.x = Math.PI; tipCone.position.y = 0.9; tipG.add(tipCone);
-      const tipRod = mmM(tipG, cyl(0.32, 0.32, 2.0, 0x9aa5b8, { metalness: 0.7 }, 20)); tipRod.position.y = 2.8;
+      const tipCone = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.8, 40), MT.metal('chrome', { roughness: 0.14 })); tipCone.rotation.x = Math.PI; tipCone.position.y = 0.9; tipG.add(tipCone);
+      const tipRod = mmM(tipG, new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 2.0, 32), MT.metal('steel', { brushed: true }))); { const col = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.16, 32), MT.metal('brass')); col.position.y = 1.86; tipG.add(col); } tipRod.position.y = 2.8;
       const NTE = 14, tElM = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 10, 8), h.basic(0xffb400), NTE); tElM.frustumCulled = false; gT.add(tElM);
       const gapA = h.mkArrow(0xe2464b, 0.025), gapA2 = h.mkArrow(0xe2464b, 0.025); gT.add(gapA, gapA2);
       const scrN = 70, scrM = 40, scCv = document.createElement('canvas'); scCv.width = scrN; scCv.height = scrM; const scX = scCv.getContext('2d'), scTex = new THREE.CanvasTexture(scCv); scTex.magFilter = THREE.NearestFilter;
       const scrPl = new THREE.Mesh(new THREE.PlaneGeometry(6.3, 3.6), new THREE.MeshBasicMaterial({ map: scTex, side: THREE.DoubleSide })); scrPl.position.set(0, 4.4, -3.8); gT.add(scrPl);
-      const scrFr = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(6.4, 3.7, 0.1)), new THREE.LineBasicMaterial({ color: 0x7f93bd })); scrFr.position.copy(scrPl.position); gT.add(scrFr);
+      const scrFr = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(6.4, 3.7, 0.1)), new THREE.LineBasicMaterial({ color: 0x7f93bd })); scrFr.position.copy(scrPl.position); gT.add(scrFr); { const bz = new THREE.Mesh(rbox(6.7, 4.0, 0.18, 0.06), MT.plastic(0x161b28)); bz.position.copy(scrPl.position); bz.position.z -= 0.12; gT.add(bz); }
       const lsScr = label('', scrPl, { color: LB, size: 12, offset: [0, 2.1, 0] }, 'stm'), lsTip = label('', tipG, { color: 'rgba(8,12,24,.85)', size: 12, offset: [1.4, 3.7, 0] }, 'stm');
       const lsGap = label('', tipG, { color: 'rgba(192,53,59,.92)', size: 12, offset: [1.3, 0.6, 0] }, 'stm'), lsSt = label('', tipG, { color: 'rgba(20,160,88,.92)', size: 12, offset: [-1.5, 3.7, 0] }, 'stm');
       label('표면의 원자 (점선 원 = 빠진 원자)', [0, -1.2, 2.2], { color: LB, size: 12 }, 'stm');
@@ -270,9 +272,9 @@
       /* ============ ④-1 트랜지스터 누설 ============ */
       const gLk = newScene('leak'); CAMS.leak = { dist: PHN ? 17 : 11.5, theta: 0.5, phi: 1.2, min: 6, max: 30, tx: 0.8, ty: 0.5 };
       const OXS = 0.5, TW = 5.4, TD = 3.2;
-      const gate = mmM(gLk, stdM(TW, 0.9, TD, 0x9aa5b8, { metalness: 0.6, roughness: 0.35 }));
-      const oxide = mmM(gLk, stdM(TW, 1, TD, 0xfac85a, { transparent: true, opacity: 0.5, depthWrite: false, emissive: 0xff6a3d, emissiveIntensity: 0 }));
-      const sil = mmM(gLk, stdM(TW, 1.6, TD, 0x7f93bd, { roughness: 0.6 }));
+      const gate = mmM(gLk, new THREE.Mesh(rbox(TW, 0.9, TD, 0.05), MT.metal(0x8b96aa, { brushed: true })));
+      const oxide = mmM(gLk, new THREE.Mesh(new THREE.BoxGeometry(TW, 1, TD), MT.glass({ tint: 0xfac85a, opacity: 0.5, extra: { emissive: 0xff6a3d, emissiveIntensity: 0 } })));
+      const sil = mmM(gLk, new THREE.Mesh(rbox(TW, 1.6, TD, 0.05), MT.ceramic(0x6d81ab)));
       const heat = new THREE.Mesh(new THREE.SphereGeometry(3.0, 20, 14), h.basic(0xff6a3d, { transparent: true, opacity: 0, depthWrite: false })); gLk.add(heat);
       const NSE = 9, siE = new THREE.InstancedMesh(new THREE.SphereGeometry(0.16, 12, 8), mat(0x3867f4, { emissive: 0x2040c0, emissiveIntensity: 0.5 }), NSE); gLk.add(siE);
       const NTL = 40, tnE = new THREE.InstancedMesh(new THREE.SphereGeometry(0.22, 12, 8), h.basic(0xffb400), NTL); tnE.frustumCulled = false; gLk.add(tnE);
@@ -302,12 +304,12 @@
       /* ============ ④-2 플래시 메모리 ============ */
       const gFl = newScene('flash'); CAMS.flash = { dist: PHN ? 16 : 11, theta: 0.45, phi: 1.2, min: 6, max: 28, tx: 0.9, ty: 0.3 };
       const FW = 5.6, FD = 3.0;
-      const cGate = mmM(gFl, stdM(FW, 0.8, FD, 0x9aa5b8, { metalness: 0.6 })); cGate.position.y = 2.1;
+      const cGate = mmM(gFl, new THREE.Mesh(rbox(FW, 0.8, FD, 0.05), MT.metal(0x8b96aa, { brushed: true }))); cGate.position.y = 2.1;
       const fGate = mmM(gFl, stdM(FW - 0.9, 1.0, FD - 0.4, 0x8a5cf6, { transparent: true, opacity: 0.88 })); fGate.position.y = 0.9;
       const tOx = mmM(gFl, stdM(FW - 0.9, 0.32, FD - 0.4, 0xfac85a, { transparent: true, opacity: 0.9 })); tOx.position.y = 0.24;
-      const fSil = mmM(gFl, stdM(FW, 1.8, FD, 0x7f93bd)); fSil.position.y = -0.9 - 0.1;
+      const fSil = mmM(gFl, new THREE.Mesh(rbox(FW, 1.8, FD, 0.05), MT.ceramic(0x6d81ab))); fSil.position.y = -0.9 - 0.1;
       const NFE = 6, flE = new THREE.InstancedMesh(new THREE.SphereGeometry(0.17, 12, 8), mat(0x3867f4, { emissive: 0x2040c0, emissiveIntensity: 0.6 }), NFE); gFl.add(flE);
-      const bitBox = stdM(1.5, 1.5, 0.5, 0x9aa5b8, { roughness: 0.4 }); bitBox.position.set(5.6, 0.6, 0); gFl.add(bitBox);
+      const bitBox = new THREE.Mesh(rbox(1.5, 1.5, 0.5, 0.1), MT.plastic(0x9aa5b8)); bitBox.position.set(5.6, 0.6, 0); gFl.add(bitBox);
       label('제어 게이트', cGate, { color: LB, size: 12, offset: [-1.6, 0.1, 1.7] }, 'flash'); label('부유 게이트 (전자를 가둬 저장)', fGate, { color: 'rgba(91,45,184,.92)', size: 12, offset: [-0.9, 0, 1.7] }, 'flash'); label('얇은 절연막 (터널링)', tOx, { color: 'rgba(122,74,0,.92)', size: 12, offset: [1.3, 0, 1.7] }, 'flash'); label('실리콘 (전자가 있어요)', fSil, { color: LB, size: 12, offset: [-0.8, -0.3, 1.7] }, 'flash');
       const lfBit = label('', bitBox, { color: 'rgba(8,12,24,.0)', size: 40, offset: [0, 0, 0.4] }, 'flash'); lfBit.el.style.background = 'transparent'; lfBit.el.style.border = '0'; lfBit.el.style.boxShadow = 'none';
       const lfTxt = label('', bitBox, { color: LB, size: 12, offset: [0, -1.3, 0] }, 'flash'); label('저장된 정보', bitBox, { color: LB, size: 12, offset: [0, 1.2, 0] }, 'flash');

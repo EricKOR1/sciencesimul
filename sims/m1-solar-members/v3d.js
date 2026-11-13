@@ -83,27 +83,54 @@
         const n = cols.length; for (let i = 0; i < 16; i++) { c.fillStyle = cols[Math.floor(r() * n)]; c.fillRect(0, i * h / 16, w, h / 16 + 1); }
         c.globalAlpha = 0.25; for (let i = 0; i < 60; i++) { c.fillStyle = cols[Math.floor(r() * n)]; c.beginPath(); c.ellipse(r() * w, r() * h, 8 + r() * 25, 2 + r() * 4, 0, 0, 7); c.fill(); } c.globalAlpha = 1; }); }
 
-      scene.add(new THREE.AmbientLight(0x8fa0d8, 0.5));
-      const sunLight = new THREE.PointLight(0xfff0cc, 1.5, 0, 0); root.add(sunLight);
+      /* 행성 겉면 (실제처럼): 띠·구름·대륙·충돌 구덩이·극관을 작은 캔버스에 그려요 */
+      function planetTex(kind, cols, seed) { return canvasTex(512, 256, (c, w, h) => { let s = seed || 3; const r = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+        const n = cols.length, blob = (x, y, rx, ry, col, a) => { c.globalAlpha = a; c.fillStyle = col; c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 7); c.fill(); if (x < rx) { c.beginPath(); c.ellipse(x + w, y, rx, ry, 0, 0, 7); c.fill(); } if (x > w - rx) { c.beginPath(); c.ellipse(x - w, y, rx, ry, 0, 0, 7); c.fill(); } c.globalAlpha = 1; };
+        c.fillStyle = cols[0]; c.fillRect(0, 0, w, h);
+        if (kind === 'gas' || kind === 'ice' || kind === 'jupiter') {   // 가스 행성: 부드러운 가로 띠 + 소용돌이
+          const gasy = kind !== 'ice', N = gasy ? 22 : 9; for (let i = 0; i < N; i++) { const y0 = i * h / N, g = c.createLinearGradient(0, y0, 0, y0 + h / N + 1); g.addColorStop(0, cols[Math.floor(r() * n)]); g.addColorStop(1, cols[Math.floor(r() * n)]); c.fillStyle = g; c.fillRect(0, y0, w, h / N + 1); }
+          for (let i = 0; i < (gasy ? 260 : 60); i++) blob(r() * w, r() * h, 10 + r() * 46, 1 + r() * 3.2, cols[Math.floor(r() * n)], gasy ? 0.22 : 0.1);
+        } else if (kind === 'earth') {            // 지구: 바다 + 대륙 + 구름 + 극지방 얼음
+          const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#1a4f9c'); g.addColorStop(0.5, '#1f66c4'); g.addColorStop(1, '#1a4f9c'); c.fillStyle = g; c.fillRect(0, 0, w, h);
+          for (let k = 0; k < 9; k++) { const cx = r() * w, cy = 50 + r() * 150; for (let i = 0; i < 22; i++) blob(cx + (r() - 0.5) * 90, cy + (r() - 0.5) * 60, 8 + r() * 24, 6 + r() * 16, r() < 0.3 ? '#8a7a45' : (r() < 0.5 ? '#2f8a4a' : '#3d9a52'), 0.9); }
+          c.fillStyle = '#eef4fa'; c.fillRect(0, 0, w, 12); c.fillRect(0, h - 14, w, 14); for (let i = 0; i < 40; i++) { blob(r() * w, 10 + r() * 8, 14 + r() * 20, 5, '#eef4fa', 0.9); blob(r() * w, h - 14 - r() * 6, 14 + r() * 20, 5, '#eef4fa', 0.9); }
+          for (let i = 0; i < 150; i++) blob(r() * w, 20 + r() * (h - 40), 8 + r() * 34, 1.5 + r() * 5, '#ffffff', 0.2 + r() * 0.3);
+        } else {                                  // 암석 천체: 얼룩 + 충돌 구덩이
+          for (let i = 0; i < 240; i++) blob(r() * w, r() * h, 6 + r() * 40, 4 + r() * 22, cols[Math.floor(r() * n)], 0.2);
+          if (kind === 'venus') for (let i = 0; i < 120; i++) blob(r() * w, r() * h, 30 + r() * 70, 2 + r() * 5, cols[Math.floor(r() * n)], 0.25);
+          if (kind === 'crater') for (let i = 0; i < 70; i++) { const x = r() * w, y = r() * h, q = 2 + r() * 9; blob(x, y, q, q * 0.9, 'rgba(0,0,0,1)', 0.22); blob(x - q * 0.2, y - q * 0.2, q * 0.7, q * 0.62, cols[Math.floor(r() * n)], 0.5); }
+          if (kind === 'mars') { for (let i = 0; i < 26; i++) blob(r() * w, 60 + r() * 130, 14 + r() * 40, 5 + r() * 14, '#6e2f1c', 0.3); c.fillStyle = '#f3ece6'; for (let i = 0; i < 30; i++) { blob(r() * w, 5 + r() * 5, 16 + r() * 20, 5, '#f3ece6', 0.9); blob(r() * w, h - 4 - r() * 4, 14 + r() * 16, 4, '#f3ece6', 0.9); } }
+        }
+        if (kind === 'jupiter') { blob(350, 168, 30, 15, '#a8452c', 0.85); blob(350, 168, 20, 9, '#c2603c', 0.8); } }); }
+      /* 태양 겉면: 쌀알 무늬 + 흑점 */
+      const sunTex = canvasTex(512, 256, (c, w, h) => { let s = 77; const r = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+        c.fillStyle = '#ffb21f'; c.fillRect(0, 0, w, h);
+        for (let i = 0; i < 2600; i++) { const q = 2 + r() * 6; c.globalAlpha = 0.18 + r() * 0.25; c.fillStyle = r() < 0.55 ? '#ffe27a' : (r() < 0.6 ? '#ff8a12' : '#fff3b8'); c.beginPath(); c.ellipse(r() * w, r() * h, q * 1.5, q, r() * 3, 0, 7); c.fill(); }
+        for (let i = 0; i < 7; i++) { const x = r() * w, y = 70 + r() * 116, q = 3 + r() * 5; c.globalAlpha = 0.5; c.fillStyle = '#c2560a'; c.beginPath(); c.ellipse(x, y, q * 2.2, q * 1.5, 0, 0, 7); c.fill(); c.globalAlpha = 0.85; c.fillStyle = '#5a2504'; c.beginPath(); c.ellipse(x, y, q * 1.1, q * 0.8, 0, 0, 7); c.fill(); } c.globalAlpha = 1; });
+
+      scene.add(new THREE.AmbientLight(0x8fa0d8, 0.34));
+      const sunLight = new THREE.PointLight(0xfff0cc, 1.25, 0, 0); root.add(sunLight);
       root.add(starField(420, 90));
+      { const s2 = starField(90, 88); s2.material.size = 2.6; s2.material.color.set(0xe8efff); s2.material.opacity = 0.8; root.add(s2); const s3 = starField(60, 86); s3.material.size = 2.2; s3.material.color.set(0xffd9a8); s3.material.opacity = 0.6; root.add(s3); }
       const rOf = (a) => 0.8 + 2.3 * Math.log(1 + 2 * a);          // 거리(AU) → 화면 반지름 (로그 모양으로 줄임)
       const st = { play: true, names: true, focus: 'all', t: 0 };
 
       /* 태양 */
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(1.15, 48, 32), new THREE.MeshBasicMaterial({ color: 0xffd23f })); root.add(sun);
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(1.15, 48, 32), new THREE.MeshBasicMaterial({ color: 0xffffff, map: sunTex })); root.add(sun);
       const glow = glowSprite(8); root.add(glow);
+      ctx.halo(sun, 0xffd27a, 4.6, 0.55);   // 코로나처럼 번지는 빛
       const sunLab = label('태양', sun, { size: 13, offset: [0, 1.7, 0], color: 'rgba(120,70,0,.9)' });
 
       /* 행성 */
       const PL = [
-        { n: '수성', a: 0.39, r: 0.27, col: ['#9a9a9a', '#b9b3a8', '#8a8579'], P: 0.24, k: 'in' },
-        { n: '금성', a: 0.72, r: 0.37, col: ['#e8cf9a', '#d9b877', '#f0dfb8'], P: 0.62, k: 'in' },
-        { n: '지구', a: 1.0, r: 0.39, col: ['#2f7fd8', '#4caf6a', '#2f7fd8', '#f2f6fa'], P: 1, k: 'in' },
-        { n: '화성', a: 1.52, r: 0.3, col: ['#c9623b', '#b5532f', '#d98a5c'], P: 1.9, k: 'in' },
-        { n: '목성', a: 5.2, r: 0.85, col: ['#d9b48a', '#c58a5c', '#efe2cc', '#b97a4a'], P: 11.9, k: 'out' },
-        { n: '토성', a: 9.5, r: 0.72, col: ['#e6d3a0', '#d3bb82', '#f2e6bf'], P: 29, k: 'out', ring: true },
-        { n: '천왕성', a: 19.2, r: 0.5, col: ['#9fe1e6', '#86d3dc'], P: 84, k: 'out' },
-        { n: '해왕성', a: 30.1, r: 0.48, col: ['#3d63dd', '#4c78f0', '#3558c8'], P: 165, k: 'out' },
+        { n: '수성', a: 0.39, r: 0.27, col: ['#7d7870', '#96908a', '#6a665f', '#857f76'], P: 0.24, k: 'in', tx: 'crater' },
+        { n: '금성', a: 0.72, r: 0.37, col: ['#d9b877', '#c9a25c', '#e6cf9c', '#b98f4e'], P: 0.62, k: 'in', tx: 'venus', atm: 0xf2d79a },
+        { n: '지구', a: 1.0, r: 0.39, col: ['#2f7fd8', '#4caf6a', '#2f7fd8', '#f2f6fa'], P: 1, k: 'in', tx: 'earth', atm: 0x6fb4ff },
+        { n: '화성', a: 1.52, r: 0.3, col: ['#b5532f', '#a34726', '#c9744a', '#8f3d22'], P: 1.9, k: 'in', tx: 'mars' },
+        { n: '목성', a: 5.2, r: 0.85, col: ['#c9a074', '#b0764a', '#e6d6bb', '#9c6238', '#d9bd96'], P: 11.9, k: 'out', tx: 'jupiter' },
+        { n: '토성', a: 9.5, r: 0.72, col: ['#d9c38a', '#c4aa70', '#e6d6a8', '#b89c62'], P: 29, k: 'out', ring: true, tx: 'gas' },
+        { n: '천왕성', a: 19.2, r: 0.5, col: ['#7fcfd6', '#6cc0ca', '#92dbe0'], P: 84, k: 'out', tx: 'ice', atm: 0x9fe8ee },
+        { n: '해왕성', a: 30.1, r: 0.48, col: ['#2a4bc0', '#3a62dc', '#2340a8', '#4a74e6'], P: 165, k: 'out', tx: 'ice', atm: 0x5c86ff },
       ];
       const orbitMat = (c, o) => new THREE.LineBasicMaterial({ color: c, transparent: true, opacity: o });
       function orbitLine(rx, rz, c, o, tilt) { const pts = []; for (let i = 0; i <= 128; i++) { const a = i / 128 * 6.2832; pts.push(new V3(Math.cos(a) * rx, 0, Math.sin(a) * rz)); }
@@ -112,39 +139,45 @@
       PL.forEach((p, i) => {
         const R = rOf(p.a); p.R = R;
         root.add(orbitLine(R, R, 0x6f86c9, 0.4));
-        const m = new THREE.Mesh(new THREE.SphereGeometry(p.r, 40, 28), mat(0xffffff, { map: bandTex(p.col, 3 + i * 5), roughness: 0.8 }));
-        if (p.ring) { const rg = new THREE.Mesh(new THREE.RingGeometry(p.r * 1.35, p.r * 2.1, 64), new THREE.MeshStandardMaterial({ color: 0xe6d3a0, transparent: true, opacity: 0.7, side: THREE.DoubleSide, roughness: 0.7 })); rg.rotation.x = Math.PI / 2 - 0.45; m.add(rg); }
+        const m = new THREE.Mesh(new THREE.SphereGeometry(p.r, 48, 32), mat(0xffffff, { map: planetTex(p.tx, p.col, 3 + i * 5), roughness: p.tx === 'earth' ? 0.55 : 0.85, metalness: 0 }));
+        if (p.atm) { const at = new THREE.Mesh(new THREE.SphereGeometry(p.r * 1.07, 32, 24), new THREE.MeshBasicMaterial({ color: p.atm, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, side: THREE.BackSide, depthWrite: false })); at.raycast = () => {}; m.add(at); }   // 얇은 대기층
+        if (p.ring) {   // 토성 고리: 여러 겹의 띠와 틈 (카시니 간극)
+          const ri = p.r * 1.3, ro = p.r * 2.25, rgG = new THREE.RingGeometry(ri, ro, 128, 1), pa = rgG.attributes.position, uv = rgG.attributes.uv;
+          for (let k = 0; k < pa.count; k++) uv.setXY(k, (Math.hypot(pa.getX(k), pa.getY(k)) - ri) / (ro - ri), 0.5);
+          const rt = canvasTex(256, 4, (c) => { let s = 9; const r = () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; for (let x = 0; x < 256; x++) { const u = x / 256; let a = 0.55 + 0.4 * r(); if (u < 0.12) a *= 0.35; if (u > 0.62 && u < 0.7) a = 0.04; if (u > 0.95) a *= 0.4; const v = Math.round(190 + r() * 45); c.fillStyle = 'rgba(' + v + ',' + Math.round(v * 0.9) + ',' + Math.round(v * 0.68) + ',' + a.toFixed(2) + ')'; c.fillRect(x, 0, 1, 4); } });
+          const rg = new THREE.Mesh(rgG, new THREE.MeshStandardMaterial({ color: 0xffffff, map: rt, transparent: true, side: THREE.DoubleSide, roughness: 0.8, depthWrite: false, emissive: 0x4a3f28, emissiveIntensity: 0.5 })); rg.rotation.x = Math.PI / 2 - 0.45; m.add(rg); }
         root.add(m); p.m = m; p.ph = i * 1.3 + 0.5; p.lab = label(p.n, m, { size: 11.5, offset: [0, p.r + 0.55, 0] }); planets.push(p);
       });
 
       /* 위성: 달(지구) · 이오 · 유로파 · 가니메데 · 칼리스토(목성) — 2D와 같은 천체, 거리와 크기는 보기 좋게 */
       const MOONS = [
-        { n: '달', host: '지구', d: 0.75, r: 0.1, P: 0.5, c: 0xcfcfcf, ph: 0.6 },
-        { n: '이오', host: '목성', d: 1.25, r: 0.075, P: 0.36, c: 0xe8d77a, ph: 0.2 },
-        { n: '유로파', host: '목성', d: 1.55, r: 0.07, P: 0.7, c: 0xdad2c0, ph: 2.1 },
-        { n: '가니메데', host: '목성', d: 1.9, r: 0.1, P: 1.3, c: 0xa89c8c, ph: 3.9 },
-        { n: '칼리스토', host: '목성', d: 2.3, r: 0.09, P: 2.3, c: 0x7f766c, ph: 5.3 },
+        { n: '달', host: '지구', d: 0.75, r: 0.1, P: 0.5, c: 0xa9a9a6, ph: 0.6 },
+        { n: '이오', host: '목성', d: 1.25, r: 0.075, P: 0.36, c: 0xc9b24a, ph: 0.2 },
+        { n: '유로파', host: '목성', d: 1.55, r: 0.07, P: 0.7, c: 0xb8ae98, ph: 2.1 },
+        { n: '가니메데', host: '목성', d: 1.9, r: 0.1, P: 1.3, c: 0x8a7e6e, ph: 3.9 },
+        { n: '칼리스토', host: '목성', d: 2.3, r: 0.09, P: 2.3, c: 0x625a50, ph: 5.3 },
       ];
       const MOON_ID = { '달': 'moon', '이오': 'io', '유로파': 'europa', '가니메데': 'ganymede', '칼리스토': 'callisto' };
-      MOONS.forEach((m) => { m.id = MOON_ID[m.n]; m.hostP = PL.find((p) => p.n === m.host); m.m = new THREE.Mesh(new THREE.SphereGeometry(m.r, 20, 14), mat(m.c, { roughness: 0.9 })); root.add(m.m); m.lab = label(m.n, m.m, { size: 10.5, offset: [0, m.r + 0.4, 0], color: 'rgba(70,70,70,.88)' }); });
+      MOONS.forEach((m) => { m.id = MOON_ID[m.n]; m.hostP = PL.find((p) => p.n === m.host); m.m = new THREE.Mesh(new THREE.SphereGeometry(m.r, 24, 18), mat(m.c, { roughness: 0.95, metalness: 0, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.01 })); root.add(m.m); m.lab = label(m.n, m.m, { size: 10.5, offset: [0, m.r + 0.4, 0], color: 'rgba(70,70,70,.88)' }); });
 
       /* 소행성대 (화성과 목성 사이) */
-      const NA = 520, belt = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.05, 0), mat(0x9a8f82, { roughness: 0.95 }), NA); belt.frustumCulled = false; root.add(belt);
-      const BP = []; for (let i = 0; i < NA; i++) { const a = rnd() * 6.283, r = rOf(2.2 + rnd() * 1.1); BP.push([r, a, (rnd() - 0.5) * 0.35, 0.6 + 0.8 * rnd()]); }
+      const NA = 520, belt = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.05, 0), mat(0xffffff, { roughness: 1, metalness: 0, flatShading: true }), NA); belt.frustumCulled = false; root.add(belt);
+      { const ROCK = [0x7a6f62, 0x8c8172, 0x655c52, 0x94897c, 0x6f6a66]; for (let i = 0; i < NA; i++) belt.setColorAt(i, _c.set(ROCK[i % ROCK.length])); belt.instanceColor.needsUpdate = true; }
+      const BP = []; for (let i = 0; i < NA; i++) { const a = rnd() * 6.283, r = rOf(2.2 + rnd() * 1.1); BP.push([r, a, (rnd() - 0.5) * 0.35, 0.6 + 0.8 * rnd(), 0.6 + 0.8 * rnd(), rnd() * 6.3]); }
       const beltLab = label('소행성대', [rOf(2.7) * 0.7, 0.4, -rOf(2.7) * 0.7], { size: 12, color: 'rgba(80,70,50,.88)' });
-      const _bm = new THREE.Matrix4(), BPOS = new Float32Array(NA * 3);
+      const _bm = new THREE.Matrix4(), _bq = new THREE.Quaternion(), _bp = new V3(), _bs = new V3(), BPOS = new Float32Array(NA * 3);
 
       /* 왜소행성 (세레스 · 명왕성 · 에리스) */
-      const DW = [{ id: 'ceres', n: '세레스', a: 2.77, r: 0.1, e: 0.08, P: 4.6, c: 0xb8aea0, ph: 2 }, { id: 'pluto', n: '명왕성', a: 39.5, r: 0.16, e: 0.25, P: 248, c: 0xd8b99a, ph: 4, tilt: 0.3 }, { id: 'eris', n: '에리스', a: 68, r: 0.17, e: 0.44, P: 558, c: 0xe9e4da, ph: 1, tilt: 0.7 }];
+      const DW = [{ id: 'ceres', n: '세레스', a: 2.77, r: 0.1, e: 0.08, P: 4.6, c: 0xb8aea0, ph: 2, cols: ['#8f867a', '#a39a8c', '#7a7268'] }, { id: 'pluto', n: '명왕성', a: 39.5, r: 0.16, e: 0.25, P: 248, c: 0xd8b99a, ph: 4, tilt: 0.3, cols: ['#b89878', '#d0b698', '#8f7258', '#e0d0b8'] }, { id: 'eris', n: '에리스', a: 68, r: 0.17, e: 0.44, P: 558, c: 0xe9e4da, ph: 1, tilt: 0.7, cols: ['#c9c4ba', '#dedad0', '#b0aba2'] }];
       DW.forEach((d) => { const R = rOf(d.a); d.R = R;
         const sx = R, sz = R * (1 - d.e * 0.3); const l = orbitLine(sx, sz, 0xc9a7ff, 0.42, d.tilt); l.position.x = -R * d.e * 0.5; root.add(l); d.l = l;
-        d.m = new THREE.Mesh(new THREE.SphereGeometry(d.r, 24, 18), mat(d.c, { roughness: 0.9 })); root.add(d.m); d.lab = label(d.n, d.m, { size: 11, offset: [0, 0.55, 0], color: 'rgba(90,50,150,.9)' }); });
+        d.m = new THREE.Mesh(new THREE.SphereGeometry(d.r, 24, 18), mat(0xffffff, { map: planetTex('crater', d.cols, 11 + d.ph), roughness: 0.95, metalness: 0 })); root.add(d.m); d.lab = label(d.n, d.m, { size: 11, offset: [0, 0.55, 0], color: 'rgba(90,50,150,.9)' }); });
 
       /* 혜성: 길쭉한 궤도 + 태양 반대쪽 꼬리 */
       const CA = 9.5, CE = 0.86, CB = CA * Math.sqrt(1 - CE * CE), CC = CA * CE;
       const cometOrbit = (() => { const pts = []; for (let i = 0; i <= 160; i++) { const a = i / 160 * 6.2832; pts.push(new V3(CA * Math.cos(a) - CC, 0, CB * Math.sin(a))); } const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), orbitMat(0x7fe0ff, 0.5)); l.rotation.y = 0.7; l.rotation.x = 0.12; return l; })();
       root.add(cometOrbit);
-      const comet = new THREE.Group(); const nucleus = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 12), mat(0xdfe6ee, { roughness: 0.9 })); comet.add(nucleus);
+      const comet = new THREE.Group(); const nucleus = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 12), mat(0xb9c4cf, { roughness: 0.95, metalness: 0, flatShading: true })); nucleus.scale.set(1.25, 0.85, 0.95); comet.add(nucleus);
       const tail = new THREE.Mesh(new THREE.ConeGeometry(0.28, 1, 20, 1, true), new THREE.MeshBasicMaterial({ color: 0x9fe8ff, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
       tail.geometry.translate(0, -0.5, 0); comet.add(tail); // 꼬리: -y 방향(원점이 머리)
       const cHead = glowSprite(1.1, 'rgba(210,245,255,1)', 'rgba(130,210,255,.5)'); comet.add(cHead); root.add(comet);
@@ -254,7 +287,7 @@
           planets.forEach((p) => { const a = p.ph - T * p.w; p.m.position.set(Math.cos(a) * p.R, 0, Math.sin(a) * p.R); p.m.rotation.y += dt * 0.6; });
           DW.forEach((d) => { const a = d.ph - T * d.w; const sx = d.R, sz = d.R * (1 - d.e * 0.3); const v = new V3(Math.cos(a) * sx - d.R * d.e * 0.5, 0, Math.sin(a) * sz); if (d.l.rotation.x) v.applyAxisAngle(new V3(1, 0, 0), d.l.rotation.x); d.m.position.copy(v); });
           MOONS.forEach((m) => { const a = m.ph - T * m.w, hp = m.hostP.m.position; m.m.position.set(hp.x + Math.cos(a) * m.d, hp.y + Math.sin(a * 0.5) * 0.04, hp.z + Math.sin(a) * m.d); });
-          for (let i = 0; i < NA; i++) { const b = BP[i], a = b[1] - T * BW[i]; _bm.makeScale(b[3], b[3], b[3]); _bm.setPosition(Math.cos(a) * b[0], b[2], Math.sin(a) * b[0]); belt.setMatrixAt(i, _bm); BPOS[i * 3] = Math.cos(a) * b[0]; BPOS[i * 3 + 1] = b[2]; BPOS[i * 3 + 2] = Math.sin(a) * b[0]; }
+          for (let i = 0; i < NA; i++) { const b = BP[i], a = b[1] - T * BW[i]; _bq.set(Math.sin(b[5] + a), 0.3, Math.cos(b[5]), 1).normalize(); _bm.compose(_bp.set(0, 0, 0), _bq, _bs.set(b[3], b[3] * b[4], b[3] * 0.8)); _bm.setPosition(Math.cos(a) * b[0], b[2], Math.sin(a) * b[0]); belt.setMatrixAt(i, _bm); BPOS[i * 3] = Math.cos(a) * b[0]; BPOS[i * 3 + 1] = b[2]; BPOS[i * 3 + 2] = Math.sin(a) * b[0]; }
           belt.instanceMatrix.needsUpdate = true;
           const M = (1.2 + T * cW) % 6.2832; placeComet(M);
           glow.scale.setScalar(8 + 0.3 * Math.sin(t * 2));

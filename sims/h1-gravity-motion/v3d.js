@@ -15,13 +15,13 @@
     levels: [3],
     autoRotate: 0,
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, mats } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.05 }, o || {}));
       let body = 'earth', v0 = 8, t = 0, state = 'ready', hold = 0;
-      const gnd = new THREE.Mesh(new THREE.BoxGeometry(15, 0.3, 5), std(BODY.earth.c, { roughness: 0.9 })); gnd.position.set(1.5, -0.15, 0); root.add(gnd); gnd.userData.v3bg = PHN;   // 휴대폰: 바닥·격자판은 배경 → 자동 맞춤이 탑과 공의 길에 맞춰요 (PC는 바닥까지 넣어 위쪽 설명 상자에 안 가리게)
+      const gnd = new THREE.Mesh(new THREE.BoxGeometry(15, 0.3, 5), mats.stone(BODY.earth.c, { cracks: true, repeat: 4, bump: 0.06 })); gnd.receiveShadow = true;   // 천체의 땅 (거친 흙·암석) gnd.position.set(1.5, -0.15, 0); root.add(gnd); gnd.userData.v3bg = PHN;   // 휴대폰: 바닥·격자판은 배경 → 자동 맞춤이 탑과 공의 길에 맞춰요 (PC는 바닥까지 넣어 위쪽 설명 상자에 안 가리게)
       // 뒤쪽 격자판 (높이·거리를 읽기 쉽게)
       const gridG = new THREE.Group(); root.add(gridG);
-      const wall = new THREE.Mesh(new THREE.PlaneGeometry(15, H * KY + 0.4), new THREE.MeshStandardMaterial({ color: 0x20304f, roughness: 0.9, transparent: true, opacity: 0.75, side: THREE.DoubleSide })); wall.position.set(1.5, (H * KY + 0.4) / 2 - 0.0, -2.4); wall.userData.v3bg = PHN; gridG.add(wall);
+      const wall = new THREE.Mesh(new THREE.PlaneGeometry(15, H * KY + 0.4), new THREE.MeshStandardMaterial({ color: 0x1a2946, roughness: 0.55, metalness: 0.1, transparent: true, opacity: 0.8, side: THREE.DoubleSide })); wall.position.set(1.5, (H * KY + 0.4) / 2 - 0.0, -2.4); wall.userData.v3bg = PHN; gridG.add(wall);
       const lm = new THREE.LineBasicMaterial({ color: 0x5f78b0, transparent: true, opacity: 0.55 });
       function buildGrid() {
         while (gridG.children.length) { const o = gridG.children[0]; gridG.remove(o); o.geometry.dispose(); }
@@ -31,14 +31,24 @@
         const gl = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), lm); gl.userData.v3bg = PHN; gridG.add(gl);
       }
       // 발사대
-      const tower = new THREE.Mesh(new THREE.BoxGeometry(0.9, H * KY, 1.8), std(0x39425a, { roughness: 0.8 })); tower.position.set(-5.6, H * KY / 2, 0.2); root.add(tower);
+      const tower = new THREE.Mesh(new THREE.BoxGeometry(0.9, H * KY, 1.8), mats.stone(0x4a5266, { repeat: 3, bump: 0.035 })); tower.position.set(-5.6, H * KY / 2, 0.2); tower.castShadow = true; root.add(tower);
+      { const TH = H * KY, steel = mats.metal('steel', { brushed: true }), dark = mats.metal(0x2c3342, { roughness: 0.45 });   // 발사대 꾸밈: 받침 · 층 띠 · 철판 바닥 · 난간 · 사다리
+        const add = (g, m, x, y, z) => { const o = new THREE.Mesh(g, m); o.position.set(x, y, z); o.castShadow = true; tower.add(o); return o; };
+        add(new THREE.BoxGeometry(1.2, 0.22, 2.1), mats.stone(0x3a4152, { repeat: 2 }), 0, -TH / 2 + 0.11, 0);
+        for (let i = 1; i < 5; i++) add(new THREE.BoxGeometry(0.94, 0.05, 1.84), dark, 0, -TH / 2 + i * TH / 5, 0);
+        add(new THREE.BoxGeometry(1.15, 0.07, 2.05), steel, 0.06, TH / 2 + 0.035, 0);
+        [[-0.5, -0.98], [-0.5, 0.98], [-0.5, 0]].forEach((q) => add(new THREE.CylinderGeometry(0.022, 0.022, 0.5, 10), steel, q[0], TH / 2 + 0.3, q[1]));
+        add(new THREE.BoxGeometry(0.03, 0.03, 2.0), steel, -0.5, TH / 2 + 0.55, 0); add(new THREE.BoxGeometry(0.03, 0.03, 2.0), steel, -0.5, TH / 2 + 0.3, 0);
+        [-0.16, 0.16].forEach((q) => add(new THREE.BoxGeometry(0.035, TH, 0.035), steel, q - 0.1, 0, 0.93));
+        for (let i = 0; i < 14; i++) add(new THREE.BoxGeometry(0.32, 0.028, 0.028), steel, -0.1, -TH / 2 + 0.3 + i * (TH - 0.5) / 13, 0.93); }
       const X0 = -5.0, ZA = -0.45, ZB = 0.75;
-      const ballA = new THREE.Mesh(new THREE.SphereGeometry(0.28, 32, 24), std(0x5aa7ff, { roughness: 0.3 })), ballB = new THREE.Mesh(new THREE.SphereGeometry(0.28, 32, 24), std(0xff7a3d, { roughness: 0.3 }));
+      const ballA = new THREE.Mesh(new THREE.SphereGeometry(0.28, 40, 28), mats.plastic(0x2f86f0, { roughness: 0.18, extra: { clearcoat: 1, clearcoatRoughness: 0.06 } })), ballB = new THREE.Mesh(new THREE.SphereGeometry(0.28, 40, 28), mats.plastic(0xf2601e, { roughness: 0.18, extra: { clearcoat: 1, clearcoatRoughness: 0.06 } }));
+      ballA.castShadow = ballB.castShadow = true;
       root.add(ballA, ballB);
       const labA = label('떨어뜨린 공', ballA, { offset: [0.0, 0.7, 0], size: 12, color: 'rgba(40,110,210,.92)' }), labB = label('던진 공', ballB, { offset: [0.2, 0.7, 0], size: 12, color: 'rgba(210,90,30,.92)' });
       const timeLab = label('', [X0 + 6, H * KY + 0.1, 0], { color: 'rgba(255,211,77,.92)' }); timeLab.el.style.color = '#1b2333';
       // 일정한 시간 간격 잔상
-      const NG = 40, gA = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 20, 14), std(0x5aa7ff, { transparent: true, opacity: 0.55, roughness: 0.4 }), NG), gB = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 20, 14), std(0xff7a3d, { transparent: true, opacity: 0.55, roughness: 0.4 }), NG);
+      const NG = 40, gA = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 20, 14), std(0x3f92f5, { transparent: true, opacity: 0.5, roughness: 0.25, metalness: 0 }), NG), gB = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 20, 14), std(0xf56a28, { transparent: true, opacity: 0.5, roughness: 0.25, metalness: 0 }), NG);
       root.add(gA, gB);
       const links = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xffd34d, transparent: true, opacity: 0.8 })); root.add(links);
       let path = null, vline = null; const dm = new THREE.Object3D();

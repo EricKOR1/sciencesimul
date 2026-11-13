@@ -97,7 +97,7 @@
       const cloudM = mk(R * 1.06, new THREE.MeshStandardMaterial({ map: tex(cloudCv), transparent: true, roughness: 1, depthWrite: false }));
       const airM = mk(R * 1.16, new THREE.MeshStandardMaterial({ color: 0x66b8ff, transparent: true, opacity: 0.2, roughness: 0.4, depthWrite: false }));
       const space = new THREE.Group(); root.add(space);
-      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.34, 32, 20), new THREE.MeshStandardMaterial({ color: 0xcfd3dc, roughness: 1 }));
+      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.34, 32, 20), ctx.mats.stone(0x9da1ab, { repeat: 2, bump: 0.025 }));
       moon.position.set(5.6, 1.3, -2.6); space.add(moon);
       const pts = []; for (let i = 0; i < 450; i++) { const u = Math.random() * 2 - 1, a = Math.random() * 6.283, s = Math.sqrt(1 - u * u), r = 26 + Math.random() * 6; pts.push(r * s * Math.cos(a), r * u, r * s * Math.sin(a)); }
       const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
@@ -114,7 +114,15 @@
       const LEVELS = { oct: [1, 1, 1], quarter: [1, 0, 1], half: [0, 0, 1] };
       let level = 'oct', thickMode = false, sel = 'all';
       const capMats = {};
-      LAYERS.forEach((L) => { capMats[L.id] = new THREE.MeshBasicMaterial({ color: L.color, side: THREE.DoubleSide }); });
+      const lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 2D 그림과 같은 진한 색으로 보이게
+      /* 단면 무늬: 층마다 안쪽(뜨거운 쪽)이 더 밝고, 잔무늬가 있어요 (색은 그대로, 밝기만 조금씩 달라요) */
+      const capTex = (L) => { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'); let sd = 7 + L.id.length * 13; const rr = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+        const k = L.a / L.b, gr = g.createRadialGradient(128, 128, 128 * k, 128, 128, 128); gr.addColorStop(0, '#ffffff'); gr.addColorStop(0.55, '#e9e9e9'); gr.addColorStop(1, L.id === 'crust' ? '#ffffff' : '#c9c9c9'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
+        if (L.id === 'outer') { g.lineWidth = 3; for (let i = 0; i < 70; i++) { const r = 128 * (k + (1 - k) * rr()), a0 = rr() * 6.283; g.strokeStyle = rr() < 0.5 ? 'rgba(255,255,255,0.22)' : 'rgba(120,70,0,0.13)'; g.beginPath(); g.arc(128, 128, r, a0, a0 + 0.3 + rr() * 0.7); g.stroke(); } }   // 액체: 흐르는 결
+        else for (let i = 0; i < 260; i++) { const r = 128 * (k + (1 - k) * rr()), a0 = rr() * 6.283, s = 1.5 + rr() * (L.id === 'mantle' ? 7 : 3); g.fillStyle = rr() < 0.5 ? 'rgba(255,255,255,0.10)' : 'rgba(60,20,0,0.09)'; g.beginPath(); g.ellipse(128 + Math.cos(a0) * r, 128 + Math.sin(a0) * r, s * 1.6, s, a0 + 1.57, 0, 6.283); g.fill(); }
+        return new THREE.CanvasTexture(c); };
+      LAYERS.forEach((L) => { capMats[L.id] = new THREE.MeshBasicMaterial({ color: lc(L.color), map: capTex(L), side: THREE.DoubleSide }); });
+      const coreGlow = ctx.halo(cutG, 0xffc45a, R * 1.25, 0.42);   // 뜨거운 핵의 빛 번짐
       const layerLabs = {};
       const labPos = { crust: [0, 0, 0], mantle: [0, 0, 0], outer: [0, 0, 0], inner: [0, 0, 0] };
       LAYERS.forEach((L) => { layerLabs[L.id] = label('', labPos[L.id], { color: 'rgba(12,18,34,.82)' }); });
@@ -158,7 +166,8 @@
         ruler.forEach((lb) => { lb.P[0] = Math.cos(lb.a) * lb.r * R + (lb.r === 1 ? 0.3 : lb.r < 0.3 ? 0.18 : 0); lb.P[1] = Math.sin(lb.a) * lb.r * R + (lb.r < 0.3 ? 0.05 : 0); });
       }
       function applySel() {
-        LAYERS.forEach((L) => { capMats[L.id].color.set(sel === 'all' || sel === L.id ? L.color : '#1e2538'); });
+        LAYERS.forEach((L) => { capMats[L.id].color.set(sel === 'all' || sel === L.id ? L.color : '#1e2538').convertSRGBToLinear(); });
+        coreGlow.material.opacity = sel === 'all' || sel === 'inner' || sel === 'outer' ? 0.42 : 0.06;
         LAYERS.forEach((L) => { layerLabs[L.id].set('<b>' + L.name + '</b> · ' + L.state); });
       }
 

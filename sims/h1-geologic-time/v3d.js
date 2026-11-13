@@ -35,7 +35,7 @@
         { key: 'cen', name: '신생대', yr: '6600만 년 전 ~ 현재', col: '#3b82f6', dur: '약 21분 (약 1.4 %)' },
       ];
       const BOUNDS = [2, 4, 5], BCOL = [0xef4444, 0x8b5cf6, 0x0ea5e9], BCSS = ['#ef4444', '#8b5cf6', '#0ea5e9'];
-      const fossilMat = (c) => mat(c, { roughness: 0.55, metalness: 0.05 });
+      const fossilMat = (c) => ctx.mats.ceramic(c, { extra: { roughness: 0.5, clearcoat: 0.25, clearcoatRoughness: 0.5, envMapIntensity: 0.6 } });   // 뼈·껍데기 화석: 매끈하고 은은한 광택
 
       /* ---------- 화석 모형 ---------- */
       function stromatolite() {
@@ -117,16 +117,19 @@
       const yBot = (i) => (N - 1 - i) * H;
       const lay = LAY.map((L, i) => {
         const grp = new THREE.Group(); grp.position.y = yBot(i); root.add(grp);
-        const m = mat(L.col);
+        const m = ctx.mats.stone(new THREE.Color(L.col).multiplyScalar(0.8), { cracks: i >= 3, repeat: 2 + (i % 3), bump: 0.05 + 0.012 * i });   // 퇴적암: 층마다 결이 조금씩 달라요
         const b = new THREE.Mesh(new THREE.BoxGeometry(W, H - 0.014, D), m); b.position.y = H / 2; b.castShadow = true; b.receiveShadow = true; grp.add(b);
-        const ln = new THREE.Mesh(new THREE.BoxGeometry(W + 0.004, 0.02, D + 0.004), mat(0x2f3440)); grp.add(ln);
+        const ln = new THREE.Mesh(new THREE.BoxGeometry(W + 0.004, 0.02, D + 0.004), mat(0x2a2620, { roughness: 1 })); grp.add(ln);
         return { grp, mats: [m, ln.material], fos: null, nameLab: null, num: null };
       });
       // 파낸 굴 (2D의 굴과 같아요)
-      const shaftM = mat(0x2d2218, { roughness: 1 });
+      const shaftM = ctx.mats.stone(0x2a1f16, { cracks: true, repeat: 2, bump: 0.08 });
       const shaft = new THREE.Mesh(new THREE.BoxGeometry(2.7, 1, 0.1), shaftM); shaft.visible = false; root.add(shaft);
       // 맨 위 흙 + 풀
-      const soil = new THREE.Mesh(new THREE.BoxGeometry(W + 0.02, 0.14, D + 0.02), mat(0x5a8f3c)); soil.position.y = topY + 0.07; soil.receiveShadow = true; root.add(soil);
+      const soil = new THREE.Mesh(new THREE.BoxGeometry(W + 0.02, 0.14, D + 0.02), [0, 1, 2, 3, 4, 5].map((q) => (q === 2 ? ctx.mats.stone(0x4a8a34, { repeat: 6, bump: 0.07 }) : ctx.mats.stone(0x5a4630, { repeat: 4, bump: 0.05 })))); soil.position.y = topY + 0.07; soil.receiveShadow = true; root.add(soil);   // 겉흙(갈색) + 풀밭(위)
+      { const NT = 520, tuft = new THREE.InstancedMesh(new THREE.ConeGeometry(0.03, 0.16, 4, 1), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 }), NT), o = new THREE.Object3D(), c = new THREE.Color(); let sd = 17; const rn = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+        for (let q = 0; q < NT; q++) { o.position.set((rn() - 0.5) * (W - 0.1), 0.12, (rn() - 0.5) * (D - 0.1)); o.rotation.set((rn() - 0.5) * 0.5, rn() * 6.3, (rn() - 0.5) * 0.5); o.scale.set(1, 0.6 + rn(), 1); o.updateMatrix(); tuft.setMatrixAt(q, o.matrix); tuft.setColorAt(q, c.setHSL(0.26 + rn() * 0.07, 0.5, 0.25 + rn() * 0.14)); }
+        tuft.userData.v3bg = true; soil.add(tuft); }   // 풀잎
 
       function addFossil(i, objs) {
         const g = new THREE.Group(); g.position.set(0, yBot(i) + H / 2, frontZ + 0.18);
@@ -172,7 +175,7 @@
       const aHead = new THREE.Mesh(new THREE.ConeGeometry(0.17, 0.42, 16), arrM); aHead.position.set(-W / 2 - 0.55, topY - 0.1, 0.3); root.add(aHead);
       const arrL1 = label('오래됨 ↓', [-W / 2 - 0.55, 0.15, 0.3], { size: 12, offset: [-0.2, 0, 0] });
       const arrL2 = label('↑ 새로움', [-W / 2 - 0.55, topY + 0.35, 0.3], { size: 12, offset: [-0.2, 0, 0] });
-      const base = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.4, 0.3, 48), new THREE.MeshLambertMaterial({ color: 0x2d3547 })); base.position.y = -0.17; base.receiveShadow = true; root.add(base);
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.4, 0.3, 96), ctx.mats.stone(0x2b303c, { repeat: 6, bump: 0.03, extra: { roughness: 0.8 } })); base.position.y = -0.17; base.receiveShadow = true; root.add(base);
 
       /* ---------- 상태 · 조작 ---------- */
       const st = { sel: 'all', labels: true };

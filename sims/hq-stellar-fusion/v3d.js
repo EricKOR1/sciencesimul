@@ -104,8 +104,8 @@
 
       /* ================= ① 핵융합: 양성자 4개 → 헬륨-4 ================= */
       const DIRS = [new V3(1, 1, 1), new V3(1, -1, -1), new V3(-1, 1, -1), new V3(-1, -1, 1)].map((v) => v.normalize());
-      const pr = DIRS.map(() => { const m = sphere(0.36, 0xff5a5f, { roughness: 0.3, emissive: 0xff3b3b, emissiveIntensity: 0.5 }); gF.add(m); return m; });
-      pr.forEach((m) => { const hl = mkHalo(0xff6a5a, 3.0, 0.55); m.add(hl); });
+      const pr = DIRS.map(() => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.36, 40, 28), ctx.mats.plastic(0xd9363c, { roughness: 0.22, extra: { emissive: 0xff2a2a, emissiveIntensity: 0.38, clearcoat: 0.8 } })); gF.add(m); return m; });
+      pr.forEach((m) => { const hl = mkHalo(0xff6a5a, 3.0, 0.4); m.add(hl); });
       const barrier = new THREE.Mesh(new THREE.SphereGeometry(1.8, 48, 32), new THREE.ShaderMaterial({ transparent: true, depthWrite: false, side: THREE.FrontSide, blending: THREE.AdditiveBlending, uniforms: { op: { value: 0.1 } }, vertexShader: 'varying vec3 vN; varying vec3 vP; void main(){ vN = normalize(normalMatrix * normal); vec4 mv = modelViewMatrix * vec4(position,1.0); vP = mv.xyz; gl_Position = projectionMatrix * mv; }', fragmentShader: 'uniform float op; varying vec3 vN; varying vec3 vP; void main(){ float f = 1.0 - abs(dot(vN, normalize(-vP))); gl_FragColor = vec4(1.0, 0.35, 0.3, 1.0) * (0.08 + pow(f, 2.5) * 0.9) * (0.6 + op * 4.0); }' })); gF.add(barrier);
       /* 뜨거운 플라스마 (주변에서 마구 움직이는 입자) */
       const NPL = 90, plasma = new THREE.InstancedMesh(new THREE.SphereGeometry(0.035, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }), NPL); plasma.frustumCulled = false; gF.add(plasma);
@@ -118,7 +118,7 @@
         const wf = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ color: 0xffb4a8, wireframe: true, transparent: true, opacity: 0.28 })); wf.position.y = -4.3; gF.add(wf); }
       const hillBall = sphere(0.2, 0xffe08a, { emissive: 0xffc43d, emissiveIntensity: 1.1 }); hillBall.add(mkHalo(0xffc43d, 1.8, 0.7)); gF.add(hillBall);
       const nu = DIRS.map((d) => { const m = sphere(0.2, 0x7cc2ff, { roughness: 0.3, emissive: 0x3b82f6, emissiveIntensity: 0.6 }); m.visible = false; gF.add(m); return m; });
-      const he = new THREE.Group(); [[0.28, 0.28, 0.28, 0xff5a5f], [-0.28, -0.28, 0.28, 0xff5a5f], [0.28, -0.28, -0.28, 0x9aa7bd], [-0.28, 0.28, -0.28, 0x9aa7bd]].forEach((a) => { const s = sphere(0.36, a[3], { roughness: 0.35, emissive: a[3], emissiveIntensity: 0.3 }); s.position.set(a[0], a[1], a[2]); he.add(s); }); he.add(mkHalo(0xffd36b, 3.4, 0.7)); he.visible = false; gF.add(he);
+      const he = new THREE.Group(); [[0.28, 0.28, 0.28, 0xff5a5f], [-0.28, -0.28, 0.28, 0xff5a5f], [0.28, -0.28, -0.28, 0x9aa7bd], [-0.28, 0.28, -0.28, 0x9aa7bd]].forEach((a) => { const s = new THREE.Mesh(new THREE.SphereGeometry(0.36, 40, 28), ctx.mats.plastic(a[3] === 0xff5a5f ? 0xd9363c : 0x8492aa, { roughness: 0.22, extra: { emissive: a[3], emissiveIntensity: 0.25, clearcoat: 0.8 } })); s.position.set(a[0], a[1], a[2]); he.add(s); }); he.add(mkHalo(0xffd36b, 3.4, 0.7)); he.visible = false; gF.add(he);
       const ep = [0, 1].map((i) => { const m = sphere(0.17, 0x4ade80, { emissive: 0x22c55e, emissiveIntensity: 0.9 }); m.visible = false; gF.add(m); return m; });
       const rings = [0, 1, 2].map(() => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 20), new THREE.MeshBasicMaterial({ color: 0xffe066, transparent: true, opacity: 0, depthWrite: false, side: THREE.BackSide })); m.visible = false; gF.add(m); return m; });
       const aP = anchor(gF, 0, 0, 0), lBar = label('쿨롱 장벽 (같은 전하끼리 밀어내요)', anchor(gF, 0, 2.2, 0), { color: '#b91c1c', size: 12 }), lHe = label('헬륨-4', he, { color: '#a16207', size: 13, offset: [0, 1.0, 0] });

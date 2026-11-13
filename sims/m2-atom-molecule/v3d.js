@@ -46,6 +46,7 @@
     levels: [1, 2, 3],               // 2~4단계는 3D (1단계: 물방울을 1/10씩 나누며 축척을 보는 장면이라 2D)
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
+      const MT = ctx.mats, lin = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에 2D와 같은 진한 색으로 보이게
       const DBG = () => window.__sim || {};
       const ID2D = {}; Object.keys(OF2D).forEach((k) => { ID2D[OF2D[k]] = k; });
       let fbMsg = '', fbT = 0;   // 분류 단추를 눌렀을 때의 알림 (잠깐 보여 줘요)
@@ -53,11 +54,11 @@
       const g = new THREE.Group(); root.add(g);
       const atomObjs = [], bondObjs = [], labs = [];
       const UP = new THREE.Vector3(0, 1, 0);
-      const stickMat = new THREE.MeshStandardMaterial({ color: 0xc3ccdd, roughness: 0.3, metalness: 0.55 });
+      const stickMat = MT.metal(0xaab3c2, { roughness: 0.26 });
       function sphere(r, col) {
-        const m = new THREE.Mesh(new THREE.SphereGeometry(r, 40, 28), new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.28, metalness: 0.05, clearcoat: 0.7, clearcoatRoughness: 0.2 }));
+        const m = new THREE.Mesh(new THREE.SphereGeometry(r, 40, 28), MT.plastic(lin(col), { roughness: 0.24, extra: { clearcoat: 0.85, clearcoatRoughness: 0.12, envMapIntensity: 1.15 } }));
         m.castShadow = true;
-        const h = new THREE.Mesh(new THREE.SphereGeometry(r * 1.38, 20, 14), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.1, depthWrite: false, blending: THREE.AdditiveBlending }));   // 전자 구름 느낌의 부드러운 빛 번짐
+        const h = new THREE.Mesh(new THREE.SphereGeometry(r * 1.38, 20, 14), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.05, depthWrite: false, blending: THREE.AdditiveBlending }));   // 전자 구름 느낌의 부드러운 빛 번짐
         m.add(h); return m;
       }
       /* 무대: 반짝이는 받침판 + 떠다니는 빛 알갱이 (분자가 빈 공간에 떠 있지 않게) */
@@ -247,7 +248,7 @@
           const M = MOLS[mk], col = mi % per, row = Math.floor(mi / per);
           const cx = (col - (Math.min(per, n) - 1) / 2) * gapX, cy = -row * 3.2 + (n > 4 ? 1.1 : 0);
           const grp = new THREE.Group(); grp.position.set(cx, cy, 0); gN.add(grp);
-          const halo = new THREE.Mesh(new THREE.SphereGeometry(1.7, 32, 20), new THREE.MeshStandardMaterial({ color: 0x8fb6ff, transparent: true, opacity: 0.18, roughness: 0.2, depthWrite: false })); grp.add(halo); cnObj.halos.push(halo);
+          const halo = new THREE.Mesh(new THREE.SphereGeometry(1.7, 32, 20), MT.glass({ tint: 0x9cc4ff, opacity: 0.17 })); grp.add(halo); cnObj.halos.push(halo);
           const objs = M.atoms.map((a, ai) => { const m = sphere(RB[a[0]], COL[a[0]]); m.position.set(a[1], a[2], a[3]); grp.add(m); const L = cnLabs[li] || (cnLabs[li] = label('', m)); li++; L.obj = m; L.off = [0, RB[a[0]] + 0.3, 0]; cnObj.atoms.push({ m, sym: a[0], L, mi }); return m; });
           M.bonds.forEach(([i, j, o]) => { const ms = []; for (let k = 0; k < o; k++) { const b = new THREE.Mesh(new THREE.CylinderGeometry(o > 1 ? 0.05 : 0.08, o > 1 ? 0.05 : 0.08, 1, 12), stickMat); grp.add(b); ms.push(b); }
             const A = objs[i].position, B = objs[j].position, dir = B.clone().sub(A).normalize(), side = new THREE.Vector3(0, 0, 1); if (Math.abs(dir.dot(side)) > 0.9) side.set(0, 1, 0); side.cross(dir).normalize();
@@ -271,8 +272,8 @@
         cnObj.atoms.forEach((o) => {
           k++;
           if (lens === 'atom') { o.m.material.color.setHex(0xe7ebf3); o.L.set(String(k)); o.L.show(true); }
-          else if (lens === 'elem') { o.m.material.color.setHex(COL[o.sym]); o.L.set(NAME[o.sym]); o.L.show(true); }
-          else { o.m.material.color.setHex(COL[o.sym]); o.L.show(false); }
+          else if (lens === 'elem') { o.m.material.color.copy(lin(COL[o.sym])); o.L.set(NAME[o.sym]); o.L.show(true); }
+          else { o.m.material.color.copy(lin(COL[o.sym])); o.L.show(false); }
         });
         cnObj.bonds.forEach((ms) => ms.forEach((b) => { b.visible = lens !== 'atom'; }));
         const nm = mols.length;

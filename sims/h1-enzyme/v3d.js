@@ -15,7 +15,7 @@
     levels: [2],
     autoRotate: 0,
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, mats } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.05 }, o || {}));
       let mode = 'ok', T0 = 0;
       function enzymeGeo(denat) {
@@ -34,14 +34,14 @@
         g.computeVertexNormals(); return g;
       }
       const gOK = enzymeGeo(false), gDN = enzymeGeo(true);
-      const enz = new THREE.Mesh(gOK, std(0x2fb8a6, { roughness: 0.35, emissive: 0x0b4a42, emissiveIntensity: 0.4 })); root.add(enz);
+      const enz = new THREE.Mesh(gOK, mats.organic(0x1a9a8a, { extra: { roughness: 0.42, emissive: 0x0b4a42, emissiveIntensity: 0.22, sheen: 0.6, clearcoat: 0.3 } })); enz.castShadow = true; root.add(enz);   // 촉촉한 단백질 덩어리
 
       // ---- 환경: 반짝이는 바닥판 · 용액 속 떠다니는 알갱이 · 표면 질감 · 활성 부위 테두리
       { const cv = document.createElement('canvas'); cv.width = cv.height = 256; const g = cv.getContext('2d'); g.fillStyle = '#808080'; g.fillRect(0, 0, 256, 256);
         for (let i = 0; i < 500; i++) { const v = 100 + Math.random() * 110 | 0; g.fillStyle = 'rgba(' + v + ',' + v + ',' + v + ',.55)'; g.beginPath(); g.arc(Math.random() * 256, Math.random() * 256, 4 + Math.random() * 10, 0, 6.283); g.fill(); }
-        const tx = new THREE.CanvasTexture(cv); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; enz.material.bumpMap = tx; enz.material.bumpScale = 0.25; enz.material.clearcoat = 0; }
+        const tx = new THREE.CanvasTexture(cv); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.repeat.set(2, 1.5); enz.material.bumpMap = tx; enz.material.bumpScale = 0.2; }
       const shell = new THREE.Mesh(new THREE.SphereGeometry(1.86, 48, 32), new THREE.MeshBasicMaterial({ color: 0x7ee8d8, transparent: true, opacity: 0.07, side: THREE.BackSide, depthWrite: false })); enz.add(shell);
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(6.2, 6.4, 0.25, 72), std(0x12203a, { roughness: 0.7, metalness: 0.1 })); floor.position.set(1.1, -3.0, 0); root.add(floor);
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(6.2, 6.4, 0.25, 96), mats.ceramic(0x101c34, { extra: { roughness: 0.36, clearcoat: 0.6 } })); floor.receiveShadow = true; floor.position.set(1.1, -3.0, 0); root.add(floor);
       const fring = new THREE.Mesh(new THREE.TorusGeometry(6.0, 0.03, 8, 96), new THREE.MeshBasicMaterial({ color: 0x4fd1c5 })); fring.rotation.x = Math.PI / 2; fring.position.set(1.1, -2.86, 0); root.add(fring);
       const fring2 = new THREE.Mesh(new THREE.TorusGeometry(4.2, 0.02, 8, 96), new THREE.MeshBasicMaterial({ color: 0x3b6ea8 })); fring2.rotation.x = Math.PI / 2; fring2.position.set(1.1, -2.86, 0); root.add(fring2);
       [floor, fring, fring2].forEach((o) => { o.userData.v3bg = true; });   // 받침은 배경: 자동 맞춤이 효소·기질에 맞춰요
@@ -53,20 +53,20 @@
       const lAS = label('활성 부위', enz, { offset: [PX + 0.6, 1.25, 0.2], size: 12 });
       // 기질 (두 조각이 이어진 분자)
       const sub = new THREE.Group(); root.add(sub);
-      const sA = new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 24), std(0x3b82f6, { roughness: 0.3 })), sB = new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 24), std(0x60a5fa, { roughness: 0.3 }));
+      const sA = new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 24), mats.plastic(0x2468e8, { roughness: 0.22 })), sB = new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 24), mats.plastic(0x4a94f5, { roughness: 0.22 }));
       sA.position.set(0, 0.42, 0); sB.position.set(0, -0.42, 0); sub.add(sA, sB);
-      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.6, 12), std(0xe8e8e8)); sub.add(neck);
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.6, 20), mats.plastic(0xdfe3ea)); sub.add(neck);
       const lS = label('기질 ②', sub, { offset: [0.0, 1.05, 0], color: 'rgba(40,100,210,.92)' });
       const lP = label('생성물', sub, { offset: [0, 0.8, 0], color: 'rgba(30,140,60,.92)' }); lP.show(false);
       // 다른 모양 기질
       const altT = new THREE.TetrahedronGeometry(0.85, 0), altD = new THREE.OctahedronGeometry(0.7, 0);
-      const alt = new THREE.Mesh(altD, std(0xec4899, { roughness: 0.3 })); root.add(alt);
-      const heat = []; for (let i = 0; i < 10; i++) { const h = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.025, 8, 20), new THREE.MeshBasicMaterial({ color: 0xff7a3c })); root.add(h); heat.push(h); }
+      const alt = new THREE.Mesh(altD, mats.plastic(0xec4899, { roughness: 0.2, extra: { flatShading: true } })); alt.castShadow = true; root.add(alt);
+      const heat = []; for (let i = 0; i < 10; i++) { const h = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.025, 8, 20), new THREE.MeshBasicMaterial({ color: 0xff7a3c })); ctx.halo(h, 0xff8a4a, 0.9, 0.5); root.add(h); heat.push(h); }
       const sm = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
       const lerp = (a, b, k) => a + (b - a) * k;
       const msg = { ok: '<b>기질 ②</b>가 활성 부위에 딱 맞게 결합해 생성물로 나뉘어요. 효소는 그대로라 계속 반응시켜요.', tri: '<b>기질 ①</b>: 모양이 활성 부위와 달라 결합하지 못해요. 효소는 자기에게 맞는 기질에만 작용해요(기질 특이성).', dia: '<b>기질 ③</b>: 모양이 활성 부위와 달라 결합하지 못해요. 효소는 자기에게 맞는 기질에만 작용해요(기질 특이성).', hot: '<b>온도가 너무 높아요</b>: 효소의 입체 구조가 변해(변성) 활성 부위가 기질과 맞지 않아요. 반응이 잘 안 일어나요.', other: '<b>모양이 다른 기질</b>: 활성 부위에 맞지 않아 결합하지 못해요. 효소는 자기에게 맞는 기질에만 작용해요(기질 특이성).' };
       function setMode(m) {
-        mode = m; T0 = 0; enz.geometry = m === 'hot' ? gDN : gOK; enz.material.color.setHex(m === 'hot' ? 0x9aa6a2 : 0x2fb8a6); enz.material.emissive.setHex(m === 'hot' ? 0x2a1208 : 0x0b4a42);
+        mode = m; T0 = 0; enz.geometry = m === 'hot' ? gDN : gOK; enz.material.color.setHex(m === 'hot' ? 0x86918d : 0x1a9a8a); enz.material.emissive.setHex(m === 'hot' ? 0x2a1208 : 0x0b4a42);
         const isO = m === 'tri' || m === 'dia', none = m === 'none'; if (isO) { alt.geometry = m === 'tri' ? altT : altD; alt.material.color.setHex(m === 'tri' ? 0xfb923c : 0xec4899); lS.set(m === 'tri' ? '기질 ①' : '기질 ③'); lS.el.style.background = m === 'tri' ? 'rgba(220,110,20,.92)' : 'rgba(210,50,130,.92)'; } else lS.set('기질 ②');
         alt.visible = isO; sub.visible = !isO && !none; lS.obj = isO ? alt : sub; lAS.show(m !== 'hot'); rings.forEach((r) => { r.visible = m !== 'hot'; }); heat.forEach((h) => { h.visible = m === 'hot'; });
         if (typeof showPl === 'function') showPl();

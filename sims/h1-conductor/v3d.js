@@ -6,7 +6,7 @@
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
   const NX = 6, NY = 3, NZ = 3, SP = 1.4;
-  const MATS = { cu: { kind: 'metal', name: '구리 (도체)', atom: 0xe39a45 }, gl: { kind: 'insul', name: '유리 (부도체)', atom: 0xc9d4ea }, si: { kind: 'semi', name: '규소 (반도체)', atom: 0x9aa9c9 } };
+  const MATS = { cu: { kind: 'metal', name: '구리 (도체)', atom: 0xd9823a }, gl: { kind: 'insul', name: '유리 (부도체)', atom: 0xb4c4e2 }, si: { kind: 'semi', name: '규소 (반도체)', atom: 0x7f90b8 } };
   const DNAME = ['없음 (순수한 규소)', '100억 개 중 1개', '10억 개 중 1개', '1억 개 중 1개', '천만 개 중 1개'];
   const DLV = [0, 1e-10, 1e-9, 1e-8, 1e-7];
   const sceneOf = (lv) => (lv === 2 ? 'semi' : 'model');
@@ -17,24 +17,33 @@
     levels: [1, 2],
     autoRotate: 0.12,
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, mats } = ctx;
+      /* 매끈한 공 (삼각형 수는 적게): 정이십면체를 나눈 뒤 법선을 둥글게 */
+      const ball = (r, d) => { const g = new THREE.IcosahedronGeometry(r, d), p = g.attributes.position, n = g.attributes.normal, v = new THREE.Vector3(); for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i).normalize(); n.setXYZ(i, v.x, v.y, v.z); } return g; };
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.1 }, o || {}));
       const lesson = () => window.__sim || null;
       const W = (NX - 1) * SP, H = (NY - 1) * SP, Dp = (NZ - 1) * SP;
       /* 원자 격자 */
-      const A = NX * NY * NZ, aGeo = new THREE.IcosahedronGeometry(0.27, 2);
-      const atoms = new THREE.InstancedMesh(aGeo, std(MATS.cu.atom, { roughness: 0.3, metalness: 0.5 }), A); root.add(atoms);
+      const A = NX * NY * NZ, aGeo = ball(0.27, 3);
+      const atoms = new THREE.InstancedMesh(aGeo, std(MATS.cu.atom, { roughness: 0.24, metalness: 0.5, envMapIntensity: 1.25 }), A); root.add(atoms);
       const home = [];
       for (let i = 0; i < NX; i++) for (let j = 0; j < NY; j++) for (let k = 0; k < NZ; k++) home.push(new THREE.Vector3(i * SP - W / 2, j * SP - H / 2, k * SP - Dp / 2));
       /* 전극 판 */
-      const plate = (x, c) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.22, H + 1.6, Dp + 1.6), std(c, { roughness: 0.35, metalness: 0.6 })); m.position.x = x; root.add(m); return m; };
+      const plate = (x, c) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.22, H + 1.6, Dp + 1.6), mats.metal(c, { brushed: true, roughness: 0.3 })); m.position.x = x; m.castShadow = true; root.add(m);
+        const sg = Math.sign(x), post = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.34, 24), mats.metal('brass')); post.rotation.z = Math.PI / 2; post.position.x = sg * 0.28; m.add(post);   // 단자
+        const nut = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.1, 6), mats.metal('steel')); nut.rotation.z = Math.PI / 2; nut.position.x = sg * 0.2; m.add(nut);
+        const wire = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(sg * 0.4, 0, 0), new THREE.Vector3(sg * 0.8, -0.05, 0), new THREE.Vector3(sg * 1.0, -0.9, 0.1), new THREE.Vector3(sg * 1.05, -(H + 1.6) / 2 - 0.2, 0.2)]), 24, 0.06, 10, false), mats.rubber(c === 0xe2464b ? 0x9c1f24 : 0x1f3f9c, { extra: { roughness: 0.5 } })); m.add(wire);   // 도선
+        return m; };
+      /* 물질 조각: 원자 격자를 감싼 맑은 덩어리 (물질 한 토막을 들여다보는 느낌) */
+      { const g = new THREE.BoxGeometry(W + 1.9, H + 1.3, Dp + 1.3), slab = new THREE.Mesh(g, mats.glass({ opacity: 0.07 })); slab.userData.v3bg = true; slab.raycast = () => {}; root.add(slab);
+        const ed = new THREE.LineSegments(new THREE.EdgesGeometry(g), new THREE.LineBasicMaterial({ color: 0xbfd6ff, transparent: true, opacity: 0.32 })); ed.userData.v3bg = true; root.add(ed); }
       const pL = plate(-W / 2 - 1.1, 0x2f6df6), pR = plate(W / 2 + 1.1, 0xe2464b);
       label('−', pL, { offset: [0, (H + 1.6) / 2 + 0.5, 0], size: 17 }); label('+', pR, { offset: [0, (H + 1.6) / 2 + 0.5, 0], size: 17 });
       const curLab = label('', [0, -H / 2 - 1.4, 0], { color: 'rgba(255,211,77,.92)' }); curLab.el.style.color = '#1b2333';
       const nLab = label('', [0, H / 2 + 1.4, 0], { size: 13 });
       /* 자유전자: 파랑 = 원래 있던 · 열/빛으로 생긴 전자, 초록 = 불순물이 내놓은 전자 (2D와 같은 색) */
-      const NE = 60, eGeo = new THREE.IcosahedronGeometry(0.16, 1);
-      const eMesh = new THREE.InstancedMesh(eGeo, std(0xffffff, { emissive: 0x1a5fb0, emissiveIntensity: 0.7, roughness: 0.2 }), NE); root.add(eMesh);
+      const NE = 60, eGeo = ball(0.16, 2);
+      const eMesh = new THREE.InstancedMesh(eGeo, std(0xffffff, { emissive: 0x1a5fb0, emissiveIntensity: 0.8, roughness: 0.18, metalness: 0, envMapIntensity: 1.3 }), NE); root.add(eMesh);
       const cB = new THREE.Color(0x62b4ff), cG = new THREE.Color(0x34d399);
       for (let i = 0; i < NE; i++) eMesh.setColorAt(i, cB); eMesh.instanceColor.needsUpdate = true;
       const eB = new THREE.InstancedMesh(eGeo, std(0x62b4ff, { emissive: 0x1a5fb0, emissiveIntensity: 0.6, roughness: 0.3 }), A); root.add(eB); // 원자에 묶인 전자

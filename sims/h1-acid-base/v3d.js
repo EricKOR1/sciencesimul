@@ -8,7 +8,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
-  const COL = { H: 0xe2464b, Cl: 0x14a058, Na: 0xf59e0b, OH: 0x3867f4 };
+  const COL = { H: 0xd42a30, Cl: 0x0c8a48, Na: 0xe88a00, OH: 0x2452e0 };
 
   window.SciSim3D.attach({
     title: '3D 산과 염기 (이온 모형)',
@@ -17,9 +17,9 @@
     autoRotate: 0,
     levels: [2],
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, mats } = ctx;
       const V3 = THREE.Vector3;
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.35, metalness: 0.05 }, o || {}));
+      const mat = (c, o) => mats.plastic(c, { roughness: 0.3, extra: o || {} });   // 입자 모형: 매끈한 플라스틱 공
       const st = { sub: 'hcl', s: 0, names: true, t: 0 };
       const SUBS = [
         { id: 'hcl', f: 'HCl', name: '염화 수소', n: 6, res: 'H⁺ + Cl⁻' }, { id: 'naoh', f: 'NaOH', name: '수산화 나트륨', n: 6, res: 'Na⁺ + OH⁻' },
@@ -30,24 +30,36 @@
 
       /* ---------- 비커 · 전극 · 전구 ---------- */
       const WR = 2.55, WH = 3.2;
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(5.6, 5.8, 0.25, 56), new THREE.MeshLambertMaterial({ color: 0x2d3547 })); floor.position.y = -0.15; floor.receiveShadow = true; root.add(floor);
-      const beaker = new THREE.Mesh(new THREE.CylinderGeometry(WR + 0.12, WR + 0.12, WH + 0.9, 56, 1, true), new THREE.MeshStandardMaterial({ color: 0xd6e6ff, transparent: true, opacity: 0.2, roughness: 0.05, metalness: 0, side: THREE.DoubleSide, depthWrite: false })); beaker.position.y = (WH + 0.9) / 2; root.add(beaker);
-      const rim = new THREE.Mesh(new THREE.TorusGeometry(WR + 0.12, 0.05, 10, 56), mat(0xe3eeff, { transparent: true, opacity: 0.6 })); rim.rotation.x = Math.PI / 2; rim.position.y = WH + 0.9; root.add(rim);
-      const bot = new THREE.Mesh(new THREE.CylinderGeometry(WR + 0.12, WR + 0.12, 0.12, 56), mat(0xcfe0f7, { transparent: true, opacity: 0.45 })); bot.position.y = 0.04; root.add(bot);
-      const water = new THREE.Mesh(new THREE.CylinderGeometry(WR, WR, WH, 56), new THREE.MeshStandardMaterial({ color: 0x8fc4ff, transparent: true, opacity: 0.28, roughness: 0.1, depthWrite: false })); water.position.y = WH / 2 + 0.1; root.add(water);
-      // 전극 두 개 (왼쪽 −극, 오른쪽 +극)
-      const bar = new THREE.Mesh(new THREE.BoxGeometry(WR * 2.1, 0.12, 0.2), mat(0x8a93a6, { metalness: 0.6 })); bar.position.set(0, WH + 0.95, 0); root.add(bar);
-      const electrodes = [-1, 1].map((sg) => { const e = new THREE.Mesh(new THREE.BoxGeometry(0.1, WH + 0.4, 1.3), mat(sg < 0 ? 0x4a5568 : 0x9aa3b2, { metalness: 0.75, roughness: 0.3 })); e.position.set(sg * (WR - 0.45), (WH + 0.4) / 2 + 0.45, 0); e.castShadow = true; root.add(e); return e; });
+      // 실험대 (짙은 실험대 상판 + 둥근 모서리)
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(5.6, 5.6, 0.25, 72), mats.ceramic(0x1d2433, { extra: { roughness: 0.42, clearcoat: 0.5 } })); floor.position.y = -0.15; floor.receiveShadow = true; root.add(floor);
+      { const edge = new THREE.Mesh(new THREE.TorusGeometry(5.6, 0.125, 12, 96), mats.metal('aluminium', { brushed: true })); edge.rotation.x = Math.PI / 2; edge.position.y = -0.15; edge.userData.v3bg = true; root.add(edge); }
+      // 비커: 두께가 있는 유리벽 · 둥근 바닥 모서리 · 바깥으로 말린 입구 · 눈금
+      const BR = WR + 0.12, BH = WH + 0.9;
+      const bprof = [[0, 0.02], [BR - 0.22, 0.02], [BR - 0.06, 0.07], [BR, 0.22], [BR, BH - 0.1], [BR + 0.09, BH], [BR + 0.05, BH + 0.03], [BR - 0.05, BH - 0.08], [BR - 0.05, 0.24], [BR - 0.24, 0.13], [0, 0.13]].map((q) => new THREE.Vector2(q[0], q[1]));
+      const beaker = new THREE.Mesh(new THREE.LatheGeometry(bprof, 72), mats.glass({ opacity: 0.2 })); beaker.renderOrder = 3; root.add(beaker);
+      { const tk = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.75 });   // 눈금
+        for (let i = 0; i < 9; i++) { const big = i % 2 === 0, w = big ? 0.5 : 0.28, a0 = 0.15; const t = new THREE.Mesh(new THREE.CylinderGeometry(BR + 0.012, BR + 0.012, 0.022, 12, 1, true, a0, w / BR), tk); t.position.y = 0.5 + i * 0.38; t.renderOrder = 4; root.add(t); } }
+      const water = new THREE.Mesh(new THREE.CylinderGeometry(WR, WR, WH, 56), mats.liquid(0x78b8f2, { opacity: 0.2, extra: { roughness: 0.12 } })); water.position.y = WH / 2 + 0.14; water.renderOrder = 1; root.add(water);
+      { const top = new THREE.Mesh(new THREE.CircleGeometry(WR, 64), mats.liquid(0x9bd0ff, { opacity: 0.34, extra: { side: THREE.DoubleSide } })); top.rotation.x = -Math.PI / 2; top.position.y = WH + 0.145; top.renderOrder = 2; root.add(top);   // 수면
+        const men = new THREE.Mesh(new THREE.TorusGeometry(WR - 0.02, 0.035, 8, 72), mats.liquid(0xc6e4ff, { opacity: 0.5 })); men.rotation.x = Math.PI / 2; men.position.y = WH + 0.15; men.renderOrder = 2; root.add(men); }
+      // 전극 두 개 (왼쪽 −극, 오른쪽 +극): 금속판 + 집게, 가로 받침대
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(BR * 2 + 0.5, 0.14, 0.34), mats.plastic(0x30384a)); bar.position.set(0, BH + 0.1, 0); bar.castShadow = true; root.add(bar);
+      const electrodes = [-1, 1].map((sg) => { const e = new THREE.Mesh(new THREE.BoxGeometry(0.1, WH + 0.4, 1.3), mats.metal(sg < 0 ? 0x4a5160 : 'steel', { brushed: true, roughness: sg < 0 ? 0.42 : 0.3 })); e.position.set(sg * (WR - 0.45), (WH + 0.4) / 2 + 0.45, 0); e.castShadow = true; root.add(e);
+        const clip = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.5), mats.plastic(sg < 0 ? 0x1f2430 : 0xb3262b)); clip.position.set(sg * (WR - 0.45), BH + 0.26, 0); root.add(clip);
+        const screw = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.12, 16), mats.metal('brass')); screw.position.set(sg * (WR - 0.45), BH + 0.46, 0); root.add(screw); return e; });
       // 전구와 전선
       const bulbG = new THREE.Group(); bulbG.position.set(0, WH + 2.5, 0); root.add(bulbG);
       const bulbM = new THREE.MeshStandardMaterial({ color: 0xfff6d0, transparent: true, opacity: 0.55, emissive: 0xffd45a, emissiveIntensity: 0, roughness: 0.1, depthWrite: false });
-      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 24), bulbM); bulbG.add(bulb);
-      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 0.4, 16), mat(0x8a93a6, { metalness: 0.7 })); base.position.y = -0.72; bulbG.add(base);
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.62, 40, 28), bulbM); bulbG.add(bulb);
+      { const shell = new THREE.Mesh(new THREE.SphereGeometry(0.64, 40, 28), mats.glass({ opacity: 0.16 })); shell.renderOrder = 4; bulbG.add(shell); const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.42, 0.3, 24, 1, true), mats.glass({ opacity: 0.22 })); neck.position.y = -0.5; bulbG.add(neck); }
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.27, 0.42, 24), mats.metal('brass')); base.position.y = -0.74; base.castShadow = true; bulbG.add(base);
+      for (let i = 0; i < 4; i++) { const th = new THREE.Mesh(new THREE.TorusGeometry(0.295 - i * 0.008, 0.022, 8, 28), mats.metal('brass')); th.rotation.x = Math.PI / 2; th.position.y = -0.6 - i * 0.095; bulbG.add(th); }   // 소켓 나사산
+      { const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.08, 0.1, 16), mats.rubber(0x1a1d24)); tip.position.y = -1.0; bulbG.add(tip); [-1, 1].forEach((q) => { const sup = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.42, 6), mats.metal('steel')); sup.position.set(q * 0.13, -0.27, 0); sup.rotation.z = q * 0.08; bulbG.add(sup); }); }
       const fil = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.015, 8, 16), new THREE.MeshBasicMaterial({ color: 0xffb400 })); fil.position.y = -0.05; bulbG.add(fil);
             const gcv = document.createElement('canvas'); gcv.width = gcv.height = 128; { const g = gcv.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,235,150,1)'); gr.addColorStop(0.35, 'rgba(255,200,70,.5)'); gr.addColorStop(1, 'rgba(255,170,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); }
       const bglow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(gcv), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })); bglow.scale.set(3.6, 3.6, 1); bulbG.add(bglow);
-      const wireM = mat(0x2a2f3a, { metalness: 0.3 });
-      [-1, 1].forEach((sg) => { const c = new THREE.CatmullRomCurve3([new V3(sg * (WR - 0.45), WH + 0.9, 0), new V3(sg * (WR - 0.45), WH + 1.5, 0), new V3(sg * 0.6, WH + 1.9, 0), new V3(sg * 0.2, WH + 2.1, 0)], false, 'catmullrom', 0.2); root.add(new THREE.Mesh(new THREE.TubeGeometry(c, 30, 0.035, 8, false), wireM)); });
+      const wireM = mats.rubber(0x15181f, { extra: { roughness: 0.55 } });
+      [-1, 1].forEach((sg) => { const c = new THREE.CatmullRomCurve3([new V3(sg * (WR - 0.45), WH + 0.9, 0), new V3(sg * (WR - 0.45), WH + 1.5, 0), new V3(sg * 0.6, WH + 1.9, 0), new V3(sg * 0.2, WH + 2.1, 0)], false, 'catmullrom', 0.2); const wm = new THREE.Mesh(new THREE.TubeGeometry(c, 40, 0.04, 10, false), sg < 0 ? wireM : mats.plastic(0xb3262b)); wm.castShadow = true; root.add(wm); });
       label('(−)', electrodes[0], { size: 12, offset: [0, WH / 2 + 0.6, 0] }); label('(+)', electrodes[1], { size: 12, offset: [0, WH / 2 + 0.6, 0] });
       const bulbLab = label('전구', bulbG, { size: 12.5, offset: [0, 1.0, 0] });
 
@@ -56,7 +68,7 @@
       function signTex(ch, col) { const k = ch + col; if (sprTex[k]) return sprTex[k]; const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.fillStyle = '#fff'; g.font = '800 54px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = col; g.shadowBlur = 6; g.fillText(ch, 32, 36); return (sprTex[k] = new THREE.CanvasTexture(c)); }
       const sg = new THREE.Group(); root.add(sg);
       let items = [];
-      function sphere(r, c, o) { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 28, 20), mat(c, o)); m.castShadow = true; return m; }
+      const sphM = {}; function sphere(r, c, o) { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 24), o ? mat(c, o) : (sphM[c] || (sphM[c] = mat(c)))); m.castShadow = true; return m; }
       function ion(kind) {
         const g = new THREE.Group();
         if (kind === 'H') g.add(sphere(0.26, COL.H));
@@ -69,14 +81,14 @@
       }
       let seed = 5; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
       function sugar() {
-        const g = new THREE.Group(), cs = [[0, 0, 0, 0xf1f1f4], [0.45, 0.2, 0.1, 0xe2464b], [-0.4, 0.25, -0.1, 0xe2464b], [0.1, -0.45, 0.2, 0xd9dce3], [-0.15, 0.55, 0.3, 0xe2464b], [0.5, -0.3, -0.2, 0xd9dce3], [-0.5, -0.3, 0.1, 0xf1f1f4]];
+        const g = new THREE.Group(), cs = [[0, 0, 0, 0xf1f1f4], [0.45, 0.2, 0.1, 0xd42a30], [-0.4, 0.25, -0.1, 0xd42a30], [0.1, -0.45, 0.2, 0xd9dce3], [-0.15, 0.55, 0.3, 0xd42a30], [0.5, -0.3, -0.2, 0xd9dce3], [-0.5, -0.3, 0.1, 0xf1f1f4]];
         cs.forEach((c) => { const m = sphere(0.24, c[3]); m.position.set(c[0], c[1], c[2]); g.add(m); });
         return g;
       }
       function molOf(kind) {
         const g = new THREE.Group(), add = (r, c, x, y, z) => { const m = sphere(r, c); m.position.set(x, y, z); g.add(m); };
-        if (kind === 'ch4') { add(0.28, 0x4d5566, 0, 0, 0); [[0.38, 0.38, 0.38], [-0.38, -0.38, 0.38], [-0.38, 0.38, -0.38], [0.38, -0.38, -0.38]].forEach((p) => add(0.16, 0xf4f6fb, p[0], p[1], p[2])); }
-        else { add(0.27, 0x4d5566, -0.25, 0, 0); add(0.24, 0xe2464b, 0.3, 0.1, 0); add(0.14, 0xf4f6fb, 0.62, 0.3, 0); [[-0.5, 0.35, 0.15], [-0.5, -0.25, 0.3], [-0.25, -0.15, -0.4]].forEach((p) => add(0.14, 0xf4f6fb, p[0], p[1], p[2])); }
+        if (kind === 'ch4') { add(0.28, 0x39404e, 0, 0, 0); [[0.38, 0.38, 0.38], [-0.38, -0.38, 0.38], [-0.38, 0.38, -0.38], [0.38, -0.38, -0.38]].forEach((p) => add(0.16, 0xf4f6fb, p[0], p[1], p[2])); }
+        else { add(0.27, 0x39404e, -0.25, 0, 0); add(0.24, 0xd42a30, 0.3, 0.1, 0); add(0.14, 0xf4f6fb, 0.62, 0.3, 0); [[-0.5, 0.35, 0.15], [-0.5, -0.25, 0.3], [-0.25, -0.15, -0.4]].forEach((p) => add(0.14, 0xf4f6fb, p[0], p[1], p[2])); }
         return g;
       }
       let NU = 8;

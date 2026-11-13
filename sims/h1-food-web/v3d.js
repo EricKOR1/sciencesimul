@@ -28,7 +28,7 @@
     autoRotate: 0.15,
     levels: [2, 3],
     build(ctx) {
-      const { THREE, root, label, info, controls, renderer } = ctx;
+      const { THREE, root, label, info, controls, renderer, mats } = ctx;
       /* 식단 비교 판: 2D의 '곡물 → 직접 먹기 / 소 사료' 막대와 먹일 수 있는 사람 수를 3D 화면에도 보여 줘요 */
       if (!document.getElementById('fw3d-diet')) { const st2 = document.createElement('style'); st2.id = 'fw3d-diet'; st2.textContent =
         '.fw-diet{position:absolute;right:10px;top:10px;width:min(260px,44%);padding:8px 10px;border-radius:12px;background:rgba(8,12,24,.76);color:#fff;font-size:12px;font-weight:700;pointer-events:none}.fw-diet .h{font-weight:900;margin-bottom:5px}.fw-diet .bar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:#2a3346;margin:3px 0 6px}.fw-diet .bar i{display:block;height:100%}.fw-diet .r{display:flex;justify-content:space-between;gap:6px;line-height:1.5}.fw-diet .t{margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,.18);font-weight:900;color:#5eead4}' +
@@ -51,7 +51,10 @@
       const L2 = () => (ctx.lesson && ctx.lesson()) || null;
       const st = { names: true, t: 0, demo: false, sig: '' };
       const clamp01 = (x) => Math.max(0, Math.min(1, x));
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.4, 0.25, 56), new THREE.MeshLambertMaterial({ color: 0x2d3547 })); floor.position.y = -0.2; floor.receiveShadow = true; root.add(floor); floor.userData.v3bg = true;   // 바닥은 배경
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.35, 0.3, 96), [mats.stone(0x5a4630, { repeat: 6, bump: 0.05 }), mats.stone(0x3f7f3a, { repeat: 7, bump: 0.06 }), mats.stone(0x5a4630)]); floor.position.y = -0.22; floor.receiveShadow = true; root.add(floor); floor.userData.v3bg = true;   // 풀밭 한 조각 (위: 풀, 옆: 흙)
+      { const N = 900, tuft = new THREE.InstancedMesh(new THREE.ConeGeometry(0.035, 0.22, 4, 1), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 }), N), o = new THREE.Object3D(), c = new THREE.Color(); let sd = 31; const rn = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+        for (let i = 0; i < N; i++) { const a = rn() * 6.283, r = Math.sqrt(rn()) * 5.05; o.position.set(Math.cos(a) * r, -0.07 + 0.05, Math.sin(a) * r); o.rotation.set((rn() - 0.5) * 0.5, rn() * 6.3, (rn() - 0.5) * 0.5); o.scale.set(1, 0.6 + rn() * 1.1, 1); o.updateMatrix(); tuft.setMatrixAt(i, o.matrix); tuft.setColorAt(i, c.setHSL(0.27 + rn() * 0.07, 0.5, 0.26 + rn() * 0.14)); }
+        tuft.userData.v3bg = true; tuft.receiveShadow = true; root.add(tuft); }   // 풀잎   // 바닥은 배경
       const gW = new THREE.Group(), gP = new THREE.Group(), gF = new THREE.Group(); root.add(gW, gP, gF);
       const LH = 1.35;
 
@@ -60,7 +63,7 @@
       Object.keys(SP).forEach((k) => {
         const s = SP[k], g = new THREE.Group(); g.position.set(s.p[0], s.lv * LH + 0.5, s.p[2]);
         const r = 0.5;
-        const body = new THREE.Mesh(s.lv === 0 ? new THREE.CylinderGeometry(0.7, 0.7, 0.34, 32) : new THREE.SphereGeometry(r, 28, 20), mat(s.c, { roughness: 0.4 })); body.castShadow = true; g.add(body);
+        const body = new THREE.Mesh(s.lv === 0 ? new THREE.CylinderGeometry(0.7, 0.7, 0.34, 32) : new THREE.SphereGeometry(r, 32, 24), mats.plastic(s.c, { roughness: 0.3 })); body.castShadow = true; g.add(body);
         const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, s.lv * LH + 0.5, 6), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.15 })); stem.position.y = -(s.lv * LH + 0.5) / 2; g.add(stem);
         gW.add(g); nodes[k] = { g, body, lab: label(s.e + ' ' + s.n, g, { size: 12.5, offset: [0, 0.95, 0] }), k };
       });
@@ -82,11 +85,13 @@
       /* ================= 쌓인 막대 (생태 피라미드 · 에너지 전달 공통) =================
          2D처럼 막대 폭 = (log10(값) + 1) 에 비례해요 (한 칸 = 10배) */
       const LHP = 1.05, UW = 0.6;
+      /* 블록: 모서리를 둥글린 원판 (반지름 1, 높이 LHP − 0.1) */
+      const blockGeo = (() => { const h = (LHP - 0.1) / 2, b = 0.05, pts = [[0, -h], [1 - b, -h], [1 - b * 0.3, -h + b * 0.3], [1, -h + b], [1, h - b], [1 - b * 0.3, h - b * 0.3], [1 - b, h], [0, h]].map((q) => new THREE.Vector2(q[0], q[1])); return new THREE.LatheGeometry(pts, 72); })();
       function stack(group) {
         const L = [];
         for (let i = 0; i < 5; i++) {
-          const m = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, LHP - 0.1, 48), mat(0x888888, { roughness: 0.5, transparent: true })); m.castShadow = true; m.receiveShadow = true; m.visible = false;
-          const gh = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, LHP - 0.1, 32, 1, true), new THREE.MeshBasicMaterial({ color: 0x9fb4d0, transparent: true, opacity: 0.18, wireframe: true, depthWrite: false })); gh.visible = false;
+          const m = new THREE.Mesh(blockGeo, mats.plastic(0x888888, { roughness: 0.34, extra: { transparent: true, clearcoat: 0.7, clearcoatRoughness: 0.18 } })); m.castShadow = true; m.receiveShadow = true; m.visible = false;
+          const gh = new THREE.Mesh(blockGeo, mats.glass({ tint: 0xbcd0ee, opacity: 0.16 })); gh.visible = false;   // 아직 쌓지 않은 칸: 빈 유리 블록
           group.add(m, gh);
           const lb = label('', m, { size: 12, offset: [0, 0, 0] });
           L.push({ m, gh, lb, w: 1 });
@@ -109,7 +114,7 @@
       const heat = [];
       for (let i = 0; i < 4; i++) for (let k = 0; k < 3; k++) { const h = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.28, 10), new THREE.MeshBasicMaterial({ color: 0xff6a5a, transparent: true, opacity: 0.8 })); h.userData = { i, k, ph: k / 3 }; h.visible = false; gF.add(h); heat.push(h); }
       const heatLab = label('나머지(약 90 %)는 열로 나가요', [3.3, 0.6, 0], { size: 11.5, color: 'rgba(170,40,30,.95)', offset: [0.8, 0.2, 0] });
-      const pkt = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), new THREE.MeshStandardMaterial({ color: 0xffe14d, emissive: 0xffb800, emissiveIntensity: 0.8 })); pkt.visible = false; gF.add(pkt);
+      const pkt = new THREE.Mesh(new THREE.SphereGeometry(0.17, 24, 16), mats.emissive(0xffd21f, 1.1)); ctx.halo(pkt, 0xffc84a, 1.3, 0.7); pkt.visible = false; gF.add(pkt);
 
       /* ---------- 조작 ---------- */
       const probe = controls.text(''); probe.style.display = 'none'; const ctlRow = probe.parentElement;

@@ -20,10 +20,12 @@
       const V = THREE.Vector3;
       if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 눕혀 둔 모형을 세워서 보여 줘요
       let type = 'comp', nS = 5;   // 2D처럼 저해제 개수: 경쟁적 6개 · 비경쟁적 4개
-      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.38, metalness: 0.03 }, o || {}));
+      const deep = (c, k) => { const a = new THREE.Color(c); return a.lerp(a.clone().convertSRGBToLinear(), k == null ? 0.7 : k); };   // 화면에서 색이 옅어지지 않게 조금 진하게
+      const std = (c, o) => { o = o || {}; return o.transparent ? new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.38, metalness: 0.03 }, o)) : ctx.mats.plastic(deep(c), { roughness: 0.3, extra: o }); };   // 분자 모형: 매끈한 플라스틱 광택 (색은 그대로, 조금 진하게)
+      const bio = (c, o) => { const t = ctx.mats.tex('noise').clone(); t.needsUpdate = true; t.repeat.set(3, 2); return ctx.mats.organic(deep(c), { extra: Object.assign({ roughness: 0.46, bumpMap: t, bumpScale: 0.025 }, o || {}) }); };   // 단백질(효소) 표면: 촉촉하고 오돌토돌하게
       const A = (p) => { const o = new THREE.Object3D(); o.position.set(p[0], p[1], p[2]); root.add(o); return o; };
-      const enzMat = std(0x38bdf8, { roughness: 0.32 }), siteMat = std(0x0c4a6e, { emissive: 0x082f49, roughness: 0.6 });
-      const alloMat = std(0x7e22ce, { emissive: 0x2e1065, roughness: 0.5 });
+      const enzMat = bio(0x38bdf8), siteMat = std(0x0c4a6e, { emissive: 0x082f49, roughness: 0.6 });
+      const alloMat = bio(0x7e22ce, { emissive: 0x2e1065 });
 
       /* ---------- 효소 3개 ---------- */
       const EX = [-3.6, 0, 3.6], EY = -1.5;
@@ -42,8 +44,8 @@
       /* ---------- 분자 ---------- */
       function dumb(c1, c2, r1, r2) {
         const g = new THREE.Group();
-        const a = new THREE.Mesh(new THREE.SphereGeometry(r1, 20, 16), std(c1, { roughness: 0.3 })), b = new THREE.Mesh(new THREE.SphereGeometry(r2, 20, 16), std(c2, { roughness: 0.3 }));
-        a.position.x = -0.26; b.position.x = 0.26; const bd = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.4, 10), std(0xe2e8f0)); bd.rotation.z = Math.PI / 2;
+        const a = new THREE.Mesh(new THREE.SphereGeometry(r1, 32, 22), std(c1, { roughness: 0.26 })), b = new THREE.Mesh(new THREE.SphereGeometry(r2, 32, 22), std(c2, { roughness: 0.26 }));
+        a.position.x = -0.26; b.position.x = 0.26; const bd = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.4, 16), std(0xc3cddb)); bd.rotation.z = Math.PI / 2;
         g.add(a, b, bd); g.userData = { a, b, bd }; return g;
       }
       const mols = [];

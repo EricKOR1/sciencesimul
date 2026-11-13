@@ -29,6 +29,7 @@
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, UP = new V3(0, 1, 0);
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.05 }, o || {}));
+      const atomM = (el) => ctx.mats.plastic(new THREE.Color(COL[el]).multiplyScalar(el === 'H' ? 0.93 : el === 'C' ? 0.72 : 0.8).getHex(), { roughness: 0.26, extra: { clearcoat: 0.7, clearcoatRoughness: 0.15 } });   // 반짝이는 분자 모형 공 (CPK 색 그대로, 조금 진하게)
       const g = new THREE.Group(); root.add(g);
       let cur = 'ethanol', hi = true, fill = false, labs = [];
       /* 방향 계산 */
@@ -79,7 +80,7 @@
         }
         return { A, B };
       }
-      function stick(a, b, r, col) { const d = b.clone().sub(a), L = d.length(), m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, L, 14), mat(col)); m.position.copy(a).add(b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(UP, d.normalize()); return m; }
+      function stick(a, b, r, col) { const d = b.clone().sub(a), L = d.length(), m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, L, 20), mat(col === 0xb4bfd2 ? 0xa3adbf : col, { roughness: 0.28, metalness: 0.2 })); m.position.copy(a).add(b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(UP, d.normalize()); return m; }
       let atoms = [], halos = [], sticks = [];
       function build() {
         while (g.children.length) g.remove(g.children[0]);
@@ -87,8 +88,8 @@
         const M = LIST.find((x) => x.id === cur), { A, B } = molecule(cur);
         const c = new V3(); A.forEach((a) => c.add(a.p)); c.divideScalar(A.length); A.forEach((a) => a.p.sub(c));
         A.forEach((a) => {
-          const m = new THREE.Mesh(new THREE.SphereGeometry(BS[a.el] * 1.12, 40, 28), mat(COL[a.el], { roughness: 0.35 })); m.position.copy(a.p); g.add(m); atoms.push(m); m.userData.el = a.el;
-          const h = new THREE.Mesh(new THREE.SphereGeometry(BS[a.el] * 1.12 + 0.2, 28, 20), mat(0xffd34d, { transparent: true, opacity: 0.26, emissive: 0xffa500, emissiveIntensity: 0.4, depthWrite: false })); h.position.copy(a.p); h.visible = a.grp && M.g !== 'none'; g.add(h); halos.push(h);
+          const m = new THREE.Mesh(new THREE.SphereGeometry(BS[a.el] * 1.12, 48, 32), atomM(a.el)); m.position.copy(a.p); g.add(m); atoms.push(m); m.userData.el = a.el;
+          const h = new THREE.Mesh(new THREE.SphereGeometry(BS[a.el] * 1.12 + 0.2, 28, 20), mat(0xffd34d, { transparent: true, opacity: 0.26, emissive: 0xffa500, emissiveIntensity: 0.4, depthWrite: false })); h.position.copy(a.p); h.visible = a.grp && M.g !== 'none'; g.add(h); halos.push(h); ctx.halo(h, 0xffc23a, 2.4, 0.3);
         });
         B.forEach(([i, j, o]) => {
           const pa = A[i].p, pb = A[j].p;

@@ -19,26 +19,33 @@
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.05 }, o || {}));
+      const MT = ctx.mats;
+      const rbox = (w, h, d, r) => { r = Math.min(r, w / 2 - 1e-3, h / 2 - 1e-3, d / 2 - 1e-3); const s = new THREE.Shape(), x = w / 2 - r, y = h / 2 - r; s.absarc(x, y, r, 0, Math.PI / 2); s.absarc(-x, y, r, Math.PI / 2, Math.PI); s.absarc(-x, -y, r, Math.PI, 1.5 * Math.PI); s.absarc(x, -y, r, 1.5 * Math.PI, 2 * Math.PI); const g = new THREE.ExtrudeGeometry(s, { depth: d - 2 * r, bevelEnabled: true, bevelThickness: r, bevelSize: r, bevelOffset: -r, bevelSegments: 3, curveSegments: 6 }); g.translate(0, 0, -(d - 2 * r) / 2); return g; };   // 모서리가 둥근 상자
+      const rslab = (w, d, t, r) => { const g = rbox(w, d, t, r); g.rotateX(Math.PI / 2); return g; };   // 눕힌 판 (윗면에 무늬가 고르게)
       let power = true, cur = 2, plated = 0;
-      const gl = new THREE.Mesh(new THREE.CylinderGeometry(BR, BR, BH, 56, 1, true), new THREE.MeshStandardMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.16, roughness: 0.08, side: THREE.DoubleSide, depthWrite: false })); gl.position.y = FY + BH / 2; root.add(gl);
-      const bt = new THREE.Mesh(new THREE.CylinderGeometry(BR, BR, 0.14, 56), mat(0xbcd0e6, { transparent: true, opacity: 0.5 })); bt.position.y = FY; root.add(bt);
+      const gl = new THREE.Mesh(new THREE.CylinderGeometry(BR, BR, BH, 64, 1, true), MT.glass({ tint: 0xcfe8ff, opacity: 0.2 })); gl.position.y = FY + BH / 2; root.add(gl);
+      { const rim = new THREE.Mesh(new THREE.TorusGeometry(BR + 0.03, 0.07, 12, 96), MT.glass({ tint: 0xe6f3ff, opacity: 0.5 })); rim.rotation.x = Math.PI / 2; rim.position.y = FY + BH; root.add(rim);
+        for (let k = 1; k <= 5; k++) { const tk = new THREE.Mesh(new THREE.BoxGeometry(k % 2 ? 0.7 : 0.4, 0.03, 0.02), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 })); tk.position.set(0, FY + BH * k / 6.2, BR + 0.01); root.add(tk); }
+        const bn = new THREE.Mesh(rslab(13, 9, 0.36, 0.08), MT.wood(0xa88962, { repeat: 0.22 })); bn.position.y = FY - 0.07 - 0.2; bn.userData.v3bg = true; root.add(bn); }   // 비커 입술 · 눈금 · 실험대
+      const bt = new THREE.Mesh(new THREE.CylinderGeometry(BR, BR, 0.14, 64), MT.glass({ tint: 0xcfe2f5, opacity: 0.42 })); bt.position.y = FY; root.add(bt);
       const top = FY + BH * WATER;
-      const liq = new THREE.Mesh(new THREE.CylinderGeometry(BR - 0.04, BR - 0.04, BH * WATER, 56), mat(0x3b9bff, { transparent: true, opacity: 0.36, roughness: 0.15, depthWrite: false })); liq.position.y = FY + BH * WATER / 2; root.add(liq);
+      const liq = new THREE.Mesh(new THREE.CylinderGeometry(BR - 0.04, BR - 0.04, BH * WATER, 64), MT.liquid(0x2f8cf5, { opacity: 0.42 })); liq.position.y = FY + BH * WATER / 2; root.add(liq);
       /* 양극: 구리판 */
-      const anode = new THREE.Mesh(new THREE.BoxGeometry(0.3, 4.2, 2.0), mat(0xd9824c, { metalness: 0.85, roughness: 0.3 })); anode.position.set(AX, FY + 2.2, 0); root.add(anode);
+      const anode = new THREE.Mesh(rbox(0.3, 4.2, 2.0, 0.05), MT.metal('copper', { brushed: true })); anode.position.set(AX, FY + 2.2, 0); root.add(anode);
       const eTop = FY + 2.2 + 2.1;
       /* 음극: 열쇠 (머리 고리 + 몸통 + 이빨) — 한 그룹 */
-      const keyMat = mat(0xaab4c4, { metalness: 0.85, roughness: 0.35 });
+      const keyMat = MT.metal(0xaab4c4, { roughness: 0.3 });
       const key = new THREE.Group(); key.position.set(KX, top - 0.5, 0); key.scale.setScalar(1.15); root.add(key);
       const head = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.2, 20, 48), keyMat); head.position.set(0, 0.45, 0); key.add(head);
-      const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.34, 2.6, 0.26), keyMat); shaft.position.set(0, -1.4, 0); key.add(shaft);
-      [[-2.55, 0.42], [-2.15, 0.3], [-1.75, 0.4]].forEach(([y, l]) => { const t = new THREE.Mesh(new THREE.BoxGeometry(l, 0.24, 0.26), keyMat); t.position.set(0.17 + l / 2, y, 0); key.add(t); });
-      const clip = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.2, 10), mat(0xd18a3a, { metalness: 0.7, roughness: 0.35 })); clip.position.set(KX, top + 0.5, 0); root.add(clip);
+      const shaft = new THREE.Mesh(rbox(0.34, 2.6, 0.26, 0.06), keyMat); shaft.position.set(0, -1.4, 0); key.add(shaft);
+      [[-2.55, 0.42], [-2.15, 0.3], [-1.75, 0.4]].forEach(([y, l]) => { const t = new THREE.Mesh(rbox(l, 0.24, 0.26, 0.04), keyMat); t.position.set(0.17 + l / 2, y, 0); key.add(t); });
+      const clip = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.2, 14), MT.metal('copper')); clip.position.set(KX, top + 0.5, 0); root.add(clip);
       /* 전지 + 도선 */
       const BY = eTop + 1.7;
-      const batt = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 2.4, 28), mat(0x3b82f6, { metalness: 0.4, roughness: 0.4 })); batt.rotation.z = Math.PI / 2; batt.position.set(0, BY, 0); root.add(batt);
-      const capP = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.4, 20), mat(0xd1d5db, { metalness: 0.8, roughness: 0.3 })); capP.rotation.z = Math.PI / 2; capP.position.set(-1.4, BY, 0); root.add(capP);
-      const wm = mat(0xd18a3a, { metalness: 0.7, roughness: 0.35 });
+      const batt = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 2.4, 40), MT.plastic(0x2563d8)); batt.rotation.z = Math.PI / 2; batt.position.set(0, BY, 0); root.add(batt);
+      { const bd = new THREE.Mesh(new THREE.CylinderGeometry(0.56, 0.56, 0.5, 40), MT.metal('gold', { brushed: true })); bd.position.y = 0.85; batt.add(bd); const mn = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.06, 40), MT.metal('steel')); mn.position.y = -1.22; batt.add(mn); }
+      const capP = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.4, 28), MT.metal('steel')); capP.rotation.z = Math.PI / 2; capP.position.set(-1.4, BY, 0); root.add(capP);
+      const wm = MT.metal('copper');
       const wA = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, BY - eTop, 10), wm); wA.position.set(AX, (BY + eTop) / 2, 0); root.add(wA);
       const wK = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, BY - (top + 1.1), 10), wm); wK.position.set(KX, (BY + top + 1.1) / 2, 0); root.add(wK);
       const hA = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, Math.abs(AX) - 1.2, 10), wm); hA.rotation.z = Math.PI / 2; hA.position.set(-(Math.abs(AX) + 1.2) / 2, BY, 0); root.add(hA);

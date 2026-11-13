@@ -24,15 +24,20 @@
 
       /* ---------- 땅 · 바다 · 대기 ---------- */
       const GW = 13, GD = 5;
-      const land = new THREE.Mesh(new THREE.BoxGeometry(GW * 0.55, 0.8, GD), new THREE.MeshLambertMaterial({ color: 0x2f6a24 })); land.position.set(-GW * 0.225, -0.4, 0); land.receiveShadow = true; root.add(land);
-      const sea = new THREE.Mesh(new THREE.BoxGeometry(GW * 0.45, 0.8, GD), new THREE.MeshLambertMaterial({ color: 0x1255b0 })); sea.position.set(GW * 0.275, -0.4, 0); sea.receiveShadow = true; root.add(sea);
-      const rock = new THREE.Mesh(new THREE.BoxGeometry(GW, 0.5, GD), new THREE.MeshLambertMaterial({ color: 0x4a4036 })); rock.position.y = -1.05; root.add(rock);
+      const land = new THREE.Mesh(new THREE.BoxGeometry(GW * 0.55, 0.8, GD), [0, 1, 2, 3, 4, 5].map((q) => (q === 2 ? ctx.mats.stone(0x2f6f26, { repeat: 6, bump: 0.07 }) : ctx.mats.stone(0x5a4630, { repeat: 4, bump: 0.05 })))); land.position.set(-GW * 0.225, -0.4, 0); land.receiveShadow = true; root.add(land);
+      const sea = new THREE.Mesh(new THREE.BoxGeometry(GW * 0.45, 0.8, GD), new THREE.MeshPhysicalMaterial({ color: 0x0d4aa4, roughness: 0.1, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 1.5 })); sea.position.set(GW * 0.275, -0.4, 0); sea.receiveShadow = true; root.add(sea);
+      const rock = new THREE.Mesh(new THREE.BoxGeometry(GW, 0.5, GD), ctx.mats.stone(0x4a4036, { cracks: true, repeat: 3, bump: 0.07 })); rock.position.y = -1.05; root.add(rock);
+      { const NT = 700, tuft = new THREE.InstancedMesh(new THREE.ConeGeometry(0.03, 0.16, 4, 1), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 }), NT), o = new THREE.Object3D(), c = new THREE.Color(); let sd = 23; const rn = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+        for (let q = 0; q < NT; q++) { o.position.set(-GW / 2 + 0.05 + rn() * (GW * 0.55 - 0.15), 0.05, (rn() - 0.5) * (GD - 0.1)); o.rotation.set((rn() - 0.5) * 0.5, rn() * 6.3, (rn() - 0.5) * 0.5); o.scale.set(1, 0.6 + rn(), 1); o.updateMatrix(); tuft.setMatrixAt(q, o.matrix); tuft.setColorAt(q, c.setHSL(0.27 + rn() * 0.07, 0.5, 0.22 + rn() * 0.13)); }
+        tuft.userData.v3bg = true; root.add(tuft);   // 풀잎
+        const foam = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.03, GD), new THREE.MeshStandardMaterial({ color: 0xe6f2ff, roughness: 0.5, transparent: true, opacity: 0.8 })); foam.position.set(GW * 0.05 + 0.05, 0.005, 0); root.add(foam);   // 바닷가 물거품
+        const sand = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.805, GD + 0.004), ctx.mats.stone(0xbfa878, { repeat: 3, bump: 0.03 })); sand.position.set(GW * 0.05 - 0.22, -0.4, 0); root.add(sand); }   // 모래사장
       for (let i = 0; i < 6; i++) { // 숲 (작은 나무)
-        const tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.3, 8), mat(0x6b4a2b)), cr = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.65, 10), mat(0x2f7a3a));
-        cr.position.y = 0.45; tr.add(tk, cr); tr.position.set(-5.8 + i * 0.55, 0.15, -1.6 + (i % 3) * 0.3); tr.traverse((o) => { if (o.isMesh) o.castShadow = true; }); root.add(tr);
+        const tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.3, 8), ctx.mats.wood(0x7a5632)), cr = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.5, 10), mat(0x1f6a30, { roughness: 0.8 })), cr2 = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.42, 10), mat(0x2a7a3a, { roughness: 0.8 }));
+        cr.position.y = 0.38; cr2.position.y = 0.66; tr.add(tk, cr, cr2); tr.position.set(-5.8 + i * 0.55, 0.15, -1.6 + (i % 3) * 0.3); tr.traverse((o) => { if (o.isMesh) o.castShadow = true; }); root.add(tr);
       }
       const ATH = 5;
-      const atm = new THREE.Mesh(new THREE.BoxGeometry(GW, ATH, GD), new THREE.MeshStandardMaterial({ color: 0x8fc2ff, transparent: true, opacity: 0.13, roughness: 0.2, depthWrite: false }));
+      const atm = new THREE.Mesh(new THREE.BoxGeometry(GW, ATH, GD), ctx.mats.glass({ tint: 0x8fc2ff, opacity: 0.13, extra: { side: THREE.FrontSide, envMapIntensity: 1.2 } }));
       atm.position.y = ATH / 2; root.add(atm);
       const frame = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(GW, ATH, GD)), new THREE.LineBasicMaterial({ color: 0xa9d0ff, transparent: true, opacity: 0.45 }));
       frame.position.y = ATH / 2; root.add(frame);
@@ -41,11 +46,16 @@
       label('우주', [GW / 2, ATH + 3.2, 0], { size: 12, offset: [-0.8, 0, 0] });
       // 구름
       const cloud = new THREE.Group();
-      [[0, 0, 0, 0.55], [0.55, 0.05, 0.1, 0.45], [-0.55, -0.05, -0.1, 0.42], [0.2, 0.3, 0, 0.42], [1.0, -0.1, 0.2, 0.32]].forEach((c) => { const m = new THREE.Mesh(new THREE.SphereGeometry(c[3], 18, 14), mat(0xf5f8ff, { roughness: 0.9, transparent: true, opacity: 0.95 })); m.position.set(c[0], c[1], c[2]); cloud.add(m); });
+      const cloudM = new THREE.MeshStandardMaterial({ color: 0xeef2fa, roughness: 1, metalness: 0, envMapIntensity: 0.25, emissive: 0x8a94ac, emissiveIntensity: 0.22 });   // 뽀얀 뭉게구름
+      [[0, 0, 0, 0.55], [0.55, 0.05, 0.1, 0.45], [-0.55, -0.05, -0.1, 0.42], [0.2, 0.3, 0, 0.42], [1.0, -0.1, 0.2, 0.32], [-0.2, 0.22, 0.3, 0.36], [0.7, 0.26, -0.2, 0.3], [-0.95, 0.02, 0.15, 0.28]].forEach((c) => { const m = new THREE.Mesh(new THREE.SphereGeometry(c[3], 18, 14), cloudM); m.position.set(c[0], c[1], c[2]); cloud.add(m); });
       cloud.position.set(-3.4, 4.35, 0.6); cloud.scale.setScalar(1.2); root.add(cloud);
       // 태양
       const sunPos = new V3(-7.6, 10.5, -1);
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(1.3, 36, 24), new THREE.MeshBasicMaterial({ color: 0xffd23f })); sun.position.copy(sunPos); root.add(sun);
+      const sunTex = (() => { const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d'); let sd = 77; const r = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+        g.fillStyle = '#ffb21f'; g.fillRect(0, 0, 512, 256);
+        for (let i = 0; i < 2400; i++) { const q = 2 + r() * 6; g.globalAlpha = 0.18 + r() * 0.25; g.fillStyle = r() < 0.55 ? '#ffe27a' : (r() < 0.6 ? '#ff8a12' : '#fff3b8'); g.beginPath(); g.ellipse(r() * 512, r() * 256, q * 1.5, q, r() * 3, 0, 7); g.fill(); }
+        const t = new THREE.CanvasTexture(c); if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; return t; })();   // 태양 겉면: 쌀알 무늬
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(1.3, 48, 32), new THREE.MeshBasicMaterial({ color: 0xffffff, map: sunTex })); ctx.halo(sun, 0xffd27a, 4.4, 0.5); sun.position.copy(sunPos); root.add(sun);
       const gc = document.createElement('canvas'); gc.width = gc.height = 128; const g2 = gc.getContext('2d'), gr = g2.createRadialGradient(64, 64, 0, 64, 64, 64);
       gr.addColorStop(0, 'rgba(255,225,130,1)'); gr.addColorStop(0.3, 'rgba(255,190,60,.5)'); gr.addColorStop(1, 'rgba(255,160,0,0)'); g2.fillStyle = gr; g2.fillRect(0, 0, 128, 128);
       const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(gc), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); glow.scale.set(8, 8, 1); glow.position.copy(sunPos); root.add(glow);
@@ -53,7 +63,7 @@
 
       /* ---------- 온실 기체 분자 ---------- */
       const mols = []; // { g, kind, base, ph }
-      const cMat = mat(0x5a6577, { roughness: 0.5 }), oMat = mat(0xe2464b, { roughness: 0.4 }), hMat = mat(0xf4f6fb, { roughness: 0.4 }), owMat = mat(0x3b82f6, { roughness: 0.4 });
+      const cMat = ctx.mats.plastic(0x3d4656), oMat = ctx.mats.plastic(0xd42a30), hMat = ctx.mats.plastic(0xf0f3f8), owMat = ctx.mats.plastic(0x2468e8);
       function co2() {
         const g = new THREE.Group(), c = new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 10), cMat);
         const o1 = new THREE.Mesh(new THREE.SphereGeometry(0.19, 14, 10), oMat), o2 = o1.clone(); o1.position.x = -0.3; o2.position.x = 0.3; g.add(c, o1, o2); return g;

@@ -31,23 +31,29 @@
       let colorBySpeed = true, flashOn = true;
 
       /* 용기 */
-      const glass = new THREE.MeshStandardMaterial({ color: 0xbfe3ff, transparent: true, opacity: 0.16, roughness: 0.1, metalness: 0, depthWrite: false, side: THREE.DoubleSide });
+      const M = ctx.mats;
+      const rbox = (w, h, d, r) => { const s = new THREE.Shape(), b = Math.min(r, h / 2) * 0.6, x = w / 2 - r - b, z = d / 2 - r - b; s.absarc(x, z, r, 0, Math.PI / 2); s.absarc(-x, z, r, Math.PI / 2, Math.PI); s.absarc(-x, -z, r, Math.PI, Math.PI * 1.5); s.absarc(x, -z, r, Math.PI * 1.5, Math.PI * 2); const g = new THREE.ExtrudeGeometry(s, { depth: h - 2 * b, bevelEnabled: true, bevelThickness: b, bevelSize: b, bevelSegments: 3, curveSegments: 6 }); g.rotateX(-Math.PI / 2); g.translate(0, -h / 2 + b, 0); return g; };   // 모서리가 둥근 상자
+      const glass = M.glass({ tint: 0xd6ecff, opacity: 0.12, extra: { envMapIntensity: 1.1 } });
       const body = new THREE.Mesh(new THREE.BoxGeometry(HW * 2, 5, HW * 2), glass); root.add(body);   // 높이 5로 만들고 h/5로 늘여요 (자동 맞춤이 크기를 바르게 재도록)
-      const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: 0x9fc8ee, transparent: true, opacity: 0.8 }));
+      const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: 0xd6ebff, transparent: true, opacity: 0.5 }));
       edges.scale.set(HW * 2, 5, HW * 2); body.add(edges);
-      const base = new THREE.Mesh(new THREE.BoxGeometry(HW * 2 + 0.4, 0.3, HW * 2 + 0.4), new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.5, metalness: 0.4 }));
+      const base = new THREE.Mesh(rbox(HW * 2 + 0.4, 0.3, HW * 2 + 0.4, 0.12), M.metal(0x3d4656, { roughness: 0.55 }));
       base.position.y = FLOOR - 0.15; root.add(base);
+      /* 실험대 (배경): 나무 상판 — 자동 맞춤은 용기에 맞춰요 */
+      const bench = new THREE.Mesh(rbox(13, 0.4, 9, 0.25), M.wood(0xd8b78a, { repeat: 0.11 })); bench.position.y = FLOOR - 0.5; bench.userData.v3bg = true; root.add(bench);
       /* 피스톤 */
       const pis = new THREE.Group(); root.add(pis);
-      const plate = new THREE.Mesh(new THREE.BoxGeometry(HW * 2 + 0.05, 0.28, HW * 2 + 0.05), new THREE.MeshStandardMaterial({ color: 0xa8b3c4, roughness: 0.3, metalness: 0.7 }));
-      const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.4, 20), new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.25, metalness: 0.85 }));
+      const plate = new THREE.Mesh(rbox(HW * 2 - 0.02, 0.28, HW * 2 - 0.02, 0.06), M.metal(0x8f99a8, { brushed: true, roughness: 0.3 }));
+      const seal = new THREE.Mesh(new THREE.BoxGeometry(HW * 2 + 0.02, 0.09, HW * 2 + 0.02), M.rubber(0x15181f)); seal.position.y = -0.05;   // 고무 패킹
+      const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.36, 0.14, 28), M.metal('steel')); collar.position.y = 0.2;
+      const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.4, 28), M.metal('chrome', { roughness: 0.14 }));
       rod.position.y = 0.85;
-      const knob = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 16), new THREE.MeshStandardMaterial({ color: 0xef6a5b, roughness: 0.4 }));
+      const knob = new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 20), M.plastic(0xc23324, { roughness: 0.22 }));
       knob.position.y = 1.7;
-      pis.add(plate, rod, knob);
+      pis.add(plate, seal, collar, rod, knob);
       /* 입자 */
       const geo = new THREE.SphereGeometry(R_P, 18, 14);
-      const mesh = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35, metalness: 0.05 }), MAXN);
+      const mesh = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2, metalness: 0 }), MAXN);
       mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); mesh.frustumCulled = false; root.add(mesh);
       const P = [];
       for (let i = 0; i < MAXN; i++) {
@@ -56,7 +62,7 @@
       }
       /* 압력 표시 (피스톤을 누르는 화살표 + 이름표) */
       const arrows = new THREE.Group(); root.add(arrows);
-      const amat = new THREE.MeshStandardMaterial({ color: 0xffb454, roughness: 0.4, emissive: 0x663300, emissiveIntensity: 0.4 });
+      const amat = M.plastic(0xf59a23, { extra: { emissive: 0x663300, emissiveIntensity: 0.35 } });
       const arrM = [];
       for (let i = 0; i < 4; i++) {
         const a = new THREE.Group();
@@ -100,8 +106,8 @@
           if (p.y > top) { p.y = top; p.d.y = -Math.abs(p.d.y); p.fl = 1; } else if (p.y < bot) { p.y = bot; p.d.y = Math.abs(p.d.y); p.fl = 1; }
           p.fl = Math.max(0, p.fl - dt * 4);
           tmpM.makeTranslation(p.x, p.y, p.z); const sc = 1 + (flashOn ? p.fl * 0.5 : 0); tmpM.scale(new V3(sc, sc, sc)); mesh.setMatrixAt(i, tmpM);
-          if (colorBySpeed && c.kind === 'gen') { const k = Math.min(1, Math.max(0, (sp * p.f / 2.3 - 0.3) / 1.4)); tmpC.setHSL(0.62 - 0.62 * k, 0.85, 0.58); }
-          else tmpC.setHex((KIND[c.kind] || KIND.gen)[1]);
+          if (colorBySpeed && c.kind === 'gen') { const k = Math.min(1, Math.max(0, (sp * p.f / 2.3 - 0.3) / 1.4)); tmpC.setHSL(0.62 - 0.62 * k, 0.85, 0.58).convertSRGBToLinear(); }
+          else tmpC.setHex((KIND[c.kind] || KIND.gen)[1]).convertSRGBToLinear();
           if (flashOn && p.fl > 0.4) tmpC.lerp(new THREE.Color(0xffffff), p.fl);
           mesh.setColorAt(i, tmpC);
         }

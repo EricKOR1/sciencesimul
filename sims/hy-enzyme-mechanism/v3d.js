@@ -17,16 +17,18 @@
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;
       let model = 'induced', sub = 'S';
-      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.03 }, o || {}));
+      const deep = (c, k) => { const a = new THREE.Color(c); return a.lerp(a.clone().convertSRGBToLinear(), k == null ? 0.7 : k); };   // 화면에서 색이 옅어지지 않게 조금 진하게
+      const std = (c, o) => { o = o || {}; return o.transparent ? new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.03 }, o)) : ctx.mats.plastic(deep(c), { roughness: 0.3, extra: o }); };   // 분자 모형: 매끈한 플라스틱 광택 (색은 그대로, 조금 진하게)
+      const bio = (c, o) => { const t = ctx.mats.tex('noise').clone(); t.needsUpdate = true; t.repeat.set(3, 2); return ctx.mats.organic(deep(c), { extra: Object.assign({ roughness: 0.46, bumpMap: t, bumpScale: 0.025 }, o || {}) }); };   // 단백질(효소) 표면: 촉촉하고 오돌토돌하게
 
       /* ---------- 효소: 몸통 + 두 턱 (사이 홈이 활성 부위) ---------- */
       const enz = new THREE.Group(); root.add(enz);
-      const enzMat = std(COL.enz, { roughness: 0.34 });
+      const enzMat = bio(COL.enz);
       const body = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), enzMat); body.scale.set(2.5, 1.35, 1.7); body.position.y = -0.9; enz.add(body);
       const jawL = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), enzMat), jawR = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), enzMat);
       [jawL, jawR].forEach((j) => { j.scale.set(0.95, 1.25, 1.45); enz.add(j); });
       // 군데군데 작은 혹 (단백질 표면 느낌)
-      const bumpMat = std(0x7dd3fc, { roughness: 0.4 });
+      const bumpMat = bio(0x5cc3f7);
       [[-1.9, -0.5, 0.9, 0.45], [1.8, -0.8, 1.0, 0.5], [0.4, -1.8, 1.0, 0.5], [-0.9, -1.7, -1.0, 0.55], [1.5, -0.3, -1.1, 0.45], [-2.2, -1.1, -0.2, 0.4]].forEach((b) => {
         const m = new THREE.Mesh(new THREE.SphereGeometry(b[3], 24, 18), bumpMat); m.position.set(b[0], b[1], b[2]); enz.add(m);
       });
@@ -55,7 +57,7 @@
           const a = new THREE.Mesh(new THREE.SphereGeometry(ra, 28, 20), std(kind === 'near' ? 0xc4b5fd : COL.subA, { roughness: 0.3 }));
           const b = new THREE.Mesh(new THREE.SphereGeometry(rb, 28, 20), std(kind === 'near' ? 0x93c5fd : COL.subB, { roughness: 0.3 }));
           a.position.x = -0.3; b.position.x = 0.3; g.add(a, b);
-          const bond = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.4, 14), std(0xe2e8f0)); bond.rotation.z = Math.PI / 2; g.add(bond);
+          const bond = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.4, 16), std(0xc3cddb)); bond.rotation.z = Math.PI / 2; g.add(bond);
           g.userData.parts = [a, b]; g.userData.bond = bond; g.userData.a = a; g.userData.b = b;
         }
         return g;

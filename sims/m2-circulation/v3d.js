@@ -18,15 +18,16 @@
       const V3 = THREE.Vector3;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.55, metalness: 0.02 }, o || {}));
       const sm = () => window.__sim;
+      const MT = ctx.mats, lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 색이 바래지 않게 (동맥혈 빨강 · 정맥혈 파랑이 또렷하게)
 
       /* ---------- 심장 (네 개의 방) ---------- */
       const heart = new THREE.Group(); root.add(heart);
       const walls = [], bloods = [];
       function chamber(name, pos, sc, blood, wallTh) {
         const g = new THREE.Group(); g.position.set(...pos);
-        const inner = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), mat(blood, { emissive: blood, emissiveIntensity: 0.25, roughness: 0.3 }));
+        const inner = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), MT.plastic(lc(blood), { roughness: 0.26, extra: { emissive: lc(blood), emissiveIntensity: 0.22 } }));
         inner.scale.set(...sc);
-        const wall = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), mat(0xc4504a, { transparent: true, opacity: 0.5, roughness: 0.6, depthWrite: false }));
+        const wall = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), MT.organic(lc(0xc4504a), { opacity: 0.5 }));
         wall.scale.set(sc[0] + wallTh, sc[1] + wallTh, sc[2] + wallTh); wall.renderOrder = 2;
         g.add(inner, wall); heart.add(g); walls.push(wall); bloods.push(inner); g.userData = { sc: new V3(...sc) };
         return g;
@@ -37,7 +38,7 @@
       const LV = chamber('LV', [0.45, -0.5, -0.05], [0.66, 1.1, 0.62], RED, 0.28);   // 벽이 가장 두꺼워요
       // 판막
       const valves = [[-0.8, 0.0, 0.2], [0.6, 0.1, -0.15], [-0.3, 0.45, 0.2], [0.8, 0.5, 0.0]].map((p, i) => {
-        const v = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.045, 10, 24), mat(0xffd34d, { metalness: 0.5, roughness: 0.3, emissive: 0x6b4d00, emissiveIntensity: 0.4 })); v.position.set(...p); v.rotation.set(Math.PI / 2 + (i < 2 ? 0.3 : 0), 0, i < 2 ? 0.2 : 0); heart.add(v); return v;
+        const v = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.045, 12, 32), MT.plastic(lc(0xf7c531), { roughness: 0.28, extra: { emissive: lc(0x6b4d00), emissiveIntensity: 0.35 } })); v.position.set(...p); v.rotation.set(Math.PI / 2 + (i < 2 ? 0.3 : 0), 0, i < 2 ? 0.2 : 0); heart.add(v); return v;
       });
 
       /* ---------- 순환 경로 (닫힌 곡선 두 개) ---------- */
@@ -65,16 +66,16 @@
         runs.forEach((r) => {
           const ps = []; const t0 = r[0] / n, t1 = r[1] / n, K = (r[1] - r[0]) * 12;
           for (let k = 0; k <= K; k++) ps.push(curve.getPoint(t0 + (t1 - t0) * k / K));
-          const m = new THREE.MeshStandardMaterial({ color: r[2] ? RED : BLUE, roughness: 0.35, transparent: true, opacity: 0.55, depthWrite: false, emissive: r[2] ? RED : BLUE, emissiveIntensity: 0.25 });
-          const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(ps), K * 2, 0.11, 12, false), m); tube.renderOrder = 1; root.add(tube);
+          const m = MT.liquid(lc(r[2] ? RED : BLUE), { opacity: 0.6, extra: { emissive: lc(r[2] ? RED : BLUE), emissiveIntensity: 0.22, roughness: 0.2 } });
+          const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(ps), K * 2, 0.11, 16, false), m); tube.renderOrder = 1; root.add(tube);
           groups[r[3]].push(m);
         });
         return { curve, pts, n, groups };
       }
       const loops = [loopOf(A), loopOf(B)];
       // 폐 · 온몸 (모세 혈관이 있는 곳)
-      const pink = (c, o) => mat(c, Object.assign({ transparent: true, opacity: 0.4, roughness: 0.5, depthWrite: false }, o || {}));
-      const lungL = new THREE.Mesh(new THREE.SphereGeometry(1, 36, 24), pink(0xf2a7b8)); lungL.scale.set(0.9, 1.4, 0.7); lungL.position.set(-3.0, 1.55, -0.25);
+      const pink = (c, o) => MT.organic(lc(c), { opacity: 0.42, extra: o });
+      const lungL = new THREE.Mesh(new THREE.SphereGeometry(1, 36, 24), pink(0xee8fa6)); lungL.scale.set(0.9, 1.4, 0.7); lungL.position.set(-3.0, 1.55, -0.25);
       const lungR = lungL.clone(); lungR.position.x = 3.0;
       const body = new THREE.Mesh(new THREE.SphereGeometry(1, 36, 24), pink(0xf6c9a8)); body.scale.set(1.9, 0.6, 0.8); body.position.set(0.0, -3.5, 0);
       const head = new THREE.Mesh(new THREE.SphereGeometry(0.55, 28, 20), pink(0xf6c9a8)); head.position.set(0.0, 3.5, 0.1);
@@ -92,7 +93,7 @@
       const NP = 38;
       const inst = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }), NP * 2);
       inst.frustumCulled = false; root.add(inst);
-      const dm = new THREE.Object3D(), cb = new THREE.Color(BLUE), cr = new THREE.Color(RED);
+      const dm = new THREE.Object3D(), cb = lc(BLUE), cr = lc(RED);
 
       /* ---------- 이름표 ---------- */
       const L = {};

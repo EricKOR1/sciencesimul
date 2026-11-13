@@ -34,26 +34,30 @@
       const S0 = sim(); if (S0 && typeof S0.iL === 'number') { loc.L = S0.iL; loc.R = S0.iR; }
       let showT = true, hL = 2.4, hR = 2.4;
 
-      const glass = new THREE.MeshStandardMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.14, roughness: 0.08, side: THREE.DoubleSide, depthWrite: false });
+      const rbox = (w, h, d, r) => { const s = new THREE.Shape(), b = Math.min(r, h / 2) * 0.6, x = w / 2 - r - b, z = d / 2 - r - b; s.absarc(x, z, r, 0, Math.PI / 2); s.absarc(-x, z, r, Math.PI / 2, Math.PI); s.absarc(-x, -z, r, Math.PI, Math.PI * 1.5); s.absarc(x, -z, r, Math.PI * 1.5, Math.PI * 2); const g = new THREE.ExtrudeGeometry(s, { depth: h - 2 * b, bevelEnabled: true, bevelThickness: b, bevelSize: b, bevelSegments: 3, curveSegments: 6 }); g.rotateX(-Math.PI / 2); g.translate(0, -h / 2 + b, 0); return g; };   // 모서리가 둥근 상자
+      const glass = ctx.mats.glass({ tint: 0xd6ecff, opacity: 0.1, extra: { envMapIntensity: 1.0 } });
       [[-1, 0], [1, 0]].forEach(([sg]) => {
         const b = new THREE.Mesh(new THREE.BoxGeometry(W, TANKH, DEP), glass); b.position.set(sg * (W / 2 + 0.04), FLOOR + TANKH / 2, 0); root.add(b);
-        const e = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(W, TANKH, DEP)), new THREE.LineBasicMaterial({ color: 0x9fc8ee, transparent: true, opacity: 0.7 })); e.position.copy(b.position); root.add(e);
+        const e = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(W, TANKH, DEP)), new THREE.LineBasicMaterial({ color: 0xd6ebff, transparent: true, opacity: 0.45 })); e.position.copy(b.position); root.add(e);
       });
-      const base = new THREE.Mesh(new THREE.BoxGeometry(W * 2 + 0.6, 0.25, DEP + 0.4), new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.5, metalness: 0.4 })); base.position.y = FLOOR - 0.125; root.add(base);
+      const base = new THREE.Mesh(rbox(W * 2 + 0.6, 0.25, DEP + 0.4, 0.12), ctx.mats.metal(0x3d4656, { roughness: 0.55 })); base.position.y = FLOOR - 0.125; root.add(base);
+      /* 실험대 (배경) · 수조 테두리 */
+      const bench = new THREE.Mesh(rbox(15, 0.4, 8, 0.25), ctx.mats.wood(0xd8b78a, { repeat: 0.11 })); bench.position.y = FLOOR - 0.45; bench.userData.v3bg = true; root.add(bench);
+      { const cm = ctx.mats.metal('steel', { roughness: 0.25 }); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach((c) => { const p = new THREE.Mesh(new THREE.BoxGeometry(0.07, TANKH, 0.07), cm); p.position.set(c[0] * (W + 0.04), FLOOR + TANKH / 2, c[1] * DEP / 2); root.add(p); }); [-1, 1].forEach((s) => { const r = new THREE.Mesh(new THREE.BoxGeometry(W * 2 + 0.15, 0.07, 0.07), cm); r.position.set(0, FLOOR + TANKH, s * DEP / 2); root.add(r); const q = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, DEP), cm); q.position.set(s * (W + 0.04), FLOOR + TANKH, 0); root.add(q); }); }
       /* 반투과성 막 */
-      const mem = new THREE.Mesh(new THREE.BoxGeometry(0.08, TANKH, DEP), new THREE.MeshStandardMaterial({ color: 0x34d399, transparent: true, opacity: 0.55, roughness: 0.3, depthWrite: false }));
+      const mem = new THREE.Mesh(new THREE.BoxGeometry(0.08, TANKH, DEP), ctx.mats.plastic(0x1fb57f, { roughness: 0.5, extra: { transparent: true, opacity: 0.62, depthWrite: false } }));
       mem.position.set(0, FLOOR + TANKH / 2, 0); root.add(mem);
       const pore = new THREE.CircleGeometry(0.1, 14), pm = new THREE.MeshBasicMaterial({ color: 0x064e3b });
       for (let a = 0; a < 6; a++) for (let b = 0; b < 12; b++) [-1, 1].forEach((s) => {
         const c = new THREE.Mesh(pore, pm); c.position.set(s * 0.045, FLOOR + 0.35 + b * 0.4, -DEP / 2 + 0.3 + a * ((DEP - 0.6) / 5)); c.rotation.y = s * Math.PI / 2; root.add(c);
       });
       /* 물 (수면 상자) */
-      const wmat = new THREE.MeshStandardMaterial({ color: 0x4aa8ff, transparent: true, opacity: 0.3, roughness: 0.1, depthWrite: false });
+      const wmat = ctx.mats.liquid(0x3f9cf2, { opacity: 0.26, extra: { envMapIntensity: 0.7, clearcoat: 0.4 } });
       const wL = new THREE.Mesh(new THREE.BoxGeometry(W - 0.04, 1, DEP - 0.04), wmat), wR = new THREE.Mesh(new THREE.BoxGeometry(W - 0.04, 1, DEP - 0.04), wmat.clone());
       root.add(wL, wR); wR.material.color.setHex(0xf0a64a);
       /* 입자 */
-      const wm = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 12, 10), new THREE.MeshStandardMaterial({ color: 0x7cc4ff, roughness: 0.3 }), NW * 2);
-      const sm = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 18, 14), new THREE.MeshStandardMaterial({ color: 0xff9a2e, roughness: 0.35 }), NS * 2);
+      const wm = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 12, 10), new THREE.MeshStandardMaterial({ color: 0x3d9be8, roughness: 0.2 }), NW * 2);
+      const sm = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 18, 14), ctx.mats.plastic(0xf07f10, { roughness: 0.25 }), NS * 2);
       const tm = new THREE.InstancedMesh(new THREE.SphereGeometry(0.13, 14, 10), new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x007c8a, emissiveIntensity: 0.8, roughness: 0.3 }), NT);
       [wm, sm, tm].forEach((m) => { m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); root.add(m); });
       const rp = (side) => ({ p: new V3(side * (0.3 + Math.random() * (W - 0.6)), FLOOR + 0.4 + Math.random() * 1.6, (Math.random() - 0.5) * (DEP - 0.4)), v: new V3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(), u: Math.random() });

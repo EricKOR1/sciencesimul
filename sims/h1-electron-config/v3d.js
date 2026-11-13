@@ -14,15 +14,15 @@
     levels: [0],
     autoRotate: 0.18,
     build(ctx) {
-      const { THREE, root, label, info, controls, orbit } = ctx;
+      const { THREE, root, label, info, controls, orbit, mats } = ctx;
       const S0 = () => (window.__sim && window.__sim.S) || null;
       let Z = S0() && S0().Z ? S0().Z : 11, lastS = S0() ? S0().Z : -1, built = null;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.1 }, o || {}));
       const g = new THREE.Group(); root.add(g);
       const nuc = new THREE.Group(); root.add(nuc);
-      const nGlow = new THREE.Mesh(new THREE.SphereGeometry(0.62, 24, 16), new THREE.MeshBasicMaterial({ color: 0xff7a5c, transparent: true, opacity: 0.16, depthWrite: false })); nuc.add(nGlow);
-      const NMAX = 44, nuI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.12, 16, 12), new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.3, clearcoat: 0.6, emissive: 0x401010, emissiveIntensity: 0.4 }), NMAX); nuc.add(nuI);
-      const nud = new THREE.Object3D(), cP = new THREE.Color(0xe0584f), cN = new THREE.Color(0x9aa5b4);
+      const nGlow = new THREE.Mesh(new THREE.SphereGeometry(0.62, 24, 16), new THREE.MeshBasicMaterial({ color: 0xff7a5c, transparent: true, opacity: 0.16, depthWrite: false })); nuc.add(nGlow); ctx.halo(nuc, 0xff8a66, 2.4, 0.45);   // 원자핵의 은은한 빛
+      const NMAX = 44, nuI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.12, 28, 20), new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.1, envMapIntensity: 1.2, emissive: 0x401010, emissiveIntensity: 0.3 }), NMAX); nuc.add(nuI);
+      const nud = new THREE.Object3D(), cP = new THREE.Color(0xd4362e), cN = new THREE.Color(0x7c8799);
       function setNucleus(z) {
         const nn = z <= 1 ? 0 : Math.round(z * 1.08), tot = z + nn, R = 0.1 + Math.cbrt(tot) * 0.11;
         for (let i = 0; i < NMAX; i++) {
@@ -39,14 +39,14 @@
       const shellMeshes = [], elecs = [], shellLabs = [];
       for (let i = 0; i < 4; i++) {
         const ring = new THREE.Group(); root.add(ring); shellMeshes.push(ring); ring.userData.tilts = i === 0 ? [[0, 0]] : [[0, 0], [0.95, 1.0], [-0.95, 2.1]];
-        ring.userData.tilts.forEach((q) => { const rg = new THREE.Mesh(new THREE.TorusGeometry(RAD[i], 0.022, 10, 128), std(0x9fb4e8, { transparent: true, opacity: 0.5, roughness: 0.3, emissive: 0x2a3f7a, emissiveIntensity: 0.5 })); const gg = new THREE.Group(); rg.rotation.x = Math.PI / 2; gg.rotation.x = q[0]; const og = new THREE.Group(); og.rotation.y = q[1]; gg.add(rg); og.add(gg); ring.add(og); });
-        const bubble = new THREE.Mesh(new THREE.SphereGeometry(RAD[i], 48, 32), new THREE.MeshStandardMaterial({ color: 0x6f8de8, transparent: true, opacity: 0.07, depthWrite: false, roughness: 0.2, emissive: 0x2a3f9a, emissiveIntensity: 0.35 }));
+        ring.userData.tilts.forEach((q) => { const rg = new THREE.Mesh(new THREE.TorusGeometry(RAD[i], 0.024, 12, 160), mats.metal(0x9fb4e8, { roughness: 0.22, extra: { transparent: true, opacity: 0.72, emissive: 0x2a3f7a, emissiveIntensity: 0.45 } })); const gg = new THREE.Group(); rg.rotation.x = Math.PI / 2; gg.rotation.x = q[0]; const og = new THREE.Group(); og.rotation.y = q[1]; gg.add(rg); og.add(gg); ring.add(og); });
+        const bubble = new THREE.Mesh(new THREE.SphereGeometry(RAD[i], 48, 32), mats.glass({ tint: 0x6f8de8, opacity: 0.07, extra: { side: THREE.FrontSide, emissive: 0x2a3f9a, emissiveIntensity: 0.3, envMapIntensity: 1.4 } }));   // 유리 구슬 같은 전자껍질
         root.add(bubble); ring.userData.bubble = bubble;
         shellLabs.push(label((i + 1) + '번째 껍질', ring, { size: 12, offset: [RAD[i] * 0.72, 0, RAD[i] * 0.72] }));
       }
-      const eGeo = new THREE.SphereGeometry(0.2, 24, 16);
-      const eMatIn = std(0x4aa3ff, { roughness: 0.25, emissive: 0x123a78, emissiveIntensity: 0.6 });
-      const eMatOut = std(0xffd34d, { roughness: 0.25, emissive: 0x7a5a00, emissiveIntensity: 0.7 });
+      const eGeo = new THREE.SphereGeometry(0.2, 32, 24);
+      const eMatIn = mats.plastic(0x2f8cf5, { roughness: 0.18, extra: { clearcoat: 1, clearcoatRoughness: 0.08, emissive: 0x123a78, emissiveIntensity: 0.6 } });
+      const eMatOut = mats.plastic(0xf7c21c, { roughness: 0.18, extra: { clearcoat: 1, clearcoatRoughness: 0.08, emissive: 0x7a5a00, emissiveIntensity: 0.7 } });
       function cfg(z) { const c = [0, 0, 0, 0]; let r = z; for (let i = 0; i < 4; i++) { const f = Math.min(CAP[i], r); c[i] = f; r -= f; } return c; }
       let buildMode = false, lastKey = '';
       function rebuild(cOver, zOver) {
@@ -58,7 +58,7 @@
           shellMeshes[i].visible = on; shellMeshes[i].userData.bubble.visible = on; shellLabs[i].show(on);
           for (let k = 0; k < c[i]; k++) {
             const m = new THREE.Mesh(eGeo, i === outer ? eMatOut : eMatIn); root.add(m);
-            const hl = new THREE.Mesh(eGeo, new THREE.MeshBasicMaterial({ color: i === outer ? 0xffe08a : 0x7cc0ff, transparent: true, opacity: 0.22, depthWrite: false })); hl.scale.setScalar(1.9); m.add(hl);
+            m.castShadow = false; ctx.halo(m, i === outer ? 0xffd870 : 0x6cb8ff, 1.25, 0.6);   // 전자의 빛 번짐
             const rr = i === 0 ? 0 : k % 3, tl = shellMeshes[i].userData.tilts[rr];
             elecs.push({ m, sh: i, a0: (k / c[i]) * Math.PI * 2 + i * 0.7, sp: (0.9 - i * 0.18) * (rr === 1 ? -1 : 1), tilt: tl[0], yaw: tl[1] });
           }

@@ -36,8 +36,11 @@
         let last = ''; el.put = (h) => { if (h !== last) { last = h; el.innerHTML = h; } }; return el;
       };
       const V3 = (x, y, z) => new THREE.Vector3(x, y, z || 0);
-      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.03 }, o || {}));
-      const ghost = (c, op, o) => std(c, Object.assign({ transparent: true, opacity: op, depthWrite: false, roughness: 0.2, side: THREE.DoubleSide }, o || {}));
+      const MT = ctx.mats;
+      // 색은 화면에서 옅게 나오므로 진하게 잡고, 세포·조직은 촉촉한 생체 재질로 · 막은 얇고 반짝이는 반투명 재질로
+      const deep = (c, k) => { const a = new THREE.Color(c); return a.lerp(a.clone().convertSRGBToLinear(), k == null ? 0.85 : k); };
+      const std = (c, o) => MT.organic(deep(c), { extra: Object.assign({ roughness: 0.45 }, o || {}) });
+      const ghost = (c, op, o) => MT.organic(deep(c, 0.6), { opacity: op, extra: Object.assign({ roughness: 0.2, side: THREE.DoubleSide, clearcoat: 0.7, clearcoatRoughness: 0.15, envMapIntensity: 1.3 }, o || {}) });
       const sph = (r, m, x, y, z, sx, sy, sz) => { const o = new THREE.Mesh(new THREE.SphereGeometry(r, 28, 20), m); o.position.set(x || 0, y || 0, z || 0); if (sx) o.scale.set(sx, sy, sz); return o; };
       const tubeG = (pts, r, seg, closed) => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, closed || false), seg || 60, r, 8, closed || false);
       const groups = [], labs = [], R = rng(21), D = new THREE.Object3D();
@@ -130,7 +133,9 @@
       const GL_ = (arr, t, o, op) => { const l = label(t, o, op || {}); l.show(false); arr.push(l); return l; };
       /* 세균 배양 접시 */
       const DR = 3.8;
-      gG.add(new THREE.Mesh(new THREE.CylinderGeometry(DR + 0.15, DR + 0.15, 0.45, 64, 1, true), ghost(0xdbeafe, 0.3)));
+      gG.add(new THREE.Mesh(new THREE.CylinderGeometry(DR + 0.15, DR + 0.15, 0.5, 64, 1, true), MT.glass({ opacity: 0.28 })));
+      { const rim = new THREE.Mesh(new THREE.TorusGeometry(DR + 0.15, 0.035, 10, 72), MT.glass({ opacity: 0.5 })); rim.rotation.x = Math.PI / 2; rim.position.y = 0.25; gG.add(rim);
+        const bot = new THREE.Mesh(new THREE.CylinderGeometry(DR + 0.15, DR + 0.15, 0.06, 64), MT.glass({ opacity: 0.3 })); bot.position.y = -0.24; gG.add(bot); }
       const agar = new THREE.Mesh(new THREE.CylinderGeometry(DR, DR, 0.2, 64), std(0xf5dd8d, { roughness: 0.55 })); agar.position.y = -0.1; gG.add(agar);
       const NBM = 130, bactI = new THREE.InstancedMesh(new THREE.CapsuleGeometry(0.15, 0.35, 4, 8).rotateZ(Math.PI / 2), std(0x16a34a, { roughness: 0.4, emissive: 0x064e1e, emissiveIntensity: 0.3 }), NBM); gG.add(bactI);
       const gL = [GL_(gLabs, '배양 접시 (현미경 시야)', [0, 0.7, DR + 0.4], { size: 12, color: 'rgba(38,50,74,.9)' }), GL_(gLabs, '', [0, 1.9, 0], { size: 14, color: 'rgba(22,101,52,.95)' })];
@@ -141,7 +146,7 @@
       const gBtn1 = controls.button('▶ 1시간 배양', () => { const b = document.getElementById('bGrow'); if (b && !b.disabled) b.click(); }); const gBtn2 = controls.button('↺ 처음부터', () => { const b = document.getElementById('bGrowReset'); if (b) b.click(); });
       const pG = controls.player({ duration: 18, loop: false, label: '세균 증식', phases: [0, 1, 2, 3, 4, 5, 6].map((h) => [h / 7, h + '시간 · ' + Math.pow(2, 3 * h).toLocaleString('ko-KR') + '개']), onFrame() { if (!ignG) actG = tnow; } });
       /* 바이러스 증식 */
-      const VW_ = 8.4, vBase = new THREE.Mesh(new THREE.BoxGeometry(VW_, 0.12, 6.4), std(0xe8e4f7, { roughness: 0.7 })); vBase.position.y = -0.1; vG.add(vBase);
+      const VW_ = 8.4, vBase = new THREE.Mesh(new THREE.BoxGeometry(VW_, 0.12, 6.4), MT.ceramic(0xcfc8ea)); vBase.position.y = -0.1; vG.add(vBase);
       const hosts = [0, 1, 2, 3, 4].map(() => { const g = new THREE.Group(); const body = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 20), std(0xf9c9a8, { roughness: 0.4, transparent: true, opacity: 0.8 })); body.scale.set(1, 0.7, 1); g.add(body); const nuc = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 12), std(0x8b5cf6, { roughness: 0.4 })); nuc.position.set(-0.25, 0.25, -0.1); g.add(nuc); const bar = new THREE.Mesh(new THREE.BoxGeometry(1, 0.06, 0.12), std(0x8b5cf6)); bar.position.set(0, 0.0, 1.35); g.add(bar); vG.add(g); return { g, body, nuc, bar }; });
       const virI = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 0), std(0x7c3aed, { roughness: 0.35, flatShading: true, emissive: 0x2e1065, emissiveIntensity: 0.4 }), 80); vG.add(virI);
       const vL = [GL_(vLabs, '숙주 세포', [0, 0, 0], { size: 12, color: 'rgba(124,45,18,.9)' }), GL_(vLabs, '바이러스', [0, 0, 0], { size: 12, color: 'rgba(91,33,182,.92)' })];

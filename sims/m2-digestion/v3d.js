@@ -27,16 +27,18 @@
       const V3 = THREE.Vector3;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.6, metalness: 0.02 }, o || {}));
       const sm = () => window.__sim;
+      const MT = ctx.mats, lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 색이 바래지 않게 (진한 색)
+      const org = (c, o) => MT.organic(lc(c), { extra: o });   // 기관 · 조직: 부드럽고 촉촉한 겉면
       const tract = new THREE.Group(), vil = new THREE.Group(); root.add(tract, vil);
 
       /* ============ 소화 기관 ============ */
-      const body = new THREE.Mesh(new THREE.CapsuleGeometry(2.6, 5.2, 12, 32), new THREE.MeshStandardMaterial({ color: 0x7f9bd0, transparent: true, opacity: 0.1, roughness: 0.3, depthWrite: false }));
+      const body = new THREE.Mesh(new THREE.CapsuleGeometry(2.6, 5.2, 12, 32), MT.glass({ tint: 0xa9c0ee, opacity: 0.1, extra: { side: THREE.FrontSide, envMapIntensity: 1.4 } }));
       body.position.set(0, 0.6, 0); body.scale.set(1, 1, 0.5); body.renderOrder = 0; tract.add(body);
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.9, 24, 16), new THREE.MeshStandardMaterial({ color: 0xf2c9a0, transparent: true, opacity: 0.35, roughness: 0.6, depthWrite: false })); head.position.set(0, 5.2, 0); tract.add(head);
-      const mouth = new THREE.Mesh(new THREE.SphereGeometry(0.26, 16, 12), mat(0xd9605a)); mouth.scale.set(1.3, 0.55, 0.8); mouth.position.set(0, 4.9, 0.55); tract.add(mouth);
-      function tube(pts, r, c, o) { const cu = new THREE.CatmullRomCurve3(pts); const m = new THREE.Mesh(new THREE.TubeGeometry(cu, Math.max(20, pts.length * 14), r, 12, false), mat(c, o)); m.castShadow = true; tract.add(m); return m; }
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.9, 36, 24), MT.organic(lc(0xeab88f), { opacity: 0.38 })); head.position.set(0, 5.2, 0); tract.add(head);
+      const mouth = new THREE.Mesh(new THREE.SphereGeometry(0.26, 24, 16), org(0xd24f4a)); mouth.scale.set(1.3, 0.55, 0.8); mouth.position.set(0, 4.9, 0.55); tract.add(mouth);
+      function tube(pts, r, c, o) { const cu = new THREE.CatmullRomCurve3(pts); const m = new THREE.Mesh(new THREE.TubeGeometry(cu, Math.max(20, pts.length * 14), r, 16, false), org(c, o)); m.castShadow = true; tract.add(m); return m; }
       const eso = tube([new V3(0, 4.85, 0.45), new V3(0, 4.3, 0.1), new V3(0, 3.0, 0), new V3(0.15, 2.1, 0)], 0.14, 0xe0877a);
-      const stom = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), mat(0xe58b7e, { roughness: 0.5 })); stom.scale.set(1.05, 0.75, 0.65); stom.position.set(0.75, 1.45, 0); stom.rotation.z = -0.55; stom.castShadow = true; tract.add(stom);
+      const stom = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), org(0xe07f72, { roughness: 0.45 })); stom.scale.set(1.05, 0.75, 0.65); stom.position.set(0.75, 1.45, 0); stom.rotation.z = -0.55; stom.castShadow = true; tract.add(stom);
       // 소장: 구불구불
       const sp = []; const rows = 7;
       for (let r = 0; r < rows; r++) { const y = 0.55 - r * 0.28, dir = r % 2 ? -1 : 1; sp.push(new V3(-dir * 1.05, y, 0.12 * (r % 3 - 1)), new V3(-dir * 0.4, y - 0.05, 0.2), new V3(dir * 0.4, y - 0.1, -0.2), new V3(dir * 1.05, y - 0.14, 0.1 * (r % 2))); }
@@ -44,35 +46,35 @@
       // 대장 (소장을 감싸요)
       const lp = [new V3(-1.55, -1.5, 0), new V3(-1.65, -0.6, 0), new V3(-1.6, 0.5, 0), new V3(-1.2, 0.95, 0), new V3(0, 1.0, 0), new V3(1.2, 0.95, 0), new V3(1.6, 0.4, 0), new V3(1.65, -0.7, 0), new V3(1.4, -1.5, 0), new V3(0.6, -1.85, 0), new V3(0.1, -2.2, 0), new V3(0.1, -2.8, 0.05)];
       const large = tube(lp, 0.24, 0xc8a46a, { roughness: 0.7 });
-      const anus = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 10), mat(0x8a5a3a)); anus.position.set(0.1, -2.85, 0.05); tract.add(anus);
+      const anus = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), org(0x8a5a3a)); anus.position.set(0.1, -2.85, 0.05); tract.add(anus);
       // 간 · 쓸개 · 이자
-      const liver = new THREE.Mesh(new THREE.SphereGeometry(1, 36, 24), mat(0x8c3b32, { roughness: 0.5 })); liver.scale.set(1.25, 0.7, 0.7); liver.position.set(-1.05, 1.6, 0.15); liver.rotation.z = 0.15; liver.castShadow = true; tract.add(liver);
-      const gall = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), mat(0x4fa56a, { roughness: 0.3 })); gall.scale.set(0.8, 1.2, 0.8); gall.position.set(-0.6, 1.1, 0.4); tract.add(gall);
-      const panc = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 1.5, 6, 14), mat(0xe8c372, { roughness: 0.5 })); panc.rotation.z = Math.PI / 2; panc.position.set(0.25, 0.95, -0.3); tract.add(panc);
+      const liver = new THREE.Mesh(new THREE.SphereGeometry(1, 36, 24), org(0x8c3b32, { roughness: 0.42, clearcoat: 0.35 })); liver.scale.set(1.25, 0.7, 0.7); liver.position.set(-1.05, 1.6, 0.15); liver.rotation.z = 0.15; liver.castShadow = true; tract.add(liver);
+      const gall = new THREE.Mesh(new THREE.SphereGeometry(0.2, 24, 16), org(0x3f9a5c, { roughness: 0.3, clearcoat: 0.5 })); gall.scale.set(0.8, 1.2, 0.8); gall.position.set(-0.6, 1.1, 0.4); tract.add(gall);
+      const panc = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 1.5, 6, 14), org(0xe3b85e, { roughness: 0.5 })); panc.rotation.z = Math.PI / 2; panc.position.set(0.25, 0.95, -0.3); tract.add(panc);
       // 음식물 경로
       const food = new THREE.CatmullRomCurve3([
         new V3(0, 4.9, 0.55), new V3(0, 4.3, 0.1), new V3(0, 3.0, 0), new V3(0.2, 2.1, 0), new V3(0.75, 1.45, 0), new V3(0.1, 1.05, 0.05), new V3(-0.7, 0.85, 0.1), ...sp.filter((_, i) => i % 2 === 0),
         new V3(-1.55, -1.5, 0), ...lp.slice(0), ]);
-      const bolus = new THREE.Mesh(new THREE.SphereGeometry(0.26, 24, 16), mat(0xffd34d, { emissive: 0xaa7a00, emissiveIntensity: 0.5, roughness: 0.4 })); tract.add(bolus);
+      const bolus = new THREE.Mesh(new THREE.SphereGeometry(0.26, 24, 16), mat(lc(0xffc93a), { emissive: lc(0xaa7a00), emissiveIntensity: 0.6, roughness: 0.35 })); tract.add(bolus); ctx.halo(bolus, 0xffd060, 1.5, 0.45);
       const bits = []; for (let i = 0; i < 10; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffe08a })); bolus.add(b); bits.push(b); }
       const lTr = [label('입', mouth, { offset: [0.0, 0.0, 0.35] }), label('식도', [0, 3.4, 0.1]), label('위', stom, { offset: [0.9, 0.25, 0.3] }), label('간', liver, { offset: [-0.3, 0.55, 0.4] }), label('쓸개', gall, { offset: [-0.1, -0.35, 0.3] }), label('이자', panc, { offset: [0.2, 0.3, -0.1] }), label('소장', [0, -0.95, 0.3]), label('대장', [-1.75, -0.2, 0.1]), label('항문', anus, { offset: [0.5, -0.1, 0] })];
       const enz = [label('아밀레이스', mouth, { offset: [1.0, 0.05, 0], color: 'rgba(200,120,20,.95)' }), label('펩신', stom, { offset: [1.8, -0.35, 0], color: 'rgba(160,50,140,.95)' }), label('아밀레이스 · 트립신 · 라이페이스', small, { offset: [2.3, 0.2, 0.4], color: 'rgba(30,130,150,.95)' })];
 
       /* ============ 소장 융털 ============ */
-      const wallBase = new THREE.Mesh(new THREE.BoxGeometry(9, 0.8, 3.6), mat(0xf4b3a8, { roughness: 0.6 })); wallBase.position.set(0, -2.2, 0); vil.add(wallBase);
+      const wallBase = new THREE.Mesh(new THREE.BoxGeometry(9, 0.8, 3.6), org(0xee9f93, { roughness: 0.55 })); wallBase.position.set(0, -2.2, 0); vil.add(wallBase);
       const lumen = new THREE.Mesh(new THREE.BoxGeometry(9, 4.6, 3.6), new THREE.MeshStandardMaterial({ color: 0xffe8a8, transparent: true, opacity: 0.06, depthWrite: false })); lumen.position.set(0, 0.5, 0); vil.add(lumen);
       const villi = [];
       const VX = [-3.4, -1.7, 0, 1.7, 3.4];
       VX.forEach((x, i) => {
         const big = i === 2, h = big ? 3.6 : 2.4, r = big ? 0.78 : 0.5;
         const g = new THREE.Group(); g.position.set(x, -1.8, big ? 0.3 : -0.9 + (i % 2) * 0.2);
-        const sk = new THREE.Mesh(new THREE.CapsuleGeometry(r, h - 2 * r, 10, 24), new THREE.MeshStandardMaterial({ color: 0xf5a9a0, transparent: true, opacity: big ? 0.38 : 0.7, roughness: 0.4, depthWrite: false })); sk.position.y = h / 2; sk.renderOrder = 2; g.add(sk);
+        const sk = new THREE.Mesh(new THREE.CapsuleGeometry(r, h - 2 * r, 10, 24), MT.organic(lc(0xf08f86), { opacity: big ? 0.4 : 0.74 })); sk.position.y = h / 2; sk.renderOrder = 2; g.add(sk);
         if (big) {
           // 모세 혈관 (고리) · 암죽관 (가운데)
           const cc = new THREE.CatmullRomCurve3([new V3(-0.25, 0, 0), new V3(-0.4, 1.5, 0.05), new V3(-0.3, 2.8, 0), new V3(0, 3.15, 0), new V3(0.3, 2.8, 0), new V3(0.4, 1.5, 0.05), new V3(0.25, 0, 0)]);
-          g.add(new THREE.Mesh(new THREE.TubeGeometry(cc, 60, 0.07, 8, false), mat(0xe8453f, { emissive: 0x7a1010, emissiveIntensity: 0.4, roughness: 0.3 })));
+          g.add(new THREE.Mesh(new THREE.TubeGeometry(cc, 60, 0.07, 12, false), MT.plastic(lc(0xe23b36), { roughness: 0.3, extra: { emissive: lc(0x7a1010), emissiveIntensity: 0.3 } })));
           const lac = new THREE.CatmullRomCurve3([new V3(0, 0, 0), new V3(0, 1.5, 0), new V3(0, 2.9, 0)]);
-          g.add(new THREE.Mesh(new THREE.TubeGeometry(lac, 30, 0.12, 8, false), mat(0xffe08a, { emissive: 0x9a7a10, emissiveIntensity: 0.4, roughness: 0.3 })));
+          g.add(new THREE.Mesh(new THREE.TubeGeometry(lac, 30, 0.12, 12, false), MT.plastic(lc(0xf5cf55), { roughness: 0.3, extra: { emissive: lc(0x9a7a10), emissiveIntensity: 0.3 } })));
           g.userData = { cap: cc, lac };
         }
         vil.add(g); villi.push(g);
@@ -92,12 +94,12 @@
       let lpl = null;
       const lab = new THREE.Group(); lab.visible = false; root.add(lab);
       const UX = 0.0095, X3 = (px) => (px - 400) * UX, Y3 = (py) => 2.6 + (228 - py) * UX;
-      { const bench = new THREE.Mesh(new THREE.BoxGeometry(9.6, 0.24, 3.2), mat(0xcfd9cf, { roughness: 0.8 })); bench.position.y = -0.12; bench.receiveShadow = true; lab.add(bench);
-        const rack = new THREE.Mesh(new THREE.BoxGeometry(9.0, 0.12, 0.9), mat(0xb98a55, { roughness: 0.8 })); rack.position.set(0, 0.06, 0); lab.add(rack); }
+      { const bench = new THREE.Mesh(new THREE.BoxGeometry(9.6, 0.24, 3.2), MT.stone(0x8f9a94, { repeat: 3, bump: 0.01 })); bench.position.y = -0.12; bench.receiveShadow = true; lab.add(bench);
+        const rack = new THREE.Mesh(new THREE.BoxGeometry(9.0, 0.12, 0.9), MT.wood(0xe6d2b4)); rack.position.set(0, 0.06, 0); lab.add(rack); }
       const NUT = { starch: '녹말', sugar: '당', protein: '단백질', fat: '지방' };
       const LTUBE = [0, 1, 2, 3].map((i) => {
         const g = new THREE.Group(); lab.add(g);
-        const gl = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 2.3, 28, 1, true), new THREE.MeshStandardMaterial({ color: 0xdff1ff, transparent: true, opacity: 0.2, roughness: 0.05, depthWrite: false, side: THREE.DoubleSide })); gl.position.y = 1.35; g.add(gl);
+        const gl = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 2.3, 28, 1, true), MT.glass({ opacity: 0.2 })); gl.position.y = 1.35; g.add(gl);
         const gb = new THREE.Mesh(new THREE.SphereGeometry(0.36, 24, 12, 0, 6.283, Math.PI / 2, Math.PI / 2), gl.material); gb.position.y = 0.36; g.add(gb);
         const liq = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.31, 1, 24), new THREE.MeshStandardMaterial({ color: 0xefe7d3, roughness: 0.25, transparent: true, opacity: 0.92 })); g.add(liq);
         const liqB = new THREE.Mesh(new THREE.SphereGeometry(0.31, 20, 10, 0, 6.283, Math.PI / 2, Math.PI / 2), liq.material); liqB.position.y = 0.36; g.add(liqB);

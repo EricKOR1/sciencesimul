@@ -20,24 +20,31 @@
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.05 }, o || {}));
+      const MT = ctx.mats;
+      const rbox = (w, h, d, r) => { r = Math.min(r, w / 2 - 1e-3, h / 2 - 1e-3, d / 2 - 1e-3); const s = new THREE.Shape(), x = w / 2 - r, y = h / 2 - r; s.absarc(x, y, r, 0, Math.PI / 2); s.absarc(-x, y, r, Math.PI / 2, Math.PI); s.absarc(-x, -y, r, Math.PI, 1.5 * Math.PI); s.absarc(x, -y, r, 1.5 * Math.PI, 2 * Math.PI); const g = new THREE.ExtrudeGeometry(s, { depth: d - 2 * r, bevelEnabled: true, bevelThickness: r, bevelSize: r, bevelOffset: -r, bevelSegments: 3, curveSegments: 6 }); g.translate(0, 0, -(d - 2 * r) / 2); return g; };   // 모서리가 둥근 상자
+      const rslab = (w, d, t, r) => { const g = rbox(w, d, t, r); g.rotateX(Math.PI / 2); return g; };   // 눕힌 판 (윗면에 무늬가 고르게)
       const s0 = window.__sim && window.__sim.S && window.__sim.S.mode;
       let scene = s0 === 'aqueous' ? 'aq' : 'ml', power = true, showLab = true, lastMode = s0;
       /* 비커 */
-      const gl = new THREE.Mesh(new THREE.CylinderGeometry(BR, BR, BH, 56, 1, true), new THREE.MeshStandardMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.16, roughness: 0.08, side: THREE.DoubleSide, depthWrite: false })); gl.position.y = FY + BH / 2; root.add(gl);
-      const bt = new THREE.Mesh(new THREE.CylinderGeometry(BR, BR, 0.14, 56), mat(0xbcd0e6, { transparent: true, opacity: 0.5 })); bt.position.y = FY; root.add(bt);
-      const liq = new THREE.Mesh(new THREE.CylinderGeometry(BR - 0.04, BR - 0.04, BH * WATER, 56), mat(0x7cc4ff, { transparent: true, opacity: 0.3, roughness: 0.15, depthWrite: false })); liq.position.y = FY + BH * WATER / 2; root.add(liq);
+      const gl = new THREE.Mesh(new THREE.CylinderGeometry(BR, BR, BH, 64, 1, true), MT.glass({ tint: 0xcfe8ff, opacity: 0.2 })); gl.position.y = FY + BH / 2; root.add(gl);
+      { const rim = new THREE.Mesh(new THREE.TorusGeometry(BR + 0.03, 0.07, 12, 96), MT.glass({ tint: 0xe6f3ff, opacity: 0.5 })); rim.rotation.x = Math.PI / 2; rim.position.y = FY + BH; root.add(rim);
+        const bn = new THREE.Mesh(rslab(13, 9, 0.36, 0.08), MT.wood(0xa88962, { repeat: 0.22 })); bn.position.y = FY - 0.07 - 0.2; bn.userData.v3bg = true; root.add(bn); }   // 비커 입술 · 실험대
+      const bt = new THREE.Mesh(new THREE.CylinderGeometry(BR, BR, 0.14, 64), MT.glass({ tint: 0xcfe2f5, opacity: 0.42 })); bt.position.y = FY; root.add(bt);
+      const liq = new THREE.Mesh(new THREE.CylinderGeometry(BR - 0.04, BR - 0.04, BH * WATER, 64), MT.liquid(0x7cc4ff, { opacity: 0.3 })); const liqGlow = ctx.halo(liq, 0xff8a3a, 11, 0); liq.position.y = FY + BH * WATER / 2; root.add(liq);
       const top = FY + BH * WATER;
       const pink = new THREE.Mesh(new THREE.CylinderGeometry(BR - 0.05, BR - 0.05, BH * WATER - 0.06, 56, 1, false, Math.PI, Math.PI), mat(0xff5fa8, { transparent: true, opacity: 0.0, depthWrite: false })); pink.position.y = FY + BH * WATER / 2; root.add(pink);
       /* 전극 (흑연) */
-      const elMat = mat(0x56607a, { roughness: 0.55, metalness: 0.3 });
+      const elMat = mat(0x363c4a, { roughness: 0.5, metalness: 0.6 });   // 흑연 막대
       const cath = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 4.5, 24), elMat); cath.position.set(-EX, FY + 2.35, 0);
       const an = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 4.5, 24), elMat); an.position.set(EX, FY + 2.35, 0); root.add(cath, an);
+      [-EX, EX].forEach((x) => { const cl = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.3, 24), MT.metal('steel')); cl.position.set(x, FY + 2.35 + 2.2, 0); root.add(cl); });   // 전극 집게
       const eTop = FY + 2.35 + 2.25;
       /* 전지 + 도선 */
       const BY = eTop + 1.5;
-      const batt = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 2.4, 28), mat(0x3b82f6, { metalness: 0.4, roughness: 0.4 })); batt.rotation.z = Math.PI / 2; batt.position.set(0, BY, 0); root.add(batt);
-      const capP = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.4, 20), mat(0xd1d5db, { metalness: 0.8, roughness: 0.3 })); capP.rotation.z = Math.PI / 2; capP.position.set(1.4, BY, 0); root.add(capP);
-      const wm = mat(0xd18a3a, { metalness: 0.7, roughness: 0.35 });
+      const batt = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 2.4, 40), MT.plastic(0x2563d8)); batt.rotation.z = Math.PI / 2; batt.position.set(0, BY, 0); root.add(batt);
+      { const bd = new THREE.Mesh(new THREE.CylinderGeometry(0.56, 0.56, 0.5, 40), MT.metal('gold', { brushed: true })); bd.position.y = -0.85; batt.add(bd); const mn = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.06, 40), MT.metal('steel')); mn.position.y = 1.22; batt.add(mn); }
+      const capP = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.4, 28), MT.metal('steel')); capP.rotation.z = Math.PI / 2; capP.position.set(1.4, BY, 0); root.add(capP);
+      const wm = MT.metal('copper');
       const wL = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, BY - eTop, 10), wm); wL.position.set(-EX, (BY + eTop) / 2, 0);
       const wR = wL.clone(); wR.position.x = EX; root.add(wL, wR);
       const hL = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, EX - 1.2, 10), wm); hL.rotation.z = Math.PI / 2; hL.position.set(-(EX + 1.2) / 2, BY, 0);
@@ -55,9 +62,9 @@
       const OH = Array.from({ length: NA }, () => ({ on: false, p: new V3(), life: 0 }));
       /* 기포 & 나트륨 방울 */
       const NB = 14, bgeo = new THREE.SphereGeometry(0.22, 18, 14);
-      const mkB = () => Array.from({ length: NB }, () => { const m = new THREE.Mesh(bgeo, mat(0xffffff, { transparent: true, opacity: 0.55, roughness: 0.1, depthWrite: false })); m.visible = false; root.add(m); return { m, on: false, t: 0, dx: 0, dz: 0 }; });
+      const mkB = () => Array.from({ length: NB }, () => { const m = new THREE.Mesh(bgeo, MT.glass({ tint: 0xffffff, opacity: 0.5, extra: { side: THREE.FrontSide } })); m.visible = false; root.add(m); return { m, on: false, t: 0, dx: 0, dz: 0 }; });
       const bA = mkB(), bC = mkB();
-      const naD = Array.from({ length: 6 }, (_, i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 14), mat(0xe6edf5, { metalness: 0.9, roughness: 0.2 })); m.position.set(-EX - 0.28, FY + 0.45 + i * 0.42, 0); m.scale.setScalar(0.0001); root.add(m); return m; });
+      const naD = Array.from({ length: 6 }, (_, i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.2, 24, 18), MT.metal('silver')); m.position.set(-EX - 0.28, FY + 0.45 + i * 0.42, 0); m.scale.setScalar(0.0001); root.add(m); return m; });
       let naN = 0, bacc = 0;
       const M = new THREE.Matrix4();
       const L = {
@@ -68,7 +75,7 @@
       const setLab = () => { Object.values(L).forEach((l) => l.show(showLab)); };
       function setScene(v) {
         scene = v; liq.material.color.setHex(v === 'ml' ? 0xff9a3c : 0x7cc4ff); liq.material.emissive.setHex(v === 'ml' ? 0x7a3300 : 0x000000); liq.material.opacity = v === 'ml' ? 0.38 : 0.3;
-        liq.material.emissiveIntensity = 0.7; naN = 0; naD.forEach((m) => m.scale.setScalar(0.0001)); bA.concat(bC).forEach((b) => { b.on = false; b.m.visible = false; }); OH.forEach((o) => { o.on = false; });
+        liq.material.emissiveIntensity = 0.7; liqGlow.material.opacity = v === 'ml' ? 0.22 : 0; naN = 0; naD.forEach((m) => m.scale.setScalar(0.0001)); bA.concat(bC).forEach((b) => { b.on = false; b.m.visible = false; }); OH.forEach((o) => { o.on = false; });
         bC.forEach((b) => b.m.material.color.setHex(0xffffff)); bA.forEach((b) => b.m.material.color.setHex(0xd7ff6a));
         L.prodC.set(v === 'ml' ? 'Na 생성' : 'H₂ 기체'); L.prodA.set('Cl₂ 기체'); txt = '';
       }
@@ -80,7 +87,7 @@
       });
       const lb = controls.button('이름표 ✓', () => { showLab = !showLab; lb.classList.toggle('on', showLab); lb.textContent = '이름표 ' + (showLab ? '✓' : '✕'); setLab(); }); lb.classList.add('on');
       /* 녹말-KI 종이: 2D의 “📄 종이” 단추로 댄 종이를 그 전극 위 기체에 보여 줘요 (Cl₂ → 푸르게, H₂ → 변화 없음) */
-      const paperM = mat(0xf8fafc, { roughness: 0.8, side: THREE.DoubleSide });
+      const paperM = MT.fabric(0xf8fafc, { extra: { side: THREE.DoubleSide } });
       const paper = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.0, 0.03), paperM); paper.visible = false; root.add(paper);
       const lPaper = label('', [0, 0, 0], { color: 'rgba(30,41,59,.9)' }); lPaper.show(false);
       const cW = new THREE.Color(0xf8fafc), cB = new THREE.Color(0x1e2a78);

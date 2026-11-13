@@ -38,32 +38,35 @@
       const Pw = (T) => { try { return sim().LIQ.water.P(T); } catch (e) { return FALLBACK(T); } };
       const Tbw = (pmm) => { try { return sim().Tbw(pmm); } catch (e) { let lo = 0, hi = 125; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (Pw(m) < pmm) lo = m; else hi = m; } return (lo + hi) / 2; } };
 
-      const jar = new THREE.Mesh(new THREE.CylinderGeometry(R, R, HJ, 56, 1, true), new THREE.MeshStandardMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.16, roughness: 0.08, side: THREE.DoubleSide, depthWrite: false }));
+      const jar = new THREE.Mesh(new THREE.CylinderGeometry(R, R, HJ, 56, 1, true), ctx.mats.glass({ tint: 0xd6ecff, opacity: 0.17 }));
       jar.position.y = FLOOR + HJ / 2; root.add(jar);
-      const bot = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.2, 56), new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.5, metalness: 0.4 }));
+      { const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.035, 10, 72), ctx.mats.glass({ opacity: 0.4 })); rim.rotation.x = Math.PI / 2; rim.position.y = FLOOR + HJ; root.add(rim); }   // 유리 용기의 두께 있는 테두리
+      const bot = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.2, 56), ctx.mats.metal(0x3d4656, { roughness: 0.55 }));
       bot.position.y = FLOOR - 0.1; root.add(bot);
       const lid = new THREE.Group(); root.add(lid);                       // 뚜껑 / 피스톤
-      lid.add(new THREE.Mesh(new THREE.CylinderGeometry(R + 0.08, R + 0.08, 0.28, 56), new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.3, metalness: 0.7 })));
-      const knob = new THREE.Mesh(new THREE.SphereGeometry(0.28, 24, 16), new THREE.MeshStandardMaterial({ color: 0xef6a5b, roughness: 0.4 })); knob.position.y = 0.36; lid.add(knob);
-      const liqMat = new THREE.MeshStandardMaterial({ color: WATER, transparent: true, opacity: 0.42, roughness: 0.15, depthWrite: false });
+      lid.add(new THREE.Mesh(new THREE.CylinderGeometry(R + 0.08, R + 0.08, 0.28, 56), ctx.mats.metal(0x8f99a8, { brushed: true, roughness: 0.3 })));
+      { const seal = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.1, R + 0.1, 0.08, 56), ctx.mats.rubber(0x15181f)); seal.position.y = -0.06; lid.add(seal); const st = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.3, 20), ctx.mats.metal('chrome', { roughness: 0.14 })); st.position.y = 0.2; lid.add(st); }
+      const knob = new THREE.Mesh(new THREE.SphereGeometry(0.28, 32, 20), ctx.mats.plastic(0xc23324, { roughness: 0.22 })); knob.position.y = 0.42; lid.add(knob);
+      const liqMat = ctx.mats.liquid(0x1f9fe0, { opacity: 0.5 });
       const liq = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.03, R - 0.03, 1, 56), liqMat); root.add(liq);
       // 외부 압력 화살표 (뚜껑을 누르는 힘)
-      const amat = new THREE.MeshStandardMaterial({ color: 0xffb454, roughness: 0.4, emissive: 0x663300, emissiveIntensity: 0.4 });
+      const amat = ctx.mats.plastic(0xf59a23, { extra: { emissive: 0x663300, emissiveIntensity: 0.35 } });
       const arrows = [];
       for (let i = 0; i < 4; i++) {
         const a = new THREE.Group(); a.add(new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1, 12), amat), new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.4, 16), amat));
         root.add(a); arrows.push(a);
       }
       // 열원 (끓음 단계)
-      const burner = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.3, R + 0.3, 0.16, 40), new THREE.MeshStandardMaterial({ color: 0x3a3f4b, roughness: 0.5, emissive: 0xff5a1f, emissiveIntensity: 0 }));
+      const burner = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.3, R + 0.3, 0.16, 40), ctx.mats.metal('iron', { roughness: 0.45, extra: { emissive: 0xff5a1f, emissiveIntensity: 0 } }));
       burner.position.y = FLOOR - 0.28; root.add(burner);
+      const burnGlow = ctx.halo(burner, 0xff7a30, (R + 0.3) * 3.2, 0);   // 달궈진 열판의 빛 번짐 (세기는 온도에 따라)
 
-      const sm = new THREE.MeshStandardMaterial({ color: WATER, roughness: 0.3, metalness: 0.05, emissive: 0x112233, emissiveIntensity: 0.3 });
+      const sm = new THREE.MeshStandardMaterial({ color: 0x1b9be0, roughness: 0.2, metalness: 0, emissive: 0x0a1a2a, emissiveIntensity: 0.3 });
       const lm = new THREE.InstancedMesh(new THREE.SphereGeometry(0.17, 16, 12), sm, NL); lm.frustumCulled = false; lm.instanceMatrix.setUsage(THREE.DynamicDrawUsage); root.add(lm);
       const gm = new THREE.InstancedMesh(new THREE.SphereGeometry(0.19, 18, 14), sm, MAXG); gm.frustumCulled = false; gm.instanceMatrix.setUsage(THREE.DynamicDrawUsage); root.add(gm);
       const LP = Array.from({ length: NL }, () => { const a = Math.random() * 6.28, r = Math.sqrt(Math.random()) * (R - 0.35); return { a, r, y: Math.random(), ph: Math.random() * 6.28 }; });
       const GP = Array.from({ length: MAXG }, () => ({ on: false, p: new V3(), v: new V3() }));
-      const bubbles = Array.from({ length: 14 }, () => { const b = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.4, roughness: 0.1, depthWrite: false })); b.visible = false; root.add(b); return { m: b, t: Math.random(), x: 0, z: 0 }; });
+      const bubbles = Array.from({ length: 14 }, () => { const b = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), ctx.mats.glass({ tint: 0xffffff, opacity: 0.38, extra: { side: THREE.FrontSide } })); b.visible = false; root.add(b); return { m: b, t: Math.random(), x: 0, z: 0 }; });
       const M = new THREE.Matrix4();
       const tl = label('', [R, FLOOR + 1, 0], { color: 'rgba(30,41,59,.9)' });
       const pl = label('', [0, FLOOR + HJ + 0.9, 0], { color: 'rgba(239,106,91,.92)' });
@@ -107,7 +110,7 @@
         liq.scale.set(1, liqH, 1); liq.position.y = FLOOR + liqH / 2;
         lid.position.y = FLOOR + HJ + 0.14;
         burner.material.emissiveIntensity = press ? Math.max(0, Math.min(1, (o.Tset - 20) / 100)) * 0.9 : 0;
-        burner.visible = press;
+        burner.visible = press; burnGlow.material.opacity = burner.material.emissiveIntensity * 0.5;
         arrows.forEach((a, i) => {
           a.visible = press;
           if (!press) return;
@@ -125,7 +128,12 @@
       const probe = controls.text(''); probe.style.display = 'none'; const ctlEl = probe.parentElement;
       const oldEls = Array.prototype.filter.call(ctlEl.children, (e) => e !== probe);
       const grab = (fn) => { const n0 = ctlEl.children.length; const r = fn(); return { r, els: Array.prototype.slice.call(ctlEl.children, n0) }; };
-      const stdM = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.05 }, o || {}));
+      const stdM = (c, o) => { o = o || {};   // 유리 · 액체 · 금속은 실제 같은 재질로
+        if (o.transparent && o.side === THREE.DoubleSide) return ctx.mats.glass({ tint: 0xd6ecff, opacity: o.opacity + 0.02 });
+        if (o.transparent && c === 0xffffff) return ctx.mats.liquid(0xffffff, { opacity: o.opacity });
+        if (o.metalness >= 0.4) return c === 0x64748b ? ctx.mats.metal(0x3d4656, { roughness: 0.55 }) : ctx.mats.metal(0x8f99a8, { brushed: true, roughness: 0.3 });
+        if (c === 0x3a3f4b) return ctx.mats.metal('iron', { roughness: 0.45, extra: { emissive: o.emissive, emissiveIntensity: 0 } });
+        return new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.3, metalness: 0 }, o)); };
       /* --- curve: 세 개의 밀폐 용기 (에터 · 에탄올 · 물) --- */
       const LK3 = ['ether', 'ethanol', 'water'], JX = [-4.4, 0, 4.4], JR = 1.3, JH = 4.0, JY = -2.6, NG = 44, LIQH = 0.9;
       const jars = LK3.map((k, i) => {

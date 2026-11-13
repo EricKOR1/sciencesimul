@@ -13,7 +13,7 @@
     camera: { dist: 13 * (PHN0 ? 1.32 : 1), theta: 0.25, phi: 1.2, fov: 45, target: [0, 0, 0], min: 5, max: 26 },
     autoRotate: 0.06,
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls } = ctx; const M = ctx.mats;
       /* ---------- 공통 도구 ---------- */
       const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
       const V3 = THREE.Vector3, Yax = new V3(0, 1, 0);
@@ -22,7 +22,7 @@
       const rnd = (() => { let s = 12345; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; })();
       const _m = new THREE.Matrix4(), _c = new THREE.Color();
       function spheres(N, r, color, seg) {
-        const m = new THREE.InstancedMesh(new THREE.SphereGeometry(r, seg || 16, Math.round((seg || 16) * 0.75)), mat(color, { roughness: 0.55, metalness: 0 }), N);
+        const m = new THREE.InstancedMesh(new THREE.SphereGeometry(r, seg || 16, Math.round((seg || 16) * 0.75)), mat(color, { roughness: 0.24, metalness: 0, envMapIntensity: 1.15 }), N);
         m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; m.castShadow = true;
         for (let i = 0; i < N; i++) m.setColorAt(i, _c.set(0xffffff));
         root.add(m); return m;
@@ -132,15 +132,20 @@
             }
           }
         };
-        const CM = { solid: new THREE.Color(0x3563d8), liquid: new THREE.Color(0x14a6cf), gas: new THREE.Color(0xf57f1f) };
+        const CM = { solid: new THREE.Color(0x3563d8).convertSRGBToLinear(), liquid: new THREE.Color(0x14a6cf).convertSRGBToLinear(), gas: new THREE.Color(0xf57f1f).convertSRGBToLinear() };   // 화면에서 색이 바래지 않게
         sys.draw = (colorOf) => { for (let i = 0; i < N; i++) { const p = P[i]; put(mesh, i, p.x, p.y, p.z, 1); if (colorOf !== false) mesh.setColorAt(i, CM[p.mode]); } flush(mesh); };
         sys.snap();
         return sys;
       }
       function boxFrame(W, H, color) {
         const g = new THREE.Group();
-        const m = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), glass(color || 0xbfe0ff, 0.1)), e = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(2, 2, 2)), new THREE.LineBasicMaterial({ color: 0x9cc3ff }));
-        g.add(m, e); g.userData.set = (w, h) => g.scale.set(w, h, w); g.userData.set(W, H); return g;
+        const m = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), M.glass({ tint: color || 0xdcefff, opacity: 0.13 })), e = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(2, 2, 2)), new THREE.LineBasicMaterial({ color: 0x9cc3ff }));
+        g.add(m, e);
+        /* 금속 모서리 기둥과 위·아래 테두리: 유리 용기처럼 보이게 */
+        const fm = M.metal('steel', { roughness: 0.22 });
+        for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2, 10), fm); p.scale.set(1 / W, 1, 1 / W); p.position.set(sx, 0, sz); g.add(p); }
+        for (const sy of [-1, 1]) for (const sx of [-1, 1]) { const a = new THREE.Mesh(new THREE.BoxGeometry(2, 0.04 / H, 0.06 / W), fm); a.position.set(0, sy, sx); const b = new THREE.Mesh(new THREE.BoxGeometry(0.06 / W, 0.04 / H, 2), fm); b.position.set(sx, sy, 0); g.add(a, b); }
+        g.traverse((o) => { if (o.isMesh && o !== m) o.userData.v3bg = true; }); g.userData.set = (w, h) => g.scale.set(w, h, w); g.userData.set(W, H); return g;
       }
 
       const PR = 0.17, N = 64, HH = 2.0, W = 1.15;
@@ -152,7 +157,12 @@
         const fr = boxFrame(W, HH); fr.position.x = XS[i]; root.add(fr);
         s.prep(k); return s;
       });
-      const stand = new THREE.Mesh(new THREE.BoxGeometry(11.4, 0.2, 3.4), mat(0x64748b, { metalness: 0.4, roughness: 0.4 })); stand.position.y = -HH - 0.12; root.add(stand);
+      const stand = new THREE.Mesh(new THREE.BoxGeometry(11.4, 0.2, 3.4), M.wood(0x8f6a48, { repeat: 2 })); stand.position.y = -HH - 0.12; root.add(stand);
+      /* 실험대 꾸밈: 용기마다 금속 받침판, 실험대 앞·뒤 테두리와 다리 */
+      { const pm = M.metal(0x7f8898, { brushed: true }), dk = M.metal(0x2a303a, { roughness: 0.45 });
+        XS.forEach((x) => { const pl = new THREE.Mesh(new THREE.CylinderGeometry(W * 1.5, W * 1.56, 0.07, 48), pm); pl.position.set(x, 0.13, 0); pl.userData.v3bg = true; stand.add(pl); });
+        for (const sz of [-1, 1]) { const ed = new THREE.Mesh(new THREE.BoxGeometry(11.5, 0.26, 0.08), dk); ed.position.set(0, 0, sz * 1.72); ed.userData.v3bg = true; stand.add(ed); }
+        for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.11, 0.5, 16), dk); lg.position.set(sx * 5.2, -0.34, sz * 1.35); lg.userData.v3bg = true; stand.add(lg); } }
       // 자동 맞춤용 보이지 않는 상자: 세 용기(입자는 계속 움직여요)를 한 덩어리로 재서 세 칸이 모두 크게 보이게
       const fitBox = new THREE.Mesh(new THREE.BoxGeometry(2 * (XS[2] + W) + 0.3, HH * 2 + 0.7, 2 * W), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); fitBox.position.y = 0.3; root.add(fitBox);
       stand.userData.v3bg = true;

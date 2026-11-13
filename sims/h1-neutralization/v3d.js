@@ -7,7 +7,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
-  const COL = { H: 0xe2464b, Cl: 0x14a058, Na: 0xf59e0b, OH: 0x3867f4, O: 0x5aa8ff };
+  const COL = { H: 0xd42a30, Cl: 0x0c8a48, Na: 0xe88a00, OH: 0x2452e0, O: 0x3f8ef0 };
   let NH = 6;                    // 처음 HCl 6묶음(20 mL) — 2D의 ACID_U
   const MAXK = 12;               // NaOH를 최대 12묶음(1.0 M 40 mL)까지
 
@@ -20,7 +20,7 @@
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.35, metalness: 0.05 }, o || {}));
+      const mats = ctx.mats, mat = (c, o) => mats.plastic(c, { roughness: 0.3, extra: o || {} });   // 입자 모형: 매끈한 플라스틱 공
       const st = { k: 0, ind: 'btb', names: true, t: 0, queue: 0, qT: 0, demo: false };
       const L2 = () => (ctx.lesson && ctx.lesson()) || null;
       { const S0 = L2(); if (S0 && S0.ACID_U) NH = S0.ACID_U; }
@@ -28,17 +28,33 @@
 
       /* ---------- 비커 ---------- */
       const WR = 2.55, WH = 3.2;
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(5.6, 5.8, 0.25, 56), new THREE.MeshLambertMaterial({ color: 0x2d3547 })); floor.position.y = -0.15; floor.receiveShadow = true; root.add(floor);
-      const beaker = new THREE.Mesh(new THREE.CylinderGeometry(WR + 0.12, WR + 0.12, WH + 0.9, 56, 1, true), new THREE.MeshStandardMaterial({ color: 0xd6e6ff, transparent: true, opacity: 0.2, roughness: 0.05, side: THREE.DoubleSide, depthWrite: false })); beaker.position.y = (WH + 0.9) / 2; root.add(beaker);
-      const rim = new THREE.Mesh(new THREE.TorusGeometry(WR + 0.12, 0.05, 10, 56), mat(0xe3eeff, { transparent: true, opacity: 0.6 })); rim.rotation.x = Math.PI / 2; rim.position.y = WH + 0.9; root.add(rim);
-      const bot = new THREE.Mesh(new THREE.CylinderGeometry(WR + 0.12, WR + 0.12, 0.12, 56), mat(0xcfe0f7, { transparent: true, opacity: 0.45 })); bot.position.y = 0.04; root.add(bot);
-      const waterM = new THREE.MeshStandardMaterial({ color: 0xffe14d, transparent: true, opacity: 0.4, roughness: 0.1, depthWrite: false });
-      const water = new THREE.Mesh(new THREE.CylinderGeometry(WR, WR, WH, 56), waterM); water.position.y = WH / 2 + 0.1; root.add(water);
-      // 뷰렛 (위에서 NaOH 방울)
-      const bur = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 2.6, 16, 1, true), new THREE.MeshStandardMaterial({ color: 0xd6e6ff, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false })); bur.position.set(0, WH + 2.6, 0); root.add(bur);
-      const burL = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 1.6, 16), new THREE.MeshStandardMaterial({ color: 0x9fc3ff, transparent: true, opacity: 0.6, depthWrite: false })); burL.position.set(0, WH + 2.6, 0); root.add(burL);
-      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 16), mat(0xaab4c6, { metalness: 0.5 })); tip.rotation.x = Math.PI; tip.position.set(0, WH + 1.15, 0); root.add(tip);
-      const drop = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 10), new THREE.MeshStandardMaterial({ color: 0x6aa6ff, transparent: true, opacity: 0.85 })); drop.visible = false; root.add(drop);
+      // 실험대 (짙은 상판 + 금속 테두리)
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(5.6, 5.6, 0.25, 72), mats.ceramic(0x1d2433, { extra: { roughness: 0.42, clearcoat: 0.5 } })); floor.position.y = -0.15; floor.receiveShadow = true; root.add(floor);
+      { const edge = new THREE.Mesh(new THREE.TorusGeometry(5.6, 0.125, 12, 96), mats.metal('aluminium', { brushed: true })); edge.rotation.x = Math.PI / 2; edge.position.y = -0.15; edge.userData.v3bg = true; root.add(edge); }
+      // 비커: 두께가 있는 유리벽 · 둥근 바닥 모서리 · 바깥으로 말린 입구 · 눈금
+      const BR = WR + 0.12, BH = WH + 0.9;
+      const bprof = [[0, 0.02], [BR - 0.22, 0.02], [BR - 0.06, 0.07], [BR, 0.22], [BR, BH - 0.1], [BR + 0.09, BH], [BR + 0.05, BH + 0.03], [BR - 0.05, BH - 0.08], [BR - 0.05, 0.24], [BR - 0.24, 0.13], [0, 0.13]].map((q) => new THREE.Vector2(q[0], q[1]));
+      const beaker = new THREE.Mesh(new THREE.LatheGeometry(bprof, 72), mats.glass({ opacity: 0.2 })); beaker.renderOrder = 3; root.add(beaker);
+      { const tk = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.75 });   // 눈금
+        for (let i = 0; i < 9; i++) { const big = i % 2 === 0, w = big ? 0.5 : 0.28; const t = new THREE.Mesh(new THREE.CylinderGeometry(BR + 0.012, BR + 0.012, 0.022, 12, 1, true, 0.15, w / BR), tk); t.position.y = 0.5 + i * 0.38; t.renderOrder = 4; root.add(t); } }
+      const waterM = mats.liquid(0xffe14d, { opacity: 0.4, extra: { roughness: 0.12 } });   // 지시약 색이 비치는 용액
+      const water = new THREE.Mesh(new THREE.CylinderGeometry(WR, WR, WH, 56), waterM); water.position.y = WH / 2 + 0.14; water.renderOrder = 1; root.add(water);
+      { const men = new THREE.Mesh(new THREE.TorusGeometry(WR - 0.02, 0.035, 8, 72), mats.liquid(0xffffff, { opacity: 0.4 })); men.rotation.x = Math.PI / 2; men.position.y = WH + 0.15; men.renderOrder = 2; root.add(men); }   // 수면 가장자리
+      // 뷰렛 (위에서 NaOH 방울): 눈금 있는 유리관 · 콕 · 스탠드와 집게
+      const bur = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 2.6, 24, 1, true), mats.glass({ opacity: 0.26 })); bur.position.set(0, WH + 2.6, 0); bur.renderOrder = 3; root.add(bur);
+      const burL = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 1.6, 20), mats.liquid(0x8ab6ff, { opacity: 0.6 })); burL.position.set(0, WH + 2.6, 0); root.add(burL);
+      { const tk = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
+        for (let i = 0; i < 11; i++) { const t = new THREE.Mesh(new THREE.CylinderGeometry(0.203, 0.203, 0.014, 8, 1, true, 0.2, i % 5 === 0 ? 1.5 : 0.8), tk); t.position.set(0, WH + 1.55 + i * 0.2, 0); t.renderOrder = 4; root.add(t); } }
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 20, 1, true), mats.glass({ opacity: 0.3 })); tip.rotation.x = Math.PI; tip.position.set(0, WH + 1.15, 0); root.add(tip);
+      { const cock = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.62, 16), mats.plastic(0x2f6fe0)); cock.rotation.z = Math.PI / 2; cock.position.set(0, WH + 1.36, 0); root.add(cock);   // 콕
+        const handle = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.3, 0.08), mats.plastic(0x2f6fe0)); handle.position.set(0.34, WH + 1.36, 0); root.add(handle);
+        const steel = mats.metal('steel'), SX = -(BR + 0.75), SZ = -1.2;   // 스탠드: 받침 · 기둥 · 집게
+        const sb = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.14, 2.0), mats.metal('iron', { roughness: 0.55 })); sb.position.set(SX, 0.05, SZ + 0.5); sb.castShadow = true; root.add(sb);
+        const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, WH + 4.0, 16), steel); rod.position.set(SX, (WH + 4.0) / 2 + 0.1, SZ); rod.castShadow = true; root.add(rod);
+        const arm = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(SX, WH + 2.9, SZ), new V3(SX * 0.5, WH + 2.9, SZ * 0.5), new V3(-0.3, WH + 2.9, -0.12)], false, 'catmullrom', 0.2), 24, 0.045, 10, false), steel); arm.castShadow = true; root.add(arm);
+        const boss = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.3, 0.22), mats.metal('aluminium')); boss.position.set(SX, WH + 2.9, SZ); root.add(boss);
+        const clamp = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.04, 10, 32), mats.rubber(0x20242c, { extra: { roughness: 0.6 } })); clamp.rotation.x = Math.PI / 2; clamp.position.set(0, WH + 2.9, 0); root.add(clamp); }
+      const drop = new THREE.Mesh(new THREE.SphereGeometry(0.13, 20, 14), mats.liquid(0x6aa6ff, { opacity: 0.85 })); drop.scale.y = 1.25; drop.visible = false; root.add(drop);
       label('뷰렛 (NaOH 수용액)', bur, { size: 12, offset: [0, 1.6, 0] });
       const thermo = label('', [WR + 0.3, WH * 0.6, 0], { size: 12.5, color: 'rgba(30,30,60,.85)' });
 
@@ -46,7 +62,7 @@
       const sprTex = {};
       function signTex(ch, col) { const k = ch + col; if (sprTex[k]) return sprTex[k]; const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.fillStyle = '#fff'; g.font = '800 54px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = col; g.shadowBlur = 6; g.fillText(ch, 32, 36); return (sprTex[k] = new THREE.CanvasTexture(c)); }
       const sg = new THREE.Group(); root.add(sg);
-      const sphere = (r, c, o) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 26, 18), mat(c, o)); m.castShadow = true; return m; };
+      const sphM = {}; const sphere = (r, c, o) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 28, 20), o ? mat(c, o) : (sphM[c] || (sphM[c] = mat(c)))); m.castShadow = true; return m; };
       function mk(kind) {
         const g = new THREE.Group();
         if (kind === 'H') g.add(sphere(0.26, COL.H)); else if (kind === 'Cl') g.add(sphere(0.44, COL.Cl)); else if (kind === 'Na') g.add(sphere(0.38, COL.Na));

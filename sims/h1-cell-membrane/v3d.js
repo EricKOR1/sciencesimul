@@ -23,7 +23,7 @@
     levels: [1],
     autoRotate: 0.0,
     build(ctx) {
-      const { THREE, root, label, info, controls, renderer } = ctx;
+      const { THREE, root, label, info, controls, renderer, mats } = ctx;
       /* 입자 통과 시험 결과표: 2D 그림 오른쪽의 결과표를 3D 화면에도 보여 줘요 (2D 시험 결과 그대로) */
       const RES_TXT = { water: '막을 직접 통과', oxygen: '막을 직접 통과', ion: '통로로만 통과', starch: '통과 못함', protein: '통과 못함' };
       if (!document.getElementById('cm3d-tab')) { const st2 = document.createElement('style'); st2.id = 'cm3d-tab'; st2.textContent =
@@ -39,6 +39,10 @@
       }
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.05 }, o || {}));
       const dm = new THREE.Object3D();
+      /* 매끈한 공 (삼각형 수는 적게): 정이십면체를 나눈 뒤 법선을 둥글게 */
+      const ball = (r, d) => { const g = new THREE.IcosahedronGeometry(r, d), p = g.attributes.position, n = g.attributes.normal, v = new THREE.Vector3(); for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i).normalize(); n.setXYZ(i, v.x, v.y, v.z); } return g; };
+      /* 인지질 꼬리: 살짝 구불구불한 가는 관 */
+      const tailGeo = (() => { const h = MT * 0.94, c = new THREE.CatmullRomCurve3([[0, -h / 2], [0.03, -h / 4], [-0.03, 0], [0.025, h / 4], [0, h / 2]].map((q) => new THREE.Vector3(q[0], q[1], 0))); return new THREE.TubeGeometry(c, 6, 0.032, 5, false); })();
       
       /* ---------- 인지질 이중층 ---------- */
       const SP = 0.4, nx = Math.floor(XW * 2 / SP), nz = Math.floor(ZW * 2 / SP), lip = [];
@@ -49,7 +53,8 @@
         lip.push([x, z]);
       }
       const NL = lip.length * 2;
-      const heads = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.17, 1), std(0xffc857, { roughness: 0.35 }), NL), tails = new THREE.InstancedMesh(new THREE.BoxGeometry(0.07, MT * 0.92, 0.07), std(0xf6e6b4, { roughness: 0.6 }), NL * 2);
+      const heads = new THREE.InstancedMesh(ball(0.175, 2), std(0xf2a516, { roughness: 0.26, metalness: 0, envMapIntensity: 1.1 }), NL), tails = new THREE.InstancedMesh(tailGeo, std(0xdcc27a, { roughness: 0.5, metalness: 0 }), NL * 2);
+      heads.castShadow = true;
       root.add(heads, tails);
       const mem = new THREE.Group(); root.add(mem);
       const wob = lip.map(() => [Math.random() * 6, Math.random() * 6]);
@@ -60,20 +65,21 @@
           lip.forEach((p, i) => {
             const w = wob[i], dx = Math.sin(t * 1.3 + w[0]) * 0.02, dz = Math.cos(t * 1.1 + w[1]) * 0.02, dy = Math.sin(t * 1.7 + w[0] * 2) * 0.02;
             dm.position.set(p[0] + dx, sgn * (MT + 0.02) + dy, p[1] + dz); dm.scale.setScalar(1); dm.rotation.set(0, 0, 0); dm.updateMatrix(); heads.setMatrixAt(h++, dm.matrix);
-            for (let q = 0; q < 2; q++) { dm.position.set(p[0] + dx + (q ? 0.07 : -0.07), sgn * (MT / 2 + 0.0) + dy * 0.5, p[1] + dz); dm.updateMatrix(); tails.setMatrixAt(tl++, dm.matrix); }
+            for (let q = 0; q < 2; q++) { dm.position.set(p[0] + dx + (q ? 0.07 : -0.07), sgn * (MT / 2 + 0.0) + dy * 0.5, p[1] + dz); dm.rotation.set(0, w[q] * 3 + q * 1.7, 0); dm.updateMatrix(); tails.setMatrixAt(tl++, dm.matrix); }
           });
         }
         heads.instanceMatrix.needsUpdate = tails.instanceMatrix.needsUpdate = true;
       }
       /* ---------- 단백질 통로 ---------- */
-      const prof = [[0.27, -MT - 0.18], [0.5, -MT - 0.18], [0.62, -MT * 0.4], [0.62, MT * 0.4], [0.5, MT + 0.18], [0.27, MT + 0.18], [0.36, 0], [0.27, -MT - 0.18]].map((p) => new THREE.Vector2(p[0], p[1]));
-      const chan = new THREE.Mesh(new THREE.LatheGeometry(prof, 40), std(0x8a5cf5, { roughness: 0.35, side: THREE.DoubleSide, emissive: 0x2a1470, emissiveIntensity: 0.4 }));
+      const prof = new THREE.SplineCurve([[0.27, -MT - 0.2], [0.42, -MT - 0.26], [0.56, -MT - 0.1], [0.64, -MT * 0.4], [0.62, MT * 0.4], [0.56, MT + 0.1], [0.42, MT + 0.26], [0.27, MT + 0.2], [0.33, MT * 0.5], [0.36, 0], [0.33, -MT * 0.5], [0.27, -MT - 0.2]].map((p) => new THREE.Vector2(p[0], p[1]))).getPoints(48);
+      const chan = new THREE.Mesh(new THREE.LatheGeometry(prof, 48), mats.organic(0x5626d6, { extra: { side: THREE.DoubleSide, emissive: 0x2a1470, emissiveIntensity: 0.3, roughness: 0.38, sheen: 0.15 } })); chan.castShadow = true;
+      { const pa = chan.geometry.attributes.position; for (let i = 0; i < pa.count; i++) { const x = pa.getX(i), y = pa.getY(i), z = pa.getZ(i), a = Math.atan2(z, x), k = 1 + 0.07 * Math.sin(a * 5 + y * 3.2); pa.setXYZ(i, x * k, y, z * k); } chan.geometry.computeVertexNormals(); }   // 단백질 소단위 5개가 둘러싼 울퉁불퉁한 겉면
       chan.position.set(CH.x, 0, CH.z); mem.add(chan);
       label('단백질 통로', chan, { offset: [0, MT + 0.7, 0], size: 12, color: 'rgba(110,60,220,.92)' });
       label('인지질 이중층', [XW - 1.2, 0, ZW], { size: 12, color: 'rgba(160,110,10,.92)' });
       label('세포 밖', [-XW + 1.2, YH - 0.4, 0], { size: 12 }); label('세포 안', [-XW + 0.9, -YH + 0.4, 0], { size: 12 });
       /* ---------- 입자: 2D에서 고른 입자 한 종류를 같은 개수로 ---------- */
-      const MAXN = 90, pm = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 18, 14), std(0xffffff, { roughness: 0.25, emissive: 0x444444, emissiveIntensity: 0.25 }), MAXN); root.add(pm);
+      const MAXN = 90, pm = new THREE.InstancedMesh(ball(1, 3), std(0xffffff, { roughness: 0.22, metalness: 0, emissive: 0x444444, emissiveIntensity: 0.18, envMapIntensity: 1.2 }), MAXN); pm.castShadow = true; root.add(pm);
       const P = []; let sel = 'water', counts = [0, 0];
       const sdr = () => (Math.random() - 0.5);
       const cur = { out: 20, in: 0, key: '' };

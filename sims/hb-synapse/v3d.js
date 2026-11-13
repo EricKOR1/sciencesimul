@@ -25,8 +25,11 @@
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;
-      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.03 }, o || {}));
-      const ghost = (c, op, o) => std(c, Object.assign({ transparent: true, opacity: op, depthWrite: false, roughness: 0.25, side: THREE.DoubleSide }, o || {}));
+      const MT = ctx.mats;
+      // 색은 화면에서 옅게 나오므로 진하게 잡고, 세포는 촉촉한 생체 재질 · 막은 얇고 반짝이는 반투명 재질로
+      const deep = (c, k) => { const a = new THREE.Color(c); return a.lerp(a.clone().convertSRGBToLinear(), k == null ? 0.8 : k); };
+      const std = (c, o) => MT.organic(deep(c), { extra: Object.assign({ roughness: 0.4 }, o || {}) });
+      const ghost = (c, op, o) => MT.organic(deep(c, 0.6), { opacity: op, extra: Object.assign({ roughness: 0.25, side: THREE.DoubleSide, clearcoat: 0.6, clearcoatRoughness: 0.2, envMapIntensity: 1.2 }, o || {}) });
       const R = rng(5), D = new THREE.Object3D();
 
       /* 세포 */
@@ -194,7 +197,12 @@
       const SOMA = new THREE.Mesh(new THREE.SphereGeometry(1.15, 36, 26), std(0x2f9fa8, { roughness: 0.35 })); sumG.add(SOMA);
       const snuc = new THREE.Mesh(new THREE.SphereGeometry(0.34, 18, 14), std(0x8d7fd4)); snuc.position.set(0.1, 0.1, 0.8); sumG.add(snuc);
       const axon = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 4.2, 14), std(0x7fd0c8, { roughness: 0.4 })); axon.rotation.z = Math.PI / 2; axon.position.set(3.1, 0, 0); sumG.add(axon);
-      const apBall = new THREE.Mesh(new THREE.SphereGeometry(0.3, 20, 14), new THREE.MeshBasicMaterial({ color: 0xffd447 })); apBall.visible = false; sumG.add(apBall);
+      const apBall = new THREE.Mesh(new THREE.SphereGeometry(0.3, 20, 14), new THREE.MeshBasicMaterial({ color: 0xffd447 })); apBall.visible = false; sumG.add(apBall); ctx.halo(apBall, 0xffc233, 2.2, 0.8);
+      // 축삭 둔덕 · 말이집(반투명) · 축삭 말단 — 뉴런답게
+      { const hill = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.5, 0.75, 24), SOMA.material); hill.rotation.z = Math.PI / 2; hill.position.set(1.28, 0, 0); sumG.add(hill);
+        const myM = MT.organic(deep(0xf3e9cf, 0.5), { opacity: 0.6, extra: { roughness: 0.35 } });
+        for (let i = 0; i < 4; i++) { const my = new THREE.Mesh(new THREE.CapsuleGeometry(0.27, 0.42, 6, 20), myM); my.rotation.z = Math.PI / 2; my.position.set(2.15 + i * 0.86, 0, 0); sumG.add(my); }
+        const endM = axon.material; [[0.5, 0.42, 0], [0.55, -0.3, 0.3], [0.5, -0.2, -0.38]].forEach((q) => { const tw = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.09, 0.6, 10), endM); const d = new THREE.Vector3(q[0], q[1], q[2]); tw.position.set(5.2 + q[0] / 2, q[1] / 2, q[2] / 2); tw.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.clone().normalize()); sumG.add(tw); const kb = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 10), endM); kb.position.set(5.2 + q[0], q[1], q[2]); sumG.add(kb); }); }
       const inN = [], inT = [], inB = [];
       for (let side = 0; side < 2; side++) for (let i = 0; i < 8; i++) {
         const exc = side === 0, f = i / 7, deg = exc ? 170 - 140 * f : -(25 + 130 * f), a = deg * Math.PI / 180, R0 = 3.1;
@@ -205,7 +213,7 @@
         inN.push({ exc, i, knob, tb, pt, p: new THREE.Vector3(px, py, 0), s: new THREE.Vector3(sx, sy, 0) });
       }
       /* 합산 전위 막대 (−110 ~ −30 mV) */
-      const GY = (v) => -1.9 + (v + 110) / 80 * 3.8, gBg = new THREE.Mesh(new THREE.BoxGeometry(0.5, 3.8, 0.3), std(0x6b7aa0, { transparent: true, opacity: 0.45 })); gBg.position.set(5.6, 0, 0); sumG.add(gBg);
+      const GY = (v) => -1.9 + (v + 110) / 80 * 3.8, gBg = new THREE.Mesh(new THREE.BoxGeometry(0.5, 3.8, 0.3), MT.glass({ tint: 0xa9bde6, opacity: 0.3 })); gBg.position.set(5.6, 0, 0); sumG.add(gBg);
       const gFg = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1, 0.34), std(0x22c55e, { emissive: 0x0a4a22, emissiveIntensity: 0.4 })); sumG.add(gFg);
       const thr = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.05, 0.1), new THREE.MeshBasicMaterial({ color: 0xe2464b })); thr.position.set(5.6, GY(-55), 0.1); sumG.add(thr);
       const rest = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.04, 0.1), new THREE.MeshBasicMaterial({ color: 0x3b82f6 })); rest.position.set(5.6, GY(-70), 0.1); sumG.add(rest);
@@ -219,7 +227,7 @@
       const pS = controls.player({ duration: 5, loop: true, label: '신호 합산', phases: [[0, '입력이 도착해요'], [0.2, '전위가 합산돼요'], [0.4, '역치에 도달하면 활동 전위'], [0.7, '활동 전위가 퍼져요']], onFrame(p) { if (!ignS) { lt = p * 10; actS = 1; } } });
       const sumEls = Array.from(hostS.children).filter((e) => !before.includes(e));
       let sSumSig = '', sMode = '';
-      const vCol = (v) => { const c = new THREE.Color(); if (v >= -40) c.set(0xf59e0b); else if (v >= -55) c.set(0xfacc15); else if (v >= -70) c.set(0x2f9fa8).lerp(new THREE.Color(0x5ac8b0), (v + 70) / 15); else c.set(0x3b82f6).lerp(new THREE.Color(0x2f9fa8), Math.max(0, 1 - (-70 - v) / 40)); return c; };
+      const vCol = (v) => { const c = new THREE.Color(); if (v >= -40) c.set(0xf59e0b); else if (v >= -55) c.set(0xfacc15); else if (v >= -70) c.set(0x2f9fa8).lerp(new THREE.Color(0x5ac8b0), (v + 70) / 15); else c.set(0x3b82f6).lerp(new THREE.Color(0x2f9fa8), Math.max(0, 1 - (-70 - v) / 40)); return c.lerp(c.clone().convertSRGBToLinear(), 0.7); };
       function sumFrame(Lx, t, dt) {
         const sm = Lx.S.sm; if (!sm) return;
         const E = sm.run ? sm.runE : sm.E, I = sm.run ? sm.runI : sm.I, tot = Lx.sumV(E, I);

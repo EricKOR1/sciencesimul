@@ -28,14 +28,17 @@
         let last = ''; el.put = (h) => { if (h !== last) { last = h; el.innerHTML = h; } }; return el;
       };
       const V = THREE.Vector3, V3 = (x, y, z) => new V(x, y, z || 0);
-      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.02 }, o || {}));
+      const MT = ctx.mats;
+      // 색은 화면에서 옅게 나오므로 조금 진하게 잡아요 (실제 장기 색에 가깝게) · 장기는 촉촉한 생체 조직 재질
+      const deep = (c, k) => { const a = new THREE.Color(c); return a.lerp(a.clone().convertSRGBToLinear(), k == null ? 1 : k); };
+      const std = (c, o) => MT.organic(deep(c), { extra: Object.assign({ roughness: 0.5 }, o || {}) });
       const sph = (r, m, x, y, z, sx, sy, sz) => { const o = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 22), m); o.position.set(x || 0, y || 0, z || 0); if (sx) o.scale.set(sx, sy, sz); return o; };
       const tubeM = (pts, r, m, seg) => new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), seg || 60, r, 10), m);
       const SYS = { dig: [], cir: [], res: [], exc: [] }, SM = { dig: [], cir: [], res: [], exc: [] };
       function reg(sys, mesh) { SYS[sys].push(mesh); if (SM[sys].indexOf(mesh.material) < 0) SM[sys].push(mesh.material); return mesh; }
 
       /* 몸 윤곽 */
-      const bodyM = std(0x9fc4ff, { transparent: true, opacity: 0.11, depthWrite: false, roughness: 0.2, side: THREE.DoubleSide });
+      const bodyM = MT.glass({ tint: 0xa9c9ff, opacity: 0.1, extra: { envMapIntensity: 1.1, roughness: 0.12, clearcoatRoughness: 0.2 } });
       const torso = new THREE.Mesh(new THREE.CapsuleGeometry(1.5, 3.6, 10, 32), bodyM); torso.scale.z = 0.62; torso.position.y = 0.0; root.add(torso);
       root.add(sph(0.88, bodyM, 0, 4.55, 0), new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 0.7, 20), bodyM));
       root.children[root.children.length - 1].position.y = 3.65;
@@ -48,6 +51,8 @@
       reg('res', tubeM([V3(0, 3.7, 0.05), V3(0, 2.6, 0.05), V3(0, 2.2, 0.05)], 0.14, airM, 20));
       [-1, 1].forEach((s) => reg('res', tubeM([V3(0, 2.25, 0.05), V3(s * 0.3, 2.05, 0.05), V3(s * 0.62, 1.55, 0.05)], 0.08, airM, 20)));
       SYS.res.slice(-3).forEach((m) => root.add(m));
+      // 기관의 연골 고리
+      for (let i = 0; i < 7; i++) { const r = reg('res', new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.03, 8, 24), airM)); r.rotation.x = Math.PI / 2; r.position.set(0, 2.42 + i * 0.19, 0.05); root.add(r); }
 
       /* 소화계 */
       const dg = new THREE.Group(); dg.position.set(0, -0.95, -0.12); dg.scale.setScalar(0.7); root.add(dg);
@@ -66,7 +71,8 @@
       const pts = [], N = 6;
       for (let r = 0; r < N; r++) { const y = 0.4 - r * 0.42, d = r % 2 ? -1 : 1; for (let k = 0; k <= 4; k++) { const x = d * (-1.0 + k * 0.5); pts.push(V3(x, y + Math.sin(k * 1.7 + r) * 0.07, Math.sin(k + r * 2) * 0.16)); } }
       const smInt = reg('dig', new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 220, 0.15, 12), std(0xf2b79a, { roughness: 0.45 }))); dg.add(smInt);
-      const lgInt = reg('dig', tubeM([V3(-1.5, -1.9), V3(-1.62, -0.6), V3(-1.6, 0.8), V3(-0.8, 1.05), V3(0.8, 1.05), V3(1.6, 0.8), V3(1.62, -0.6), V3(1.5, -1.9), V3(0.9, -2.3), V3(0.1, -2.5), V3(0, -3.1)], 0.26, std(0xc98f6b, { roughness: 0.55 }), 120)); dg.add(lgInt);
+      // 대장: 잘록잘록한 주름(결장 팽대)이 있어요
+      const lgInt = reg('dig', new THREE.Mesh(varTube([V3(-1.5, -1.9), V3(-1.62, -0.6), V3(-1.6, 0.8), V3(-0.8, 1.05), V3(0.8, 1.05), V3(1.6, 0.8), V3(1.62, -0.6), V3(1.5, -1.9), V3(0.9, -2.3), V3(0.1, -2.5), V3(0, -3.1)], 200, (t) => 0.26 * (1 + 0.11 * Math.sin(t * 118)) * (t > 0.9 ? 1 - (t - 0.9) * 4 : 1), 18), std(0xc98f6b, { roughness: 0.55 }))); dg.add(lgInt);
       // 흡수된 영양소가 소장 곁에서 반짝여요
       const nutM = std(0xffd34d, { emissive: 0xffb300, emissiveIntensity: 0.6 });
       const NN = 14, nut = new THREE.InstancedMesh(new THREE.SphereGeometry(0.06, 10, 8), nutM, NN); dg.add(nut);

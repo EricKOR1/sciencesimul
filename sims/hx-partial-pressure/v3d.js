@@ -43,39 +43,39 @@
       const fracCounts = (nO) => { const r = 20 - nO, he = Math.round(0.4 * r); return { he, n2: r - he, o2: nO }; };
       let only = 'all';
       const X0 = -1.6;                       // 용기 중심 x
-      const box = new THREE.Mesh(new THREE.BoxGeometry(HW * 2, H, HW * 2), new THREE.MeshStandardMaterial({ color: 0xbfe3ff, transparent: true, opacity: 0.15, roughness: 0.1, depthWrite: false, side: THREE.DoubleSide }));
+      const box = new THREE.Mesh(new THREE.BoxGeometry(HW * 2, H, HW * 2), ctx.mats.glass({ tint: 0xd6ecff, opacity: 0.11, extra: { envMapIntensity: 1.0 } }));
       box.position.set(X0, FLOOR + H / 2, 0); root.add(box);
-      const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(HW * 2, H, HW * 2)), new THREE.LineBasicMaterial({ color: 0x9fc8ee, transparent: true, opacity: 0.8 }));
+      const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(HW * 2, H, HW * 2)), new THREE.LineBasicMaterial({ color: 0xd6ebff, transparent: true, opacity: 0.45 }));
       edges.position.copy(box.position); root.add(edges);
-      const base = new THREE.Mesh(new THREE.BoxGeometry(HW * 2 + 0.4, 0.25, HW * 2 + 0.4), new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.5, metalness: 0.4 }));
+      const base = new THREE.Mesh(new THREE.BoxGeometry(HW * 2 + 0.4, 0.25, HW * 2 + 0.4), ctx.mats.metal(0x3d4656, { roughness: 0.55 }));
       base.position.set(X0, FLOOR - 0.125, 0); root.add(base);
       /* 실험실 벽 · 나무 실험대 · 유리 용기의 금속 기둥 · 기체 실린더 */
       FX.dome('#1b2a48', '#2b3e63', '#40557c', 0);
       const bench = new THREE.Mesh(new THREE.BoxGeometry(14.5, 0.4, 9), new THREE.MeshStandardMaterial({ map: FX.wood([3.2, 1.5]), roughness: 0.55 })); bench.position.set(1.0, FLOOR - 0.45, 0.4); bench.receiveShadow = true; root.add(bench);
       const benchEdge = new THREE.Mesh(new THREE.BoxGeometry(14.54, 0.08, 9.04), new THREE.MeshStandardMaterial({ color: 0x6b4a2b, roughness: 0.6 })); benchEdge.position.set(1.0, FLOOR - 0.3, 0.4); root.add(benchEdge);
-      const chrome = new THREE.MeshStandardMaterial({ color: 0xdfe6ee, roughness: 0.22, metalness: 0.85 });
+      const chrome = ctx.mats.metal('chrome', { roughness: 0.14 }), brass = ctx.mats.metal('brass'), rubberM = ctx.mats.rubber(0x161a22);
       [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach((c) => { const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, H + 0.1, 12), chrome); post.position.set(X0 + c[0] * HW, FLOOR + H / 2, c[1] * HW); post.castShadow = true; root.add(post); const cap = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 10), chrome); cap.position.set(X0 + c[0] * HW, FLOOR + H + 0.05, c[1] * HW); root.add(cap); });
       [[0, HW], [0, -HW]].forEach((r) => { const b = new THREE.Mesh(new THREE.BoxGeometry(HW * 2, 0.07, 0.07), chrome); b.position.set(X0, FLOOR + H, r[1]); root.add(b); });
       [-HW, HW].forEach((x) => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, HW * 2), chrome); b.position.set(X0 + x, FLOOR + H, 0); root.add(b); });
       G.forEach((g, i) => {
         const cx = X0 - 1.6 + i * 1.6, cz = -3.5, bodyH = 3.0, tank = new THREE.Group();
-        const bm = new THREE.MeshStandardMaterial({ color: g.col, roughness: 0.4, metalness: 0.15 });
+        const bm = ctx.mats.ceramic(g.col, { extra: { roughness: 0.3 } });   // 에나멜 칠한 강철 봄베
         const body = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, bodyH, 28), bm); body.position.y = bodyH / 2; tank.add(body);
         const dome = new THREE.Mesh(new THREE.SphereGeometry(0.46, 28, 14, 0, 6.283, 0, 1.2), bm); dome.position.y = bodyH; tank.add(dome);
-        const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.22, 12), chrome); neck.position.y = bodyH + 0.42; tank.add(neck);
-        const valve = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.14, 0.16), chrome); valve.position.y = bodyH + 0.6; tank.add(valve);
-        const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.12, 10), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 })); knob.position.y = bodyH + 0.72; tank.add(knob);
-        const band = new THREE.Mesh(new THREE.CylinderGeometry(0.47, 0.47, 0.22, 28), new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.5 })); band.position.y = bodyH * 0.62; tank.add(band);
-        const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.08, 28), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 })); foot.position.y = 0.04; tank.add(foot);
+        const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.22, 20), brass); neck.position.y = bodyH + 0.42; tank.add(neck);
+        const valve = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.14, 0.16), brass); valve.position.y = bodyH + 0.6; tank.add(valve);
+        const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.07, 20), rubberM); knob.position.y = bodyH + 0.72; tank.add(knob);
+        const band = new THREE.Mesh(new THREE.CylinderGeometry(0.47, 0.47, 0.22, 28), ctx.mats.plastic(0xeef2f7)); band.position.y = bodyH * 0.62; tank.add(band);
+        const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.08, 28), rubberM); foot.position.y = 0.04; tank.add(foot);
         tank.position.set(cx, FLOOR, cz); tank.traverse((o) => { if (o.isMesh) o.castShadow = true; }); root.add(tank);
         const a = new THREE.Vector3(cx, FLOOR + bodyH + 0.7, cz), b = new THREE.Vector3(X0 + (i - 1) * 1.0, FLOOR + H + 0.35, -HW * 0.55);
-        const hose = new THREE.Mesh(new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(a, new THREE.Vector3((a.x + b.x) / 2, a.y + 1.1, (a.z + b.z) / 2), b), 30, 0.045, 8), new THREE.MeshStandardMaterial({ color: g.col, roughness: 0.5 })); root.add(hose);
+        const hose = new THREE.Mesh(new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(a, new THREE.Vector3((a.x + b.x) / 2, a.y + 1.1, (a.z + b.z) / 2), b), 40, 0.045, 12), ctx.mats.rubber(g.col, { extra: { roughness: 0.6 } })); root.add(hose);
         const nz = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.2, 10), chrome); nz.position.copy(b).add(new THREE.Vector3(0, -0.05, 0)); root.add(nz);
       });
 
       /* 입자 */
       const meshes = G.map((g) => {
-        const m = new THREE.InstancedMesh(new THREE.SphereGeometry(g.r, 20, 16), new THREE.MeshStandardMaterial({ color: g.col, roughness: 0.25, metalness: 0.05, emissive: g.col, emissiveIntensity: 0.22 }), MAXG);
+        const m = new THREE.InstancedMesh(new THREE.SphereGeometry(g.r, 20, 16), new THREE.MeshStandardMaterial({ color: g.col, roughness: 0.2, metalness: 0, emissive: g.col, emissiveIntensity: 0.12 }), MAXG);
         m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; root.add(m); return m;
       });
       const P = G.map(() => Array.from({ length: MAXG }, () => ({
@@ -90,7 +90,7 @@
         const m = new THREE.Mesh(new THREE.BoxGeometry(BW, 1, BW), new THREE.MeshPhysicalMaterial({ color: g.col, roughness: 0.3, metalness: 0.1, clearcoat: 0.7, clearcoatRoughness: 0.2, emissive: g.col, emissiveIntensity: 0.12 }));
         m.castShadow = true; root.add(m); return m;
       });
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(BW + 0.5, 0.12, BW + 0.5), new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.5, metalness: 0.4 }));
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(BW + 0.5, 0.12, BW + 0.5), ctx.mats.metal(0x3d4656, { roughness: 0.55 }));
       rail.position.set(BX, FLOOR - 0.06, 0); root.add(rail);
       { const pl = new THREE.Mesh(new THREE.BoxGeometry(BW + 0.9, 0.1, BW + 0.9), new THREE.MeshStandardMaterial({ map: FX.wood([0.6, 0.6]), roughness: 0.5 })); pl.position.set(BX, FLOOR - 0.17, 0); root.add(pl); }
       const labs = G.map((g, i) => label('', cols[i], { color: 'rgba(30,41,59,.88)', offset: [0, 0, BW / 2 + 0.05] }));

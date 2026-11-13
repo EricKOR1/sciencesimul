@@ -20,6 +20,8 @@
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = (x, y, z) => new THREE.Vector3(x, y, z || 0);
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.7, metalness: 0.0 }, o || {}));
+      // 색은 화면에서 옅게 나오므로 풀·흙 색을 진하게 잡아요
+      const deep = (c, k) => { const a = new THREE.Color(c); return a.lerp(a.clone().convertSRGBToLinear(), k == null ? 0.85 : k); };
       const R = rng(77), D = new THREE.Object3D(), L2 = () => window.__sim || null;
       const LS = L2(); if (!LS) return {};
       const hgt = (x, z) => 0.22 * Math.sin(x * 0.55) * Math.cos(z * 0.5) + 0.12 * Math.sin(x * 1.1 + z * 0.8);
@@ -27,10 +29,11 @@
       /* 땅 */
       const gg = new THREE.PlaneGeometry(W, H, 50, 30); gg.rotateX(-Math.PI / 2);
       const p = gg.attributes.position, col = new Float32Array(p.count * 3);
-      for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i); p.setY(i, hgt(x, z)); const n = 0.5 + 0.5 * Math.sin(x * 2.3) * Math.sin(z * 2.1 + 1) + 0.15 * Math.sin(x * 7 + z * 5); const c = new THREE.Color().setHSL(0.27 + 0.03 * n, 0.5, 0.26 + 0.05 * n); col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; }
+      for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i); p.setY(i, hgt(x, z)); const n = 0.5 + 0.5 * Math.sin(x * 2.3) * Math.sin(z * 2.1 + 1) + 0.15 * Math.sin(x * 7 + z * 5); const c = new THREE.Color().setHSL(0.26 + 0.04 * n, 0.5, 0.3 + 0.07 * n).convertSRGBToLinear(); col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; }
       gg.setAttribute('color', new THREE.BufferAttribute(col, 3)); gg.computeVertexNormals();
-      const ground = new THREE.Mesh(gg, std(0xffffff, { vertexColors: true, roughness: 0.95 })); ground.receiveShadow = true; root.add(ground);
-      const soil = new THREE.Mesh(new THREE.BoxGeometry(W + 0.02, 0.9, H + 0.02), std(0x5a3b22, { roughness: 1 })); soil.position.y = -0.75; root.add(soil);
+      const ground = new THREE.Mesh(gg, ctx.mats.stone(0xffffff, { repeat: 8, bump: 0.025, extra: { vertexColors: true } })); ground.receiveShadow = true; root.add(ground);
+      const soil = new THREE.Mesh(new THREE.BoxGeometry(W + 0.02, 0.9, H + 0.02), ctx.mats.stone(deep(0x6b4526), { cracks: true, repeat: 3, bump: 0.05 })); soil.position.y = -0.75; root.add(soil);
+      { const sub = new THREE.Mesh(new THREE.BoxGeometry(W + 0.04, 0.35, H + 0.04), ctx.mats.stone(deep(0x4a3a2c), { repeat: 3, bump: 0.05 })); sub.position.y = -1.37; root.add(sub); }   // 아래 흙층
 
       /* 식물 : 2D 차시의 초지 자료(FIELD_PLANTS · QPLANTS)를 그대로 써요 */
       const SPEC = SP.map(() => 0);
@@ -42,7 +45,7 @@
       const mats = []; const partsBySp = SPEC.map(() => []);
       function part(sp, geo, color, local, o) {
         if (partsBySp[sp].length >= (sp === 3 ? 2 : 1)) return null;   // 식물이 많아서(2D와 같은 수) 부품 수를 줄여 가볍게
-        const m = std(color, Object.assign({ roughness: 0.6 }, o || {})); mats.push([sp, m]);
+        const m = std(deep(color, 0.7), Object.assign({ roughness: 0.6 }, o || {})); mats.push([sp, m]);
         const im = new THREE.InstancedMesh(geo, m, plants[sp].length); im.castShadow = false;
         plants[sp].forEach((pl, i) => { D.position.set(pl.x, hgt(pl.x, pl.z), pl.z); D.rotation.set(0, pl.r, 0); D.scale.setScalar(pl.s); D.updateMatrix(); const base = D.matrix.clone(); const lm = new THREE.Matrix4().compose(local.p, new THREE.Quaternion().setFromEuler(new THREE.Euler(local.r ? local.r[0] : 0, local.r ? local.r[1] : 0, local.r ? local.r[2] : 0)), local.s || V3(1, 1, 1)); im.setMatrixAt(i, base.multiply(lm)); });
         root.add(im); partsBySp[sp].push(im); return im;
@@ -62,7 +65,7 @@
       const labPool = Array.from({ length: NQ }, () => { const l = label('', null, { size: 12 }); l.show(false); return l; });
       for (let idx = 0; idx < NQ; idx++) {
         const x = LS.QPOS[idx][0] + 0.5 - W / 2, z = LS.QPOS[idx][1] + 0.5 - H / 2, c = QCOL[idx % QCOL.length];
-        const g = new THREE.Group(), fm = std(c, { roughness: 0.4, emissive: c, emissiveIntensity: 0.25 }), sm = std(0xffffff, { roughness: 0.5, transparent: true, opacity: 0.8 });
+        const g = new THREE.Group(), fm = ctx.mats.plastic(c, { extra: { emissive: c, emissiveIntensity: 0.25 } }), sm = std(0xffffff, { roughness: 0.5, transparent: true, opacity: 0.8 });
         const hs = [[-.5, -.5], [.5, -.5], [.5, .5], [-.5, .5]].map(([a, b]) => hgt(x + a, z + b)), top = Math.max(hgt(x, z), ...hs) + 0.14;
         [[0, -0.5, 1], [0, 0.5, 1], [-0.5, 0, 0], [0.5, 0, 0]].forEach(([a, b, h]) => { const e = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.05, 8), fm); e.position.set(a, top, b); if (h) e.rotation.z = Math.PI / 2; else e.rotation.x = Math.PI / 2; g.add(e); });
         [-0.25, 0, 0.25].forEach((o) => { [0, 1].forEach((d) => { const s = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 1, 5), sm); s.position.set(d ? o : 0, top, d ? 0 : o); if (d) s.rotation.x = Math.PI / 2; else s.rotation.z = Math.PI / 2; g.add(s); }); });

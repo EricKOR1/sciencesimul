@@ -29,7 +29,9 @@
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3;
       let cycles = 0, cc = 0;
-      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.38, metalness: 0.04 }, o || {}));
+      const deep = (c, k) => { const a = new THREE.Color(c); return a.lerp(a.clone().convertSRGBToLinear(), k == null ? 0.7 : k); };   // 화면에서 색이 옅어지지 않게 조금 진하게
+      const std = (c, o) => { o = o || {}; return o.transparent ? new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.38, metalness: 0.04 }, o)) : ctx.mats.plastic(deep(c), { roughness: 0.3, extra: o }); };   // 분자 모형: 매끈한 플라스틱 광택 (색은 그대로, 조금 진하게)
+      const bio = (c, o) => { const t = ctx.mats.tex('noise').clone(); t.needsUpdate = true; t.repeat.set(3, 2); return ctx.mats.organic(deep(c), { extra: Object.assign({ roughness: 0.46, bumpMap: t, bumpScale: 0.025 }, o || {}) }); };   // 단백질(효소) 표면: 촉촉하고 오돌토돌하게
       const pos = (a, r, z) => new V((r || R) * Math.cos(a * D2R), (r || R) * Math.sin(a * D2R), z || 0);
 
       /* ---------- 스트로마 바탕 · 회로 고리 · 효소 ---------- */
@@ -41,7 +43,7 @@
         const c = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 20), std(0xbae6fd, { emissive: 0x0c4a6e }));
         c.position.copy(pos(a, R, -0.1)); c.rotation.z = a * D2R + Math.PI; root.add(c);
       });
-      const enzMats = [std(0x3b82f6, { roughness: 0.3 }), std(0xf59e0b, { roughness: 0.3 }), std(0x10b981, { roughness: 0.3 })];
+      const enzMats = [bio(0x3b82f6), bio(0xf59e0b), bio(0x10b981)];
       [S0, S1, S2].forEach((a, i) => {
         const m = new THREE.Mesh(new THREE.SphereGeometry(0.42, 30, 22), enzMats[i]); m.scale.set(1.05, 0.95, 0.7); m.position.copy(pos(a, R, -0.3)); root.add(m);
       });

@@ -14,7 +14,7 @@
     camera: { dist: 9.5 * (PHN0 ? 1.05 : 1), theta: 0.6, phi: 1.15, fov: 45, target: [0, -0.1, 0], min: 5, max: 26 },
     autoRotate: 0.18,
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls } = ctx; const M = ctx.mats;
       /* ---------- 공통 도구 ---------- */
       const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
       const V3 = THREE.Vector3, Yax = new V3(0, 1, 0);
@@ -23,7 +23,7 @@
       const rnd = (() => { let s = 12345; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; })();
       const _m = new THREE.Matrix4(), _c = new THREE.Color();
       function spheres(N, r, color, seg) {
-        const m = new THREE.InstancedMesh(new THREE.SphereGeometry(r, seg || 16, Math.round((seg || 16) * 0.75)), mat(color, { roughness: 0.55, metalness: 0 }), N);
+        const m = new THREE.InstancedMesh(new THREE.SphereGeometry(r, seg || 16, Math.round((seg || 16) * 0.75)), mat(color, { roughness: 0.24, metalness: 0, envMapIntensity: 1.15 }), N);
         m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; m.castShadow = true;
         for (let i = 0; i < N; i++) m.setColorAt(i, _c.set(0xffffff));
         root.add(m); return m;
@@ -133,14 +133,14 @@
             }
           }
         };
-        const CM = { solid: new THREE.Color(0x3563d8), liquid: new THREE.Color(0x14a6cf), gas: new THREE.Color(0xf57f1f) };
+        const CM = { solid: new THREE.Color(0x3563d8).convertSRGBToLinear(), liquid: new THREE.Color(0x14a6cf).convertSRGBToLinear(), gas: new THREE.Color(0xf57f1f).convertSRGBToLinear() };   // 화면에서 색이 바래지 않게
         sys.draw = (colorOf) => { for (let i = 0; i < N; i++) { const p = P[i]; put(mesh, i, p.x, p.y, p.z, 1); if (colorOf !== false) mesh.setColorAt(i, CM[p.mode]); } flush(mesh); };
         sys.snap();
         return sys;
       }
       function boxFrame(W, H, color) {
         const g = new THREE.Group();
-        const m = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), glass(color || 0xbfe0ff, 0.1)), e = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(2, 2, 2)), new THREE.LineBasicMaterial({ color: 0x9cc3ff }));
+        const m = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), M.glass({ tint: color || 0xdcefff, opacity: 0.13 })), e = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(2, 2, 2)), new THREE.LineBasicMaterial({ color: 0x9cc3ff }));
         g.add(m, e); g.userData.set = (w, h) => g.scale.set(w, h, w); g.userData.set(W, H); return g;
       }
 
@@ -164,20 +164,25 @@
       sys.H = HH; sys.W = W;
       const frame = boxFrame(W, HH); root.add(frame);
       /* 금속 모서리 기둥과 테두리 (상자 크기에 맞춰 늘어나요) */
-      { const fm = mat(0xb8c4d6, { metalness: 0.8, roughness: 0.25 });
+      { const fm = M.metal('steel', { roughness: 0.22 });
         for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 2, 8), fm); p.position.set(sx, 0, sz); frame.add(p); }
         for (const sy of [-1, 1]) { for (const sx of [-1, 1]) { const a = new THREE.Mesh(new THREE.BoxGeometry(2, 0.03, 0.05), fm); a.position.set(0, sy, sx); const b = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.03, 2), fm); b.position.set(sx, sy, 0); frame.add(a, b); } } }
       /* 받침: 나뭇결 책상 + 가열/냉각 판 (상자 크기가 바뀌면 함께 움직여요) */
       const stand = new THREE.Group(); stand.position.y = -HH - 0.12; root.add(stand);
       const woodT = canvasTex(512, 512, (c, w, h) => { c.fillStyle = '#9a6234'; c.fillRect(0, 0, w, h); for (let i = 0; i < 80; i++) { c.strokeStyle = 'rgba(' + (60 + (i * 31) % 50) + ',30,10,' + (0.1 + (i % 4) * 0.05) + ')'; c.lineWidth = 1 + (i % 3); c.beginPath(); const y = i / 80 * h; c.moveTo(0, y); for (let x = 0; x <= w; x += 32) c.lineTo(x, y + Math.sin(x * 0.04 + i) * 3); c.stroke(); } });
-      const table = new THREE.Mesh(new THREE.CylinderGeometry(7.5, 7.5, 0.35, 64), mat(0xffffff, { map: woodT, roughness: 0.65 })); table.position.y = -0.62; table.receiveShadow = true; stand.add(table);
-      const plate = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.4, 0.2, 48), mat(0x64748b, { metalness: 0.4, roughness: 0.4 })); stand.add(plate);
-      const hpBody = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 3.7, 0.4, 48), mat(0x2b3442, { metalness: 0.6, roughness: 0.4 })); hpBody.position.y = -0.3; stand.add(hpBody);
+      const table = new THREE.Mesh(new THREE.CylinderGeometry(7.5, 7.5, 0.35, 64), M.wood(0x8f6a48, { repeat: 3 })); table.position.y = -0.62; table.receiveShadow = true; stand.add(table);
+      const plate = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.4, 0.2, 64), M.metal('steel', { brushed: true, repeat: 3 })); stand.add(plate);
+      const hpBody = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 3.7, 0.4, 64), M.metal(0x2a303a, { roughness: 0.42 })); hpBody.position.y = -0.3; stand.add(hpBody);
       const coilMat = mat(0x553322, { emissive: 0xff5a1f, emissiveIntensity: 0, roughness: 0.5 });
       const coil = new THREE.Mesh(new THREE.TorusGeometry(2.4, 0.07, 10, 64), coilMat); coil.rotation.x = Math.PI / 2; coil.position.y = -0.08; stand.add(coil);
       const coil2 = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.07, 10, 48), coilMat); coil2.rotation.x = Math.PI / 2; coil2.position.y = -0.08; stand.add(coil2);
       const coil3 = new THREE.Mesh(new THREE.TorusGeometry(3.6, 0.08, 10, 64), coilMat); coil3.rotation.x = Math.PI / 2; coil3.position.y = -0.12; stand.add(coil3);
-      const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.2, 16), mat(0xe5e7eb, { metalness: 0.6, roughness: 0.3 })); knob.rotation.x = Math.PI / 2; knob.position.set(0, -0.3, 3.7); stand.add(knob);
+      const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.2, 24), M.plastic(0x14171c)); knob.rotation.x = Math.PI / 2; knob.position.set(0, -0.3, 3.7); stand.add(knob);
+      { const mk = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.2, 0.02), M.plastic(0xf1f5f9)); mk.position.set(0, -0.22, 3.81); stand.add(mk);   // 조절 손잡이 눈금 · 표시등 · 고무 발
+        for (let i = 0; i < 4; i++) { const a = Math.PI / 4 + i * Math.PI / 2, ft = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.34, 0.14, 20), M.rubber()); ft.position.set(Math.cos(a) * 3.1, -0.5, Math.sin(a) * 3.1); stand.add(ft); }
+        const rimR = new THREE.Mesh(new THREE.TorusGeometry(3.3, 0.045, 10, 72), M.metal('chrome')); rimR.rotation.x = Math.PI / 2; rimR.position.y = 0.1; stand.add(rimR); }
+      const led = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 12), M.emissive(0xff5a1f, 1.6)); led.position.set(0.6, -0.3, 3.62); stand.add(led);
+      const heatGlow = ctx.halo(stand, 0xff7a30, 8.5, 0.3); heatGlow.position.y = 0.15;
       let heatDir = 0;       // +1 가열(열을 얻어요) · -1 냉각 · 0 꺼짐
       const wallT = canvasTex(8, 256, (c, w, h) => { const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#26364f'); g.addColorStop(1, '#0f1a2c'); c.fillStyle = g; c.fillRect(0, 0, w, h); });
       const wallM = new THREE.Mesh(new THREE.PlaneGeometry(80, 40), new THREE.MeshBasicMaterial({ map: wallT })); wallM.position.set(0, 6, -14); root.add(wallM);
@@ -276,7 +281,8 @@
           { const rank = { solid: 0, liquid: 1, gas: 2 }; let a, b;
             if (st.mode === 'exp') { const e = EX[st.exp]; a = e.a; b = e.b; } else { const c = CH[st.key]; a = c.a; b = c.b; }
             heatDir = rank[b] > rank[a] ? 1 : -1; const k = 0.55 + 0.45 * Math.sin(performance.now() * 0.004);
-            coilMat.emissive.setHex(heatDir > 0 ? 0xff5a1f : 0x4cc2ff); coilMat.color.setHex(heatDir > 0 ? 0x7a2a12 : 0x2a5f80); coilMat.emissiveIntensity = 0.6 + 0.9 * k; }
+            coilMat.emissive.setHex(heatDir > 0 ? 0xff5a1f : 0x4cc2ff); coilMat.color.setHex(heatDir > 0 ? 0x7a2a12 : 0x2a5f80); coilMat.emissiveIntensity = 0.6 + 0.9 * k;
+            led.material.color.setHex(heatDir > 0 ? 0xff5a1f : 0x4cc2ff); led.material.emissive.setHex(heatDir > 0 ? 0xff5a1f : 0x4cc2ff); heatGlow.material.color.setHex(heatDir > 0 ? 0xff7a30 : 0x58c4ff); heatGlow.material.opacity = 0.2 + 0.14 * k; }
           sys.step(dt); sys.draw();
           drawTbl();
           const ph = document.querySelector('.v3-player .v3-ph');

@@ -4,7 +4,7 @@
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
-  const COL = { H: 0xf1f5f9, C: 0x4b5563, N: 0x3867f4, O: 0xe23b3b, Cl: 0x22b14c };
+  const COL = { H: 0xeef2f7, C: 0x363d49, N: 0x2452e0, O: 0xd42a30, Cl: 0x12963c };
   const RB = { H: 0.3, C: 0.42, N: 0.4, O: 0.4, Cl: 0.5 };
   const RV = { H: 0.78, C: 1.05, N: 0.98, O: 0.95, Cl: 1.1 };
   const SHARE = 0xf59e0b, LONE = 0x8b5cf6;
@@ -31,7 +31,7 @@
     levels: [0],
     autoRotate: 0.3,
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, mats } = ctx;
       let dustP = null, ghosts = [];
       let key = 'H2O', style = 'pair', showLP = true, showCnt = false;
       const g = new THREE.Group(); g.scale.setScalar(1.9); root.add(g);        // Å → 장면 단위(보기 좋게 확대)
@@ -39,22 +39,22 @@
       const labs = [];
       const UP = new THREE.Vector3(0, 1, 0);
       const V = (a) => new THREE.Vector3(a[0], a[1], a[2]);
-      const stickMat = new THREE.MeshStandardMaterial({ color: 0xc3ccdc, roughness: 0.3, metalness: 0.5 });
+      const stickMat = mats.metal('steel', { roughness: 0.22 });
       /* 받침대: 빛나는 원판 + 눈금 고리, 떠다니는 먼지 */
       { const cv = document.createElement('canvas'); cv.width = cv.height = 512; const x = cv.getContext('2d'); const gr = x.createRadialGradient(256, 256, 10, 256, 256, 256); gr.addColorStop(0, '#2a4066'); gr.addColorStop(0.7, '#141f35'); gr.addColorStop(1, '#0a1020'); x.fillStyle = gr; x.fillRect(0, 0, 512, 512);
         x.strokeStyle = 'rgba(125,175,255,.35)'; x.lineWidth = 2; for (let r = 50; r < 256; r += 50) { x.beginPath(); x.arc(256, 256, r, 0, 7); x.stroke(); } x.lineWidth = 1; for (let a = 0; a < 16; a++) { x.beginPath(); x.moveTo(256, 256); x.lineTo(256 + Math.cos(a / 16 * 6.283) * 256, 256 + Math.sin(a / 16 * 6.283) * 256); x.stroke(); }
-        const fl = new THREE.Mesh(new THREE.CircleGeometry(5.5, 64), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(cv), roughness: 0.95, metalness: 0 })); fl.rotation.x = -Math.PI / 2; fl.position.y = -2.6; fl.receiveShadow = true; root.add(fl);
+        const fl = new THREE.Mesh(new THREE.CircleGeometry(5.5, 96), new THREE.MeshPhysicalMaterial({ map: new THREE.CanvasTexture(cv), roughness: 0.38, metalness: 0, clearcoat: 0.6, clearcoatRoughness: 0.25, envMapIntensity: 0.8 }));   // 은은하게 비치는 받침 원판 fl.rotation.x = -Math.PI / 2; fl.position.y = -2.6; fl.receiveShadow = true; root.add(fl);
         const rim = new THREE.Mesh(new THREE.TorusGeometry(5.5, 0.04, 8, 80), new THREE.MeshBasicMaterial({ color: 0x60a5fa })); rim.rotation.x = Math.PI / 2; rim.position.y = -2.6; root.add(rim); fl.userData.v3bg = rim.userData.v3bg = true;   // 바닥은 배경: 자동 맞춤이 원자에 맞춰요
         const N = 80, pos = new Float32Array(N * 3); for (let i = 0; i < N; i++) { pos[i * 3] = (Math.random() - 0.5) * 16; pos[i * 3 + 1] = -2 + Math.random() * 8; pos[i * 3 + 2] = (Math.random() - 0.5) * 16; }
         const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); dustP = new THREE.Points(pg, new THREE.PointsMaterial({ color: 0xa5c8ff, size: 0.06, transparent: true, opacity: 0.5, depthWrite: false })); root.add(dustP); dustP.userData.v3bg = true; }
       function sphere(r, col, opa, tag) {
-        return new THREE.Mesh(new THREE.SphereGeometry(r, 36, 24), new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.28, clearcoat: 0.7, clearcoatRoughness: 0.2, transparent: opa < 1, opacity: opa, depthWrite: opa >= 1 }));
+        const m = new THREE.Mesh(new THREE.SphereGeometry(r, 48, 32), mats.plastic(col, { roughness: 0.2, extra: { clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 1.25, transparent: opa < 1, opacity: opa, depthWrite: opa >= 1 } })); m.castShadow = opa >= 1; return m;
       }
       function orient(m, from, dir) { m.position.copy(from); m.quaternion.setFromUnitVectors(UP, dir.clone().normalize()); }
       // 전자쌍 하나: 반투명 물방울 + 전자 2개
       function pairLobe(center, dir, col, long, thick) {
         const grp = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), new THREE.MeshStandardMaterial({ color: col, transparent: true, opacity: 0.5, roughness: 0.3, depthWrite: false, emissive: col, emissiveIntensity: 0.35 }));
+        const body = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), new THREE.MeshPhysicalMaterial({ color: col, transparent: true, opacity: 0.5, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.1, envMapIntensity: 1.4, depthWrite: false, emissive: col, emissiveIntensity: 0.4 }));
         body.scale.set(thick, long, thick);
         grp.add(body);
         const side = new THREE.Vector3(1, 0, 0); if (Math.abs(dir.x) > 0.9) side.set(0, 0, 1);

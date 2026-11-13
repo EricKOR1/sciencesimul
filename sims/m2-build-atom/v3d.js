@@ -17,8 +17,9 @@
       const { THREE, root, label, info, controls } = ctx;
       const sm = () => window.__sim;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.05 }, o || {}));
-      const geoP = new THREE.SphereGeometry(1, 32, 20);
-      const mP = new THREE.MeshPhysicalMaterial({ color: 0xe2464b, roughness: 0.3, clearcoat: 0.6, clearcoatRoughness: 0.25 }), mN = new THREE.MeshPhysicalMaterial({ color: 0xaab3c2, roughness: 0.45, clearcoat: 0.4 }), mE = mat(0x4a78ff, { roughness: 0.25, emissive: 0x1b3aa8, emissiveIntensity: 0.55 });
+      const geoP = new THREE.SphereGeometry(1, 40, 28);
+      const MT = ctx.mats, lin = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 2D와 같은 진한 색(양성자 빨강 · 전자 파랑)으로 보이게
+      const mP = MT.plastic(lin(0xe2464b), { roughness: 0.26, extra: { clearcoat: 0.8, clearcoatRoughness: 0.15 } }), mN = MT.plastic(lin(0xb4bcc9), { roughness: 0.34 }), mE = mat(lin(0x4a78ff), { roughness: 0.22, metalness: 0, emissive: lin(0x2f5cf0), emissiveIntensity: 0.9 });
       const nuc = new THREE.Group(), shells = new THREE.Group(); root.add(nuc, shells);
       const halo = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 20), new THREE.MeshBasicMaterial({ color: 0xff8a8a, transparent: true, opacity: 0.12, depthWrite: false }));
       nuc.add(halo);
@@ -33,7 +34,7 @@
         ring.rotation.x = Math.PI / 2; g.add(ring); rings.push(ring);
       }
       const glowM = new THREE.MeshBasicMaterial({ color: 0x7aa2ff, transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending });
-      for (let i = 0; i < 20; i++) { const m = new THREE.Mesh(geoP, mE); m.scale.setScalar(0.2); m.castShadow = true; const gl = new THREE.Mesh(geoP, glowM); gl.scale.setScalar(2.3); m.add(gl); shells.add(m); elM.push(m); }
+      for (let i = 0; i < 20; i++) { const m = new THREE.Mesh(geoP, mE); m.scale.setScalar(0.2); m.castShadow = true; ctx.halo(m, 0x6f9dff, 6.5, 0.6); shells.add(m); elM.push(m); }
       // 전자 꼬리 (지나간 자리가 흐릿하게 남아요)
       const NTR = 6, trail = new THREE.InstancedMesh(geoP, new THREE.MeshBasicMaterial({ color: 0x8fb0ff, transparent: true, opacity: 0.45, depthWrite: false, blending: THREE.AdditiveBlending }), 20 * NTR);
       trail.frustumCulled = false; shells.add(trail);

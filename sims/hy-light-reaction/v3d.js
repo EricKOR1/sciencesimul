@@ -29,7 +29,9 @@
       const V = THREE.Vector3;
       if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 눕혀 둔 모형을 세워서 보여 줘요
       let light = 0.7, minor = false, treat = 'none', cyc = false, pulseAuto = true;
-      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.42, metalness: 0.04 }, o || {}));
+      const deep = (c, k) => { const a = new THREE.Color(c); return a.lerp(a.clone().convertSRGBToLinear(), k == null ? 0.7 : k); };   // 화면에서 색이 옅어지지 않게 조금 진하게
+      const std = (c, o) => { o = o || {}; return o.transparent ? new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.42, metalness: 0.04 }, o)) : ctx.mats.plastic(deep(c), { roughness: 0.3, extra: o }); };   // 분자 모형: 매끈한 플라스틱 광택 (색은 그대로, 조금 진하게)
+      const bio = (c, o) => { const t = ctx.mats.tex('noise').clone(); t.needsUpdate = true; t.repeat.set(3, 2); return ctx.mats.organic(deep(c), { extra: Object.assign({ roughness: 0.46, bumpMap: t, bumpScale: 0.025 }, o || {}) }); };   // 단백질 표면: 촉촉하고 오돌토돌하게
       const A = (p) => { const o = new THREE.Object3D(); o.position.set(p[0], p[1], p[2]); root.add(o); return o; };
 
       /* ---------- 틸라코이드 막 ---------- */
@@ -52,7 +54,7 @@
         heads.count = h; tails.count = t; root.add(heads, tails);
       }
       const ell = (x, y, sx, sy, sz, color, extra) => {
-        const m = new THREE.Mesh(new THREE.SphereGeometry(1, 36, 24), std(color, Object.assign({ roughness: 0.35 }, extra || {}))); m.scale.set(sx, sy, sz); m.position.set(x, y, 0); root.add(m); return m;
+        const m = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), bio(color, extra)); m.scale.set(sx, sy, sz); m.position.set(x, y, 0); root.add(m); return m;
       };
       // 광계 Ⅱ (물 분해 효소가 루멘 쪽에 붙어 있어요)
       const psII = ell(X.II, 0, 0.8, 0.85, 0.75, 0x10b981, { emissive: 0x000000 });
@@ -93,7 +95,7 @@
       function rndLumen() { return new V((Math.random() * 2 - 1) * 5, 0.8 + Math.random() * 1.3, (Math.random() * 2 - 1) * 2); }
       function addLumenH(p) { const m = new THREE.Mesh(hGeo, hMat); m.position.copy(p || rndLumen()); root.add(m); const o = { m, v: new V(Math.random() - .5, Math.random() - .5, Math.random() - .5).setLength(0.9), s: 0 }; lumenH.push(o); return o; }
       function bit(m, from, vel, life, grow) { m.position.copy(from); root.add(m); bits.push({ m, v: vel, t: 0, life, grow, base: m.scale.x }); }
-      function photon(from, to, arriveCb) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.14, 14, 10), phMat); m.position.copy(from); root.add(m); photons.push({ m, from: from.clone(), to: to.clone(), t: 0, dur: 0.8, cb: arriveCb }); }
+      function photon(from, to, arriveCb) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.14, 14, 10), phMat); ctx.halo(m, 0xfff0a0, 1.1, 0.7); m.position.copy(from); root.add(m); photons.push({ m, from: from.clone(), to: to.clone(), t: 0, dur: 0.8, cb: arriveCb }); }
       function flash(mesh) { mesh.material.emissive.setHex(0x9a8a00); setTimeout(() => mesh.material.emissive.setHex(0x000000), 220); }
       function launch() {
         if (treat === 'dry') return;          // 물이 모자라 광계 Ⅱ에 전자를 줄 수 없어요
@@ -148,7 +150,7 @@
       const mb = controls.button('전달체 이름표 보기', () => { minor = !minor; mb.classList.toggle('on', minor); mb.textContent = minor ? '전달체 이름표 가리기' : '전달체 이름표 보기'; applyLabels(); });
       /* ▶ 전자 한 개의 여행: 물 분해 → PQ → 시토크롬 b₆f(H⁺ 펌프) → PC → 광계 Ⅰ → Fd → NADPH */
       tracer = new THREE.Group();
-      { const c = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 14), std(0xfff3a0, { emissive: 0xfde047, emissiveIntensity: 1.1 })); const sh = new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 16), std(0xfb923c, { transparent: true, opacity: 0.4, depthWrite: false })); tracer.add(c, sh); tracer.userData.sh = sh; tracer.visible = false; root.add(tracer); }
+      { const c = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 14), std(0xfff3a0, { emissive: 0xfde047, emissiveIntensity: 1.1 })); const sh = new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 16), std(0xfb923c, { transparent: true, opacity: 0.4, depthWrite: false })); tracer.add(c, sh); ctx.halo(c, 0xffe680, 1.4, 0.6); tracer.userData.sh = sh; tracer.visible = false; root.add(tracer); }
       const gPlay = grp(() => {
         player = controls.player({
           duration: 9, loop: true, autoplay: false, label: '전자의 여행',

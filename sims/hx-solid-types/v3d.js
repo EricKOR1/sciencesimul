@@ -48,12 +48,13 @@
       const UP = new THREE.Vector3(0, 1, 0);
       const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
       const geoCache = {};
-      const sg = (r) => geoCache[r] || (geoCache[r] = new THREE.SphereGeometry(r, 18, 12));
+      const sg = (r) => geoCache[r] || (geoCache[r] = new THREE.SphereGeometry(r, 32, 22));
+      const deep = (c, k) => { const a = new THREE.Color(c); return a.lerp(a.clone().convertSRGBToLinear(), k == null ? 0.7 : k); };   // 화면에서 색이 옅어지지 않게 조금 진하게
       const matCache = {};
-      const mat = (c, o) => { const k = c + '|' + (o || 1); return matCache[k] || (matCache[k] = new THREE.MeshStandardMaterial({ color: c, roughness: 0.4, transparent: (o || 1) < 1, opacity: o || 1 })); };
+      const mat = (c, o) => { const k = c + '|' + (o || 1); return matCache[k] || (matCache[k] = (o || 1) < 1 ? new THREE.MeshStandardMaterial({ color: deep(c), roughness: 0.3, transparent: true, opacity: o }) : ctx.mats.plastic(deep(c), { roughness: 0.26 })); };   // 공 · 막대 모형: 매끈한 플라스틱 광택
       function ball(r, c, o) { return new THREE.Mesh(sg(r), mat(c, o)); }
       function stickTo(m, a, b) { const d = b.clone().sub(a), len = Math.max(1e-4, d.length()); m.position.copy(a).add(b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(UP, d.normalize()); m.scale.set(1, len, 1); }
-      const unitCyl = new THREE.CylinderGeometry(1, 1, 1, 10);
+      const unitCyl = new THREE.CylinderGeometry(1, 1, 1, 16);
       function stick(r, c) { const m = new THREE.Mesh(unitCyl, mat(c)); m.scale.set(r, 1, r); m.userData.r = r; return m; }
       function stickSet(m, a, b) { const d = b.clone().sub(a), len = Math.max(1e-4, d.length()); m.position.copy(a).add(b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(UP, d.normalize()); m.scale.set(m.userData.r, len, m.userData.r); }
       function center(items) { const c = new THREE.Vector3(); items.forEach((it) => c.add(it.base)); c.multiplyScalar(1 / items.length); items.forEach((it) => it.base.sub(c)); }
@@ -275,7 +276,7 @@
       const hrng = (() => { let a = 12345; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; })();
       const rndIn = (R) => { for (;;) { const v = V3(hrng() * 2 - 1, hrng() * 2 - 1, hrng() * 2 - 1); if (v.length() <= 1) return v.multiplyScalar(R); } };
       const darts = (n, minD, R) => { const pts = []; let guard = 0; while (pts.length < n && guard++ < 5000) { const v = rndIn(R); if (pts.every((q) => q.distanceTo(v) >= minD)) pts.push(v); } while (pts.length < n) pts.push(rndIn(R)); return pts; };
-      const hMat = {}; const hm = (k, c) => hMat[k] || (hMat[k] = new THREE.MeshStandardMaterial({ color: c, roughness: 0.4, emissive: 0x000000 }));
+      const hMat = {}; const hm = (k, c) => hMat[k] || (hMat[k] = ctx.mats.plastic(deep(c), { roughness: 0.26, extra: { emissive: 0x000000 } }));
       const KINDS = {};
       function kindOf(kind, hs) {
         if (KINDS[kind + hs.c]) return KINDS[kind + hs.c];
@@ -289,16 +290,16 @@
         KINDS[kind + hs.c] = K; return K;
       }
       const lensG = new THREE.Group(); gH.add(lensG);
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(HPR + 0.35, 0.12, 14, 64), new THREE.MeshStandardMaterial({ color: 0x7d8da6, roughness: 0.4, metalness: 0.4 })); ring.position.z = 0; gH.add(ring);
-      const lens = new THREE.Mesh(new THREE.SphereGeometry(HPR + 0.25, 40, 28), new THREE.MeshStandardMaterial({ color: 0xcfe3ff, transparent: true, opacity: 0.12, roughness: 0.1, depthWrite: false })); gH.add(lens);
-      const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 2.2, 14), new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.5 })); handle.position.set(HPR * 0.9 + 0.4, -HPR * 0.9 - 0.7, 0); handle.rotation.z = 0.78; gH.add(handle);
-      const flame = new THREE.Group(); [[0.55, 1.5, 0xff8a1f], [0.35, 1.0, 0xffd34d]].forEach(([r, h, c]) => { const f = new THREE.Mesh(new THREE.ConeGeometry(r, h, 16), new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.9, transparent: true, opacity: 0.9 })); f.position.y = h / 2; flame.add(f); }); flame.position.set(0, -HPR - 1.5, 0); gH.add(flame);
-      const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.7, 0.5, 20), new THREE.MeshStandardMaterial({ color: 0x475569 })); stand.position.set(0, -HPR - 2.2, 0); gH.add(stand);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(HPR + 0.35, 0.13, 18, 96), ctx.mats.metal('brass', { roughness: 0.24 })); ring.position.z = 0; gH.add(ring);
+      const lens = new THREE.Mesh(new THREE.SphereGeometry(HPR + 0.25, 40, 28), ctx.mats.glass({ tint: 0xd9eaff, opacity: 0.13, extra: { side: THREE.FrontSide } })); gH.add(lens);
+      const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 2.2, 24), ctx.mats.wood(0x8a5a36, { repeat: 1 })); handle.position.set(HPR * 0.9 + 0.4, -HPR * 0.9 - 0.7, 0); handle.rotation.z = 0.78; gH.add(handle);
+      const flame = new THREE.Group(); [[0.55, 1.5, 0xff8a1f], [0.35, 1.0, 0xffd34d]].forEach(([r, h, c]) => { const f = new THREE.Mesh(new THREE.ConeGeometry(r, h, 16), new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 1.1, transparent: true, opacity: 0.88, depthWrite: false })); f.position.y = h / 2; flame.add(f); }); ctx.halo(flame, 0xffa040, 4.2, 0.6).position.y = 0.7; flame.position.set(0, -HPR - 1.5, 0); gH.add(flame);
+      const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.7, 0.5, 32), ctx.mats.metal('iron', { roughness: 0.4 })); stand.position.set(0, -HPR - 2.2, 0); gH.add(stand);
       /* 온도계 */
       const TH_X = -HPR - 1.9, TH_H = 4.4;
-      const thTube = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, TH_H, 16), new THREE.MeshStandardMaterial({ color: 0xdbe7ff, transparent: true, opacity: 0.3, roughness: 0.15, depthWrite: false })); thTube.position.set(TH_X, 0, 0); gH.add(thTube);
-      const thBulb = new THREE.Mesh(new THREE.SphereGeometry(0.34, 20, 14), new THREE.MeshStandardMaterial({ color: 0xe2464b, roughness: 0.3 })); thBulb.position.set(TH_X, -TH_H / 2 - 0.1, 0); gH.add(thBulb);
-      const thFill = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1, 12), new THREE.MeshStandardMaterial({ color: 0xe2464b, emissive: 0x7a1010, emissiveIntensity: 0.5 })); gH.add(thFill);
+      const thTube = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, TH_H, 24), ctx.mats.glass({ opacity: 0.28 })); thTube.position.set(TH_X, 0, 0); gH.add(thTube);
+      const thBulb = new THREE.Mesh(new THREE.SphereGeometry(0.34, 28, 20), ctx.mats.plastic(0xc81e24, { roughness: 0.12 })); thBulb.position.set(TH_X, -TH_H / 2 - 0.1, 0); gH.add(thBulb);
+      const thFill = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1, 12), new THREE.MeshStandardMaterial({ color: 0xc81e24, emissive: 0x7a1010, emissiveIntensity: 0.5, roughness: 0.2 })); gH.add(thFill);
       const lTh = label('', [TH_X, TH_H / 2 + 0.55, 0], { color: 'rgba(30,41,59,.9)' }); lTh.show(false);
       const lOrd = label('', [0, HPR + 0.9, 0], { color: 'rgba(30,41,59,.9)' }); lOrd.show(false);
       let hPool = null, hKey = '', hObjs = [], hBonds = [], hElm = [];

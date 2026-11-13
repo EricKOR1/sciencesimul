@@ -16,7 +16,7 @@
     autoRotate: 0,
     levels: [0, 2],
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, mats } = ctx;
       const V3 = THREE.Vector3;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ envMapIntensity: 0.6, color: c, roughness: 0.5, metalness: 0.15 }, o || {}));
       const S0 = (window.__sim && window.__sim.S) || {};
@@ -25,24 +25,28 @@
       /* ---------- 코일 (x축 방향 나선) ---------- */
       const CR = 1.25, CL = 2.6;
       let NT = 9;   // 코일 감은 수 (2D: 100회 = 9바퀴로 그려요, 50회 · 200회도 같은 비율)
-      const coilMat = mat(COPPER, { metalness: 0.55, roughness: 0.32 });
+      const coilMat = mats.metal('copper', { roughness: 0.26 });   // 에나멜 구리선
       const coil = new THREE.Group(); root.add(coil);
       function buildCoil(n) {
         NT = n; while (coil.children.length) { const c = coil.children[0]; coil.remove(c); c.geometry.dispose(); }
         const pts = [];
         for (let i = 0; i <= NT * 36; i++) { const s = i / 36; pts.push(new V3(-CL / 2 + CL * s / NT, CR * Math.cos(s * Math.PI * 2), CR * Math.sin(s * Math.PI * 2))); }
-        const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), Math.max(120, NT * 36), 0.075, 8, false), coilMat);
+        const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), Math.max(120, NT * 36), 0.075, 12, false), coilMat);
         tube.castShadow = true; coil.add(tube);
       }
       buildCoil(NT);
-      const wireM = mat(COPPER, { metalness: 0.5, roughness: 0.35 });
-      const wire = (pts, par) => { const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0), 40, 0.05, 8, false), wireM); (par || root).add(m); return m; };
+      const wireM = mats.metal('copper', { roughness: 0.3 });
+      const wire = (pts, par) => { const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.08), 60, 0.05, 10, false), wireM); m.castShadow = true; (par || root).add(m); return m; };
 
       /* ---------- 막대자석 ---------- */
+      /* 막대자석: 모서리를 둥글린 칠한 쇠막대 (N 빨강 · S 파랑) + 가운데 이음선 */
+      const rbox = (w, h, d, r) => { const x = w / 2 - r, y = h / 2 - r, sh = new THREE.Shape(); sh.moveTo(-x, -y - r); sh.lineTo(x, -y - r); sh.quadraticCurveTo(x + r, -y - r, x + r, -y); sh.lineTo(x + r, y); sh.quadraticCurveTo(x + r, y + r, x, y + r); sh.lineTo(-x, y + r); sh.quadraticCurveTo(-x - r, y + r, -x - r, y); sh.lineTo(-x - r, -y); sh.quadraticCurveTo(-x - r, -y - r, -x, -y - r);
+        const g = new THREE.ExtrudeGeometry(sh, { depth: d - 2 * r, bevelEnabled: true, bevelThickness: r, bevelSize: r * 0.6, bevelSegments: 3, curveSegments: 6 }); g.translate(0, 0, -(d - 2 * r) / 2); return g; };
       function bar(len, th) {
-        const g = new THREE.Group();
-        const n = new THREE.Mesh(new THREE.BoxGeometry(len / 2, th, th), mat(NC, { roughness: 0.4 })); n.position.x = len / 4;
-        const s = new THREE.Mesh(new THREE.BoxGeometry(len / 2, th, th), mat(SC, { roughness: 0.4 })); s.position.x = -len / 4;
+        const g = new THREE.Group(), r = th * 0.09;
+        const n = new THREE.Mesh(rbox(len / 2, th, th, r), mats.plastic(0xd42a30, { roughness: 0.28, extra: { clearcoat: 0.9, clearcoatRoughness: 0.1 } })); n.position.x = len / 4;
+        const s = new THREE.Mesh(rbox(len / 2, th, th, r), mats.plastic(0x2452e0, { roughness: 0.28, extra: { clearcoat: 0.9, clearcoatRoughness: 0.1 } })); s.position.x = -len / 4;
+        const seam = new THREE.Mesh(new THREE.BoxGeometry(0.03, th * 1.005, th * 1.005), mats.metal('steel')); g.add(seam);
         n.castShadow = s.castShadow = true; g.add(n, s); return g;
       }
 
@@ -54,15 +58,19 @@
       const coilLab = label('코일', [0, 1.6, 0], { size: 13 });
       // 검류계 (원형 계기판 + 바늘)
       const gal = new THREE.Group(); gal.position.set(0, -2.5, 0.2); gMag.add(gal);
-      const dial = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.22, 48), mat(0xf4f6fb, { roughness: 0.4, metalness: 0.0 })); dial.rotation.x = Math.PI / 2; gal.add(dial);
-      const rim = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.07, 12, 48), mat(0x56627a, { metalness: 0.6, roughness: 0.3 })); rim.position.z = 0.1; gal.add(rim);
+      const dial = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.22, 64), mats.ceramic(0xf1f3f7, { extra: { roughness: 0.45, clearcoat: 0.2 } })); dial.rotation.x = Math.PI / 2; gal.add(dial);
+      { const body = new THREE.Mesh(new THREE.CylinderGeometry(1.02, 1.02, 0.3, 64), mats.plastic(0x1c212c)); body.rotation.x = Math.PI / 2; body.position.z = -0.1; body.castShadow = true; gal.add(body);   // 검정 몸통
+        const cover = new THREE.Mesh(new THREE.SphereGeometry(1.6, 48, 12, 0, Math.PI * 2, 0, 0.62), mats.glass({ opacity: 0.16 })); cover.rotation.x = Math.PI / 2; cover.position.z = -1.12; cover.raycast = () => {}; gal.add(cover);   // 볼록한 유리 덮개
+        const foot = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.16, 0.7), mats.plastic(0x1c212c)); foot.position.set(0, -0.98, -0.1); foot.castShadow = true; gal.add(foot);
+        [-0.95, 0.95].forEach((x) => { const t = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.2, 16), mats.metal('brass')); t.rotation.z = Math.PI / 2; t.position.set(x * 1.06, 0, 0); gal.add(t); }); }   // 단자
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(0.96, 0.075, 16, 72), mats.metal('chrome', { roughness: 0.14 })); rim.position.z = 0.1; gal.add(rim);
       for (let i = -5; i <= 5; i++) {
         const a = Math.PI / 2 - i * 0.26, t = new THREE.Mesh(new THREE.BoxGeometry(i === 0 ? 0.05 : 0.025, i === 0 ? 0.22 : 0.13, 0.02), mat(0x394257));
         t.position.set(Math.cos(a) * 0.72, Math.sin(a) * 0.72 - 0.15, 0.125); t.rotation.z = a - Math.PI / 2; gal.add(t);
       }
       const needleG = new THREE.Group(); needleG.position.set(0, -0.15, 0.15); gal.add(needleG);
-      const needle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.85, 0.03), mat(0xd33a3a, { roughness: 0.4 })); needle.position.y = 0.4; needleG.add(needle);
-      const hub = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 10), mat(0x394257)); hub.position.z = 0.02; needleG.add(hub);
+      const needle = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.85, 0.02), mats.plastic(0xd02a2a)); needle.position.y = 0.4; needleG.add(needle);
+      const hub = new THREE.Mesh(new THREE.SphereGeometry(0.07, 20, 14), mats.metal('brass')); hub.position.z = 0.02; needleG.add(hub);
       const galL = label('검류계', gal, { size: 12, offset: [0, -1.35, 0] });
       // 코일 - 검류계 도선
       const wm = [
@@ -77,13 +85,13 @@
       /* ================== ② 간이 발전기 ================== */
       const gGen = new THREE.Group(); root.add(gGen);
       const spin = new THREE.Group(); gGen.add(spin);
-      const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.6, 12), mat(0x9aa3b2, { metalness: 0.7, roughness: 0.3 })); spin.add(axle);
+      const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.6, 16), mats.metal('steel')); spin.add(axle);
       const mA = bar(2.0, 0.55); mA.position.y = 0.3; spin.add(mA);
       const mB = bar(2.0, 0.55); mB.position.y = -0.3; spin.add(mB);
       // 손잡이
       const crank = new THREE.Group(); crank.position.y = 1.35; spin.add(crank);
-      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.08, 0.1), mat(0x9aa3b2, { metalness: 0.6 })); arm.position.x = 0.45; crank.add(arm);
-      const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.4, 14), mat(0xf59e0b, { roughness: 0.4 })); knob.position.set(0.9, 0.2, 0); crank.add(knob);
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.08, 0.1), mats.metal('steel', { brushed: true })); arm.position.x = 0.45; crank.add(arm);
+      const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.4, 20), mats.plastic(0xf08c00)); knob.position.set(0.9, 0.2, 0); crank.add(knob);
       const genN = label('N', mA, { size: 12, color: '#e2464b', offset: [1.0, 0.5, 0] });
       const genLab = label('돌리는 자석', [0, 1.85, 0], { size: 12 });
       // 두 LED (서로 반대 방향)
@@ -95,7 +103,9 @@
       ];
       function branch(z, dir) {
         wire([wA.clone(), new V3(wA.x, BY, z), new V3(-0.5, BY, z)], gGen); wire([new V3(0.5, BY, z), new V3(wB.x, BY, z), wB.clone()], gGen);
-        const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.34, 24, 18), mat(dir > 0 ? 0xff6b6b : 0x6bdc8c, { transparent: true, opacity: 0.88, emissive: dir > 0 ? 0xff3b3b : 0x35d46f, emissiveIntensity: 0, roughness: 0.25, metalness: 0 }));
+        const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.34, 32, 24), mats.plastic(dir > 0 ? 0xf04848 : 0x3fcf6a, { roughness: 0.12, extra: { transparent: true, opacity: 0.88, emissive: dir > 0 ? 0xff3b3b : 0x35d46f, emissiveIntensity: 0, clearcoat: 1, clearcoatRoughness: 0.05 } }));
+        const glowS = ctx.halo(bulb, dir > 0 ? 0xff5a4a : 0x4fe07f, 2.4, 0); bulb.userData.glow = glowS;   // 켜지면 빛이 번져요
+        { const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.08, 24), mats.metal('steel')); collar.position.set(0, BY - 0.3, z); gGen.add(collar); }
         bulb.position.set(0, BY, z);
         const tri = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.3, 3), mat(0x2a2f3a)); tri.rotation.z = -Math.PI / 2 * dir; tri.position.set(0, BY, z);
         const bar2 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.32, 0.18), mat(0x2a2f3a)); bar2.position.set(0.17 * dir, BY, z);
@@ -106,7 +116,7 @@
       const led2L = label('LED 2', [0, BY, -0.95], { size: 11.5, offset: [0, -0.6, -0.2] });
 
       /* ---------- 바닥 ---------- */
-      const base = new THREE.Mesh(new THREE.CylinderGeometry(5.4, 5.6, 0.3, 48), new THREE.MeshLambertMaterial({ color: 0x2d3547 })); base.position.y = -3.4; base.receiveShadow = true; root.add(base); base.userData.v3bg = true;   // 바닥은 배경: 자동 맞춤이 코일·자석에 맞춰요
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(5.4, 5.5, 0.3, 96), mats.wood(0x8a6644, { repeat: 3 }));   // 나무 실험대 base.position.y = -3.4; base.receiveShadow = true; root.add(base); base.userData.v3bg = true;   // 바닥은 배경: 자동 맞춤이 코일·자석에 맞춰요
 
       /* ---------- 조작 (2D를 대신 눌러 줘요) ---------- */
       const L2 = () => (ctx.lesson && ctx.lesson()) || null;
@@ -186,7 +196,7 @@
             if (g) {
               const turns = Math.max(3, Math.round(9 * g.tn / 100)); if (turns !== NT) buildCoil(turns);
               spin.rotation.y = g.phi; mB.visible = g.mg === 2;
-              ledA.bulb.material.emissiveIntensity = g.ledA * 2.4; ledB.bulb.material.emissiveIntensity = g.ledB * 2.4;
+              ledA.bulb.material.emissiveIntensity = g.ledA * 2.4; ledB.bulb.material.emissiveIntensity = g.ledB * 2.4; ledA.bulb.userData.glow.material.opacity = Math.min(0.85, g.ledA * 0.9); ledB.bulb.userData.glow.material.opacity = Math.min(0.85, g.ledB * 0.9);
               if (rngS && Math.abs(rngS.value - g.ft) > 0.01) rngS.set(g.ft);
               const pct = L.ledPct(g);
               setInfo(g.ft === 0 ? '자석이 <b>멈춰 있으면</b> 전류가 없어서 LED가 꺼져요.<br>돌리는 속도를 올려 보세요.' : '자석이 돌면 전류 방향이 <b>번갈아 바뀌어서</b> LED 두 개가 번갈아 켜져요.<br>회전 ' + g.f.toFixed(1) + ' 회/초 · 코일 ' + g.tn + '회 · 자석 ' + g.mg + '개 → LED 최대 밝기 <b>' + pct + ' %</b>');

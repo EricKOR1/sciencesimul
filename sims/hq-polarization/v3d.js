@@ -47,6 +47,8 @@
 
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.1 }, o || {}));
       const basic = (c, o) => new THREE.MeshBasicMaterial(Object.assign({ color: c }, o || {}));
+      const MT = ctx.mats;
+      const rbox = (w, h, d, r) => { r = Math.min(r, w / 2 - 1e-3, h / 2 - 1e-3, d / 2 - 1e-3); const s = new THREE.Shape(), x = w / 2 - r, y = h / 2 - r; s.absarc(x, y, r, 0, Math.PI / 2); s.absarc(-x, y, r, Math.PI / 2, Math.PI); s.absarc(-x, -y, r, Math.PI, 1.5 * Math.PI); s.absarc(x, -y, r, 1.5 * Math.PI, 2 * Math.PI); const g = new THREE.ExtrudeGeometry(s, { depth: d - 2 * r, bevelEnabled: true, bevelThickness: r, bevelSize: r, bevelOffset: -r, bevelSegments: 3, curveSegments: 6 }); g.translate(0, 0, -(d - 2 * r) / 2); return g; };   // 모서리가 둥근 상자
       function mkArrow(col, rad) {
         const g = new THREE.Group(); const m = mat(col, { roughness: 0.4 });
         const sh = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, 1, 10), m), hd = new THREE.Mesh(new THREE.ConeGeometry(rad * 2.6, rad * 6, 14), m);
@@ -62,12 +64,19 @@
 
       const LAMP = PHN ? -5 : -7, SCR = PHN ? 5 : 7, RAD = 1.75, KW = 2 * Math.PI / 2.4, OM = 2.8, AMP = 1.15;
       /* ---------- 전구 · 화면 · 빛의 진행 화살표 ---------- */
-      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.45, 20, 14), mat(0xffe27a, { emissive: 0xffc83a, emissiveIntensity: 0.9 })); bulb.position.x = LAMP; root.add(bulb);
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.45, 36, 24), MT.emissive(0xffdc6a, 1.3, { extra: { roughness: 0.25 } })); bulb.position.x = LAMP; root.add(bulb); ctx.halo(bulb, 0xffd98a, 3.6, 0.8);
+      /* 광학대: 레일 · 받침 기둥 · 전구 소켓 (실험실의 광학 실험 장치처럼) */
+      const RY = -RAD - 1.05, railM = MT.metal(0x8f98a8, { brushed: true }), postM = MT.metal('steel'), carM = MT.plastic(0x1c2233);
+      const rail = new THREE.Mesh(rbox(SCR - LAMP + 1.8, 0.16, 0.62, 0.05), railM); rail.rotation.x = 0; rail.position.set((LAMP + SCR) / 2, RY - 0.08, 0); root.add(rail);
+      [-1, 1].forEach((sg) => { const ft = new THREE.Mesh(rbox(0.5, 0.14, 1.3, 0.05), carM); ft.position.set((LAMP + SCR) / 2 + sg * ((SCR - LAMP) / 2 + 0.5), RY - 0.22, 0); root.add(ft); });
+      const mkPost = (g, x, yTop) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, yTop - RY, 16), postM); p.position.set(x, (yTop + RY) / 2, 0); g.add(p); const c = new THREE.Mesh(rbox(0.46, 0.2, 0.78, 0.05), carM); c.position.set(x, RY + 0.1, 0); g.add(c); };
+      mkPost(root, LAMP, -0.62);
+      { const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.25, 0.36, 28), MT.metal('brass')); sock.position.set(LAMP, -0.56, 0); root.add(sock); }
       label('💡 자연광', bulb, { color: 'rgba(8,12,24,.78)', size: 13, offset: [0, 0.9, 0] });
       const travel = mkArrow(0xffffff, 0.03); setArrow(travel, new V3(LAMP + 0.8, -RAD - 0.5, 0), new V3(SCR - 1.0, -RAD - 0.5, 0)); root.add(travel); travel.children.forEach((c) => (c.material = mat(0xaab4cf, { transparent: true, opacity: 0.55 })));
       label('빛의 진행 방향 →', [0, -RAD - 0.5, 0], { color: 'rgba(8,12,24,.7)', size: 12, offset: [0, -0.35, 0] });
       const screen = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 3.2), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })); screen.rotation.y = Math.PI / 2; screen.position.x = SCR; root.add(screen);
-      const scrFrame = new THREE.Mesh(new THREE.BoxGeometry(0.12, 3.4, 3.4), mat(0x2a3350)); scrFrame.position.x = SCR + 0.1; root.add(scrFrame);
+      const scrFrame = new THREE.Mesh(rbox(3.46, 3.46, 0.14, 0.05), MT.plastic(0x1c2233)); scrFrame.rotation.y = Math.PI / 2; scrFrame.position.x = SCR + 0.1; root.add(scrFrame); mkPost(root, SCR + 0.1, -1.7);
       const labScr = label('화면', screen, { color: 'rgba(8,12,24,.78)', size: 13, offset: [0, 2.05, 0] });
       const bar = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1, 0.3), basic(0xffd34d)); bar.position.set(SCR, 0, 2.4); root.add(bar);
       const barFrame = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(0.34, 3.2, 0.34)), new THREE.LineBasicMaterial({ color: 0x8a96b8 })); barFrame.position.set(SCR, 0, 2.4); root.add(barFrame);
@@ -77,8 +86,8 @@
       /* ---------- 편광판 3개 (필요한 만큼 보여요) ---------- */
       const sheets = [0, 1, 2].map(() => {
         const g = new THREE.Group();
-        const disc = new THREE.Mesh(new THREE.CircleGeometry(RAD, 48), basic(0x4a74ff, { transparent: true, opacity: 0.16, side: THREE.DoubleSide })); disc.rotation.y = Math.PI / 2; g.add(disc);
-        const ring = new THREE.Mesh(new THREE.TorusGeometry(RAD, 0.05, 8, 64), mat(0x4a74ff)); ring.rotation.y = Math.PI / 2; g.add(ring);
+        const disc = new THREE.Mesh(new THREE.CircleGeometry(RAD, 64), MT.glass({ tint: 0x4a74ff, opacity: 0.24 })); disc.rotation.y = Math.PI / 2; g.add(disc);
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(RAD, 0.075, 16, 96), MT.plastic(0x4a74ff)); ring.rotation.y = Math.PI / 2; g.add(ring); mkPost(g, 0, -RAD - 0.05);
         const grate = new THREE.Group(); g.add(grate);
         const slits = [];
         for (let k = -7; k <= 7; k++) { const z = k * RAD / 7.5, h = 2 * Math.sqrt(Math.max(0.01, RAD * RAD - z * z)); const b = new THREE.Mesh(new THREE.BoxGeometry(0.03, h, 0.025), basic(0x9fb6ff, { transparent: true, opacity: 0.7 })); b.position.set(0, 0, z); grate.add(b); slits.push(b); }
@@ -203,23 +212,23 @@
       /* 양쪽 화살표 (진동 방향 표시) */
       function mkDbl(g, col, rad) { const a = mkArrow(col, rad || 0.04), b = mkArrow(col, rad || 0.04); const gg = new THREE.Group(); gg.add(a, b); g.add(gg); gg.userData = { a, b }; return gg; }
       function setDbl(gg, c, d, len) { setArrow(gg.userData.a, c, c.clone().addScaledVector(d, len)); setArrow(gg.userData.b, c, c.clone().addScaledVector(d, -len)); }
-      const sphereM = (r, c, o) => new THREE.Mesh(new THREE.SphereGeometry(r, 24, 16), mat(c, o));
-      const boxM = (w, h, d, c, o) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c, o));
+      const sphereM = (r, c, o) => new THREE.Mesh(new THREE.SphereGeometry(r, 32, 20), mat(c, o));
+      const boxM = (w, h, d, c, o) => new THREE.Mesh(o ? new THREE.BoxGeometry(w, h, d) : rbox(w, h, d, Math.min(w, h, d) * 0.18), o ? mat(c, o) : MT.plastic(c));   // 기기 몸체: 모서리가 둥근 플라스틱
       const bar3 = (g, col) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.34, 1, 0.34), basic(col)); g.add(m); return m; };
 
       /* ============ ① 반사: 젖은 도로에서 반사한 햇빛 ============ */
       const gR = newScene('refl'); CAMS.refl = { dist: PHN ? 19 : 12, theta: 0.55, phi: 1.22, min: 7, max: 36, ty: 0.2 };
       const rO = new V3(0, -1.7, 0), RR = 4.3;
-      const road = boxM(11, 0.25, 6, 0x4a5163, { roughness: 0.12, metalness: 0.35 }); road.position.set(0, -1.83, 0); gR.add(road);
+      const road = new THREE.Mesh(rbox(11, 6, 0.25, 0.04), MT.stone(0x12151b, { repeat: 1.3, bump: 0.012, extra: { roughness: 0.34, metalness: 0.1, envMapIntensity: 0.7 } })); road.rotation.x = Math.PI / 2; road.position.set(0, -1.83, 0); gR.add(road);   // 물에 젖은 아스팔트
       for (let k = -3; k <= 3; k++) { const dsh = boxM(0.9, 0.02, 0.16, 0xe8ecf4, { roughness: 0.6 }); dsh.position.set(k * 1.5, -1.69, 2.2); gR.add(dsh); }
       const normal = segM(0x9aa6b8, 0.015, 0.8); setSeg(normal, rO, rO.clone().add(new V3(0, RR * 0.95, 0))); gR.add(normal);
-      const sunR = sphereM(0.42, 0xffd34d, { emissive: 0xffb400, emissiveIntensity: 0.9 }); gR.add(sunR);
+      const sunR = new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 24), MT.emissive(0xffcb45, 1.3)); gR.add(sunR); ctx.halo(sunR, 0xffd27a, 3.6, 0.6);
       const hrR = segM(0xffb400, 0.03), hrR2 = segM(0xf26b3a, 0.03); gR.add(hrR, hrR2);
-      const headR = sphereM(0.38, 0xf2c9a0); gR.add(headR);
+      const headR = new THREE.Mesh(new THREE.SphereGeometry(0.38, 32, 24), MT.organic(0xe2b48a)); gR.add(headR);
       const eyeDot = sphereM(0.07, 0x26324a); gR.add(eyeDot);
       const lensR = new THREE.Group(); gR.add(lensR);
-      const lensDisc = new THREE.Mesh(new THREE.CircleGeometry(0.62, 32), basic(0x3d4658, { transparent: true, opacity: 0.35, side: THREE.DoubleSide })); lensR.add(lensDisc);
-      const lensRing = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.035, 8, 40), mat(0x3d4658)); lensR.add(lensRing);
+      const lensDisc = new THREE.Mesh(new THREE.CircleGeometry(0.62, 48), MT.glass({ tint: 0x2a3142, opacity: 0.5 })); lensR.add(lensDisc);
+      const lensRing = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.04, 12, 64), MT.plastic(0x1a1f2b)); lensR.add(lensRing);
       const lensGr = new THREE.Group(); lensR.add(lensGr);
       for (let k = -4; k <= 4; k++) { const hh = 2 * Math.sqrt(Math.max(0.01, 0.62 * 0.62 - Math.pow(k * 0.13, 2))); const b = new THREE.Mesh(new THREE.BoxGeometry(0.02, hh, 0.012), basic(0x1b2233)); b.position.x = k * 0.13; lensGr.add(b); }
       const natR = mkNat(gR), ribS = mkRib(gR, 0xf26b3a, 0.28), ribP = mkRib(gR, 0x2f6bff, 0.28);
@@ -274,17 +283,18 @@
       const gK = newScene('sky'); CAMS.sky = { dist: PHN ? 19 : 11.5, theta: 0.0, phi: 0.95, min: 6, max: 34, tx: 0.3, ty: 0.5, tz: 0.4 };
       const camP = new V3(0.8, 0, 2.7), sunPos = new V3(-3.4, 0.4, -2.2);
       const us = Math.atan2(sunPos.z - camP.z, sunPos.x - camP.x), sdir = new V3(Math.cos(us), 0, Math.sin(us));
-      const ground = boxM(10.5, 0.1, 7.2, 0x3a5a45, { roughness: 0.9 }); ground.position.set(0, -0.12, 0); gK.add(ground);
-      const sunK = sphereM(0.5, 0xffd34d, { emissive: 0xffb400, emissiveIntensity: 0.9 }); sunK.position.copy(sunPos); gK.add(sunK);
-      const camBody = boxM(0.9, 0.6, 0.6, 0x3d4658); camBody.position.copy(camP).add(new V3(0, 0.35, 0)); gK.add(camBody);
-      const camLens = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.4, 20), mat(0x7b8798)); gK.add(camLens);
-      const molK = sphereM(0.16, 0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.9 }); gK.add(molK);
+      const ground = new THREE.Mesh(rbox(10.5, 7.2, 0.16, 0.05), MT.stone(0x2c5338, { repeat: 1.2, bump: 0.02 })); ground.rotation.x = Math.PI / 2; ground.position.set(0, -0.14, 0); gK.add(ground);   // 풀밭
+      const sunK = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 24), MT.emissive(0xffcb45, 1.3)); sunK.position.copy(sunPos); gK.add(sunK); ctx.halo(sunK, 0xffd27a, 4.2, 0.6);
+      const camBody = new THREE.Mesh(rbox(0.9, 0.6, 0.6, 0.07), MT.plastic(0x232a3a)); camBody.position.copy(camP).add(new V3(0, 0.35, 0)); gK.add(camBody);
+      { const tri = MT.metal('aluminium', { brushed: true }); [[0, 0], [2.1, 0], [4.2, 0]].forEach(([a]) => { const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.98, 10), tri); lg.position.set(camP.x + Math.cos(a) * 0.2, 0.33, camP.z + Math.sin(a) * 0.2); lg.rotation.set(Math.sin(a) * 0.42, 0, -Math.cos(a) * 0.42); gK.add(lg); }); }
+      const camLens = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.4, 28), MT.metal(0x3a4150, { roughness: 0.35 })); gK.add(camLens);
+      const molK = new THREE.Mesh(new THREE.SphereGeometry(0.16, 24, 16), MT.emissive(0xffffff, 1.0)); gK.add(molK); ctx.halo(molK, 0xcfe4ff, 1.3, 0.55);
       const sightK = segM(0x9aa6b8, 0.012, 0.8); gK.add(sightK);
       const natK = mkNat(gK), scDom = mkRib(gK, 0xf26b3a, 0.28), scOth = mkRib(gK, 0x2f6bff, 0.22), scPass = mkRib(gK, 0xffffff, 0.3);
       const filK = mkPlate(gK, 1.2, 0x4a74ff);
       const arcK = new THREE.Group(); gK.add(arcK); let arcKg = -99;
       const boardK = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 1.8), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })); boardK.position.set(4.0, 1.2, 2.9); boardK.rotation.y = -0.55; gK.add(boardK);
-      const boardFr = new THREE.Mesh(new THREE.BoxGeometry(2.95, 1.95, 0.08), mat(0x2a3350)); boardFr.position.copy(boardK.position).add(new V3(0.02, 0, -0.06)); boardFr.rotation.y = -0.55; gK.add(boardFr);
+      const boardFr = new THREE.Mesh(rbox(3.0, 2.0, 0.1, 0.04), MT.plastic(0x1c2233)); boardFr.position.copy(boardK.position).add(new V3(0.02, 0, -0.06)); boardFr.rotation.y = -0.55; gK.add(boardFr);
       const cv = document.createElement('canvas'); cv.width = 168; cv.height = 108; const cx2 = cv.getContext('2d'); const tex = new THREE.CanvasTexture(cv); boardK.material.map = tex; let lastKK = -1, kSig = ''; const kPl = { on: false, fa: 0 };
       function paintSky(kk) {
         if (Math.abs(kk - lastKK) < 0.004) return; lastKK = kk;
@@ -354,7 +364,7 @@
         const g = new THREE.Group(); const b = boxM(0.14, 2.3, 1.2, 0x26324a); g.add(b); const s = boxM(0.04, 2.1, 1.0, 0xf58aa6); s.material = screenM(0xf58aa6); s.position.x = 0.08; g.add(s); upArrow(g, 0.1, 0); g.children[g.children.length - 1].position.x = -0.42; devGrp.C = g;
       }
       { // D 백열등
-        const g = new THREE.Group(); const bl = sphereM(0.7, 0xffe27a, { emissive: 0xffc83a, emissiveIntensity: 1.0 }); g.add(bl); const nk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.5, 16), mat(0x9aa6b8)); nk.position.y = -0.95; g.add(nk); devGrp.D = g;
+        const g = new THREE.Group(); const bl = new THREE.Mesh(new THREE.SphereGeometry(0.7, 36, 24), MT.emissive(0xffdc6a, 1.3, { extra: { roughness: 0.25 } })); g.add(bl); ctx.halo(bl, 0xffd98a, 4.2, 0.5); const nk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.5, 28), MT.metal('brass')); nk.position.y = -0.95; g.add(nk); devGrp.D = g;
       }
       { // E 맑은 하늘
         const g = new THREE.Group(); const b = boxM(0.16, 2.2, 2.2, 0x5d9bf0, { emissive: 0x5d9bf0, emissiveIntensity: 0.35 }); g.add(b);
@@ -363,7 +373,7 @@
       }
       Object.keys(devGrp).forEach((k) => { devGrp[k].visible = false; devRot.add(devGrp[k]); });
       const eArr = mkDbl(gV, 0xffb347, 0.045);
-      const polV = mkPlate(gV, 2.8, 0xf26b3a); polV.position.x = PX; const polRing = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.045, 8, 48), mat(0xf26b3a)); polRing.rotation.y = Math.PI / 2; polRing.position.x = PX; gV.add(polRing);
+      const polV = mkPlate(gV, 2.8, 0xf26b3a); polV.position.x = PX; const polRing = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.06, 14, 80), MT.plastic(0xf26b3a)); polRing.rotation.y = Math.PI / 2; polRing.position.x = PX; gV.add(polRing);
       const polArrow = mkArrow(0xf26b3a, 0.05); gV.add(polArrow);
       const sensor = boxM(0.9, 1.5, 1.3, 0x3d4658); sensor.position.set(SX + 0.4, 0, 0); gV.add(sensor);
       const sensScr = boxM(0.04, 0.55, 1.0, 0x10151f); sensScr.position.set(SX - 0.07, 0.3, 0); gV.add(sensScr);
@@ -408,10 +418,10 @@
       const p2 = mkPlate(gL, 3.2, 0x2f6bff); p2.position.x = lx.P2; p2.userData.gr.rotation.x = Math.PI / 2;
       const lcBox = new THREE.Mesh(new THREE.BoxGeometry(lx.L1 - lx.L0, 3.2, 3.2), basic(0x7fd3c0, { transparent: true, opacity: 0.1, depthWrite: false })); lcBox.position.x = (lx.L0 + lx.L1) / 2; gL.add(lcBox);
       const lcEdge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(lx.L1 - lx.L0, 3.2, 3.2)), new THREE.LineBasicMaterial({ color: 0x46968a })); lcEdge.position.copy(lcBox.position); gL.add(lcEdge);
-      [lx.L0, lx.L1].forEach((x) => { const e = new THREE.Mesh(new THREE.BoxGeometry(0.05, 3.2, 3.2), basic(0xc8d0de, { transparent: true, opacity: 0.35, depthWrite: false })); e.position.x = x; gL.add(e); });
+      [lx.L0, lx.L1].forEach((x) => { const e = new THREE.Mesh(new THREE.BoxGeometry(0.05, 3.2, 3.2), MT.glass({ tint: 0xc8d0de, opacity: 0.3 })); e.position.x = x; gL.add(e); });
       const NJ = 7, rods = [];
       for (let j = 0; j < NJ; j++) for (let yy = -1; yy <= 1; yy++) for (let zz = -1; zz <= 1; zz++) {
-        const m = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.8, 10), mat(0x2a9d8f, { roughness: 0.4 })); m.position.set(lx.L0 + (lx.L1 - lx.L0) * (j + 0.5) / NJ, yy * 1.0, zz * 1.0); gL.add(m); rods.push({ m, j });
+        const m = new THREE.Mesh(new THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(0.09, 0.62, 6, 14) : new THREE.CylinderGeometry(0.09, 0.09, 0.8, 14), mat(0x2a9d8f, { roughness: 0.3, metalness: 0 })); m.position.set(lx.L0 + (lx.L1 - lx.L0) * (j + 0.5) / NJ, yy * 1.0, zz * 1.0); gL.add(m); rods.push({ m, j });
       }
       const pxBox = boxM(0.3, 2.6, 2.4, 0x26324a); pxBox.position.x = lx.Px; gL.add(pxBox);
       const subs = [0xff5a4d, 0x2fd66b, 0x4a7dff].map((c, i) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.2, 0.62), basic(c)); m.position.set(lx.Px - 0.18, 0, (i - 1) * 0.72); gL.add(m); return m; });
@@ -443,11 +453,11 @@
       const cyL = 1.7, cyR = -1.7, cxP = -5.4, cxS = -0.6, cxG = 2.6, cxE = 5.6;
       [[cyL, 0xe2464b, '왼눈 영상', 0], [cyR, 0x1f6fe0, '오른눈 영상', 90]].forEach(([y, col, name, ax]) => {
         const body = boxM(1.0, 0.8, 1.0, 0x3d4658); body.position.set(cxP, y, 0); gC.add(body);
-        const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.3, 18), mat(col, { emissive: col, emissiveIntensity: 0.6 })); lens.rotation.z = Math.PI / 2; lens.position.set(cxP + 0.65, y, 0); gC.add(lens);
+        const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.3, 28), mat(col, { emissive: col, emissiveIntensity: 0.75, roughness: 0.2 })); lens.rotation.z = Math.PI / 2; lens.position.set(cxP + 0.65, y, 0); gC.add(lens);
         const pp = mkPlate(gC, 1.5, col); pp.position.set(cxP + 1.2, y, 0); pp.userData.gr.rotation.x = ax * D2R;
         label(name + ' · ' + (ax === 0 ? '세로(↕) 편광' : '가로(↔) 편광'), [cxP + 0.6, y + 1.05, 0], { color: 'rgba(8,12,24,.78)', size: 12 }, 'cine');
       });
-      const screenC = boxM(0.12, 6.0, 3.6, 0xf5f7fb); screenC.position.set(cxS, 0, 0); gC.add(screenC); label('스크린', [cxS, -3.3, 0], { color: 'rgba(8,12,24,.78)', size: 12 }, 'cine');
+      const screenC = new THREE.Mesh(new THREE.BoxGeometry(0.12, 6.0, 3.6), MT.fabric(0xf5f7fb)); screenC.position.set(cxS, 0, 0); gC.add(screenC); label('스크린', [cxS, -3.3, 0], { color: 'rgba(8,12,24,.78)', size: 12 }, 'cine');
       const spotR = sphereM(0.22, 0xe2464b, { emissive: 0xe2464b, emissiveIntensity: 0.8 }); spotR.position.set(cxS + 0.2, 0.35, 0); gC.add(spotR);
       const spotB = sphereM(0.22, 0x3b82f6, { emissive: 0x3b82f6, emissiveIntensity: 0.8 }); spotB.position.set(cxS + 0.2, -0.35, 0); gC.add(spotB);
       const lensC = [cyL, cyR].map((y) => { const pl = mkPlate(gC, 1.6, 0x3d4658); pl.position.set(cxG, y, 0); const dash = new THREE.Mesh(new THREE.TorusGeometry(0.8, 0.02, 6, 40), basic(0x9aa6b8)); dash.rotation.y = Math.PI / 2; dash.position.set(cxG, y, 0); gC.add(dash); return { pl, dash }; });
@@ -488,8 +498,8 @@
       /* ============ ④-3 광통신: 편광 다중화 ============ */
       const gF = newScene('fiber'); CAMS.fiber = { dist: PHN ? 21 : 12.5, theta: 0.4, phi: 1.2, min: 8, max: 40 };
       const FA = [new V3(-4.4, 1.7, 0), new V3(-2.4, 0, 0), new V3(2.4, 0, 0), new V3(4.4, 1.7, 0)], FB = FA.map((p) => new V3(p.x, -p.y, 0));
-      [FA, FB].forEach((P, k) => { const g = new THREE.CatmullRomCurve3(P, false, 'catmullrom', 0.0); for (let i = 0; i < 3; i++) gF.add(tubeG(P[i], P[i + 1], 0.2, new THREE.MeshStandardMaterial({ color: 0xc7d0e0, transparent: true, opacity: 0.35, roughness: 0.2, depthWrite: false }))); });
-      const trunk = tubeG(FA[1], FA[2], 0.26, new THREE.MeshStandardMaterial({ color: 0xdde4f2, transparent: true, opacity: 0.4, roughness: 0.2, depthWrite: false })); gF.add(trunk);
+      [FA, FB].forEach((P, k) => { const g = new THREE.CatmullRomCurve3(P, false, 'catmullrom', 0.0); for (let i = 0; i < 3; i++) gF.add(tubeG(P[i], P[i + 1], 0.2, MT.glass({ tint: 0xc7d0e0, opacity: 0.3 }))); });
+      const trunk = tubeG(FA[1], FA[2], 0.26, MT.glass({ tint: 0xdde4f2, opacity: 0.34 })); gF.add(trunk);
       [[FA[0], 0xf26b3a, '레이저 ①', 0], [FB[0], 0x2f6bff, '레이저 ②', 90]].forEach(([p, col, name, ang]) => {
         const b = boxM(1.2, 0.9, 1.0, 0x3d4658); b.position.copy(p).add(new V3(-0.8, 0, 0)); gF.add(b); const d = mkDbl(gF, col, 0.04); setDbl(d, p.clone().add(new V3(-0.8, p.y > 0 ? 1.0 : -1.0, 0)), dirv(ang), 0.45);
         label(name, b, { color: 'rgba(8,12,24,.8)', size: 12, offset: [0, p.y > 0 ? 0.0 : 0.0, 0.0] }, 'fiber');

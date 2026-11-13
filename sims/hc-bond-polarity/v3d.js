@@ -4,14 +4,14 @@
   'use strict';
   if (!window.SciSim3D) return;
     /* ---- 공용 도우미: 분자 모형 · 유리 상자 · 화살표 ---- */
-  function makeLib(THREE) {
+  function makeLib(THREE, MT) {
     const COL = { H: 0xf3f6fb, C: 0x8a93a3, N: 0x4f7cff, O: 0xf0524f, F: 0x9be36b, Cl: 0x34c759, Na: 0xb07cf5, B: 0xf4a6a6, S: 0xf5c518, Cu: 0xe08a3c, Ca: 0x6fd0c4, e: 0xffd34d };
     const RAD = { H: 0.26, C: 0.38, N: 0.37, O: 0.36, F: 0.32, Cl: 0.48, Na: 0.5, B: 0.36, S: 0.48, Cu: 0.5, Ca: 0.55 };
     const mats = {};
-    const mat = (k) => mats[k] || (mats[k] = new THREE.MeshStandardMaterial({ color: COL[k] !== undefined ? COL[k] : k, roughness: 0.36, metalness: 0.06 }));
+    const mat = (k) => mats[k] || (mats[k] = MT.plastic(COL[k] !== undefined ? COL[k] : k, { roughness: 0.3, extra: { clearcoat: 0.7, clearcoatRoughness: 0.2 } }));   // 분자 모형: 매끈한 플라스틱 공
     const SG = new THREE.SphereGeometry(1, 28, 20);
     const CG = new THREE.CylinderGeometry(1, 1, 1, 16);
-    const stickMat = new THREE.MeshStandardMaterial({ color: 0xc3ccdd, roughness: 0.45, metalness: 0.1 });
+    const stickMat = MT.plastic(0xaab4c8, { roughness: 0.42 });
     const V = (x, y, z) => new THREE.Vector3(x, y, z);
     function atom(k, s, pal) { const m = new THREE.Mesh(SG, mat(pal && pal[k] !== undefined ? pal[k] : k)); m.scale.setScalar((RAD[k] || 0.4) * (s || 1)); return m; }
     function stick(a, b, r, m) {
@@ -53,18 +53,18 @@
     /* 반투명 유리 상자 (가장자리 선 포함). 크기는 scale로 조절 */
     function glassBox(w, h, d, color, op) {
       const g = new THREE.Group();
-      const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: color || 0x9ec5ff, transparent: true, opacity: op === undefined ? 0.13 : op, roughness: 0.15, metalness: 0, depthWrite: false }));
+      const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), MT.glass({ tint: color || 0x9ec5ff, opacity: op === undefined ? 0.13 : op, extra: { side: THREE.FrontSide, envMapIntensity: 1.6 } }));
       const e = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.75 }));
       g.add(m, e); g.scale.set(w, h, d); g.userData.fill = m; return g;
     }
     function tube(pts, r, color, seg) {
       const c = new THREE.CatmullRomCurve3(pts.map((p) => (p.isVector3 ? p : V(p[0], p[1], p[2]))));
-      return new THREE.Mesh(new THREE.TubeGeometry(c, seg || 40, r, 10, false), new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.2 }));
+      return new THREE.Mesh(new THREE.TubeGeometry(c, seg || 40, r, 12, false), color && color.isMaterial ? color : MT.plastic(color, { roughness: 0.45 }));
     }
     /* 화살표: from → to */
     function arrow(from, to, color, r, headLen) {
       const g = new THREE.Group(); const a = V(from[0], from[1], from[2]), b = V(to[0], to[1], to[2]); const d = b.clone().sub(a), len = d.length();
-      if (len < 1e-3) return g; const hl = Math.min(headLen || 0.4, len * 0.6); const m = new THREE.MeshStandardMaterial({ color, roughness: 0.35, metalness: 0.1 });
+      if (len < 1e-3) return g; const hl = Math.min(headLen || 0.4, len * 0.6); const m = MT.plastic(color, { roughness: 0.35 });
       const dir = d.clone().normalize(); const tip = b.clone();
       const sh = new THREE.Mesh(CG, m); sh.scale.set(r, len - hl, r); sh.position.copy(a).addScaledVector(dir, (len - hl) / 2); sh.quaternion.setFromUnitVectors(V(0, 1, 0), dir);
       const hd = new THREE.Mesh(new THREE.ConeGeometry(r * 2.6, hl, 20), m); hd.position.copy(tip).addScaledVector(dir, -hl / 2); hd.quaternion.setFromUnitVectors(V(0, 1, 0), dir);
@@ -85,15 +85,16 @@
     levels: [0],
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
-      const L = makeLib(THREE);
+      const L = makeLib(THREE, ctx.mats);
       const clamp = (x, a, b) => Math.max(a, Math.min(b, x)), sm = L.sstep;
       const enCol = (e10) => { const t = Math.pow(clamp((e10 - 8) / 32, 0, 1), 0.85); return new THREE.Color(0xf1ebfd).lerp(new THREE.Color(0x5b21b6), t); };
       const f1 = (v) => (v / 10).toFixed(1);
       const XA = -1.9, XB = 1.9, RA = 0.62;
       const grp = new THREE.Group(); root.add(grp);
-      const matA = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35 }), matB = matA.clone();
+      const MT = ctx.mats;
+      const matA = MT.plastic(0xffffff, { roughness: 0.28, extra: { clearcoat: 0.8, clearcoatRoughness: 0.15 } }), matB = matA.clone();
       const atA = new THREE.Mesh(L.SG, matA), atB = new THREE.Mesh(L.SG, matB); atA.scale.setScalar(RA); atB.scale.setScalar(RA); atA.position.x = XA; atB.position.x = XB; grp.add(atA, atB);
-      const shMat = (c) => new THREE.MeshStandardMaterial({ color: c, transparent: true, opacity: 0.12, roughness: 0.2, depthWrite: false });
+      const shMat = (c) => MT.glass({ tint: c, opacity: 0.12, extra: { side: THREE.FrontSide, envMapIntensity: 1.0, roughness: 0.15 } });   // 전하 구름 껍질: 얇은 유리 같은 막
       const shA = new THREE.Mesh(L.SG, shMat(0xdde6f5)), shB = new THREE.Mesh(L.SG, shMat(0xdde6f5)); shA.position.x = XA; shB.position.x = XB; grp.add(shA, shB);
       const ND = 460;
       const dots = new THREE.InstancedMesh(L.SG, new THREE.MeshStandardMaterial({ color: 0xffd34d, emissive: 0xffb300, emissiveIntensity: 0.9, roughness: 0.4, transparent: true, opacity: 0.85 }), ND);
@@ -104,6 +105,14 @@
       lA.off = [0, -1.25, 0]; lB.off = [0, -1.25, 0]; lA.el.style.color = lB.el.style.color = '#fff';
       const dA = label('', [XA, 0, 0], { size: 13 }), dB = label('', [XB, 0, 0], { size: 13 }); dA.off = [0, 1.05, 0]; dB.off = [0, 1.05, 0];
       const arrowG = new THREE.Group(); grp.add(arrowG);
+      /* 받침대: 은은한 빛무리 원판 + 고리 (모형이 허공에 떠 있지 않게) */
+      (function () {
+        const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d');
+        const gr = x.createRadialGradient(128, 128, 8, 128, 128, 126); gr.addColorStop(0, 'rgba(120,160,255,.34)'); gr.addColorStop(0.55, 'rgba(60,90,170,.24)'); gr.addColorStop(1, 'rgba(20,30,70,0)');
+        x.fillStyle = gr; x.fillRect(0, 0, 256, 256); x.strokeStyle = 'rgba(180,205,255,.3)'; x.lineWidth = 1.5;
+        [48, 84, 122].forEach((r) => { x.beginPath(); x.arc(128, 128, r, 0, 7); x.stroke(); });
+        const f = new THREE.Mesh(new THREE.CircleGeometry(5.2, 64), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false })); f.rotation.x = -Math.PI / 2; f.position.y = -2.6; f.userData.v3bg = true; f.renderOrder = -1; root.add(f);
+      })();
       const dipL = label('쌍극자 모멘트', [0, 1.75, 0], { size: 12, color: 'rgba(255,200,40,.95)' }); dipL.el.style.color = '#1b2333';
       let pos = 0.5;
       function resample(i) {

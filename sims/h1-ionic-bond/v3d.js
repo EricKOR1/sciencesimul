@@ -14,6 +14,7 @@
     autoRotate: 0.22,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
+      const eGeo = new THREE.SphereGeometry(0.15, 28, 20), eOut = ctx.mats.plastic(0xf7c21c, { roughness: 0.18, extra: { clearcoat: 1, emissive: 0x7a5a00, emissiveIntensity: 0.6 } }), eIn = ctx.mats.plastic(0x2f8cf5, { roughness: 0.18, extra: { clearcoat: 1, emissive: 0x123a78, emissiveIntensity: 0.55 } });
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.35, metalness: 0.1 }, o || {}));
       let mode = 'transfer', spread = 0, layers = 4, grow = -1;
       const gT = new THREE.Group(), gL = new THREE.Group();
@@ -24,11 +25,11 @@
       /* ---------- 1) 전자 이동 ---------- */
       const atom = (col, rs, nOut, x) => {
         const g = new THREE.Group(); g.position.x = x;
-        const nuc = new THREE.Mesh(new THREE.SphereGeometry(0.4, 24, 16), std(col, { emissive: col, emissiveIntensity: 0.25 }));
+        const nuc = new THREE.Mesh(new THREE.SphereGeometry(0.4, 40, 28), ctx.mats.plastic(col, { roughness: 0.22, extra: { clearcoat: 1, clearcoatRoughness: 0.1, emissive: col, emissiveIntensity: 0.18 } })); ctx.halo(nuc, col, 1.7, 0.28);
         g.add(nuc);
-        const rings = rs.map((r) => { const m = new THREE.Mesh(new THREE.TorusGeometry(r, 0.025, 10, 96), std(0xaabbe6, { transparent: true, opacity: 0.55 })); m.rotation.x = Math.PI / 2; g.add(m); return m; });
+        const rings = rs.map((r) => { const m = new THREE.Mesh(new THREE.TorusGeometry(r, 0.025, 12, 128), ctx.mats.metal(0xaabbe6, { roughness: 0.22, extra: { transparent: true, opacity: 0.7, emissive: 0x2a3f7a, emissiveIntensity: 0.35 } })); m.rotation.x = Math.PI / 2; g.add(m); return m; });
         const es = [];
-        rs.forEach((r, i) => { const n = i === 0 ? 2 : i === 1 ? 8 : nOut; for (let k = 0; k < n; k++) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 12), std(i === rs.length - 1 ? 0xffd34d : 0x4aa3ff, { emissive: i === rs.length - 1 ? 0x7a5a00 : 0x123a78, emissiveIntensity: 0.6 })); g.add(e); es.push({ e, r, a0: k / n * 6.283 + i, sp: 0.8 - i * 0.2, out: i === rs.length - 1, k }); } });
+        rs.forEach((r, i) => { const n = i === 0 ? 2 : i === 1 ? 8 : nOut; for (let k = 0; k < n; k++) { const e = new THREE.Mesh(eGeo, i === rs.length - 1 ? eOut : eIn); g.add(e); es.push({ e, r, a0: k / n * 6.283 + i, sp: 0.8 - i * 0.2, out: i === rs.length - 1, k }); } });
         gT.add(g); return { g, rings, es };
       };
       const NA = atom(CNA, [0.9, 1.6, 2.3], 1, -3.2), CL = atom(CCL, [0.9, 1.6, 2.3], 7, 3.2);
@@ -44,9 +45,9 @@
       /* ---------- 2) 결정 ---------- */
       const N = 4, D = 1.5, rNa = 0.42, rCl = 0.7;
       const cnt = N * N * N, geoI = new THREE.SphereGeometry(1, 28, 20);
-      const mNa = new THREE.InstancedMesh(geoI, std(CNA, { roughness: 0.3 }), cnt), mCl = new THREE.InstancedMesh(geoI, std(CCL, { roughness: 0.3 }), cnt);
+      const mNa = new THREE.InstancedMesh(geoI, std(CNA, { roughness: 0.2, metalness: 0, envMapIntensity: 1.3 }), cnt), mCl = new THREE.InstancedMesh(geoI, std(CCL, { roughness: 0.2, metalness: 0, envMapIntensity: 1.3 }), cnt);
       gL.add(mNa, mCl);
-      const bondM = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.035, 0.035, 1, 8), std(0xdde6ff, { transparent: true, opacity: 0.55 }), cnt * 3);
+      const bondM = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.035, 0.035, 1, 8), std(0xdde6ff, { transparent: true, opacity: 0.6, metalness: 0.6, roughness: 0.25 }), cnt * 3);
       gL.add(bondM);
       const dummy = new THREE.Object3D(), Yv = new THREE.Vector3(0, 1, 0);
       function pos(i, j, k) { const o = (N - 1) / 2; return new THREE.Vector3((i - o) * D * (1 + spread), (j - o) * D * (1 + spread), (k - o) * D * (1 + spread)); }
