@@ -114,11 +114,11 @@
       const st = { P: 0.3, R: 0.9, N2: 0, q: 0.003 };
       const XL = -5, XR = 5;
       /* 이득 매질(막대) · 거울 · 램프 */
-      const rod = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 9.2, 40, 1, false), new THREE.MeshStandardMaterial({ color: 0xff9aa8, roughness: 0.15, transparent: true, opacity: 0.22, depthWrite: false, emissive: 0xff3b3b, emissiveIntensity: 0 })); rod.rotation.z = Math.PI / 2; root.add(rod);
-      const mL = cyl(1.5, 1.5, 0.22, 0xdfe6f2, { metalness: 0.95, roughness: 0.12 }, 48); mL.rotation.z = Math.PI / 2; mL.position.x = XL - 0.3; root.add(mL);
-      const mR = cyl(1.5, 1.5, 0.22, 0xbcd7ff, { metalness: 0.7, roughness: 0.15, transparent: true, opacity: 0.6 }, 48); mR.rotation.z = Math.PI / 2; mR.position.x = XR + 0.3; root.add(mR);
+      const rod = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 9.2, 40, 1, false), ctx.mats.glass({ tint: 0xff9aa8, opacity: 0.26, extra: { emissive: 0xff3b3b, emissiveIntensity: 0 } })); rod.rotation.z = Math.PI / 2; root.add(rod);
+      const mL = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.22, 64), ctx.mats.metal('silver', { roughness: 0.04 })); mL.rotation.z = Math.PI / 2; mL.position.x = XL - 0.3; root.add(mL);
+      const mR = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.22, 64), ctx.mats.glass({ tint: 0xbcd7ff, opacity: 0.55, extra: { metalness: 0.5 } })); mR.rotation.z = Math.PI / 2; mR.position.x = XR + 0.3; root.add(mR);
       const lampPts = []; for (let i = 0; i <= 140; i++) { const s = i / 140, a = s * Math.PI * 2 * 7; lampPts.push(new V3(-4 + 8 * s, 1.75 * Math.cos(a), 1.75 * Math.sin(a))); }
-      const lamp = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(lampPts), 280, 0.09, 8, false), mat(0xfff1b0, { emissive: 0xffe27a, emissiveIntensity: 0, roughness: 0.3 })); root.add(lamp);
+      const lamp = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(lampPts), 280, 0.09, 12, false), ctx.mats.plastic(0xf6f1e0, { roughness: 0.12, extra: { emissive: 0xffe27a, emissiveIntensity: 0, clearcoat: 1 } })); root.add(lamp);
       /* 원자 */
       const NA = 110, atoms = [];
       const aM = new THREE.InstancedMesh(new THREE.SphereGeometry(0.14, 12, 8), mat(0xffffff, { roughness: 0.4, emissive: 0xffffff, emissiveIntensity: 0.5 }), NA); root.add(aM);
@@ -270,7 +270,7 @@
       /* ============ ④-2 광통신 ============ */
       const gF = newScene('fiber'); CAMS.fiber = { dist: PHN ? 21 : 14, theta: 0.2, phi: 1.3, min: 8, max: 34, ty: 0 };
       const FX0 = -5.2, FX1 = 5.2, FY = 0.4, xAtKm = (km) => FX0 + (FX1 - FX0) * km / 100;
-      const fibT = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, FX1 - FX0, 24, 1, true), glass(0xc7d0e0, 0.3)); fibT.rotation.z = Math.PI / 2; fibT.position.set(0, FY, 0); gF.add(fibT);
+      const fibT = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, FX1 - FX0, 32, 1, true), ctx.mats.glass({ tint: 0xc7d0e0, opacity: 0.3 })); fibT.rotation.z = Math.PI / 2; fibT.position.set(0, FY, 0); gF.add(fibT);
       const fibCore = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, FX1 - FX0, 16), h.basic(0xeef2fa, { transparent: true, opacity: 0.8 })); fibCore.rotation.z = Math.PI / 2; fibCore.position.set(0, FY, 0); gF.add(fibCore);
       const txB = stdM(1.0, 0.9, 1.0, 0x3d4658); txB.position.set(FX0 - 0.8, FY, 0); gF.add(txB); const rxB = stdM(1.0, 0.9, 1.0, 0x16a05a); rxB.position.set(FX1 + 0.8, FY, 0); gF.add(rxB);
       const ampM = new THREE.Mesh(new THREE.ConeGeometry(0.55, 0.9, 3), mat(0x7a3cff, { emissive: 0x5b2db8, emissiveIntensity: 0.4 })); ampM.rotation.z = -Math.PI / 2; gF.add(ampM);

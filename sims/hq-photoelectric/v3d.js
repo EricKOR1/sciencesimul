@@ -123,15 +123,15 @@
       const st = { lam: S0 && S0.tb && S0.tb.lam ? Math.max(200, Math.min(700, S0.tb.lam)) : 400, I: 3, V: 0, metal: 'Na' };
       const XC = -3.8, XA = 3.2, D = XA - XC;
       /* 유리관 */
-      const tubeM = new THREE.Mesh(new THREE.CylinderGeometry(2.0, 2.0, 9.6, 40, 1, true), glass(0xbfd9ff, 0.12)); tubeM.rotation.z = Math.PI / 2; tubeM.position.x = -0.1; root.add(tubeM);
-      [-4.9, 4.7].forEach((x) => { const c = new THREE.Mesh(new THREE.SphereGeometry(2.0, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), glass(0xbfd9ff, 0.12)); c.rotation.z = x < 0 ? Math.PI / 2 : -Math.PI / 2; c.position.x = x; c.scale.set(0.25, 1, 1); root.add(c); });
+      const tubeM = new THREE.Mesh(new THREE.CylinderGeometry(2.0, 2.0, 9.6, 64, 1, true), ctx.mats.glass({ tint: 0xd6e6ff, opacity: 0.14 })); tubeM.rotation.z = Math.PI / 2; tubeM.position.x = -0.1; root.add(tubeM);
+      [-4.9, 4.7].forEach((x) => { const c = new THREE.Mesh(new THREE.SphereGeometry(2.0, 64, 24, 0, Math.PI * 2, 0, Math.PI / 2), ctx.mats.glass({ tint: 0xd6e6ff, opacity: 0.14 })); c.rotation.z = x < 0 ? Math.PI / 2 : -Math.PI / 2; c.position.x = x; c.scale.set(0.25, 1, 1); root.add(c); });
       /* 음극(금속판) · 양극(고리) */
-      const cath = cyl(1.65, 1.65, 0.22, METALS.Na.c, { metalness: 0.9, roughness: 0.25 }, 48); cath.rotation.z = Math.PI / 2; cath.position.x = XC - 0.1; root.add(cath);
-      const anode = new THREE.Mesh(new THREE.TorusGeometry(1.55, 0.07, 14, 56), mat(0xb7c0d0, { metalness: 0.85, roughness: 0.3 })); anode.rotation.y = Math.PI / 2; anode.position.x = XA; root.add(anode);
-      const rodA = cyl(0.05, 0.05, 2.6, 0xb7c0d0, { metalness: 0.8 }, 8); rodA.position.set(XA, 1.55 + 1.3, 0); rodA.rotation.z = 0; root.add(rodA);
+      const cath = new THREE.Mesh(new THREE.CylinderGeometry(1.65, 1.65, 0.22, 64), ctx.mats.plastic(METALS.Na.c, { roughness: 0.25, extra: { metalness: 0.55, clearcoat: 0.6 } })); cath.rotation.z = Math.PI / 2; cath.position.x = XC - 0.1; root.add(cath);
+      const anode = new THREE.Mesh(new THREE.TorusGeometry(1.55, 0.07, 14, 56), ctx.mats.metal('steel')); anode.rotation.y = Math.PI / 2; anode.position.x = XA; root.add(anode);
+      const rodA = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.6, 12), ctx.mats.metal('steel')); rodA.position.set(XA, 1.55 + 1.3, 0); rodA.rotation.z = 0; root.add(rodA);
       /* 전류계 */
       const am = new THREE.Group(); am.position.set(-0.3, -4.4, 0); root.add(am);
-      const amB = cyl(0.95, 0.95, 0.3, 0x2c3345, { roughness: 0.4, metalness: 0.4 }, 36); amB.rotation.x = Math.PI / 2; am.add(amB);
+      const amB = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.3, 48), ctx.mats.plastic(0x2c3345, { roughness: 0.3 })); amB.rotation.x = Math.PI / 2; am.add(amB); { const bz = new THREE.Mesh(new THREE.TorusGeometry(0.92, 0.05, 12, 64), ctx.mats.metal('chrome', { roughness: 0.15 })); bz.position.z = 0.16; am.add(bz); }
       const amF = new THREE.Mesh(new THREE.CircleGeometry(0.85, 40), h.basic(0xf4f6fb)); amF.position.z = 0.16; am.add(amF);
       const needle = new THREE.Group(); needle.position.set(0, -0.3, 0.2); am.add(needle); const nd = box(0.06, 0.9, 0.03, 0xe2464b); nd.position.y = 0.45; needle.add(nd);
       const wA = tube([new V3(XA, 4.1, 0), new V3(XA, 4.6, 0), new V3(-0.3, 4.7, -0.3)], 0.035, 0xe39a45, { mo: { metalness: 0.4 } }); root.add(wA);
@@ -140,7 +140,7 @@
       /* 전원(역전압) */
       const batt = new THREE.Group(); batt.add(box(1.3, 0.6, 0.6, 0x374151)); const bp = box(0.35, 0.62, 0.62, 0xe2464b); bp.position.x = -0.45; const bn = box(0.35, 0.62, 0.62, 0x2f6df6); bn.position.x = 0.45; batt.add(bp, bn); batt.position.set(-0.3, 5.5, -0.3); root.add(batt);
       /* 광원과 빛줄기 */
-      const lamp = new THREE.Group(); const lb = cyl(0.7, 0.9, 1.2, 0x4b5563, { metalness: 0.5 }, 24); lb.rotation.z = Math.PI / 2; const lc = sphere(0.65, 0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.9 }); lc.position.x = -0.7; lamp.add(lb, lc); lamp.position.set(7.4, 0, 0); root.add(lamp);
+      const lamp = new THREE.Group(); const lb = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.9, 1.2, 40), ctx.mats.plastic(0x5a6474, { roughness: 0.3, extra: { metalness: 0.4 } })); lb.rotation.z = Math.PI / 2; const lc = sphere(0.65, 0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.9 }); lc.position.x = -0.7; lamp.add(lb, lc); ctx.halo(lc, 0xffffff, 2.6, 0.55); lamp.position.set(7.4, 0, 0); root.add(lamp);
       const beam = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.8, 11.0, 32, 1, true), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.05, depthWrite: false, side: THREE.DoubleSide })); beam.rotation.z = Math.PI / 2; beam.position.x = 1.55; root.add(beam);
       CAMS.tube = { dist: 22 * KD, theta: 0.55, phi: 1.32, min: 9, max: 36, tx: 1.3, ty: 0.2, tz: 0 };
       /* 입자 */
@@ -163,7 +163,7 @@
         if (k <= 0) info(head + '전류계를 보세요: 광전자가 나오나요? 파장과 세기를 바꿔 가며 확인해 봐요.');
         else info(head + '역전압 ' + st.V.toFixed(2) + ' V · 역전압을 천천히 올리며 전류계가 처음 0이 되는 전압(정지 전압 V₀)을 찾아요.<br>역전압은 전자를 되밀어요: 운동 에너지가 큰 전자만 양극에 닿아요.');
         lV.set('역전압 ' + st.V.toFixed(2) + ' V');
-        const c = waveColor(st.lam); beam.material.color.copy(c); lc.material.color.copy(c); lc.material.emissive.copy(c); phM.material.color.copy(c); phM.material.emissive.copy(c);
+        const c = waveColor(st.lam); beam.material.color.copy(c); lc.material.color.copy(c); lc.material.emissive.copy(c); lc.children.forEach((o) => { if (o.isSprite) o.material.color.copy(c); }); phM.material.color.copy(c); phM.material.emissive.copy(c);
         lPh.el.style.background = '#' + c.clone().multiplyScalar(0.55).getHexString();
         cath.material.color.setHex(METALS[st.metal].c);
       }
@@ -190,7 +190,7 @@
       const pPlate = mm(gP, stdM(6.2, 0.4, 3.6, 0xf2c36b, { metalness: 0.9, roughness: 0.3 })); pPlate.position.set(-0.6, -2.0, 0);
       const pLampPos = new V3(-3.4, 3.4, 0), pTgt = new V3(-0.6, -1.8, 0);
       const pLamp = new THREE.Group(); pLamp.position.copy(pLampPos); gP.add(pLamp);
-      const pLb = cyl(0.55, 0.8, 1.0, 0x4b5563, { metalness: 0.5 }, 24); pLb.position.y = 0.3; pLamp.add(pLb); const pLc = sphM(0.5, 0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.9 }); pLc.position.y = -0.25; pLamp.add(pLc);
+      const pLb = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.8, 1.0, 40), ctx.mats.plastic(0x5a6474, { roughness: 0.3, extra: { metalness: 0.4 } })); pLb.position.y = 0.3; pLamp.add(pLb); const pLc = sphM(0.5, 0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.9 }); pLc.position.y = -0.25; pLamp.add(pLc);
       const pBeamDir = new V3().subVectors(pTgt, pLampPos), pBeamLen = pBeamDir.length();
       const Yax = h.Yax;
       const pBeam = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 0.3, pBeamLen, 28, 1, true), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.07, depthWrite: false, side: THREE.DoubleSide }));
@@ -295,7 +295,7 @@
       const grnd = stdM(15, 0.2, 5, 0x3a5a45, { roughness: 0.9 }); grnd.position.set(0, -1.55, -0.5); gM.add(grnd);
       const sunM = sphM(0.7, 0xffd34d, { emissive: 0xffb400, emissiveIntensity: 1 }); gM.add(sunM);
       const post = new THREE.Group(); post.position.set(4.3, -1.45, -0.6); gM.add(post);
-      const pole = cyl(0.07, 0.1, 3.4, 0xaab4c6, { metalness: 0.5 }, 12); pole.position.y = 1.7; post.add(pole);
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.1, 3.4, 16), ctx.mats.metal('steel', { brushed: true })); pole.position.y = 1.7; post.add(pole);
       const arm = stdM(1.1, 0.14, 0.3, 0xaab4c6, { metalness: 0.5 }); arm.position.set(-0.45, 3.4, 0); post.add(arm);
       const lampHead = sphM(0.3, 0xc7ccd6, { emissive: 0x000000 }); lampHead.position.set(-0.85, 3.2, 0); post.add(lampHead);
       const lampLight = new THREE.PointLight(0xffe27a, 0, 9, 1.6); lampLight.position.copy(lampHead.position); post.add(lampLight);

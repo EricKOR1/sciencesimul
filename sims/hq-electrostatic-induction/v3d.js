@@ -255,11 +255,11 @@
       }
 
       /* ================= ③ 종이 조각이 끌려오는 과정 ================= */
-      const rodP = cyl(0.3, 0.3, 4.2, 0xe9edf5, { roughness: 0.3 }); rodP.rotation.z = Math.PI / 2; gPa.add(rodP);
+      const rodP = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 3.6, 10, 40), ctx.mats.plastic(0xe9edf5, { roughness: 0.18, extra: { clearcoat: 0.9, clearcoatRoughness: 0.08 } })); rodP.rotation.z = Math.PI / 2; gPa.add(rodP);   // 매끈한 플라스틱(PVC) 막대
       const rodHalo = new THREE.Mesh(new THREE.SphereGeometry(0.6, 20, 14), glass(NEG, 0.0)); gPa.add(rodHalo);
       const rodCh = []; for (let i = 0; i < 7; i++) { const m = sphere(0.12, NEG, { emissive: NEG, emissiveIntensity: 0.6 }); m.position.set(-1.8 + i * 0.6, 0.0, 0.32); rodP.parent.add(m); rodCh.push(m); }
       const paper = new THREE.Group(); gPa.add(paper);
-      const paperB = box(4.4, 0.56, 2.4, 0xf4f1e8, { roughness: 0.8, transparent: true, opacity: 0.55, depthWrite: false }); paper.add(paperB);
+      const paperB = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.56, 2.4), ctx.mats.fabric(0xfffdf6, { repeat: 4, extra: { transparent: true, opacity: 0.62, depthWrite: false, emissive: 0x3a3830 } })); paper.add(paperB);   // 종이 결
       const pT = box(4.4, 0.03, 2.4, POS, { transparent: true, opacity: 0, depthWrite: false, emissive: POS, emissiveIntensity: 0.7 }), pBt = box(4.4, 0.03, 2.4, NEG, { transparent: true, opacity: 0, depthWrite: false, emissive: NEG, emissiveIntensity: 0.7 });
       pT.position.y = 0.28; pBt.position.y = -0.28; paper.add(pT, pBt);
       const pm = []; for (let i = 0; i < 6; i++) for (let j = 0; j < 3; j++) {

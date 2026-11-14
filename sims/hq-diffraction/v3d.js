@@ -101,10 +101,10 @@
       const water = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.18, metalness: 0.15 })); gT.add(water);
       /* 탱크 테두리 */
       const rimM = mat(0x64748b, { metalness: 0.5, roughness: 0.4 });
-      const rim = (w, d, x, z) => { const m = box(w, 0.35, d, 0x64748b, { metalness: 0.5, roughness: 0.4 }); m.position.set(x, -0.15, z); gT.add(m); };
+      const rim = (w, d, x, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.35, d), ctx.mats.metal('aluminium', { brushed: true })); m.position.set(x, -0.15, z); gT.add(m); };
       rim(X1 - X0 + 0.6, 0.3, (X0 + X1) / 2, YH + 0.15); rim(X1 - X0 + 0.6, 0.3, (X0 + X1) / 2, -YH - 0.15); rim(0.3, 2 * YH, X0 - 0.15, 0); rim(0.3, 2 * YH, X1 + 0.15, 0);
       /* 방해벽 */
-      const wallM = mat(0x94a3b8, { metalness: 0.5, roughness: 0.4 });
+      const wallM = ctx.mats.metal('steel', { brushed: true });
       const wU = new THREE.Mesh(new THREE.BoxGeometry(0.45, 1.1, 1), wallM), wD = new THREE.Mesh(new THREE.BoxGeometry(0.45, 1.1, 1), wallM); gT.add(wU, wD);
       const aW = anchor(gT, XB, 1.0, 0), lW = L('tank', '', aW, { color: '#475569', size: 13 });
       const lI = L('tank', '들어오는 평면 파동', anchor(gT, -4.4, 0.8, -2.8), { color: '#1d4ed8', size: 12 }), lD = L('tank', '퍼져 나가는 파동', anchor(gT, 3.8, 0.8, 2.6), { color: '#0f766e', size: 12 });
@@ -130,7 +130,7 @@
       const rBase = []; for (let i = 0; i < rPos.count; i++) rBase.push([rPos.getX(i), rPos.getZ(i)]);
       const rSurf = new THREE.Mesh(rGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.4, metalness: 0.1, side: THREE.DoubleSide })); gR.add(rSurf);
       const rPt = [0, 1].map(() => { const m = sphere(0.14, 0xfff3b0, { emissive: 0xffe066, emissiveIntensity: 1 }); m.position.y = 3.2; gR.add(m); return m; });
-      const lensRing = new THREE.Mesh(new THREE.TorusGeometry(1, 0.07, 12, 40), mat(0x94a3b8, { metalness: 0.6 })); lensRing.rotation.x = Math.PI / 2; lensRing.position.y = 2.1; gR.add(lensRing);
+      const lensRing = new THREE.Mesh(new THREE.TorusGeometry(1, 0.07, 12, 40), ctx.mats.metal('chrome', { roughness: 0.15 })); lensRing.rotation.x = Math.PI / 2; lensRing.position.y = 2.1; gR.add(lensRing);
       const rBeam = [0, 1].map(() => mkSeg(0xfff3b0, 0.02, { basic: true, mo: { transparent: true, opacity: 0.4 } })); rBeam.forEach((m) => gR.add(m));
       L('res', '두 점광원', anchor(gR, 0, 3.7, 0), { color: '#a16207', size: 12 }); const lLens = L('res', '', anchor(gR, 1.9, 2.1, 0), { color: '#475569', size: 12 });
       const lRes = L('res', '', anchor(gR, 0, 0.2, 2.1), { color: '#0f766e', size: 14 });
@@ -158,13 +158,13 @@
 
       /* ================= ③ 홀로그램 기록 (광학대) ================= */
       const HX = (x) => (x - 270) * 0.022, HY = (y) => -(y - 150) * 0.022;
-      const tbl = box(12.6, 0.3, 7, 0x1f2937, { roughness: 0.7 }); tbl.position.set(0.5, -2.6, 0); gH.add(tbl);
+      const tbl = new THREE.Mesh(new THREE.BoxGeometry(12.6, 0.3, 7), ctx.mats.metal(0x3a4150, { roughness: 0.45, brushed: true, repeat: 4 }));   // 광학 테이블 tbl.position.set(0.5, -2.6, 0); gH.add(tbl);
       const comps = [
-        { id: 'laser', mesh: box(1.4, 0.7, 0.7, 0xef4444, { roughness: 0.4 }), n: '레이저' },
-        { id: 'bs', mesh: box(0.7, 0.7, 0.7, 0x93c5fd, { transparent: true, opacity: 0.7, roughness: 0.1 }), n: '빔 분할기' },
-        { id: 'mirror', mesh: box(0.12, 0.8, 0.8, 0xe2e8f0, { metalness: 0.9, roughness: 0.1 }), n: '거울' },
-        { id: 'obj', mesh: (function () { const g = new THREE.Group(); const b = cyl(0.35, 0.45, 0.5, 0xd1d5db, {}, 14), hd = sphere(0.3, 0xe5e7eb); hd.position.y = 0.5; const bd = cyl(0.3, 0.38, 0.8, 0xd1d5db, {}, 14); bd.position.y = 0.0; g.add(bd, hd); return g; }()), n: '물체(조각상)' },
-        { id: 'film', mesh: box(0.1, 3.3, 1.8, 0xbfe3ff, { transparent: true, opacity: 0.45, roughness: 0.1 }), n: '필름' },
+        { id: 'laser', mesh: new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.7, 0.7), ctx.mats.plastic(0xd8343a, { roughness: 0.25 })), n: '레이저' },
+        { id: 'bs', mesh: new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.7), ctx.mats.glass({ tint: 0x93c5fd, opacity: 0.55 })), n: '빔 분할기' },
+        { id: 'mirror', mesh: new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.8, 0.8), ctx.mats.metal('chrome', { roughness: 0.03 })), n: '거울' },
+        { id: 'obj', mesh: (function () { const g = new THREE.Group(); const stat = ctx.mats.ceramic(0xe2e5ea); const b = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 0.5, 32), stat), hd = new THREE.Mesh(new THREE.SphereGeometry(0.3, 32, 24), stat); hd.position.y = 0.5; const bd = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.38, 0.8, 32), stat); bd.position.y = 0.0; g.add(bd, hd); return g; }()), n: '물체(조각상)' },
+        { id: 'film', mesh: new THREE.Mesh(new THREE.BoxGeometry(0.1, 3.3, 1.8), ctx.mats.glass({ tint: 0xbfe3ff, opacity: 0.45 })), n: '필름' },
       ];
       const gBeams = [0, 1, 2, 3].map((i) => mkSeg(i < 2 ? 0xff4d4d : i === 2 ? 0xff9a9a : 0xff6b6b, 0.045, { basic: true, mo: { transparent: true, opacity: 0.9 } })); gBeams.forEach((m) => gH.add(m));
       const hLab = comps.map((c) => { c.mesh.position.set(0, 0, 0); gH.add(c.mesh); return L('holo', c.n, c.mesh, { color: '#475569', size: 12, offset: [0, 0.9, 0] }); });

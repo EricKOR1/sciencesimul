@@ -23,7 +23,7 @@
       let sd = 5; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
 
       /* 땅 · 마을 */
-      const ground = new THREE.Mesh(new THREE.CylinderGeometry(6.4, 6.4, 0.3, 72), std(0x3b6a3a, { bumpMap: mats.tex('noise'), bumpScale: 0.02 })); ground.receiveShadow = true;   // 풀밭 (잔무늬) ground.position.y = -0.15; root.add(ground); ground.userData.v3bg = true;   // 바닥은 화면 맞춤에서 빼요
+      const ground = new THREE.Mesh(new THREE.CylinderGeometry(6.4, 6.4, 0.3, 72), std(0x3b6a3a, { bumpMap: mats.tex('noise'), bumpScale: 0.02 }));   // 풀밭 (잔무늬) ground.position.y = -0.15; root.add(ground); ground.userData.v3bg = true;   // 바닥은 화면 맞춤에서 빼요
       { const hm = [mats.ceramic(0xe2d2b0, { extra: { roughness: 0.6, clearcoat: 0.1 } }), mats.ceramic(0xc9725a, { extra: { roughness: 0.6, clearcoat: 0.1 } }), mats.ceramic(0xb1bfd2, { extra: { roughness: 0.6, clearcoat: 0.1 } })];   // 회벽 집
         [[-3.6, 1.2], [-4.2, -0.3], [-3.2, -1.7], [4.0, 1.6], [4.4, -0.6], [3.4, -2.2]].forEach((p, i) => { const h = new THREE.Group(), b = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.36, 0.42), hm[i % 3]), r = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.28, 4), mats.wood(0x6b4e3d)); b.castShadow = r.castShadow = true; r.rotation.y = Math.PI / 4; b.position.y = 0.18; r.position.y = 0.5; h.add(b, r); h.position.set(p[0], 0, p[1]); root.add(h); });
         const tw = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.06, 0.95, 8), mats.metal('steel', { brushed: true })); tw.position.set(3.0, 0.48, 0.4); root.add(tw); }

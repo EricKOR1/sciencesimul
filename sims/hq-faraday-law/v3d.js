@@ -101,7 +101,7 @@
 
       /* ================= ① 자기선속 ================= */
       const MAXL = 400, fArr = arrowSet(MAXL, 0.03); gF.add(fArr.group);
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.06, 16, 64), mat(COPPER, { metalness: 0.5, roughness: 0.35 }));
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.06, 20, 96), ctx.mats.metal('copper', { roughness: 0.28 }));
       const disc = new THREE.Mesh(new THREE.CircleGeometry(1, 48), glass(0xffe08a, 0.22));
       const loop = new THREE.Group(); loop.add(ring, disc); gF.add(loop);
       const nArr = mkArrow(0xffffff, 0.045); gF.add(nArr);
@@ -138,18 +138,18 @@
         const pts = [], T = st.N, seg = 40;
         for (let i = 0; i <= T * seg; i++) { const s = i / seg, a = s * Math.PI * 2; pts.push(new V3(CY * Math.cos(a), -CH / 2 + CH * s / T, CY * Math.sin(a))); }
         const cv = new THREE.CatmullRomCurve3(pts);
-        coilMesh = new THREE.Mesh(new THREE.TubeGeometry(cv, T * seg * 2, 0.06, 8, false), mat(COPPER, { metalness: 0.5, roughness: 0.35 }));
+        coilMesh = new THREE.Mesh(new THREE.TubeGeometry(cv, T * seg * 2, 0.06, 10, false), ctx.mats.metal('copper', { roughness: 0.28 }));
         coilG.add(coilMesh);
         coilG.userData.top = pts[pts.length - 1];
       }
       buildCoil();
       const magnet = new THREE.Group(); gC.add(magnet);
-      const mN = box(0.9, 1.6, 0.9, NC, { roughness: 0.35, metalness: 0.3 }), mS = box(0.9, 1.6, 0.9, SC, { roughness: 0.35, metalness: 0.3 });
+      const mN = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.6, 0.9), ctx.mats.plastic(NC, { roughness: 0.25 })), mS = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.6, 0.9), ctx.mats.plastic(SC, { roughness: 0.25 }));
       mN.position.y = -0.8; mS.position.y = 0.8; magnet.add(mN, mS);          // N극이 아래
       const lMN = L('coil', 'N', mN, { color: '#e2464b', size: 15 }), lMS = L('coil', 'S', mS, { color: '#2f6df6', size: 15 });
       /* 검류계 */
       const gal = new THREE.Group(); gal.position.set(4.2, -1.2, 0); gC.add(gal);
-      const gBody = cyl(1.15, 1.15, 0.35, 0x2c3345, { roughness: 0.4, metalness: 0.4 }, 40); gBody.rotation.x = Math.PI / 2; gal.add(gBody);
+      const gBody = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 0.35, 48), ctx.mats.plastic(0x2c3345, { roughness: 0.3 })); { const bz = new THREE.Mesh(new THREE.TorusGeometry(1.1, 0.06, 12, 64), ctx.mats.metal('chrome', { roughness: 0.15 })); bz.position.z = 0.19; gal.add(bz); } gBody.rotation.x = Math.PI / 2; gal.add(gBody);
       const gFace = new THREE.Mesh(new THREE.CircleGeometry(1.0, 48), h.basic(0xf4f6fb)); gFace.position.z = 0.19; gal.add(gFace);
       [-1, -0.5, 0, 0.5, 1].forEach((u) => { const tk = box(0.04, u === 0 ? 0.28 : 0.16, 0.02, 0x334, { roughness: 0.6 }); const a = u * 0.9; tk.position.set(Math.sin(a) * 0.82, Math.cos(a) * 0.82 - 0.35, 0.2); tk.rotation.z = -a; gal.add(tk); });
       const needle = new THREE.Group(); needle.position.set(0, -0.35, 0.22); gal.add(needle);
@@ -167,7 +167,7 @@
 
       /* ================= ③ 자기 브레이크 (구리관 속 자석) ================= */
       const PH = 7, YT = 3.4, YB = -3.4;
-      const pipeCu = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, PH, 40, 1, true), mat(COPPER, { metalness: 0.75, roughness: 0.3, side: THREE.DoubleSide, transparent: true, opacity: 0.5, depthWrite: false })); pipeCu.position.x = -2.2;
+      const pipeCu = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, PH, 48, 1, true), ctx.mats.metal('copper', { roughness: 0.25, extra: { side: THREE.DoubleSide, transparent: true, opacity: 0.5, depthWrite: false } })); pipeCu.position.x = -2.2;
       const pipePl = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, PH, 40, 1, true), glass(0xbfd6ff, 0.16)); pipePl.position.x = 2.2;
       gB.add(pipeCu, pipePl);
       const mkMag = () => { const g = new THREE.Group(); const a = cyl(0.42, 0.42, 0.55, NC, { roughness: 0.35, metalness: 0.3 }, 24), b = cyl(0.42, 0.42, 0.55, SC, { roughness: 0.35, metalness: 0.3 }, 24); a.position.y = -0.27; b.position.y = 0.27; g.add(a, b); return g; };
@@ -190,13 +190,13 @@
       /* ================= 도체판 진자 (자기 브레이크 · 2D의 진자 각도를 그대로 따라가요) ================= */
       const gPd = new THREE.Group(); root.add(gPd);
       const PL_ = 4.2, PIV = new V3(0, 3.6, 0);
-      const pivBar = box(1.6, 0.18, 0.5, 0x64748b, { metalness: 0.5 }); pivBar.position.copy(PIV); gPd.add(pivBar);
+      const pivBar = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.18, 0.5), ctx.mats.metal('steel', { brushed: true })); pivBar.position.copy(PIV); gPd.add(pivBar);
       const swing = new THREE.Group(); swing.position.copy(PIV); gPd.add(swing);
-      const rodSw = cyl(0.04, 0.04, PL_, 0x94a3b8, { metalness: 0.6 }, 8); rodSw.position.y = -PL_ / 2; swing.add(rodSw);
+      const rodSw = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, PL_, 12), ctx.mats.metal('steel')); rodSw.position.y = -PL_ / 2; swing.add(rodSw);
       const plate = new THREE.Group(); plate.position.y = -PL_ - 0.7; swing.add(plate);
-      const plBody = box(1.7, 1.5, 0.12, 0xc9824a, { metalness: 0.7, roughness: 0.3 }); plate.add(plBody);
+      const plBody = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.5, 0.12), ctx.mats.metal('copper', { roughness: 0.3, brushed: true })); plate.add(plBody);
       const slits = []; for (let i = 0; i < 4; i++) { const sl = box(0.07, 1.0, 0.16, 0x0b1224, { roughness: 1 }); sl.position.set(-0.6 + i * 0.4, -0.2, 0); sl.visible = false; plate.add(sl); slits.push(sl); }
-      const mgN = box(1.5, 1.6, 0.55, NC, { roughness: 0.35, metalness: 0.3 }), mgS = box(1.5, 1.6, 0.55, SC, { roughness: 0.35, metalness: 0.3 });
+      const mgN = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.6, 0.55), ctx.mats.plastic(NC, { roughness: 0.25 })), mgS = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.6, 0.55), ctx.mats.plastic(SC, { roughness: 0.25 }));
       mgN.position.set(0, PIV.y - PL_ - 0.7, 0.62); mgS.position.set(0, PIV.y - PL_ - 0.7, -0.62); gPd.add(mgN, mgS);
       const eddyP = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.045, 10, 36), mat(0xffd54d, { emissive: 0xffb300, emissiveIntensity: 0.9, transparent: true, opacity: 0, depthWrite: false })); gPd.add(m); return m; });
       const aPlate = anchor(plate, 0, 1.05, 0), lPlate = L('pend', '', aPlate, { color: '#b45309', size: 13 });
@@ -223,12 +223,12 @@
       /* ================= ⑤ 움직이는 막대 도체 (rail) · 가상 실험 (fake) ================= */
       const gRl = new THREE.Group(); root.add(gRl); gRl.visible = false;
       const RU = 0.022, RXc = (px) => (px - 250) * RU, RZc = (py) => (py - 210) * RU, RLEN = 300;
-      const rBase = box(9.6, 0.2, 5.8, 0x1f2937, { roughness: 0.7 }); rBase.position.set(0, -0.2, 0); gRl.add(rBase);
+      const rBase = new THREE.Mesh(new THREE.BoxGeometry(9.6, 0.2, 5.8), ctx.mats.wood(0x6a4a30, { repeat: 3 })); rBase.position.set(0, -0.2, 0); gRl.add(rBase);
       const zT = RZc(120), zB = RZc(300), xL = RXc(60), xR = RXc(440);
-      [zT, zB].forEach((z) => { const r = cyl(0.07, 0.07, xR - xL, 0xb7c0d0, { metalness: 0.8, roughness: 0.3 }, 14); r.rotation.z = Math.PI / 2; r.position.set((xL + xR) / 2, 0.1, z); gRl.add(r); });
-      [[zT, RZc(180)], [RZc(240), zB]].forEach(([a, b]) => { const w = cyl(0.07, 0.07, Math.abs(b - a), 0xb7c0d0, { metalness: 0.8 }, 12); w.rotation.x = Math.PI / 2; w.position.set(xL, 0.1, (a + b) / 2); gRl.add(w); });
+      [zT, zB].forEach((z) => { const r = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, xR - xL, 16), ctx.mats.metal('copper', { roughness: 0.25 })); r.rotation.z = Math.PI / 2; r.position.set((xL + xR) / 2, 0.1, z); gRl.add(r); });
+      [[zT, RZc(180)], [RZc(240), zB]].forEach(([a, b]) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, Math.abs(b - a), 16), ctx.mats.metal('copper', { roughness: 0.25 })); w.rotation.x = Math.PI / 2; w.position.set(xL, 0.1, (a + b) / 2); gRl.add(w); });
       const resis = box(0.5, 0.3, 1.3, 0x475569, { roughness: 0.5 }); resis.position.set(xL, 0.15, RZc(210)); gRl.add(resis);
-      const barM = cyl(0.12, 0.12, (zB - zT) + 0.5, 0xcbd5e1, { metalness: 0.85, roughness: 0.25 }, 18); barM.rotation.x = Math.PI / 2; gRl.add(barM);
+      const barM = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, (zB - zT) + 0.5, 24), ctx.mats.metal('chrome', { roughness: 0.12 })); barM.rotation.x = Math.PI / 2; gRl.add(barM);
       const fluxPl = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: 0xfacc15, transparent: true, opacity: 0.2, side: THREE.DoubleSide, depthWrite: false })); fluxPl.rotation.x = -Math.PI / 2; gRl.add(fluxPl);
       const bArr = arrowSet(40, 0.025); gRl.add(bArr.group);
       let bi = 0; for (let x = 90; x < 440; x += 44) for (let y = 138; y < 300; y += 40) { if (bi < 40) { bArr.set(bi++, new V3(RXc(x), 1.5, RZc(y)), new V3(0, -1, 0), 0.9, 0x7c3aed); } } bArr.flush();

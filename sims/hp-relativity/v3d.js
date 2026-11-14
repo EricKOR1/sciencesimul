@@ -137,7 +137,7 @@
       }
       /* ================= 📏 길이 수축: 우주선 ================= */
       function shipMk(col) {
-        const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.CapsuleGeometry(0.55, 3.0, 10, 40), ctx.mats.metal(col, { roughness: 0.22, brushed: true })); b.rotation.z = Math.PI / 2; g.add(b);
+        const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 4, 48), ctx.mats.plastic(col, { roughness: 0.22, extra: { metalness: 0.35, clearcoat: 0.8 } })); b.rotation.z = Math.PI / 2; g.add(b);
         [-1.2, 0.2, 1.4].forEach((x) => { const bd = new THREE.Mesh(new THREE.TorusGeometry(0.56, 0.025, 8, 48), ctx.mats.metal('iron', { roughness: 0.4 })); bd.rotation.y = Math.PI / 2; bd.position.x = x; g.add(bd); });   // 동체 이음매
         const nz = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.45, 0.45, 32, 1, true), ctx.mats.metal('iron', { roughness: 0.35, extra: { side: THREE.DoubleSide } })); nz.rotation.z = Math.PI / 2; nz.position.x = -2.25; g.add(nz);   // 엔진 노즐
         const n = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.1, 24), ctx.mats.plastic(0xd8343a, { roughness: 0.2 })); n.rotation.z = -Math.PI / 2; n.position.x = 2.55; g.add(n);

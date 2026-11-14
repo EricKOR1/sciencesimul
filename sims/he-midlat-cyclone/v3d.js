@@ -24,7 +24,7 @@
       const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
       /* 땅: 찬 공기 쪽(북·서)과 따뜻한 쪽(남동) 색 */
-      const slab = new THREE.Mesh(new THREE.BoxGeometry(15, 0.3, 9.4), mats.stone(0x2f3d4b, { repeat: 4 })); slab.receiveShadow = true; slab.position.set(0.8, -0.16, 0.4); root.add(slab);
+      const slab = new THREE.Mesh(new THREE.BoxGeometry(15, 0.3, 9.4), std(0x2f3d4b, { bumpMap: mats.tex('noise'), bumpScale: 0.015 })); slab.position.set(0.8, -0.16, 0.4); root.add(slab);
       const sys = new THREE.Group(); root.add(sys);                 // 이동하는 전선계
       const LX = -0.8, LZ = -0.6;                                   // 저기압 중심
       const WF = { x1: 4.8, W: 4.6, H: 1.15 }, CF = { z1: 3.9, W: 2.0, H: 1.7 };

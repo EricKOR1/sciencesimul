@@ -111,7 +111,7 @@
       function setLines(lines, sign, op) { lines.forEach((l) => { l.tube.material.opacity = op; l.cones.forEach((c) => { c.quaternion.setFromUnitVectors(Yax, c.userData.tg.clone().multiplyScalar(sign)); c.material.opacity = op; }); }); }
 
       /* ---------- ① 직선 전류 ---------- */
-      const wireMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 8, 16), mat(0xe39a45, { metalness: 0.4 })); gW.add(wireMesh);
+      const wireMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 8, 24), ctx.mats.metal('copper', { roughness: 0.25 })); gW.add(wireMesh);
       const plane = new THREE.Mesh(new THREE.CircleGeometry(4.8, 64), basic(0x6b7fb4, { transparent: true, opacity: 0.16, side: THREE.DoubleSide })); plane.rotation.x = -Math.PI / 2; gW.add(plane);
       const wLines = []; // 동심원 (비 1.5 = 같은 자속)
       const RINGS = [0.55, 0.85, 1.3, 2.0, 3.0, 4.5];
@@ -147,7 +147,7 @@
       function buildLoop() {
         disposeKids(loopWrap); const R = lRU(), N = st.l.N;
         for (let k = 0; k < N; k++) {
-          const t = new THREE.Mesh(new THREE.TorusGeometry(R, 0.06, 10, 64), mat(0xe39a45, { metalness: 0.4 })); t.rotation.y = Math.PI / 2; t.position.x = (k - (N - 1) / 2) * 0.22; loopWrap.add(t);
+          const t = new THREE.Mesh(new THREE.TorusGeometry(R, 0.06, 14, 96), ctx.mats.metal('copper', { roughness: 0.25 })); t.rotation.y = Math.PI / 2; t.position.x = (k - (N - 1) / 2) * 0.22; loopWrap.add(t);
         }
         if (Math.abs(lRbuilt - R) > 1e-6) {
           lRbuilt = R; disposeKids(lGroup); SRC_L = loopSources(0, 0, 1, R, 48);
@@ -163,7 +163,7 @@
       const sGroup = new THREE.Group(); gS.add(sGroup);
       const sLines = traceLines(sGroup, SRC_S, sSeeds, -SL * 0.45, 6.2, 'x0');
       const sCoil = new THREE.Group(); gS.add(sCoil);
-      const sCore = new THREE.Mesh(new THREE.CylinderGeometry(SR * 0.62, SR * 0.62, SL + 0.3, 24), mat(0x9aa3b2, { transparent: true, opacity: 0.55, metalness: 0.5 })); sCore.rotation.z = Math.PI / 2; gS.add(sCore);
+      const sCore = new THREE.Mesh(new THREE.CylinderGeometry(SR * 0.62, SR * 0.62, SL + 0.3, 24), ctx.mats.metal('iron', { roughness: 0.4, extra: { transparent: true, opacity: 0.55 } })); sCore.rotation.z = Math.PI / 2; gS.add(sCore);
       const sCapN = new THREE.Mesh(new THREE.CircleGeometry(SR * 1.1, 32), basic(NC, { transparent: true, opacity: 0.4, side: THREE.DoubleSide })), sCapS = new THREE.Mesh(new THREE.CircleGeometry(SR * 1.1, 32), basic(0x2f6df6, { transparent: true, opacity: 0.4, side: THREE.DoubleSide }));
       sCapN.rotation.y = sCapS.rotation.y = Math.PI / 2; gS.add(sCapN, sCapS);
       const sLabN = label('N극', sCapN, { color: '#e2464b', offset: [0, 0.95, 0] }), sLabS = label('S극', sCapS, { color: '#2f6df6', offset: [0, 0.95, 0] });
@@ -173,7 +173,7 @@
       function buildSol() {
         disposeKids(sCoil); sTurns = Math.round(st.s.n / 100); const pts = [];
         for (let i = 0; i <= sTurns * 24; i++) { const s = i / 24; pts.push(new V3(-SL / 2 + SL * s / sTurns, SR * Math.cos(s * Math.PI * 2), SR * Math.sin(s * Math.PI * 2))); }
-        sPath = pts; sCoil.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), Math.min(900, pts.length), 0.045, 6, false), mat(0xe39a45, { metalness: 0.4 })));
+        sPath = pts; sCoil.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), Math.min(900, pts.length), 0.045, 8, false), ctx.mats.metal('copper', { roughness: 0.25 })));
       }
 
       /* ---------- 상태 → 장면 ---------- */

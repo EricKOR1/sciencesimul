@@ -113,7 +113,7 @@
 
       /* ================= ① 사이클로트론 ================= */
       const RD = 3.7;
-      const deeM = mat(COPPER, { metalness: 0.7, roughness: 0.3, transparent: true, opacity: 0.38, depthWrite: false });
+      const deeM = ctx.mats.metal('copper', { roughness: 0.22, brushed: true, extra: { transparent: true, opacity: 0.42, depthWrite: false } });
       const deeR = new THREE.Mesh(new THREE.CylinderGeometry(RD, RD, 0.6, 56, 1, false, 0, Math.PI), deeM), deeL = new THREE.Mesh(new THREE.CylinderGeometry(RD, RD, 0.6, 56, 1, false, Math.PI, Math.PI), deeM);
       deeR.position.x = 0.22; deeL.position.x = -0.22; gC.add(deeR, deeL);
       [deeR, deeL].forEach((d) => { d.add(new THREE.LineSegments(new THREE.EdgesGeometry(d.geometry, 30), new THREE.LineBasicMaterial({ color: 0xffc98a }))); });
@@ -175,11 +175,11 @@
       }
 
       /* ================= ② 질량 분석기 ================= */
-      const wallM = box(0.4, 1.2, 14, 0x64748b, { metalness: 0.4, roughness: 0.5 }); wallM.position.set(-2.5, 0, 3.4); gM.add(wallM);
+      const wallM = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.2, 14), ctx.mats.metal('steel', { brushed: true })); wallM.position.set(-2.5, 0, 3.4); gM.add(wallM);
       const pl1 = box(3.4, 1.0, 0.18, 0x94a3b8, { metalness: 0.6 }), pl2 = box(3.4, 1.0, 0.18, 0x94a3b8, { metalness: 0.6 }); pl1.position.set(-4.5, 0, 0.75); pl2.position.set(-4.5, 0, -0.75); gM.add(pl1, pl2);
-      pl1.material = mat(0xff8a8a, { metalness: 0.6, roughness: 0.4 }); pl2.material = mat(0x8ab4ff, { metalness: 0.6, roughness: 0.4 });
+      pl1.material = ctx.mats.plastic(0xff8a8a, { roughness: 0.22, extra: { metalness: 0.3 } }); pl2.material = ctx.mats.plastic(0x8ab4ff, { roughness: 0.22, extra: { metalness: 0.3 } });
       const selE = mkArrow(0xffe14d, 0.05); setArrow(selE, new V3(-4.5, 1.0, 0.55), new V3(-4.5, 1.0, -0.55)); gM.add(selE);
-      const gunM = cyl(0.5, 0.65, 1.2, 0x4b5563, { metalness: 0.6 }); gunM.rotation.z = Math.PI / 2; gunM.position.set(-7.4, 0, 0); gM.add(gunM);
+      const gunM = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.65, 1.2, 40), ctx.mats.metal('steel', { brushed: true })); gunM.rotation.z = Math.PI / 2; gunM.position.set(-7.4, 0, 0); gM.add(gunM);
       bGrid(gM, 3, 2, -6.2, -1.2, 1.6, 1.6, 1.2, 0.6, true);                       // 속도 선택기의 B₁
       const bm = bGrid(gM, 6, 6, -1.6, 0.6, 1.5, 1.5, 1.2, 0.6, true);
       const SPCOL = { c12: 0xff6b6b, c14: 0x60a5fa, c12d: 0xfbbf24, x: 0x4ade80 };
@@ -224,7 +224,7 @@
       /* ================= ③ 토카막 ================= */
       const TR = 3.6, TA = 1.35;
       const torus = new THREE.Mesh(new THREE.TorusGeometry(TR, TA, 28, 72), glass(0xff8fb0, 0.1)); torus.rotation.x = Math.PI / 2; gT.add(torus);
-      for (let i = 0; i < 16; i++) { const psi = i / 16 * Math.PI * 2; const r = new THREE.Mesh(new THREE.TorusGeometry(TA + 0.28, 0.08, 10, 36), mat(COPPER, { metalness: 0.6, roughness: 0.35 })); r.position.set(TR * Math.cos(psi), 0, TR * Math.sin(psi)); r.quaternion.setFromUnitVectors(new V3(0, 0, 1), new V3(-Math.sin(psi), 0, Math.cos(psi))); gT.add(r); }
+      for (let i = 0; i < 16; i++) { const psi = i / 16 * Math.PI * 2; const r = new THREE.Mesh(new THREE.TorusGeometry(TA + 0.28, 0.08, 10, 36), ctx.mats.metal('copper', { roughness: 0.28 })); r.position.set(TR * Math.cos(psi), 0, TR * Math.sin(psi)); r.quaternion.setFromUnitVectors(new V3(0, 0, 1), new V3(-Math.sin(psi), 0, Math.cos(psi))); gT.add(r); }
       const bLine = new THREE.Mesh(new THREE.TorusGeometry(TR, 0.03, 8, 96), h.basic(0x9db7ff)); bLine.rotation.x = Math.PI / 2; gT.add(bLine);
       const bCones = []; for (let i = 0; i < 8; i++) { const psi = i / 8 * Math.PI * 2 + 0.2; const c = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.4, 12), h.basic(0xcfe0ff)); c.position.set(TR * Math.cos(psi), 0, TR * Math.sin(psi)); c.quaternion.setFromUnitVectors(h.Yax, new V3(-Math.sin(psi), 0, Math.cos(psi))); gT.add(c); bCones.push(c); }
       const NI = 7;
@@ -256,7 +256,7 @@
       /* ================= ④ 밴앨런대 (지구 자기장에 갇힌 입자) ================= */
       const RE = 1.25;
       const earthTex = (() => { const c = document.createElement('canvas'); c.width = 256; c.height = 128; const g = c.getContext('2d'); g.fillStyle = '#1f6fb5'; g.fillRect(0, 0, 256, 128); g.fillStyle = '#3f9d5a'; [[40, 50, 26], [75, 70, 18], [120, 40, 22], [150, 78, 24], [190, 50, 28], [215, 85, 14], [20, 90, 12], [100, 100, 10]].forEach(([x, y, r]) => { g.beginPath(); g.ellipse(x, y, r, r * 0.7, 0.4, 0, 7); g.fill(); }); g.fillStyle = '#eef6ff'; g.fillRect(0, 0, 256, 9); g.fillRect(0, 119, 256, 9); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t; })();
-      const earth = new THREE.Mesh(new THREE.SphereGeometry(RE, 48, 32), mat(0xffffff, { map: earthTex, roughness: 0.75 })); gV.add(earth);
+      const earth = new THREE.Mesh(new THREE.SphereGeometry(RE, 48, 32), ctx.mats.plastic(0xffffff, { roughness: 0.55, extra: { map: earthTex, clearcoat: 0.3 } })); gV.add(earth);
       const bFieldLines = new THREE.Group(); gV.add(bFieldLines);
       function dipLine(L, phi, col, rad) {
         const l0 = Math.acos(Math.sqrt(1 / L)), pts = [];

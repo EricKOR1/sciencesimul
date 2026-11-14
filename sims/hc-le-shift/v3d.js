@@ -42,7 +42,7 @@
       const sLab = label('', [0, 0, 0], { size: 12.5 });
       /* 물 중탕 */
       const gT = new THREE.Group(); root.add(gT);
-      const bath = new THREE.Mesh(unit, mats.liquid(0x4aa3ff, { opacity: 0.32 })), bathE = new THREE.Group();   // 물 (온도에 따라 색이 바뀜) + 유리 수조
+      const bath = new THREE.Mesh(unit, mats.liquid(0x3d8fe6, { opacity: 0.2, extra: { envMapIntensity: 0.6 } })), bathE = new THREE.Group();   // 물 (온도에 따라 색이 바뀜) + 유리 수조
       // 플라스크 속 기체 색: NO₂(갈색)가 많을수록 진해져요 (2D 플라스크의 색 변화와 같아요)
       const flask = new THREE.Mesh(new THREE.SphereGeometry(0.5, 48, 32), new THREE.MeshStandardMaterial({ color: 0xa65b1e, transparent: true, opacity: 0.1, roughness: 0.2, depthWrite: false })), flaskE = new THREE.Group();   // 둥근 플라스크 속 기체 색
       const flame = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.2, 20), mats.emissive(0xff7a1a, 1.6, { extra: { transparent: true, opacity: 0.9 } })); ctx.halo(flame, 0xff8a3a, 2.4, 0.7);
@@ -53,7 +53,7 @@
       const BW = 5.2, BH = 3.4, BD = 3.6, FW = 2.6, FH = 2.2, FD = 2.2;
       bath.scale.set(BW, BH, BD); bath.position.y = BH / 2;
       { // 유리 수조: 벽 두께 · 테두리 · 수면 · 받침
-        const tank = new THREE.Mesh(new THREE.BoxGeometry(BW + 0.16, BH + 0.5, BD + 0.16), mats.glass({ opacity: 0.12 })); tank.position.y = (BH + 0.5) / 2; tank.renderOrder = 4; bathE.add(tank);
+        const tank = new THREE.Mesh(new THREE.BoxGeometry(BW + 0.16, BH + 0.5, BD + 0.16), mats.glass({ opacity: 0.06 })); tank.position.y = (BH + 0.5) / 2; tank.renderOrder = 4; bathE.add(tank);
         const te = new THREE.LineSegments(new THREE.EdgesGeometry(tank.geometry), new THREE.LineBasicMaterial({ color: 0xe6f1ff, transparent: true, opacity: 0.6 })); te.position.copy(tank.position); bathE.add(te);
         const surf = new THREE.Mesh(new THREE.PlaneGeometry(BW, BD), mats.liquid(0x9bd0ff, { opacity: 0.3, extra: { side: THREE.DoubleSide } })); surf.rotation.x = -Math.PI / 2; surf.position.y = BH + 0.005; surf.renderOrder = 2; bathE.add(surf);
         const pad = new THREE.Mesh(new THREE.BoxGeometry(BW + 0.5, 0.08, BD + 0.5), mats.rubber(0x20242c)); pad.position.y = -0.02; bathE.add(pad); }
