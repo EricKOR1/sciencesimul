@@ -17,6 +17,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: narrow ? 13 : 11.5, theta: 0.3, phi: 1.38, target: [0, -0.4, 0], min: 6, max: 22 },
     autoRotate: 0,
+    autofit: false,     // 세포가 갈라져 퍼지는 동안 화면 밖으로 나가지 않게, 차시가 정한 거리 그대로
     levels: [0],   // 감수 분열 단계만 3D. 수정 · 핵형 카드 · 염색체 편집 · 빈도 그래프는 캔버스에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
@@ -97,7 +98,7 @@
       const MC = [0x3b82f6, 0xef4444], PL = [0.9, 1.15, 1.4];     // 어머니(파랑) · 아버지(빨강) 염색체, 쌍마다 길이가 달라요
       const cells = [];
       for (let side = 0; side < 2; side++) for (let s = 0; s < 2; s++) {
-        const m = new THREE.Mesh(new THREE.SphereGeometry(1, 56, 40), ctx.mats.glass({ tint: 0xc4dcff, opacity: 0.1, extra: { roughness: 0.16, envMapIntensity: 0.9, clearcoatRoughness: 0.2 } }));   // 세포막: 얇고 맑은 막
+        const m = new THREE.Mesh(new THREE.SphereGeometry(1, 56, 40), ctx.mats.glass({ tint: 0xc4dcff, opacity: 0.1, extra: { roughness: 0.16, envMapIntensity: 0.9, clearcoatRoughness: 0.2, side: THREE.FrontSide } }));   // 세포막: 얇고 맑은 막
         meiG.add(m); cells.push({ m, side: side ? 1 : -1, s: s ? 1 : -1 });
       }
       const chroms = [];     // {p, h, g(중심체), sis:[메시, 메시], side}
@@ -146,6 +147,7 @@
           const z2 = c.s * 1.6, x1 = c.side * 2.3;
           const x = lerp(0, x1, p1), z = lerp(0, z2, p2), r = lerp(lerp(2.7, 1.9, p1), 1.15, p2);
           c.m.position.set(x, 0, z); c.m.scale.setScalar(r);
+          c.m.visible = p2 > 0 || (c.s < 0 && (p1 > 0 || c.side < 0));     // 겹쳐 있는 동안은 막을 한 장만 그려요 (여러 장이 겹치면 화면이 뿌옇게 돼요)
         });
         const cnt = { '-1': [], '1': [] };
         chroms.forEach((c) => cnt[c.side].push(c));
@@ -190,7 +192,7 @@
         g2.els.forEach((e) => { e.style.display = v === 'mei' ? '' : 'none'; }); g3.els.forEach((e) => { e.style.display = v === 'struct' ? '' : 'none'; });
         g4.els.forEach((e) => { e.style.display = v === 'mei' ? '' : 'none'; }); g5.els.forEach((e) => { e.style.display = v === 'struct' ? '' : 'none'; });
         if (v === 'struct') { showSt(true); textSt(); orbit.dist = narrow ? 14 : 11.5; orbit.phi = 1.38; orbit.ty = -0.4; t = 0; setKind(kind); }
-        else { showSt(false); gLab.forEach((l) => l.show(false)); orbit.dist = narrow ? 9 : 6.6; orbit.phi = 0.95; orbit.ty = 0; setMei(meiKind); }
+        else { showSt(false); gLab.forEach((l) => l.show(false)); orbit.dist = narrow ? 13 : 8.4; orbit.phi = 0.95; orbit.ty = 0; setMei(meiKind); }
       }
       setKind('del'); setMei('normal'); setScene('mei');
 

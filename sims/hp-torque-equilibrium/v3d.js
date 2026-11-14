@@ -221,7 +221,7 @@
 
       /* ================= 🌀 우력: 얼음 위의 막대 (위에서 본 모습, 1 m = 8칸, 위쪽 힘 = 화면 위 = −z) ================= */
       const CS = 8, CPX = [-0.2, 0, 0.2], CFS = 0.08, labCp = [];
-      const ice = new THREE.Mesh(new THREE.BoxGeometry(9, 0.3, 5.6), ctx.mats.ice({ extra: { color: 0x9cc8e6, opacity: 0.92 } })); ice.position.y = -0.15; ice.receiveShadow = true; gCp.add(ice);
+      const ice = new THREE.Mesh(new THREE.BoxGeometry(9, 0.3, 5.6), ctx.mats.ice({ extra: { color: 0x34709f, opacity: 1, roughness: 0.42, envMapIntensity: 0.35, clearcoat: 0.35, clearcoatRoughness: 0.5 } })); ice.position.y = -0.15; ice.receiveShadow = true; gCp.add(ice);
       const startBox = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(0.4 * CS, 0.3, 0.55)), new THREE.LineBasicMaterial({ color: 0x3c506e })); startBox.position.y = 0.17; gCp.add(startBox);
       const rodG = new THREE.Group(); gCp.add(rodG);
       const rodM = new THREE.Mesh(new THREE.BoxGeometry(0.4 * CS, 0.3, 0.55), ctx.mats.wood(0xa8742f, { repeat: 2 })); rodM.position.y = 0.15; rodM.castShadow = true; rodG.add(rodM);

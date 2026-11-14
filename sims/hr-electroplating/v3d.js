@@ -27,7 +27,7 @@
       { const rim = new THREE.Mesh(new THREE.TorusGeometry(BR + 0.03, 0.07, 12, 96), MT.glass({ tint: 0xe6f3ff, opacity: 0.5 })); rim.rotation.x = Math.PI / 2; rim.position.y = FY + BH; root.add(rim);
         for (let k = 1; k <= 5; k++) { const tk = new THREE.Mesh(new THREE.BoxGeometry(k % 2 ? 0.7 : 0.4, 0.03, 0.02), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 })); tk.position.set(0, FY + BH * k / 6.2, BR + 0.01); root.add(tk); }
         const bn = new THREE.Mesh(rslab(13, 9, 0.36, 0.08), MT.wood(0xa88962, { repeat: 0.22 })); bn.position.y = FY - 0.07 - 0.2; bn.userData.v3bg = true; root.add(bn); }   // 비커 입술 · 눈금 · 실험대
-      const bt = new THREE.Mesh(new THREE.CylinderGeometry(BR, BR, 0.14, 64), MT.glass({ tint: 0xcfe2f5, opacity: 0.42 })); bt.position.y = FY; root.add(bt);
+      const bt = new THREE.Mesh(new THREE.CylinderGeometry(BR, BR, 0.14, 64), MT.glass({ tint: 0xcfe2f5, opacity: 0.2, extra: { envMapIntensity: 0.9 } })); bt.position.y = FY; root.add(bt);
       const top = FY + BH * WATER;
       const liq = new THREE.Mesh(new THREE.CylinderGeometry(BR - 0.04, BR - 0.04, BH * WATER, 64), MT.liquid(0x2f8cf5, { opacity: 0.42 })); liq.position.y = FY + BH * WATER / 2; root.add(liq);
       /* 양극: 구리판 */
