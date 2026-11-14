@@ -60,7 +60,7 @@
       const cnt = NS * NR, parts = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 10, 8), M(0xffffff, { roughness: 0.4 }), cnt);
       parts.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(cnt * 3), 3); root.add(parts);
       const base = []; for (let i = 0; i < NS; i++) { const x = -LEN / 2 + LEN * (i + 0.5) / NS; for (let j = 0; j < NR; j++) { const r = j === 0 ? 0 : R * 0.8, a = j * TAU / 6; base.push([x, r * Math.cos(a), r * Math.sin(a)]); } }
-      const spk = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.6, 40, 1, true), ctx.mats.rubber(0x1e2430, { extra: { side: THREE.DoubleSide } }))   // 스피커 진동판; spk.rotation.z = -Math.PI / 2; spk.position.x = -LEN / 2 - 0.9; root.add(spk);
+      const spk = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.6, 40, 1, true), ctx.mats.rubber(0x1e2430, { extra: { side: THREE.DoubleSide } })); spk.rotation.z = -Math.PI / 2; spk.position.x = -LEN / 2 - 0.9; root.add(spk);   // 스피커 진동판
       const fork = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.22, 28), ctx.mats.metal('steel')); fork.rotation.z = Math.PI / 2; fork.position.x = -LEN / 2 - 1.3; root.add(fork);
       // 마디·배 표지
       const marks = []; for (let i = 0; i < 10; i++) { const mk = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffffff })); root.add(mk); marks.push(mk); }
@@ -141,7 +141,7 @@
       const bG = new THREE.Group(); bG.visible = false; root.add(bG);
       const BH = 0.2, BP = 22, BRAD = 1.35;
       const prof = [[0, 0], [BRAD - 0.12, 0], [BRAD, 0.12], [BRAD, BH * BP - 1.5], [0.8, BH * BP - 0.9], [0.72, BH * BP - 0.5], [0.72, BH * BP], [0.82, BH * BP]].map((p) => new THREE.Vector2(p[0], p[1]));
-      const bGlass = new THREE.Mesh(new THREE.LatheGeometry(prof, 64), ctx.mats.glass({ tint: 0x9fe8c4, opacity: 0.26 }))   // 초록빛 유리병; bG.add(bGlass);
+      const bGlass = new THREE.Mesh(new THREE.LatheGeometry(prof, 64), ctx.mats.glass({ tint: 0x9fe8c4, opacity: 0.26 })); bG.add(bGlass);   // 초록빛 유리병
       const bWater = new THREE.Mesh(new THREE.CylinderGeometry(BRAD - 0.03, BRAD - 0.03, 1, 56), ctx.mats.liquid(0x2f7fe0, { opacity: 0.62 })); bG.add(bWater);
       const bP = new THREE.InstancedMesh(new THREE.SphereGeometry(0.07, 10, 8), M(0xffffff, { roughness: 0.4 }), S0.NB * 6);
       bP.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(S0.NB * 6 * 3), 3); bP.frustumCulled = false; bG.add(bP);

@@ -158,7 +158,7 @@
           const xs = [-c.d, 0, -F, F]; if (show) xs.push(c.Q.x);
           const x0 = Math.max(-12, Math.min.apply(null, xs)) - 0.7, x1 = Math.min(12, Math.max.apply(null, xs)) + 0.7;
           const qy = show ? Math.max(-6, Math.min(6, c.Q.y)) : 0, yT = Math.max(HO, qy, 1.4) + 0.9, yB = Math.min(-1.9, qy - 0.4);
-          fitBox.scale.set(x1 - x0, yT - yB, Math.max(1.3, 0.14 * (x1 - x0)));   // (얇으면 바닥판으로 여겨 빠지니 두께를 줘요) fitBox.position.set((x0 + x1) / 2, (yT + yB) / 2, 0);
+          fitBox.scale.set(x1 - x0, yT - yB, Math.max(1.3, 0.14 * (x1 - x0))); fitBox.position.set((x0 + x1) / 2, (yT + yB) / 2, 0);   // (얇으면 바닥판으로 여겨 빠지니 두께를 줘요)
         }
         // 초점 점
         const mir = c.isMirror;

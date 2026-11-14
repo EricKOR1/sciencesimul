@@ -158,7 +158,7 @@
 
       /* ================= ③ 홀로그램 기록 (광학대) ================= */
       const HX = (x) => (x - 270) * 0.022, HY = (y) => -(y - 150) * 0.022;
-      const tbl = new THREE.Mesh(new THREE.BoxGeometry(12.6, 0.3, 7), ctx.mats.metal(0x3a4150, { roughness: 0.45, brushed: true, repeat: 4 }));   // 광학 테이블 tbl.position.set(0.5, -2.6, 0); gH.add(tbl);
+      const tbl = new THREE.Mesh(new THREE.BoxGeometry(12.6, 0.3, 7), ctx.mats.metal(0x3a4150, { roughness: 0.45, brushed: true, repeat: 4 })); tbl.position.set(0.5, -2.6, 0); gH.add(tbl);   // 광학 테이블
       const comps = [
         { id: 'laser', mesh: new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.7, 0.7), ctx.mats.plastic(0xd8343a, { roughness: 0.25 })), n: '레이저' },
         { id: 'bs', mesh: new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.7), ctx.mats.glass({ tint: 0x93c5fd, opacity: 0.55 })), n: '빔 분할기' },

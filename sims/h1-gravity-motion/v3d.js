@@ -18,7 +18,7 @@
       const { THREE, root, label, info, controls, mats } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.05 }, o || {}));
       let body = 'earth', v0 = 8, t = 0, state = 'ready', hold = 0;
-      const gnd = new THREE.Mesh(new THREE.BoxGeometry(15, 0.3, 5), mats.stone(BODY.earth.c, { cracks: true, repeat: 4, bump: 0.06 })); gnd.receiveShadow = true;   // 천체의 땅 (거친 흙·암석) gnd.position.set(1.5, -0.15, 0); root.add(gnd); gnd.userData.v3bg = PHN;   // 휴대폰: 바닥·격자판은 배경 → 자동 맞춤이 탑과 공의 길에 맞춰요 (PC는 바닥까지 넣어 위쪽 설명 상자에 안 가리게)
+      const gnd = new THREE.Mesh(new THREE.BoxGeometry(15, 0.3, 5), mats.stone(BODY.earth.c, { cracks: true, repeat: 4, bump: 0.06 })); gnd.receiveShadow = true; gnd.position.set(1.5, -0.15, 0); root.add(gnd); gnd.userData.v3bg = PHN;   // 휴대폰: 바닥·격자판은 배경 → 자동 맞춤이 탑과 공의 길에 맞춰요 (PC는 바닥까지 넣어 위쪽 설명 상자에 안 가리게)   // 천체의 땅 (거친 흙·암석)
       // 뒤쪽 격자판 (높이·거리를 읽기 쉽게)
       const gridG = new THREE.Group(); root.add(gridG);
       const wall = new THREE.Mesh(new THREE.PlaneGeometry(15, H * KY + 0.4), new THREE.MeshStandardMaterial({ color: 0x1a2946, roughness: 0.55, metalness: 0.1, transparent: true, opacity: 0.8, side: THREE.DoubleSide })); wall.position.set(1.5, (H * KY + 0.4) / 2 - 0.0, -2.4); wall.userData.v3bg = PHN; gridG.add(wall);

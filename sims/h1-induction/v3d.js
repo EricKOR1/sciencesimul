@@ -116,7 +116,7 @@
       const led2L = label('LED 2', [0, BY, -0.95], { size: 11.5, offset: [0, -0.6, -0.2] });
 
       /* ---------- 바닥 ---------- */
-      const base = new THREE.Mesh(new THREE.CylinderGeometry(5.4, 5.5, 0.3, 96), mats.wood(0x8a6644, { repeat: 3 }));   // 나무 실험대 base.position.y = -3.4; base.receiveShadow = true; root.add(base); base.userData.v3bg = true;   // 바닥은 배경: 자동 맞춤이 코일·자석에 맞춰요
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(5.4, 5.5, 0.3, 96), mats.wood(0x8a6644, { repeat: 3 })); base.position.y = -3.4; base.receiveShadow = true; root.add(base); base.userData.v3bg = true;   // 바닥은 배경: 자동 맞춤이 코일·자석에 맞춰요   // 나무 실험대
 
       /* ---------- 조작 (2D를 대신 눌러 줘요) ---------- */
       const L2 = () => (ctx.lesson && ctx.lesson()) || null;
