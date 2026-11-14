@@ -18,13 +18,13 @@
     autoRotate: 0,
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, mats } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.8, metalness: 0 }, o || {}));
       let sd = 9; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
       const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
       /* 땅: 찬 공기 쪽(북·서)과 따뜻한 쪽(남동) 색 */
-      const slab = new THREE.Mesh(new THREE.BoxGeometry(15, 0.3, 9.4), std(0x2f3d4b)); slab.position.set(0.8, -0.16, 0.4); root.add(slab);
+      const slab = new THREE.Mesh(new THREE.BoxGeometry(15, 0.3, 9.4), mats.stone(0x2f3d4b, { repeat: 4 })); slab.receiveShadow = true; slab.position.set(0.8, -0.16, 0.4); root.add(slab);
       const sys = new THREE.Group(); root.add(sys);                 // 이동하는 전선계
       const LX = -0.8, LZ = -0.6;                                   // 저기압 중심
       const WF = { x1: 4.8, W: 4.6, H: 1.15 }, CF = { z1: 3.9, W: 2.0, H: 1.7 };
@@ -60,7 +60,7 @@
         const g = new THREE.Group(), m = std(0xffffff, { emissive: 0x7fb2ff, emissiveIntensity: 0.4 }), s = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.5, 8), m), h = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.22, 10), m); s.position.y = 0.25; h.position.y = 0.6; g.add(s, h);
         const tx = -Math.sin(a), tz = -Math.cos(a), rx = -Math.cos(a), rz = Math.sin(a), dx = tx * 0.8 + rx * 0.6, dz = tz * 0.8 + rz * 0.6; g.position.set(LX + Math.cos(a) * r, 0.25, LZ - Math.sin(a) * r); g.quaternion.setFromUnitVectors(V(0, 1, 0), V(dx, 0, dz).normalize()); g.rotateX(0); sys.add(g); windA.push(g); }
       /* 구름 */
-      const cloudM = std(0xf4f7fb, { roughness: 1 });
+      const cloudM = new THREE.MeshPhysicalMaterial({ color: 0xf4f7fb, roughness: 0.9, sheen: 0.6, sheenColor: 0xffffff, sheenRoughness: 0.6 });   // 솜털 같은 구름
       const NC = 150, clouds = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 16, 12), cloudM, NC), dm = new THREE.Object3D(), cc = new THREE.Color(); sys.add(clouds);
       const warmCl = [], coldCl = []; let nc = 0;
       for (let i = 0; i < 64; i++) { const u = 0.1 + rnd() * 0.9, x = LX + 0.2 + rnd() * (WF.x1 - LX - 0.2), z = LZ - u * WF.W, y = u * WF.H + 0.16 + rnd() * 0.35 + (u > 0.8 ? 0.4 : 0); const hi = u > 0.78; warmCl.push({ x, y, z, s: lerp(0.4, 0.26, u) * (0.7 + rnd() * 0.5), sy: hi ? 0.12 : 0.2, hi }); }

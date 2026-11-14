@@ -19,7 +19,14 @@
       const { THREE, root, label, info, controls, renderer } = ctx;
       const V = THREE.Vector3, M4 = new THREE.Matrix4(), cc = new THREE.Color();
       if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 눕혀 둔 모형을 세워서 보여 줘요
-      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.04 }, o || {}));
+      /* 재질: 구슬 모형은 매끈한 광택(std), 단백질(Cas9)은 촉촉한 생체 조직 느낌 + 울퉁불퉁한 표면(bio, lumpy) */
+      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.28, metalness: 0.04, envMapIntensity: 1.1 }, o || {}));
+      const bio = (c, op, o) => ctx.mats.organic(c, { opacity: op, extra: o });
+      const lumpy = (geo, amp, f) => {
+        const p = geo.attributes.position, v = new V(), n = new V();
+        for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); n.copy(v).normalize(); v.multiplyScalar(1 + amp * (Math.sin(n.x * f + 1.3) * Math.cos(n.y * f * 1.3 + 0.4) + 0.6 * Math.sin(n.z * f * 1.7 + n.x * 2.1))); p.setXYZ(i, v.x, v.y, v.z); }
+        geo.computeVertexNormals(); return geo;
+      };
       const An = (x, y, z) => { const o = new THREE.Object3D(); o.position.set(x, y, z); root.add(o); return o; };
       const ease = (k) => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
       const lerp = (a, b, k) => a + (b - a) * k;
@@ -34,11 +41,11 @@
 
       /* ---------- Cas9 · 가이드 RNA ---------- */
       const cas = new THREE.Group(); root.add(cas);
-      { const m = std(0x7dd3fc, { transparent: true, opacity: 0.4, depthWrite: false, roughness: 0.3 });
-        const a = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), m); a.scale.set(1.75, 1.3, 1.1); a.position.set(-1.25, 0.15, 0); cas.add(a);
-        const b = new THREE.Mesh(new THREE.SphereGeometry(1, 36, 24), std(0x38bdf8, { transparent: true, opacity: 0.5, depthWrite: false, roughness: 0.3 })); b.scale.set(0.9, 0.95, 0.9); b.position.set(-0.1, 0.55, 0.3); cas.add(b);
-        const c = new THREE.Mesh(new THREE.SphereGeometry(0.5, 24, 18), std(0x0ea5e9, { roughness: 0.35 })); c.position.set(-2.2, 0.85, 0.3); cas.add(c); }
-      const hnh = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.6, 16), std(0xef4444, { emissive: 0x330000, roughness: 0.35 })), ruvc = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.6, 16), std(0xef4444, { emissive: 0x330000, roughness: 0.35 }));
+      { const m = bio(0x7dd3fc, 0.4);
+        const a = new THREE.Mesh(lumpy(new THREE.SphereGeometry(1, 56, 40), 0.05, 3.4), m); a.scale.set(1.75, 1.3, 1.1); a.position.set(-1.25, 0.15, 0); cas.add(a);
+        const b = new THREE.Mesh(lumpy(new THREE.SphereGeometry(1, 48, 32), 0.06, 3.8), bio(0x38bdf8, 0.5)); b.scale.set(0.9, 0.95, 0.9); b.position.set(-0.1, 0.55, 0.3); cas.add(b);
+        const c = new THREE.Mesh(lumpy(new THREE.SphereGeometry(0.5, 32, 22), 0.08, 3.6), bio(0x0ea5e9)); c.position.set(-2.2, 0.85, 0.3); cas.add(c); }
+      const hnh = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.6, 16), std(0xdc2626, { emissive: 0x5a0000, roughness: 0.35 })), ruvc = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.6, 16), std(0xdc2626, { emissive: 0x5a0000, roughness: 0.35 }));
       hnh.rotation.z = Math.PI; ruvc.position.set(CUT, -0.75, 0); hnh.position.set(CUT, 0.75, 0); cas.add(hnh, ruvc);   // 두 가위 날
       cas.userData.cut = [hnh, ruvc];
       const gN = 20, gb = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 12, 10), std(0xfb923c, { emissive: 0x3a1a00, roughness: 0.35 }), gN + 22); cas.add(gb);

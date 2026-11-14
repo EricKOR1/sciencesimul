@@ -32,7 +32,9 @@
       const V = THREE.Vector3;
       if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 눕혀 둔 모형을 세워서 보여 줘요
       let mode = 'chemi';
-      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.42, metalness: 0.04 }, o || {}));
+      const deep = (c, k) => { const a = new THREE.Color(c); return a.lerp(a.clone().convertSRGBToLinear(), k == null ? 0.7 : k); };   // 화면에서 색이 옅어지지 않게 조금 진하게
+      const std = (c, o) => { o = o || {}; return o.transparent ? new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.42, metalness: 0.04 }, o)) : ctx.mats.plastic(deep(c), { roughness: 0.3, extra: o }); };   // 분자 모형: 매끈한 플라스틱 광택 (색은 그대로, 조금 진하게)
+      const bio = (c, o) => { const t = ctx.mats.tex('noise').clone(); t.needsUpdate = true; t.repeat.set(3, 2); return ctx.mats.organic(deep(c), { extra: Object.assign({ roughness: 0.46, bumpMap: t, bumpScale: 0.025 }, o || {}) }); };   // 단백질 표면: 촉촉하고 오돌토돌하게
       const A = (p) => { const o = new THREE.Object3D(); o.position.set(p[0], p[1], p[2]); root.add(o); return o; };
       const chemi = new THREE.Group(), sub = new THREE.Group(); root.add(chemi, sub);
 
@@ -57,7 +59,7 @@
         heads.count = h; tails.count = t; chemi.add(heads, tails);
       })();
       // 전자 전달계 복합체 3개
-      const cxCols = [0xf59e0b, 0x22c55e, 0x3b82f6], cxMats = cxCols.map((c) => std(c, { roughness: 0.35, emissive: 0x000000 }));
+      const cxCols = [0xf59e0b, 0x22c55e, 0x3b82f6], cxMats = cxCols.map((c) => bio(c, { emissive: 0x000000 }));
       const cx = CX.map((x, i) => {
         const m = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 22), cxMats[i]); m.scale.set(0.5, 0.78, 0.55); m.position.set(x, 0, 0); chemi.add(m); return m;
       });

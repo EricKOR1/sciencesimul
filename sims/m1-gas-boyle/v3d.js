@@ -16,8 +16,8 @@
       /* ---------- 공통 도구 ---------- */
       const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
       const V3 = THREE.Vector3, Yax = new V3(0, 1, 0);
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o || {}));
-      const glass = (c, op, o) => mat(c || 0xbfe3ff, Object.assign({ transparent: true, opacity: op || 0.16, roughness: 0.12, metalness: 0, depthWrite: false, side: THREE.DoubleSide }, o || {}));
+      const mat = (c, o) => { o = o || {}; if (o.metalness >= 0.5 && !o.transparent) { const q = Object.assign({}, o), r = q.roughness; delete q.metalness; delete q.roughness; return ctx.mats.metal(c, { roughness: r == null ? 0.3 : r, extra: q }); } return new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o)); };   // 금속 부품은 실제 금속 재질(환경 반사)
+      const glass = (c, op, o) => ctx.mats.glass({ tint: c || 0xeaf6ff, opacity: op || 0.16, extra: o || {} });   // 유리: 맑고 또렷한 반사
       const rnd = (() => { let s = 12345; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; })();
       const _m = new THREE.Matrix4(), _c = new THREE.Color();
       function spheres(N, r, color, seg) {
@@ -88,19 +88,19 @@
       /* 주사기 몸통 (유리) + 눈금 */
       const barrel = new THREE.Mesh(new THREE.CylinderGeometry(RC + 0.08, RC + 0.08, 5.6, 56, 1, true), glass(0xcfe6ff, 0.2));
       barrel.position.y = Y0 + 2.8; root.add(barrel);
-      const base = new THREE.Mesh(new THREE.CylinderGeometry(RC + 0.12, RC + 0.12, 0.3, 56), mat(0xb7c2d4, { metalness: 0.3, roughness: 0.35 })); base.position.y = Y0 - 0.15; root.add(base);
-      const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.5, 20), mat(0xb7c2d4, { metalness: 0.3 })); nozzle.position.y = Y0 - 0.5; root.add(nozzle);
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(RC + 0.12, RC + 0.12, 0.3, 56), mat(0xb7c2d4, { metalness: 0.9, roughness: 0.35 })); base.position.y = Y0 - 0.15; root.add(base);
+      const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.5, 20), mat(0xb7c2d4, { metalness: 0.9 })); nozzle.position.y = Y0 - 0.5; root.add(nozzle);
       for (let v = 10; v <= 50; v += 10) {
         const ring = new THREE.Mesh(new THREE.TorusGeometry(RC + 0.09, 0.015, 8, 64), mat(0x2f6df6, { roughness: 0.5, transparent: true, opacity: 0.55 })); ring.rotation.x = Math.PI / 2; ring.position.y = Y0 + hOf(v); root.add(ring);
         if (v % 20 === 10 || v === 50) label(v + ' mL', [RC + 0.1, Y0 + hOf(v), 0], { size: 10.5, offset: [0.55, 0, 0] });
       }
-      const topRim = new THREE.Mesh(new THREE.TorusGeometry(RC + 0.08, 0.06, 10, 64), mat(0xb7c2d4, { metalness: 0.3 })); topRim.rotation.x = Math.PI / 2; topRim.position.y = Y0 + 5.6; root.add(topRim);
+      const topRim = new THREE.Mesh(new THREE.TorusGeometry(RC + 0.08, 0.06, 10, 64), mat(0xb7c2d4, { metalness: 0.9 })); topRim.rotation.x = Math.PI / 2; topRim.position.y = Y0 + 5.6; root.add(topRim);
 
       /* 피스톤 */
       const piston = new THREE.Group();
-      const pd = new THREE.Mesh(new THREE.CylinderGeometry(RC, RC, 0.34, 56), mat(0x5b6577, { roughness: 0.8 })); pd.position.y = 0.17; piston.add(pd);
+      const pd = new THREE.Mesh(new THREE.CylinderGeometry(RC, RC, 0.34, 56), ctx.mats.rubber(0x23272e)); pd.position.y = 0.17; piston.add(pd);
       const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 2.6, 16), mat(0xcfd6e2, { metalness: 0.7, roughness: 0.25 })); rod.position.y = 1.6; piston.add(rod);
-      const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.22, 36), mat(0xf59e0b, { roughness: 0.45 })); knob.position.y = 2.9; piston.add(knob);
+      const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.22, 36), ctx.mats.plastic(0xe08a00)); knob.position.y = 2.9; piston.add(knob);
       root.add(piston);
 
       /* 기체: 푸른 반투명 부피 + 입자 */

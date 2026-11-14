@@ -18,38 +18,39 @@
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.1 }, o || {}));
+      const MT = ctx.mats, lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 색이 바래지 않게 (진한 색)
+      const mat = (c, o) => { const q = Object.assign({ color: lc(c), roughness: 0.5, metalness: 0.1 }, o || {}); if (typeof q.emissive === 'number') q.emissive = lc(q.emissive); return new THREE.MeshStandardMaterial(q); };
       const sm = () => window.__sim;
       const SX = -6.2;
 
       // 스피커
       const spk = new THREE.Group(); root.add(spk);
-      const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.2, 1.4), mat(0x2f3850, { roughness: 0.6 })); body.castShadow = true; spk.add(body);
-      const cone = new THREE.Mesh(new THREE.ConeGeometry(0.62, 0.45, 32, 1, true), mat(0xd7deee, { side: THREE.DoubleSide, roughness: 0.4 })); cone.rotation.z = Math.PI / 2; cone.position.set(0.62, 0, 0); spk.add(cone);
-      const dome = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 12), mat(0x8fa0c8)); dome.position.set(0.7, 0, 0); spk.add(dome);
-      { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.66, 0.05, 10, 36), mat(0x9aa7c2, { metalness: 0.8, roughness: 0.3 })); ring.rotation.y = Math.PI / 2; ring.position.set(0.71, 0, 0); spk.add(ring);
-        const tw = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.03, 8, 24), mat(0x9aa7c2, { metalness: 0.8 })); tw.rotation.y = Math.PI / 2; tw.position.set(0.71, 0.78, 0); spk.add(tw);
-        const twc = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(0x8fa0c8, { metalness: 0.5 })); twc.rotation.z = -Math.PI / 2; twc.position.set(0.71, 0.78, 0); spk.add(twc);
-        const fr = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.3, 1.5), mat(0x1c2233, { roughness: 0.7 })); fr.position.set(0.63, 0, 0); spk.add(fr);
-        for (const sz of [-1, 1]) { const ft = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.12, 12), mat(0x111623)); ft.position.set(0, -1.16, sz * 0.5); spk.add(ft); } }
+      const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.2, 1.4), MT.wood(0x6e5a4a)); body.castShadow = true; spk.add(body);
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(0.62, 0.45, 32, 1, true), MT.fabric(lc(0xb9c2d6), { repeat: 10, extra: { side: THREE.DoubleSide } })); cone.rotation.z = Math.PI / 2; cone.position.set(0.62, 0, 0); spk.add(cone);
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(0.2, 28, 18), MT.plastic(lc(0x2a3040), { roughness: 0.3 })); dome.position.set(0.7, 0, 0); spk.add(dome);
+      { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.66, 0.05, 12, 56), MT.metal('steel', { roughness: 0.22 })); ring.rotation.y = Math.PI / 2; ring.position.set(0.71, 0, 0); spk.add(ring);
+        const tw = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.03, 10, 36), MT.metal('steel', { roughness: 0.22 })); tw.rotation.y = Math.PI / 2; tw.position.set(0.71, 0.78, 0); spk.add(tw);
+        const twc = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), MT.metal('aluminium', { roughness: 0.25 })); twc.rotation.z = -Math.PI / 2; twc.position.set(0.71, 0.78, 0); spk.add(twc);
+        const fr = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.3, 1.5), MT.plastic(lc(0x1a1f2c), { roughness: 0.55 })); fr.position.set(0.63, 0, 0); spk.add(fr);
+        for (const sz of [-1, 1]) { const ft = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.12, 16), MT.rubber()); ft.position.set(0, -1.16, sz * 0.5); spk.add(ft); } }
       spk.position.set(SX - 0.8, 0, 0);
       // 귀
       const ear = new THREE.Group(); root.add(ear);
-      const earM = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.14, 12, 28, Math.PI * 1.5), mat(0xf2c9a0, { roughness: 0.7 })); earM.rotation.y = Math.PI / 2; ear.add(earM);
+      const earM = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.14, 12, 28, Math.PI * 1.5), MT.organic(lc(0xeab88f))); earM.rotation.y = Math.PI / 2; ear.add(earM);
       const earGlow = new THREE.Mesh(new THREE.SphereGeometry(0.9, 20, 14), new THREE.MeshBasicMaterial({ color: 0xffd34d, transparent: true, opacity: 0, depthWrite: false })); ear.add(earGlow);
-      { const head = new THREE.Mesh(new THREE.SphereGeometry(0.55, 28, 20), mat(0xf2c9a0, { roughness: 0.75 })); head.position.set(0.6, 0, 0); head.scale.set(0.95, 1.1, 0.9); ear.add(head);
-        const nose = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.25, 10), mat(0xe8b88a, { roughness: 0.8 })); nose.rotation.x = Math.PI / 2; nose.position.set(0.6, -0.05, 0.55); ear.add(nose);
+      { const head = new THREE.Mesh(new THREE.SphereGeometry(0.55, 28, 20), MT.organic(lc(0xeab88f))); head.position.set(0.6, 0, 0); head.scale.set(0.95, 1.1, 0.9); ear.add(head);
+        const nose = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.25, 10), MT.organic(lc(0xe0a67c))); nose.rotation.x = Math.PI / 2; nose.position.set(0.6, -0.05, 0.55); ear.add(nose);
         for (const sz of [-1, 1]) { const ey = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), mat(0x1c2233)); ey.position.set(0.4, 0.15, sz * 0.3); ear.add(ey); } }
       ear.position.set(SX + NX * SP + 0.3, 0, 0);
 
       // 공기 입자
       const N = NX * NY * NZ;
-      const inst = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 8, 6), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.45, metalness: 0 }), N);
+      const inst = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 8, 6), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3, metalness: 0 }), N);
       inst.frustumCulled = false; root.add(inst);
       const home = new Float32Array(N * 3); let q = 0;
       for (let i = 0; i < NX; i++) for (let j = 0; j < NY; j++) for (let k = 0; k < NZ; k++) { home[q++] = SX + (i + 0.5) * SP; home[q++] = (j - (NY - 1) / 2) * SP; home[q++] = (k - (NZ - 1) / 2) * SP * 1.2; }
       // 눈에 띄는 한 입자 (제자리 진동)
-      const mark = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 14), mat(0xffd34d, { emissive: 0xffa800, emissiveIntensity: 0.6, roughness: 0.3 })); root.add(mark);
+      const mark = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 14), mat(0xffd34d, { emissive: 0xffa800, emissiveIntensity: 0.7, roughness: 0.3 })); root.add(mark); ctx.halo(mark, 0xffd34d, 1.1, 0.55);
       const mHome = new V3(SX + 10.25 * SP, 0, 0); // 가운데 줄의 한 입자
       const mrk = label('이 입자를 지켜봐요', mark, { offset: [0, 0.55, 0], color: 'rgba(255,211,77,.92)' }); mrk.el.style.color = '#1b2333';
       // 퍼지는 파면
@@ -101,8 +102,8 @@
       const gR = new THREE.Group(); gR.visible = false; root.add(gR);
       const beads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.15, 12, 10), mat(0xc58a4b, { roughness: 0.7 }), RNn); beads.frustumCulled = false; gR.add(beads);
       const handle = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 12), mat(0xffd34d, { emissive: 0xa87a00, emissiveIntensity: 0.4 })); gR.add(handle);
-      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 5.4, 14), mat(0x8793a6, { metalness: 0.7, roughness: 0.3 })); post.position.set(RX1 + 0.1, -0.1, 0); gR.add(post);
-      { const ft = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.8, 0.16, 24), mat(0x8793a6, { metalness: 0.7, roughness: 0.3 })); ft.position.set(RX1 + 0.1, -2.72, 0); gR.add(ft); const cl = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.05, 8, 18), mat(0x8793a6, { metalness: 0.7 })); cl.rotation.y = Math.PI / 2; cl.position.set(RX1, 0, 0); gR.add(cl); }
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 5.4, 14), MT.metal('steel', { roughness: 0.25 })); post.position.set(RX1 + 0.1, -0.1, 0); gR.add(post);
+      { const ft = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.8, 0.16, 24), MT.metal('steel', { roughness: 0.25 })); ft.position.set(RX1 + 0.1, -2.72, 0); gR.add(ft); const cl = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.05, 8, 18), MT.metal('steel', { roughness: 0.25 })); cl.rotation.y = Math.PI / 2; cl.position.set(RX1, 0, 0); gR.add(cl); }
       const mkCol = [0xef4444, 0x3b82f6, 0x22c55e];
       const mks = mkCol.map((c) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), mat(c, { emissive: c, emissiveIntensity: 0.35 })); gR.add(m); return m; });
       const mkLabs = mks.map((m, i) => label('표시점 ' + (i + 1), m, { size: 11.5, offset: [0, 0.55, 0] }));
@@ -114,15 +115,15 @@
       const NWB = 200, wbeads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.07, 10, 8), mat(0x34d399, { emissive: 0x0b6e4f, emissiveIntensity: 0.5, roughness: 0.4 }), NWB); wbeads.frustumCulled = false; gT.add(wbeads);
       const axisT = new THREE.Mesh(new THREE.BoxGeometry(9, 0.015, 0.015), mat(0x94a3b8)); axisT.position.set(1.6, 0, 0); gT.add(axisT);
       const inst3 = { fork: new THREE.Group(), flute: new THREE.Group(), guitar: new THREE.Group() };
-      { const f = inst3.fork; const hd = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.9, 12), mat(0xc9d2e0, { metalness: 0.8, roughness: 0.3 })); hd.position.y = -0.9; f.add(hd);
-        [-0.22, 0.22].forEach((x) => { const p = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.8, 0.2), mat(0xdbe3ef, { metalness: 0.85, roughness: 0.25 })); p.position.set(x, 0.45, 0); f.add(p); });
-        const b = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.06, 8, 20, Math.PI), mat(0xdbe3ef, { metalness: 0.85, roughness: 0.25 })); b.rotation.z = Math.PI; b.position.y = -0.45; f.add(b); }
-      { const f = inst3.flute; const tb = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 3.4, 20), mat(0xe6c27a, { roughness: 0.5 })); tb.rotation.z = Math.PI / 2; f.add(tb);
+      { const f = inst3.fork; const hd = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.9, 12), MT.metal('steel', { roughness: 0.18 })); hd.position.y = -0.9; f.add(hd);
+        [-0.22, 0.22].forEach((x) => { const p = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.8, 0.2), MT.metal('steel', { roughness: 0.18 })); p.position.set(x, 0.45, 0); f.add(p); });
+        const b = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.06, 8, 20, Math.PI), MT.metal('steel', { roughness: 0.18 })); b.rotation.z = Math.PI; b.position.y = -0.45; f.add(b); }
+      { const f = inst3.flute; const tb = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 3.4, 20), MT.wood(0xf2dcae)); tb.rotation.z = Math.PI / 2; f.add(tb);
         for (let i = 0; i < 5; i++) { const h = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.05, 12), mat(0x3b2a14)); h.position.set(-0.5 + i * 0.5, 0.2, 0); f.add(h); } }
-      { const f = inst3.guitar; const b1 = new THREE.Mesh(new THREE.SphereGeometry(0.75, 24, 16), mat(0xb4682a, { roughness: 0.5 })); b1.scale.set(1, 1, 0.35); b1.position.y = -0.55; f.add(b1);
-        const b2 = new THREE.Mesh(new THREE.SphereGeometry(0.55, 24, 16), mat(0xb4682a, { roughness: 0.5 })); b2.scale.set(1, 1, 0.35); b2.position.y = 0.25; f.add(b2);
+      { const f = inst3.guitar; const b1 = new THREE.Mesh(new THREE.SphereGeometry(0.75, 24, 16), MT.wood(0xe0a468)); b1.scale.set(1, 1, 0.35); b1.position.y = -0.55; f.add(b1);
+        const b2 = new THREE.Mesh(new THREE.SphereGeometry(0.55, 24, 16), MT.wood(0xe0a468)); b2.scale.set(1, 1, 0.35); b2.position.y = 0.25; f.add(b2);
         const hole = new THREE.Mesh(new THREE.CircleGeometry(0.2, 20), mat(0x20120a)); hole.position.set(0, -0.15, 0.27); f.add(hole);
-        const nk = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.7, 0.1), mat(0x5b3a1a)); nk.position.y = 1.35; f.add(nk); }
+        const nk = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.7, 0.1), MT.wood(0x8a6a4a)); nk.position.y = 1.35; f.add(nk); }
       Object.keys(inst3).forEach((k) => { inst3[k].position.set(-5.6, 0, 0); inst3[k].visible = false; gT.add(inst3[k]); });
       const iLab = label('', [-5.6, 1.8, 0], { size: 12.5, color: 'rgba(15,100,70,.92)' }), wLab = label('같은 소리의 높이 · 크기, 다른 파형 → 다른 음색', [1.6, 2.0, 0], { size: 12, color: 'rgba(15,100,70,.92)' });
       const SHP = { fork: { a: [1, 0, 0, 0, 0, 0], th: [0, 0, 0, 0, 0, 0] }, flute: { a: [1, 0.55, 0.28, 0.12, 0, 0], th: [0, 2.2, 0.4, 2.6, 0, 0] }, guitar: { a: [1, 0.62, 0.5, 0.36, 0.22, 0.12], th: [0, 0.5, 1.2, 1.8, 2.4, 3.0] } };
@@ -160,7 +161,7 @@
         const ph = document.querySelector('.v3-player .v3-ph'); if (ph && !ph.textContent) ph.textContent = nm;
         info('<b>' + nm + '</b>의 파형: ' + (k === 'fork' ? '부드러운 <b>사인 곡선</b>이에요.' : '마루와 골의 모양이 <b>복잡해요</b>.') + '<br>같은 높이(진동수)와 크기(진폭)여도 악기마다 <b>파형이 달라서</b> 소리의 맵시, <b>음색</b>이 달라요.'); 
       }
-      const c1 = new THREE.Color(0x4a7bff), c2 = new THREE.Color(0xf2f4fa), c3 = new THREE.Color(0xff4a4a), tc = new THREE.Color();
+      const c1 = lc(0x3f6ff5), c2 = lc(0xe9edf6), c3 = lc(0xf23a3a), tc = new THREE.Color();
       const dm = new THREE.Object3D(); let k0 = 0;
       return {
         update(dt, t) {

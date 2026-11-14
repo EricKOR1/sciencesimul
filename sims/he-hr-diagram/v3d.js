@@ -70,7 +70,7 @@
       /* 질량 · 주계열 (3단계): 질량 0.5~20 M☉의 주계열성 */
       const MASSES = [0.5, 1, 2, 5, 10, 20];
       const mData = (M) => { const l = L2(); if (l && l.massData) return l.massData(M); const T = [[0.5, 0.04, 3800], [1, 1, 5800], [2, 25, 9900], [5, 500, 16000], [10, 6000, 25000], [20, 5e4, 32000]]; const r = T.find((x) => x[0] === M) || T[1]; return { L: r[1], T: r[2], R: Math.sqrt(r[1]) / Math.pow(r[2] / 5772, 2), t: 1e10 * M / r[1] }; };
-      const msM = MASSES.map((M) => { const d = mData(M), m = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), new THREE.MeshBasicMaterial({ color: new THREE.Color().fromArray(kelvin(d.T)) })); m.position.set(bx(Math.log10(d.T)), by(Math.log10(d.L)), 0.1); m.scale.setScalar(sz(d.R) * 1.2); root.add(m); return m; });
+      const msM = MASSES.map((M) => { const d = mData(M), m = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), new THREE.MeshBasicMaterial({ color: new THREE.Color().fromArray(kelvin(d.T)) })); m.position.set(bx(Math.log10(d.T)), by(Math.log10(d.L)), 0.1); m.scale.setScalar(sz(d.R) * 1.2); root.add(m); ctx.halo(m, m.material.color.getHex(), 3.2, 0.55); return m; });   // 별: 스스로 빛나는 빛무리
       const msL = MASSES.map((M, i) => label(M + ' M☉', msM[i], { size: 11.5, offset: [0.35, 0.25, 0], color: 'rgba(15,23,42,.9)' }));
       const cur = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.035, 8, 40), new THREE.MeshBasicMaterial({ color: 0xffd34d })); root.add(cur);
       const curL = label('', cur, { size: 12, offset: [0, -0.6, 0], color: 'rgba(130,90,0,.95)' });

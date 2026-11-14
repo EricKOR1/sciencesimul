@@ -17,16 +17,17 @@
     autoRotate: 0,
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, mats } = ctx;
+      const rock = (c, o) => mats.stone(c, { cracks: true, repeat: 0.3, bump: 0.05, extra: o });   // 암석층: 거친 돌 질감
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.8, metalness: 0 }, o || {}));
       const gA = new THREE.Group(), gB = new THREE.Group(); root.add(gA, gB);
       const arrow = (parent, col, len, rad) => { const g = new THREE.Group(), m = std(col, { emissive: col, emissiveIntensity: 0.4, roughness: 0.4 }), s = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, 1, 12), m), h = new THREE.Mesh(new THREE.ConeGeometry(rad * 2.4, rad * 5, 16), m); g.add(s, h); g.userData = { s, h, rad }; parent.add(g); return g; };
       const setArrow = (g, len) => { const u = g.userData, hh = u.rad * 5, L = Math.max(0.05, len); u.s.scale.set(1, Math.max(0.01, L - hh), 1); u.s.position.y = (L - hh) / 2; u.h.position.y = L - hh / 2; g.visible = len > 0.12; };
 
       /* ===================== A. 열과 압력 ===================== */
-      const N = 260, flakes = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 0.16), std(0xffffff, { roughness: 0.45, metalness: 0.12 }), N); gA.add(flakes);
-      const heater = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.16, 5.2), std(0x222a3a, { emissive: 0xff4a1a, emissiveIntensity: 0, roughness: 0.6 })); heater.position.y = -2.0; gA.add(heater);
-      const frame = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0xaecbff, transparent: true, opacity: 0.07, depthWrite: false })); gA.add(frame);
+      const N = 260, flakes = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 0.16), new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.32, metalness: 0.12, clearcoat: 0.6, clearcoatRoughness: 0.2 }), N); gA.add(flakes);   // 운모처럼 반짝이는 납작한 광물
+      const heater = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.16, 5.2), mats.metal('iron', { roughness: 0.5, extra: { emissive: 0xff4a1a, emissiveIntensity: 0 } })); heater.position.y = -2.0; gA.add(heater);   // 가열판
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mats.glass({ tint: 0xdcebff, opacity: 0.08 })); gA.add(frame);
       const fitP = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.2, colorWrite: false, depthWrite: false })); gA.add(fitP);   // 화면 맞춤용 보이지 않는 상자 (암석 틀과 같은 크기: 알갱이는 화면 맞춤이 재지 못해요)
       const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.6 })); gA.add(edges);
       const aL = arrow(gA, 0xffd34d, 1, 0.1), aR = arrow(gA, 0xffd34d, 1, 0.1); aL.rotation.z = -Math.PI / 2; aR.rotation.z = Math.PI / 2;
@@ -90,22 +91,22 @@
       /* ===================== B. 변동대 단면 ===================== */
       const XW = 4.8, ZD = 1.6, YB = -3.1;
       const ext = (poly, mat, z0, d) => { const sh = new THREE.Shape(); poly.forEach((p, i) => (i ? sh.lineTo(p[0], p[1]) : sh.moveTo(p[0], p[1]))); sh.closePath(); const g = new THREE.ExtrudeGeometry(sh, { depth: d == null ? ZD * 2 : d, bevelEnabled: false, curveSegments: 3 }); g.translate(0, 0, z0 == null ? -ZD : z0); const m = new THREE.Mesh(g, mat); m.castShadow = m.receiveShadow = true; gB.add(m); return m; };
-      const hostM = std(0x5d5348), top = [[-XW, 0]], mt = [];
+      const hostM = rock(0x564c42), top = [[-XW, 0]], mt = [];
       for (let i = 0; i <= 24; i++) { const x = -XW + 2 * XW * i / 24; top.push([x, 0.0 + (x < 0.2 ? 0.8 * Math.exp(-Math.pow((x + 2.6) / 1.4, 2)) : 0)]); }
       const profile = top.slice(1);
       /* 전체 블록 */
       ext([[-XW, YB]].concat(profile, [[XW, YB]]), hostM);
       /* 광역 변성대: 깊이별 띠 (왼쪽 산맥 아래) */
       const REG = [[-0.35, -1.0, 0x71818f, '점판암'], [-1.0, -1.8, 0x7d9a8c, '천매암'], [-1.8, -2.5, 0xa2765f, '편암'], [-2.5, YB, 0xcbb9a5, '편마암']];
-      REG.forEach((r) => { ext([[-XW, r[0]], [-0.4, r[0]], [-0.4, r[1]], [-XW, r[1]]], std(r[2]), -ZD + 0.0, ZD * 2 + 0.02); });
+      REG.forEach((r) => { ext([[-XW, r[0]], [-0.4, r[0]], [-0.4, r[1]], [-XW, r[1]]], rock(r[2]), -ZD + 0.0, ZD * 2 + 0.02); });
       /* 산맥 + 습곡 줄무늬 (표면) */
-      ext([[-XW, 0]].concat(profile.filter((p) => p[0] < 0.2), [[0.2, 0], [0.2, -0.35], [-XW, -0.35]]), std(0x8a8a78), -ZD, ZD * 2 + 0.02);
+      ext([[-XW, 0]].concat(profile.filter((p) => p[0] < 0.2), [[0.2, 0], [0.2, -0.35], [-XW, -0.35]]), rock(0x7e7e6c), -ZD, ZD * 2 + 0.02);
       /* 심성암체 + 접촉 변성대 (오른쪽) */
       const dome = (cx, cy, rx, ry) => { const a = []; for (let i = 0; i <= 28; i++) { const t = Math.PI * i / 28; a.push([cx + Math.cos(t) * rx, cy - Math.sin(t) * ry + ry * 0]); } return a; };
       const half = (cx, cy, rx, ry) => { const a = []; for (let i = 0; i <= 28; i++) { const t = Math.PI * i / 28; a.push([cx + Math.cos(t) * rx, cy + Math.sin(t) * ry]); } return a; };
-      const aur = (rx, ry, col, e) => ext(half(2.7, YB, rx, ry), std(col), -ZD, ZD * 2 + e);
+      const aur = (rx, ry, col, e) => ext(half(2.7, YB, rx, ry), rock(col), -ZD, ZD * 2 + e);
       const aur1 = aur(2.2, 3.0, 0x9a7a52, 0.02), aur2 = aur(1.75, 2.45, 0x6a4b48, 0.03);
-      const plut = ext(half(2.7, YB, 1.2, 1.9), std(0xc0443a, { emissive: 0x4a0f0a, emissiveIntensity: 0.55, roughness: 0.6 }), -ZD, ZD * 2 + 0.04);
+      const plut = ext(half(2.7, YB, 1.2, 1.9), std(0xc0443a, { emissive: 0xff3a14, emissiveIntensity: 0.45, roughness: 0.55 }), -ZD, ZD * 2 + 0.04);
       const aurTop = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.01, 0.01), std(0)); gB.add(aurTop);
       /* 힘 화살표 */
       const cL = arrow(gB, 0xffd34d, 1, 0.1), cR = arrow(gB, 0xffd34d, 1, 0.1); setArrow(cL, 1.4); setArrow(cR, 1.4); cL.rotation.z = -Math.PI / 2; cR.rotation.z = Math.PI / 2; cL.position.set(-XW - 1.6, -1.2, 0); cR.position.set(-0.4 + 0.0, 0, 0); cR.visible = false;

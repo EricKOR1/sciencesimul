@@ -56,7 +56,7 @@
       const sim = () => ctx.lesson();
       const P = (x, y, z) => new V3(x * UX, y * UY, z || 0);
       const gT = new THREE.Group(), gB = new THREE.Group(), gR = new THREE.Group(); root.add(gT, gB, gR);
-      const benchBase = (g, w) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, 0.14, 1.6), M(0x334155, { metalness: 0.4, roughness: 0.5 })); b.position.set(0, -4.1, 0); b.receiveShadow = true; g.add(b); const ax = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, w, 6), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45 })); ax.rotation.z = Math.PI / 2; g.add(ax); return b; };
+      const benchBase = (g, w) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, 0.14, 1.6), ctx.mats.metal('aluminium', { brushed: true })); b.position.set(0, -4.1, 0); b.receiveShadow = true; g.add(b); const ax = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, w, 6), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45 })); ax.rotation.z = Math.PI / 2; g.add(ax); return b; };
       const lensMesh = (g, halfCm, col) => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), new THREE.MeshStandardMaterial({ color: col || 0x9fd2ff, roughness: 0.05, transparent: true, opacity: 0.42, depthWrite: false })); m.scale.set(0.25, halfCm * UY, halfCm * UY / 1.2); g.add(m); const r = new THREE.Mesh(new THREE.TorusGeometry(1, 0.05, 10, 56), M(0x475569, { metalness: 0.6 })); r.scale.set(halfCm * UY / 1.2, halfCm * UY, 1); r.rotation.y = Math.PI / 2; r.scale.set(halfCm * UY / 1.2, halfCm * UY, 1); g.add(r); return m; };
       const tubeLine = (g, pts, col, op, thin, dashed) => { if (pts.length < 2) return null; const t = tube(pts, thin || 0.022, col, { basic: true, op: op || 0.95 }); g.add(t); return t; };
       /* ================= 🧭 광선 추적 ================= */
@@ -181,14 +181,14 @@
         const g = new THREE.Group(), box = (x0, x1, y0, h, col, o) => { const m = new THREE.Mesh(new THREE.BoxGeometry((x1 - x0) * WW, h, 0.9), M(col, o || { roughness: 0.6 })); m.position.set(-WW / 2 + (x0 + x1) / 2 * WW, y0 + h / 2, 0); m.castShadow = true; g.add(m); return m; };
         const hs = 0.3, ho = 0.12, hr = 0.2;
         const segs = (excl) => { const out = []; let px = 0; GAPS.forEach(([a, b]) => { out.push([px, a]); px = b; }); out.push([px, 1]); return excl ? out : [[0, 1]]; };
-        box(0, 1, 0, hs, 0x8a95a8, { roughness: 0.5, metalness: 0.3 });
-        segs(stage >= 4).forEach(([a, b]) => box(a, b, hs, ho, 0x6aa8e8, { roughness: 0.3 }));
+        box(0, 1, 0, hs, 0x5d6470, { roughness: 0.22, metalness: 0.85, envMapIntensity: 1.3 });   // 실리콘 웨이퍼: 거울처럼 매끈한 회색 금속광
+        segs(stage >= 4).forEach(([a, b]) => box(a, b, hs, ho, 0x6aa8e8, { roughness: 0.12, envMapIntensity: 1.3 }));
         if (stage >= 1 && stage <= 4) {
           segs(stage >= 3).forEach(([a, b]) => box(a, b, hs + ho, hr, 0xf06292, { roughness: 0.5 }));
           if (stage === 2) GAPS.forEach(([a, b]) => box(a, b, hs + ho, hr, 0xffe28a, { roughness: 0.5, emissive: 0x6b5a10 }));
         }
         if (stage === 2) {
-          segs(true).forEach(([a, b]) => box(a, b, hs + ho + hr + 0.4, 0.07, 0x4b5878, { roughness: 0.5, metalness: 0.4 }));
+          segs(true).forEach(([a, b]) => box(a, b, hs + ho + hr + 0.4, 0.07, 0xc9ced6, { roughness: 0.1, metalness: 1, envMapIntensity: 1.4 }));
           GAPS.forEach(([a, b]) => [0.25, 0.75].forEach((q) => { const ar = mkArrow(0x7bdcff, 0.025); g.add(ar); const x = -WW / 2 + (a + (b - a) * q) * WW; setArrow(ar, new V3(x, hs + ho + hr + 1.1, 0), new V3(x, hs + ho + hr + 0.06, 0)); }));
         }
         if (stage === 0) for (let k = 0; k < 4; k++) { const d = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), M(0xffffff)); d.position.set(-WW / 2 + (0.12 + k * 0.25) * WW, hs + ho + 0.06, (k % 2 - 0.5) * 0.4); g.add(d); }
@@ -197,8 +197,8 @@
       const cards = [];
       for (let i = 0; i < 6; i++) {
         const c = new THREE.Group(); gW.add(c);
-        const tile = new THREE.Mesh(new THREE.BoxGeometry(3.1, 2.5, 0.16), M(0xb4c0d6, { roughness: 0.8 })); tile.position.set(0, 1.2, -0.7); c.add(tile);
-        const dot = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), M(0xb9c3d6)); dot.position.set(-1.25, 2.2, -0.56); c.add(dot);
+        const tile = new THREE.Mesh(new THREE.BoxGeometry(3.1, 2.5, 0.16), ctx.mats.ceramic(0xc4ccdb, { extra: { roughness: 0.35, clearcoat: 0.5 } })); tile.position.set(0, 1.2, -0.7); c.add(tile);
+        const dot = new THREE.Mesh(new THREE.SphereGeometry(0.2, 28, 20), ctx.mats.plastic(0xb9c3d6, { roughness: 0.25 })); dot.position.set(-1.25, 2.2, -0.56); c.add(dot);
         const wf = mkWafer(i); wf.position.set(0, 0.25, -0.1); wf.userData.s = 1.15; c.add(wf);
         const lb = label('', [0, 0, 0], { color: '#3867f4', size: 12 }); labW.push(lb);
         cards.push({ c, dot, wf, lb });

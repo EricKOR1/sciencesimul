@@ -56,7 +56,9 @@
       g.lineWidth = 0.7; g.strokeStyle = 'rgba(255,255,255,.25)'; for (let lo = -180; lo < 180; lo += 30) { const x = X(lo); g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); g.beginPath(); g.moveTo(x + W, 0); g.lineTo(x + W, H); g.stroke(); }
       const tex = new THREE.CanvasTexture(cv); tex.anisotropy = 4;
       if ('encoding' in tex) tex.encoding = THREE.sRGBEncoding;
-      earth.add(new THREE.Mesh(new THREE.SphereGeometry(1, 64, 40), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85, metalness: 0 })));
+      earth.add(new THREE.Mesh(new THREE.SphereGeometry(1, 64, 40), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.7, metalness: 0 })));
+      const lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 2D 차시와 같은 진한 색으로 보이게
+      ctx.halo(earth, 0x62aaff, 3.0, 0.42);   // 대기의 푸른 빛 번짐
       // 우리나라 (37°N 127.5°E)
       const kor = new THREE.Mesh(new THREE.SphereGeometry(0.02, 12, 10), new THREE.MeshBasicMaterial({ color: 0xef4444 })); kor.position.copy(P(37, 127.5, 1.01)); earth.add(kor);
       // 대기 (과장해서 두껍게)
@@ -87,10 +89,10 @@
       CELLS.forEach((c) => [1, -1].forEach((sg) => {
         const pts = []; for (let i = 0; i < 72; i++) pts.push(loopPt(c, (i / 72) * Math.PI * 2, sg));
         const curve = new THREE.CatmullRomCurve3(pts, true);
-        const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 120, 0.011, 6, true), new THREE.MeshBasicMaterial({ color: c.col, transparent: true, opacity: 0.55 }));
+        const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 120, 0.011, 8, true), new THREE.MeshBasicMaterial({ color: lc(c.col), transparent: true, opacity: 0.55 }));
         root.add(tube);
         const parts = [];
-        for (let i = 0; i < 8; i++) { const m = new THREE.Mesh(cone, new THREE.MeshStandardMaterial({ color: c.col, emissive: c.col, emissiveIntensity: 0.55, roughness: 0.4 })); root.add(m); parts.push({ m, t: i / 8, i }); }
+        for (let i = 0; i < 8; i++) { const m = new THREE.Mesh(cone, new THREE.MeshStandardMaterial({ color: lc(c.col), emissive: lc(c.col), emissiveIntensity: 0.6, roughness: 0.35 })); root.add(m); parts.push({ m, t: i / 8, i }); }
         loops.push({ c, sg, curve, tube, parts });
       }));
       // 상승·하강 이름표 (북반구)
@@ -113,7 +115,7 @@
           for (let i = 0; i < NL; i++) {
             const lon0 = (i / NL) * 360 + (k === 'west' ? 20 : k === 'east' ? 40 : 0);
             for (let j = 0; j < 2; j++) {
-              const m = new THREE.Mesh(arrowGeo, new THREE.MeshStandardMaterial({ color: w.col, emissive: w.col, emissiveIntensity: 0.6, roughness: 0.4 }));
+              const m = new THREE.Mesh(arrowGeo, new THREE.MeshStandardMaterial({ color: lc(w.col), emissive: lc(w.col), emissiveIntensity: 0.65, roughness: 0.35 }));
               earth.add(m); arrows.push({ k, sg, lat0: w.lat * sg, lon0, ve: v[0] / n, vn: v[1] / n, m, ph: j * 0.5 + (i % 2) * 0.25 });
             }
           }
@@ -128,7 +130,7 @@
       const korLab = label('우리나라', kor, { color: 'rgba(185,28,28,.92)', size: 12 }); korLab.off = [0, 0.06, 0];
 
       /* ---- 열 운반(role): 저위도의 남는 열 → 고위도, 위도별 에너지 남음(+)/부족(−) ---- */
-      const NPK = 14, packI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 8), new THREE.MeshStandardMaterial({ color: 0xfb923c, emissive: 0xea580c, emissiveIntensity: 0.8, roughness: 0.4 }), NPK * 2); root.add(packI); packI.visible = false;
+      const NPK = 14, packI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 8), new THREE.MeshStandardMaterial({ color: lc(0xfb923c), emissive: lc(0xea580c), emissiveIntensity: 0.9, roughness: 0.35 }), NPK * 2); root.add(packI); packI.visible = false;
       const packLab = label('🔥 저위도의 남는 열 → 고위도로', [1.5 * Math.cos(40 * D2R) + 0.2, 1.5 * Math.sin(40 * D2R) + 0.28, 0], { color: 'rgba(120,53,15,.9)', size: 12 }); packLab.show(false);
       const BAND = [[0, 30, 15], [30, 60, 45], [60, 90, 75]];
       const bandM = BAND.map((b, i) => { const th0 = (90 - b[1]) * D2R, th1 = (90 - b[0]) * D2R; const m = new THREE.Mesh(new THREE.SphereGeometry(1.012, 48, 6, 0, Math.PI * 2, th0, th1 - th0), new THREE.MeshBasicMaterial({ color: 0x22c55e, transparent: true, opacity: 0.3, depthWrite: false })); earth.add(m); m.visible = false; return m; });

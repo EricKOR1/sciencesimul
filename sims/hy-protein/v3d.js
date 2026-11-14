@@ -104,8 +104,9 @@ function foldChain(start, phob, seed) {
       /* 구슬 · 사슬 (구조 4개 분량) */
       const subs = [];
       const beadGeo = new THREE.SphereGeometry(0.28, 28, 18), stickGeo = new THREE.CylinderGeometry(0.07, 0.07, 1, 10);
-      const chainMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, roughness: 0.5 });
-      const mats = SEQ.map((k) => new THREE.MeshStandardMaterial({ color: AAI[k].col, roughness: 0.35, metalness: 0.05 }));
+      const deep = (c, k) => { const a = new THREE.Color(c); return a.lerp(a.clone().convertSRGBToLinear(), k == null ? 0.7 : k); };   // 화면에서 색이 옅어지지 않게 조금 진하게
+      const chainMat = ctx.mats.plastic(deep(0xfbbf24), { roughness: 0.4 });
+      const mats = SEQ.map((k) => ctx.mats.plastic(deep(AAI[k].col), { roughness: 0.28 }));   // 아미노산 구슬: 매끈한 플라스틱 광택
       const Yv = new THREE.Vector3(0, 1, 0), tv = new THREE.Vector3();
       for (let s = 0; s < 4; s++) {
         const g = new THREE.Group(); root.add(g);
@@ -290,7 +291,7 @@ function foldChain(start, phob, seed) {
       const grab = (fn) => { const n0 = ctlEl.children.length; const r = fn(); return { r, els: Array.prototype.slice.call(ctlEl.children, n0) }; };
       const sh = (g2, on) => g2.els.forEach((e) => { e.style.display = on ? '' : 'none'; });
       const W = () => window.__sim || null;
-      const stdM = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.38, metalness: 0.05 }, o || {}));
+      const stdM = (c, o) => { o = o || {}; if (o.metalness >= 0.5) return ctx.mats.metal('steel', { roughness: 0.25 }); return o.transparent ? new THREE.MeshStandardMaterial(Object.assign({ color: deep(c), roughness: 0.3, metalness: 0 }, o)) : ctx.mats.plastic(deep(c), { roughness: 0.3, extra: o }); };
       const KEYS6 = ['ser', 'gln', 'leu', 'val', 'lys', 'glu'];
       /* 아미노산 구슬: 공통 부분(회색) + 아미노기(파랑) · 카복실기(빨강) + 곁사슬 R기(색) — 2D의 drawAA와 같아요 */
       function mkBead() {
@@ -306,7 +307,7 @@ function foldChain(start, phob, seed) {
         return { g, R, sgH, sgV, wat, key: '' };
       }
       function setBead(B, key, withWater, t, ph) {
-        const a = AAI[key]; if (B.key !== key) { B.key = key; B.R.material.color.setHex(a.col); B.sgH.visible = a.cls === 'chg'; B.sgV.visible = key === 'lys'; }
+        const a = AAI[key]; if (B.key !== key) { B.key = key; B.R.material.color.copy(deep(a.col)); B.sgH.visible = a.cls === 'chg'; B.sgV.visible = key === 'lys'; }
         B.wat.forEach((w, i) => { w.visible = withWater && a.cls !== 'phob'; if (w.visible) { const an = t * 0.9 + i * 6.283 / 5 + ph; w.position.set(0.72 + Math.cos(an) * 0.52, Math.sin(an) * 0.52, Math.sin(an * 0.7) * 0.2); } });
       }
       /* --- aa: 물속에서 R기의 성질 (2D의 S.aa.beads를 그대로) --- */
@@ -382,7 +383,7 @@ function foldChain(start, phob, seed) {
       const lHb = label('', [-3.8, 1.2, 0], { color: 'rgba(51,65,85,.9)' }), lHb2 = label('', [0, -3.9, 0], { color: 'rgba(120,40,40,.92)' }), lKn = label('주황 돌기: 표면의 소수성 발린', [3.6, 0.7, 0], { color: 'rgba(194,65,12,.92)' }); [lHb, lHb2, lKn].forEach((l) => l.show(false));
       /* 적혈구: 오목한 원반 → 낫 모양 (정점을 매 프레임 바꿔요) */
       const rbcGeo = new THREE.SphereGeometry(1, 48, 32), rbcBase = Float32Array.from(rbcGeo.attributes.position.array);
-      const rbc = new THREE.Mesh(rbcGeo, stdM(0xb91c1c, { roughness: 0.4 })); rbc.position.set(0, -2.1, 0); gSK.add(rbc);
+      const rbc = new THREE.Mesh(rbcGeo, ctx.mats.organic(0x9c1515)); rbc.position.set(0, -2.1, 0); gSK.add(rbc);
       let rbcM = -1;
       function shapeRBC(m) {
         if (Math.abs(m - rbcM) < 0.004) return; rbcM = m; const pa = rbcGeo.attributes.position, R = 1.15, T = 0.34, e = m * m * (3 - 2 * m);
@@ -402,7 +403,7 @@ function foldChain(start, phob, seed) {
       const Mn = new THREE.Matrix4();
       function updSickle(w, t) {
         const k = w.S.sk, m = k.mut;
-        skBeads[5].material.color.setHex(m ? CLC.phob : CLC.chg); skRing.material.color.setHex(m ? 0xdc2626 : 0x2563eb); skRing.material.emissive.setHex(m ? 0xdc2626 : 0x2563eb);
+        skBeads[5].material.color.copy(deep(m ? CLC.phob : CLC.chg)); skRing.material.color.setHex(m ? 0xdc2626 : 0x2563eb); skRing.material.emissive.setHex(m ? 0xdc2626 : 0x2563eb);
         skLab[5].set(m ? 'Val' : 'Glu');
         lSeq.set(m ? '변이 헤모글로빈 β 사슬 (처음 8개)' : '정상 헤모글로빈 β 사슬 (처음 8개)'); lSix.set(m ? '6번째: 글루탐산 → 발린 (친수성 → 소수성)' : '6번째: 글루탐산 (친수성, 전하)');
         HB.forEach((o, i) => {

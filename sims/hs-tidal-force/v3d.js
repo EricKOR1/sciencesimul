@@ -46,14 +46,15 @@
       /* 지구: 땅(자전) + 바다(달·태양 방향에 고정) */
       const earth = new THREE.Group(); root.add(earth);
       const tex = new THREE.CanvasTexture(earthCanvas()); if ('encoding' in tex) tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 4;
-      earth.add(new THREE.Mesh(new THREE.SphereGeometry(RS, 64, 44), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.95 })));
+      earth.add(new THREE.Mesh(new THREE.SphereGeometry(RS, 64, 44), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.75, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.006, envMapIntensity: 0.6 })));
+      ctx.halo(earth, 0x6fb4ff, RO * 2.9, 0.38);   // 대기의 푸른 빛
       const oceanGeo = new THREE.SphereGeometry(RO, 72, 48);
       const base = oceanGeo.attributes.position.array.slice();
-      const ocean = new THREE.Mesh(oceanGeo, new THREE.MeshStandardMaterial({ color: 0x2f8be0, transparent: true, opacity: 0.66, roughness: 0.25, metalness: 0.1, depthWrite: false }));
+      const ocean = new THREE.Mesh(oceanGeo, ctx.mats.liquid(0x1f7fd6, { opacity: 0.66, extra: { roughness: 0.1, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.006 } }));
       root.add(ocean);
       /* 달 · 태양 */
-      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 20), new THREE.MeshStandardMaterial({ color: 0xd6d9e0, roughness: 1 })); root.add(moon);
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(1.0, 32, 20), new THREE.MeshBasicMaterial({ color: 0xffc933 })); sun.position.set(8.8, 0, 0); root.add(sun);
+      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 20), ctx.mats.stone(0xbfc3cb, { cracks: true, repeat: 1.5, bump: 0.025 })); root.add(moon);
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(1.0, 40, 28), new THREE.MeshBasicMaterial({ color: 0xffc933 })); sun.position.set(8.8, 0, 0); root.add(sun); ctx.halo(sun, 0xffc04a, 4.2, 0.6);
       const sunGlow = new THREE.Mesh(new THREE.SphereGeometry(1.4, 24, 16), new THREE.MeshBasicMaterial({ color: 0xffa500, transparent: true, opacity: 0.25, depthWrite: false })); sunGlow.position.copy(sun.position); root.add(sunGlow);
       const MR = 4.8;
       const orbitLine = (() => { const p = []; for (let i = 0; i <= 120; i++) { const a = i / 120 * Math.PI * 2; p.push(new THREE.Vector3(Math.cos(a) * MR, 0, -Math.sin(a) * MR)); } const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(p), new THREE.LineDashedMaterial({ color: 0xcbd5e1, dashSize: 0.25, gapSize: 0.2, transparent: true, opacity: 0.6 })); l.computeLineDistances(); root.add(l); return l; })();
@@ -77,7 +78,7 @@
       /* 관측점 + 부표 */
       const pinDir = new THREE.Vector3(1, 0, 0);
       const pin = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 10), new THREE.MeshBasicMaterial({ color: 0xff3b30 })); earth.add(pin); pin.position.copy(pinDir).multiplyScalar(RS);
-      const buoy = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), new THREE.MeshStandardMaterial({ color: 0xff7a1a, emissive: 0xff4500, emissiveIntensity: 0.35 })); root.add(buoy);
+      const buoy = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), ctx.mats.plastic(0xff7a1a, { roughness: 0.3, extra: { emissive: 0xff4500, emissiveIntensity: 0.3 } })); root.add(buoy);
       const stem = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(1, 0, 0)]), new THREE.LineBasicMaterial({ color: 0xff3b30 })); root.add(stem);
       const labBuoy = label('', buoy, { offset: [0, -0.45, 0], color: 'rgba(124,45,18,.92)' });
       /* 기조력 화살표 (달의 기조력 = 그 지점의 달의 인력 − 지구 중심의 평균 인력) */

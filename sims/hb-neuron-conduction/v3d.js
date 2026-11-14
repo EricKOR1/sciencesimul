@@ -41,13 +41,13 @@
 
       /* 신경 세포 앞쪽(가지 돌기 · 세포체)과 뒤쪽(축삭 말단) */
       function ends(g, x0, x1, z) {
-        const somaM = std(0x9a7fe0, { roughness: 0.4 });
+        const somaM = ctx.mats.organic(0x8a6ed8);   // 촉촉한 세포체
         const soma = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 22), somaM); soma.position.set(x0 - 1.0, 0, 0); g.add(soma);
-        const nuc = new THREE.Mesh(new THREE.SphereGeometry(0.26, 20, 14), std(0x4b2a96)); nuc.position.set(x0 - 1.05, 0.05, 0.25); g.add(nuc);
-        const dm = std(0xb59cf0, { roughness: 0.45 });
+        const nuc = new THREE.Mesh(new THREE.SphereGeometry(0.26, 24, 18), ctx.mats.organic(0x3e2288)); nuc.position.set(x0 - 1.05, 0.05, 0.25); g.add(nuc);
+        const dm = ctx.mats.organic(0xa58ce8);
         [[-0.9, 0.7, 0.2], [-1.0, -0.2, 0.7], [-0.8, -0.8, -0.3], [-0.9, 0.3, -0.7]].forEach((q, i) => g.add(tube([V3(x0 - 1.3, 0.1 * i - 0.1, 0), V3(x0 - 1.7 + q[0] * 0.3, q[1] * 0.6, q[2] * 0.6), V3(x0 - 1.4 + q[0], q[1], q[2])], 0.07, dm, 16)));
         const hill = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.8, 20), somaM); hill.rotation.z = -Math.PI / 2; hill.position.x = x0 - 0.35; g.add(hill);
-        const tm = std(0xf2b24a, { roughness: 0.4 }), tips = [];
+        const tm = ctx.mats.organic(0xe8a43a), tips = [];
         [[0.55, 0.65, 0.2], [0.75, 0.0, -0.1], [0.55, -0.65, 0.3]].forEach((q) => { g.add(tube([V3(x1, 0, 0), V3(x1 + 0.2, q[1] * 0.5, q[2] * 0.5), V3(x1 + q[0] + 0.2, q[1], q[2])], 0.07, tm, 12)); const b = new THREE.Mesh(new THREE.SphereGeometry(0.14, 14, 10), std(0xf2b24a)); b.position.set(x1 + q[0] + 0.2, q[1], q[2]); g.add(b); tips.push(b); });
         g.position.z = z || 0; return { soma, tips };
       }
@@ -75,10 +75,10 @@
       const unE = ends(new THREE.Group(), RX0, RX1, 0); // 쓰지 않음 (이름표 위치용)
       const gU = new THREE.Group(); RG.add(gU); const eU = ends(gU, RX0 - SP / 2, RX1 + SP / 2, ZU); gU.position.z = 0;
       const mx = (k) => RX0 + k * SP;
-      const axM = std(0x7fd0c8, { roughness: 0.4 }); const axon = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, RX1 - RX0 + SP, 18), axM); axon.rotation.z = Math.PI / 2; axon.position.set((RX0 + RX1) / 2, 0, ZM); RG.add(axon);
+      const axM = ctx.mats.organic(0x6cc4bc); const axon = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, RX1 - RX0 + SP, 18), axM); axon.rotation.z = Math.PI / 2; axon.position.set((RX0 + RX1) / 2, 0, ZM); RG.add(axon);
       const gM = new THREE.Group(); RG.add(gM); const eM = ends(gM, RX0 - SP / 2, RX1 + SP / 2, ZM);
       const sheaths = [], nodeMat = [];
-      for (let j = 0; j < 3; j++) { const xa = mx(NODES[j]) + SP * 0.45, xb = mx(NODES[j + 1]) - SP * 0.45; const m = std(0xf6cf6b, { roughness: 0.35, transparent: true, opacity: 0.85 }); const s = new THREE.Mesh(new THREE.CapsuleGeometry(0.34, xb - xa - 0.68, 8, 24), m); s.rotation.z = Math.PI / 2; s.position.set((xa + xb) / 2, 0, ZM); RG.add(s); sheaths.push([s, m]); }
+      for (let j = 0; j < 3; j++) { const xa = mx(NODES[j]) + SP * 0.45, xb = mx(NODES[j + 1]) - SP * 0.45; const m = ctx.mats.organic(0xf0c458, { opacity: 0.85, extra: { bumpMap: ctx.mats.tex('fabric'), bumpScale: 0.01 } }); const s = new THREE.Mesh(new THREE.CapsuleGeometry(0.34, xb - xa - 0.68, 8, 24), m); s.rotation.z = Math.PI / 2; s.position.set((xa + xb) / 2, 0, ZM); RG.add(s); sheaths.push([s, m]); }
       for (let j = 0; j < 4; j++) { const m = std(0x3b6fe0, { roughness: 0.3, emissive: 0x000000 }); const n = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, SP * 0.9, 22), m); n.rotation.z = Math.PI / 2; n.position.set(mx(NODES[j]), 0, ZM); RG.add(n); nodeMat.push(m); }
       const glows = []; for (let k = 0; k < NS; k++) { const g = new THREE.Mesh(new THREE.SphereGeometry(0.34, 14, 10), new THREE.MeshBasicMaterial({ color: 0xffd447, transparent: true, opacity: 0, depthWrite: false })); g.position.set(mx(k), 0, ZU); RG.add(g); glows.push(g); }
       const ngl = []; for (let j = 0; j < 4; j++) { const g = new THREE.Mesh(new THREE.SphereGeometry(0.4, 14, 10), new THREE.MeshBasicMaterial({ color: 0xffd447, transparent: true, opacity: 0, depthWrite: false })); g.position.set(mx(NODES[j]), 0, ZM); RG.add(g); ngl.push(g); }

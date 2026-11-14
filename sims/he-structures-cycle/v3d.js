@@ -21,14 +21,15 @@
     autoRotate: 0,
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, mats } = ctx;
+      let colM = null; const lay = {}, rock = (c) => lay[c] || (lay[c] = mats.stone(c, { repeat: 0.45, bump: 0.035, extra: { roughness: 0.9 } }));   // 지층: 퇴적암 잔무늬 (색은 그대로)
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.85, metalness: 0.0 }, o || {}));
       const grp = new THREE.Group(); root.add(grp);
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(6.2, 6.2, 0.2, 64), std(0x2a3550, { roughness: 0.9 })); floor.position.y = -0.12; root.add(floor); floor.userData.v3bg = true;   // 바닥은 화면 맞춤에서 빼요
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(6.2, 6.2, 0.2, 64), mats.stone(0x262d3c, { repeat: 3 })); floor.receiveShadow = true; floor.position.y = -0.12; root.add(floor); floor.userData.v3bg = true;   // 바닥은 화면 맞춤에서 빼요
       const ext = (poly, col, d, x0) => {
         const sh = new THREE.Shape(); poly.forEach((p, i) => (i ? sh.lineTo(p[0], p[1]) : sh.moveTo(p[0], p[1]))); sh.closePath();
         const g = new THREE.ExtrudeGeometry(sh, { depth: d, bevelEnabled: false, curveSegments: 3 }); g.translate(0, 0, -d / 2);
-        const m = new THREE.Mesh(g, std(col)); m.castShadow = m.receiveShadow = true; return m;
+        const m = new THREE.Mesh(g, rock(col)); m.castShadow = m.receiveShadow = true; return m;
       };
       const clip = (poly, a, b, c) => { const out = []; for (let i = 0; i < poly.length; i++) { const p = poly[i], q = poly[(i + 1) % poly.length], fp = a * p[0] + b * p[1] + c, fq = a * q[0] + b * q[1] + c; if (fp >= 0) out.push(p); if ((fp >= 0) !== (fq >= 0)) { const t = fp / (fp - fq); out.push([p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t]); } } return out; };
       const band = (j) => { const y0 = HT * j / NL, y1 = HT * (j + 1) / NL; return [[-XW, y0], [XW, y0], [XW, y1], [-XW, y1]]; };
@@ -58,14 +59,14 @@
           const pl = new THREE.Mesh(new THREE.PlaneGeometry(HT / Math.sin(DIP) + 0.4, ZD * 2 + 0.02), new THREE.MeshBasicMaterial({ color: 0xff6666, transparent: true, opacity: 0.0, side: THREE.DoubleSide })); grp.add(pl);
         } else if (tp === 'strike') {
           halfA = new THREE.Group(); halfB = new THREE.Group(); grp.add(halfA, halfB);
-          for (let j = 0; j < NL; j++) [[halfA, 1], [halfB, -1]].forEach(([g, s]) => { const m = new THREE.Mesh(new THREE.BoxGeometry(XW * 2, HT / NL, ZD), std(COLS[j])); m.position.set(0, HT * (j + 0.5) / NL, s * ZD / 2); g.add(m); });
+          for (let j = 0; j < NL; j++) [[halfA, 1], [halfB, -1]].forEach(([g, s]) => { const m = new THREE.Mesh(new THREE.BoxGeometry(XW * 2, HT / NL, ZD), rock(COLS[j])); m.position.set(0, HT * (j + 0.5) / NL, s * ZD / 2); g.add(m); });
           [[halfA, 1], [halfB, -1]].forEach(([g, s]) => { const r = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.03, ZD), std(0xffe066, { emissive: 0xaa8800, emissiveIntensity: 0.4 })); r.position.set(0, HT + 0.02, s * ZD / 2); g.add(r); });
         } else if (tp === 'column') {
           let sd = 4; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
           const rr = [0.55, 0.4, 0.28][colSpeed - 1], dx = rr * 1.732, dz = rr * 1.5;
           for (let iz = -4; iz <= 4; iz++) for (let ix = -4; ix <= 4; ix++) {
             const x = ix * dx + (iz % 2 ? dx / 2 : 0), z = iz * dz; if (Math.hypot(x, z) > 3.0) continue;
-            const h = 2.3 + rnd() * 0.5 + (1 - Math.hypot(x, z) / 3) * 0.35, m = new THREE.Mesh(new THREE.CylinderGeometry(rr, rr, h, 6), std(0x5b6575, { roughness: 0.75, metalness: 0.08 })); m.rotation.y = Math.PI / 6; m.position.set(x, h / 2, z); m.castShadow = m.receiveShadow = true; grp.add(m); cols.push(m);
+            const h = 2.3 + rnd() * 0.5 + (1 - Math.hypot(x, z) / 3) * 0.35, m = new THREE.Mesh(new THREE.CylinderGeometry(rr, rr, h, 6), colM || (colM = mats.stone(0x4f5868, { cracks: true, repeat: 0.6, bump: 0.04 }))); m.rotation.y = Math.PI / 6; m.position.set(x, h / 2, z); m.castShadow = m.receiveShadow = true; grp.add(m); cols.push(m);
           }
         } else if (tp === 'sheet') {
           /* 판상절리: 화강암체(반쪽을 잘라 단면이 보여요) 위를 덮은 지층이 깎일수록 압력이 줄어 지표와 나란하게 갈라져요 (2D와 같은 깎인 두께 S.sheet.e) */
@@ -75,8 +76,8 @@
           shSlabs = [0, 1, 2, 3, 4, 5, 6].map((j) => { const m = new THREE.Mesh(new THREE.BoxGeometry(XW * 2, 1, ZD * 2), std(COLS[j % NL], { transparent: true, opacity: 0.42, depthWrite: false })); m.userData.y0 = j * SHK * 5 / 7 * 1.4; grp.add(m); return m; });
           shGrass = new THREE.Mesh(new THREE.BoxGeometry(XW * 2, 0.06, ZD * 2), std(0x5b8f4a)); grp.add(shGrass);
         } else if (tp === 'intr') {
-          for (let j = 0; j < NL; j++) { const m = new THREE.Mesh(new THREE.BoxGeometry(XW * 2, HT / NL, ZD * 2), std(COLS[j])); m.position.y = HT * (j + 0.5) / NL; grp.add(m); }
-          const mg = std(0xb23a3a, { roughness: 0.6, emissive: 0x4a0f0f, emissiveIntensity: 0.4 });
+          for (let j = 0; j < NL; j++) { const m = new THREE.Mesh(new THREE.BoxGeometry(XW * 2, HT / NL, ZD * 2), rock(COLS[j])); m.position.y = HT * (j + 0.5) / NL; grp.add(m); }
+          const mg = std(0xb23a3a, { roughness: 0.55, emissive: 0xff3a14, emissiveIntensity: 0.4 });   // 식은 관입암(붉은 빛이 은은하게)
           dikeM = new THREE.Mesh(new THREE.BoxGeometry(0.42, HT + 0.02, ZD * 2 + 0.02), mg); dikeM.position.set(1.4, HT / 2, 0); grp.add(dikeM);
           sillM = new THREE.Mesh(new THREE.BoxGeometry(XW + 1.4 - 0.2, 0.22, ZD * 2 + 0.02), mg); sillM.position.set(-XW / 2 - 0.1 + 0.5, HT * 2 / NL + 0.0, 0); grp.add(sillM);
         }

@@ -16,7 +16,8 @@
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3;
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.1 }, o || {}));
+      const MT = ctx.mats, lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 색이 바래지 않게 (진한 색)
+      const mat = (c, o) => { const q = Object.assign({ color: lc(c), roughness: 0.5, metalness: 0.1 }, o || {}); if (typeof q.emissive === 'number') q.emissive = lc(q.emissive); return new THREE.MeshStandardMaterial(q); };
       const near = new THREE.Group(), solar = new THREE.Group(); root.add(near, solar);
       // 별 배경
       const NS = 500, sp = new Float32Array(NS * 3);
@@ -34,13 +35,13 @@
       }
 
       /* ================= 지구 주변 ================= */
-      const earth = new THREE.Mesh(new THREE.SphereGeometry(1.6, 64, 40), mat(0xffffff, { map: earthTex(), roughness: 0.7 })); earth.castShadow = false; near.add(earth);
+      const earth = new THREE.Mesh(new THREE.SphereGeometry(1.6, 64, 40), mat(0xffffff, { map: earthTex(), roughness: 0.7 })); earth.castShadow = false; near.add(earth); ctx.halo(earth, 0x5aa8ff, 4.9, 0.4);   // 대기의 푸른 빛 번짐
       const atm = new THREE.Mesh(new THREE.SphereGeometry(1.74, 48, 32), new THREE.MeshBasicMaterial({ color: 0x6fb4ff, transparent: true, opacity: 0.14, side: THREE.BackSide, depthWrite: false })); near.add(atm);
-      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.45, 40, 28), mat(0xbfc3cc, { roughness: 0.95 })); near.add(moon);
+      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.45, 40, 28), MT.stone(0x9a9ea8, { repeat: 2, bump: 0.03 })); near.add(moon);
       const moonO = ring(9, 0x8fa0c8, 0.35); near.add(moonO);
       const danuri = new THREE.Mesh(new THREE.OctahedronGeometry(0.1, 0), mat(0xffd34d, { metalness: 0.7, roughness: 0.3, emissive: 0x7a5a00, emissiveIntensity: 0.4 })); near.add(danuri);
       const danuriO = ring(0.85, 0xffd34d, 0.5); moon.add(danuriO);
-      function sat(col, size) { const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), mat(col, { metalness: 0.8, roughness: 0.3 })); const w = new THREE.Mesh(new THREE.BoxGeometry(size * 3.2, size * 0.06, size * 0.9), mat(0x2f5fd0, { metalness: 0.6, roughness: 0.2, emissive: 0x0a2a70, emissiveIntensity: 0.4 })); g.add(b, w); near.add(g); return g; }
+      function sat(col, size) { const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), mat(col, { metalness: 0.85, roughness: 0.28 })); const w = new THREE.Mesh(new THREE.BoxGeometry(size * 3.2, size * 0.06, size * 0.9), MT.plastic(lc(0x1f47b8), { roughness: 0.18, extra: { emissive: lc(0x0a2a70), emissiveIntensity: 0.35, envMapIntensity: 1.6 } })); g.add(b, w); near.add(g); return g; }
       const iss = sat(0xdfe6f2, 0.1), hub = sat(0xc9ced8, 0.1), gps = [0, 1, 2].map(() => sat(0xe8d58a, 0.09));
       const tilt = { iss: 51.6 * DEG, hub: 28 * DEG, gps: 55 * DEG };
       const rIss = 1.95, rHub = 2.2, rGps = 3.6;
@@ -51,15 +52,15 @@
       const debD = []; for (let i = 0; i < ND; i++) debD.push({ r: 1.85 + Math.random() * 0.5, inc: (Math.random() - 0.5) * 2.4, node: Math.random() * 6.28, ph: Math.random() * 6.28, sp: 0.5 + Math.random() * 0.4 });
       // 로켓
       const rocket = new THREE.Group(); near.add(rocket);
-      const rb = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.45, 16), mat(0xf4f6fa, { metalness: 0.3, roughness: 0.3 })); const rn = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.16, 16), mat(0xe2464b)); rn.position.y = 0.3; rocket.add(rb, rn);
+      const rb = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.45, 16), MT.ceramic(0xf2f4f8)); const rn = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.16, 16), mat(0xe2464b)); rn.position.y = 0.3; rocket.add(rb, rn);
       for (let i = 0; i < 3; i++) { const f = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.14, 0.1), mat(0xe2464b)); const a = i * 2.094; f.position.set(Math.cos(a) * 0.08, -0.17, Math.sin(a) * 0.08); f.rotation.y = -a; rocket.add(f); }
-      const flame = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.4, 12), new THREE.MeshBasicMaterial({ color: 0xffa33a, transparent: true, opacity: 0.9 })); flame.rotation.x = Math.PI; flame.position.y = -0.4; rocket.add(flame);
+      const flame = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.4, 16), new THREE.MeshBasicMaterial({ color: lc(0xffa33a), transparent: true, opacity: 0.9 })); flame.rotation.x = Math.PI; flame.position.y = -0.4; rocket.add(flame); ctx.halo(flame, 0xffb04a, 0.9, 0.7);
       rocket.visible = false;
       const lNear = [label('지구', earth, { offset: [0, 1.95, 0] }), label('달', moon, { offset: [0, 0.7, 0] }), label('다누리', danuri, { offset: [0.2, 0.3, 0] }), label('국제 우주 정거장', iss, { offset: [0.0, 0.3, 0] }), label('허블 우주 망원경', hub, { offset: [0, -0.3, 0] }), label('인공위성', gps[0], { offset: [0, 0.3, 0] })];
       const lDeb = label('우주 쓰레기', [1.2, 1.5, 1.5], { color: 'rgba(200,90,40,.95)' });
 
       /* ================= 태양계 ================= */
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(1.1, 40, 28), new THREE.MeshBasicMaterial({ color: 0xffd34d })); solar.add(sun);
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(1.1, 48, 32), new THREE.MeshBasicMaterial({ color: lc(0xffcf45) })); solar.add(sun); ctx.halo(sun, 0xffc040, 7, 0.75);
       solar.add(new THREE.Mesh(new THREE.SphereGeometry(1.7, 32, 20), new THREE.MeshBasicMaterial({ color: 0xffa500, transparent: true, opacity: 0.2, depthWrite: false })));
       const PL = [
         { n: '지구', r: 3.6, s: 0.24, c: 0x3f86e0, sp: 0.5, ph: 0.3 }, { n: '화성', r: 5.2, s: 0.2, c: 0xd9693a, sp: 0.33, ph: 2.6 },
@@ -74,7 +75,7 @@
       const v2c = tubeOf([new V3(3.6, 0, 0.0), new V3(5.8, -0.2, -2.5), new V3(8.6, -0.8, -5.2), new V3(11.5, -2.2, -7.5), new V3(14.5, -4.5, -9), new V3(18, -7, -9.5)], 0xb59aff);
       const mars = new THREE.Curve(); mars.getPoint = (t) => { const a = 0.15 + t * Math.PI * 0.9, r = 3.6 + (5.2 - 3.6) * (1 - Math.cos(t * Math.PI)) / 2; return new V3(Math.cos(a) * r, 0, Math.sin(a) * r); };
       solar.add(new THREE.Mesh(new THREE.TubeGeometry(mars, 80, 0.03, 6, false), new THREE.MeshBasicMaterial({ color: 0xff9a6a, transparent: true, opacity: 0.7 })));
-      const probe = (col) => { const g = new THREE.Group(); g.add(new THREE.Mesh(new THREE.OctahedronGeometry(0.2, 0), mat(col, { metalness: 0.7, roughness: 0.3, emissive: col, emissiveIntensity: 0.4 }))); solar.add(g); return g; };
+      const probe = (col) => { const g = new THREE.Group(); g.add(new THREE.Mesh(new THREE.OctahedronGeometry(0.2, 0), mat(col, { metalness: 0.7, roughness: 0.3, emissive: col, emissiveIntensity: 0.5 }))); ctx.halo(g, col, 1.0, 0.5); solar.add(g); return g; };
       const pv1 = probe(0x9fe8ff), pv2 = probe(0xb59aff), pm = probe(0xff9a6a);
       const lS = [label('태양', sun, { offset: [0, 1.5, 0] }), label('보이저 1호', pv1, { offset: [0, 0.5, 0], color: 'rgba(40,130,160,.95)' }), label('보이저 2호', pv2, { offset: [0, 0.5, 0], color: 'rgba(110,80,200,.95)' }), label('화성 탐사선', pm, { offset: [0, 0.5, 0], color: 'rgba(190,90,50,.95)' })];
       solar.visible = false;
@@ -84,7 +85,7 @@
       { const eg = new THREE.Mesh(new THREE.SphereGeometry(8, 64, 20, 0, 6.283, 0, 0.9), mat(0x2f6fb8, { roughness: 0.8 })); eg.position.y = -8; scope.add(eg);
         const land = new THREE.Mesh(new THREE.SphereGeometry(8.02, 64, 12, 1.2, 1.4, 0, 0.5), mat(0x4aa063, { roughness: 0.9 })); land.position.y = -8; scope.add(land);
         const at = new THREE.Mesh(new THREE.SphereGeometry(9.8, 64, 20, 0, 6.283, 0, 0.8), new THREE.MeshBasicMaterial({ color: 0x6fb4ff, transparent: true, opacity: 0.2, side: THREE.DoubleSide, depthWrite: false })); at.position.y = -8; scope.add(at); }
-      const scStar = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), new THREE.MeshBasicMaterial({ color: 0xfff2c0 })); scStar.position.set(0, 7.2, 0); scope.add(scStar);
+      const scStar = new THREE.Mesh(new THREE.SphereGeometry(0.2, 24, 16), new THREE.MeshBasicMaterial({ color: 0xfff2c0 })); scStar.position.set(0, 7.2, 0); scope.add(scStar); ctx.halo(scStar, 0xfff0c0, 2.0, 0.8);
       const scGal = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const make = (blur) => { const g = c.getContext('2d'); g.clearRect(0, 0, 128, 128); if (blur) g.filter = 'blur(6px)'; g.fillStyle = '#0b1230'; g.fillRect(0, 0, 128, 128);
         g.fillStyle = 'rgba(255,230,170,.95)'; g.beginPath(); g.ellipse(64, 64, 8, 8, 0, 0, 7); g.fill(); for (let k = 0; k < 2; k++) for (let i = 0; i < 70; i++) { const a = i / 70 * 4 + k * Math.PI, r = 6 + i * 0.7; g.fillStyle = 'rgba(180,200,255,' + (0.9 - i / 90) + ')'; g.beginPath(); g.arc(64 + Math.cos(a) * r, 64 + Math.sin(a) * r * 0.55, 2.2, 0, 7); g.fill(); } g.filter = 'none'; const t = new THREE.CanvasTexture(c.cloneNode ? (() => { const c2 = document.createElement('canvas'); c2.width = c2.height = 128; c2.getContext('2d').drawImage(c, 0, 0); return c2; })() : c); if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; return t; }; return { blur: make(true), sharp: make(false) }; })();
       const imgG = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 1.7), new THREE.MeshBasicMaterial({ map: scGal.blur })); imgG.position.set(-3.3, 1.7, 0.2); scope.add(imgG);
@@ -92,11 +93,11 @@
       // 지상 망원경 (삼각대 + 관)
       const gTel = new THREE.Group(); gTel.position.set(-3.3, -0.05, 0); scope.add(gTel);
       { const tb = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 1.1, 20), mat(0xe8edf5, { metalness: 0.4, roughness: 0.4 })); tb.position.y = 0.75; tb.rotation.z = 0.12; gTel.add(tb);
-        [-0.35, 0.35].forEach((x) => { const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.7, 6), mat(0x64748b)); lg.position.set(x, 0.3, 0); lg.rotation.z = x * 0.8; gTel.add(lg); }); }
+        [-0.35, 0.35].forEach((x) => { const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.7, 6), MT.metal('steel', { roughness: 0.3 })); lg.position.set(x, 0.3, 0); lg.rotation.z = x * 0.8; gTel.add(lg); }); }
       // 우주 망원경 (대기권 밖 궤도)
       const sTel = new THREE.Group(); sTel.position.set(3.3, 3.2, 0); scope.add(sTel);
-      { const tb = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 1.2, 24), mat(0xcbd2dc, { metalness: 0.8, roughness: 0.3 })); sTel.add(tb);
-        [-0.9, 0.9].forEach((x) => { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.04, 0.5), mat(0x2f4f9f, { metalness: 0.5, roughness: 0.4, emissive: 0x112266, emissiveIntensity: 0.4 })); sp.position.x = x; sTel.add(sp); }); }
+      { const tb = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 1.2, 24), MT.metal('aluminium', { roughness: 0.25 })); sTel.add(tb);
+        [-0.9, 0.9].forEach((x) => { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.04, 0.5), MT.plastic(lc(0x1f47b8), { roughness: 0.18, extra: { emissive: lc(0x112266), emissiveIntensity: 0.35, envMapIntensity: 1.6 } })); sp.position.x = x; sTel.add(sp); }); }
       // 별빛: 지상으로 오는 빛은 대기에서 흔들려요 (구불구불, 약해져요) / 우주로 오는 빛은 곧게 와요
       const rayMat = (c, o) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o });
       const wav = []; for (let i = 0; i < 4; i++) { const pts = []; const off = (i - 1.5) * 0.16; for (let k = 0; k <= 40; k++) { const u = k / 40, y = 7.1 - u * 7.1, inAtm = Math.max(0, Math.min(1, (2.2 - y) / 2.0)); pts.push(new V3(-3.3 * u + off * u + Math.sin(k * 0.95 + i * 1.7) * 0.2 * inAtm, y, 0)); }

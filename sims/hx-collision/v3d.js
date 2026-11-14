@@ -26,7 +26,7 @@
       const S0 = window.__sim && window.__sim.S && window.__sim.S.lb;
       const opt = { co: S0 && S0.co === 'O' ? 'O' : 'C', no: S0 && S0.no === 'N' ? 'N' : 'O', lv: S0 && S0.lv ? S0.lv : 3 };
       const W2 = () => window.__sim || null, lb2 = () => { const w = W2(); return w && w.S ? w.S.lb : null; };
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.38, metalness: 0.05 }, o || {}));
+      const mat = (c, o) => { o = o || {}; if (o.metalness >= 0.7) return ctx.mats.metal(c, { roughness: o.roughness }); if (!o.transparent) return ctx.mats.plastic(c, { roughness: 0.3, extra: o }); return new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.38, metalness: 0.05 }, o)); };   // 분자 모형은 매끈한 플라스틱, 금속 촉매는 금속 재질
       const gLab = new THREE.Group(); root.add(gLab);
       const A = {};
       [['C', 'C'], ['Oc', 'O'], ['N', 'N'], ['Oa', 'O'], ['Ob', 'O']].forEach(([k, el]) => { A[k] = new THREE.Mesh(new THREE.SphereGeometry(RAD[el], 36, 26), mat(CPK[el])); gLab.add(A[k]); });
@@ -131,11 +131,11 @@
       const PU = 0x7c3aed;
       /* --- box: 반응기 속 분자 (2D의 S.bx.mols 를 그대로 따라가요) --- */
       const BW = 8, BH = 4.4, BD = 3.2, BY = 2.3;
-      const glass = new THREE.Mesh(new THREE.BoxGeometry(BW, BH, BD), new THREE.MeshStandardMaterial({ color: 0x9fb4d6, transparent: true, opacity: 0.1, roughness: 0.2, depthWrite: false }));
+      const glass = new THREE.Mesh(new THREE.BoxGeometry(BW, BH, BD), ctx.mats.glass({ tint: 0x9fb4d6, opacity: 0.12 }));
       glass.position.set(0, BY, 0); gBox.add(glass);
       const frame = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(BW, BH, BD)), new THREE.LineBasicMaterial({ color: 0x8aa0c8 })); frame.position.set(0, BY, 0); gBox.add(frame);
       { const fit = new THREE.Mesh(new THREE.BoxGeometry(BW, BH, BD), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); fit.position.set(0, BY, 0); gBox.add(fit); }   // 자동 맞춤용 보이지 않는 상자: 반응기 전체가 잘리지 않게
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(BW + 0.6, 0.2, BD + 0.6), mat(0x1c2540)); floor.position.set(0, BY - BH / 2 - 0.1, 0); gBox.add(floor);
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(BW + 0.6, 0.2, BD + 0.6), ctx.mats.metal(0x4a5368, { brushed: true, roughness: 0.45 })); floor.position.set(0, BY - BH / 2 - 0.1, 0); gBox.add(floor);
       const SL = 16, slots = [];
       for (let i = 0; i < SL; i++) {
         const g = new THREE.Group(), at = [], bd = [];

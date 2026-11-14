@@ -18,8 +18,8 @@
       /* ---------- 공통 도구 ---------- */
       const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
       const V3 = THREE.Vector3, Yax = new V3(0, 1, 0);
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o || {}));
-      const glass = (c, op, o) => mat(c || 0xbfe3ff, Object.assign({ transparent: true, opacity: op || 0.16, roughness: 0.12, metalness: 0, depthWrite: false, side: THREE.DoubleSide }, o || {}));
+      const mat = (c, o) => { o = o || {}; if (o.metalness >= 0.5 && !o.transparent) { const q = Object.assign({}, o), r = q.roughness; delete q.metalness; delete q.roughness; return ctx.mats.metal(c, { roughness: r == null ? 0.3 : r, extra: q }); } return new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o)); };   // 금속 부품은 실제 금속 재질(환경 반사)
+      const glass = (c, op, o) => ctx.mats.glass({ tint: c || 0xeaf6ff, opacity: op || 0.16, extra: o || {} });   // 유리: 맑고 또렷한 반사
       const rnd = (() => { let s = 12345; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; })();
       const _m = new THREE.Matrix4(), _c = new THREE.Color();
       function spheres(N, r, color, seg) {
@@ -165,12 +165,12 @@
       const sys = stateSys(N, PR, 0xffffff), st = { key: 'heat', t: 0, lastT: 0, seg: -1, on: false };
       sys.H = HH; sys.W = W;
       const frame = boxFrame(W, HH, 0xdff0ff); root.add(frame);
-      const stand = new THREE.Mesh(new THREE.CylinderGeometry(2.9, 3.1, 0.2, 48), mat(0x64748b, { metalness: 0.4, roughness: 0.4 })); stand.position.y = -HH - 0.12; root.add(stand);
+      const stand = new THREE.Mesh(new THREE.CylinderGeometry(2.9, 3.1, 0.2, 48), mat(0x5d6673, { metalness: 0.9, roughness: 0.45 })); stand.position.y = -HH - 0.12; root.add(stand);
       /* 가열 장치(가열) / 찬물 수조(냉각) */
       const burner = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.7, 0.5, 24), mat(0x475569, { metalness: 0.6, roughness: 0.4 })); burner.position.y = -HH - 0.5; root.add(burner);
       const flame = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.9, 20), new THREE.MeshBasicMaterial({ color: 0xff8a2a, transparent: true, opacity: 0.9 })); flame.position.y = -HH - 0.04; root.add(flame);
       const flame2 = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.55, 16), new THREE.MeshBasicMaterial({ color: 0xffe082 })); flame2.position.y = -HH - 0.15; root.add(flame2);
-      const bath = new THREE.Mesh(new THREE.BoxGeometry(2 * W + 1.1, HH * 1.1, 2 * W + 1.1), glass(0x5fb4ff, 0.2, { side: THREE.FrontSide })); bath.position.y = -HH + HH * 0.55 - 0.05; root.add(bath);
+      const bath = new THREE.Mesh(new THREE.BoxGeometry(2 * W + 1.1, HH * 1.1, 2 * W + 1.1), ctx.mats.liquid(0x3f95e8, { opacity: 0.26, extra: { side: THREE.FrontSide } })); bath.position.y = -HH + HH * 0.55 - 0.05; root.add(bath);
       const bathLab = label('찬물 수조', bath, { size: 11.5, offset: [W + 0.9, -0.3, 0] });
       const arrIn = mkArrow(0xff6a3d, 0.1), arrOut = mkArrow(0x3b82f6, 0.1); root.add(arrIn, arrOut);
       setArrow(arrIn, new V3(1.2, -HH - 0.9, 0), new V3(0.4, -HH - 0.1, 0)); setArrow(arrOut, new V3(W + 0.1, -HH + 1.0, 0), new V3(W + 1.5, -HH + 1.0, 0));

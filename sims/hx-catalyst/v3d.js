@@ -39,7 +39,7 @@
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, UP = new V3(0, 1, 0);
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.38, metalness: 0.05 }, o || {}));
+      const mat = (c, o) => { o = o || {}; if (o.metalness >= 0.7) return ctx.mats.metal(c, { roughness: o.roughness }); if (!o.transparent) return ctx.mats.plastic(c, { roughness: 0.3, extra: o }); return new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.38, metalness: 0.05 }, o)); };   // 분자 모형은 매끈한 플라스틱, 금속 촉매는 금속 재질
       const W = () => window.__sim || null;
       let cat = false, catName = '촉매 없음', prog = 0, demo = false, txt = '';
       /* 촉매 표면 */

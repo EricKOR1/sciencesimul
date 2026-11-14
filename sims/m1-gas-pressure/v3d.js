@@ -17,8 +17,8 @@
       /* ---------- 공통 도구 ---------- */
       const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
       const V3 = THREE.Vector3, Yax = new V3(0, 1, 0);
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o || {}));
-      const glass = (c, op, o) => mat(c || 0xbfe3ff, Object.assign({ transparent: true, opacity: op || 0.16, roughness: 0.12, metalness: 0, depthWrite: false, side: THREE.DoubleSide }, o || {}));
+      const mat = (c, o) => { o = o || {}; if (o.metalness >= 0.5 && !o.transparent) { const q = Object.assign({}, o), r = q.roughness; delete q.metalness; delete q.roughness; return ctx.mats.metal(c, { roughness: r == null ? 0.3 : r, extra: q }); } return new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o)); };   // 금속 부품은 실제 금속 재질(환경 반사)
+      const glass = (c, op, o) => ctx.mats.glass({ tint: c || 0xeaf6ff, opacity: op || 0.16, extra: o || {} });   // 유리: 맑고 또렷한 반사
       const rnd = (() => { let s = 12345; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; })();
       const _m = new THREE.Matrix4(), _c = new THREE.Color();
       function spheres(N, r, color, seg) {

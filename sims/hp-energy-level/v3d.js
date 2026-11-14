@@ -75,10 +75,10 @@
       const rulerLabs = [];
       function ruler(g, x0, y, w, yl) { [400, 500, 600, 700].forEach((nm) => { const t = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.2, 0.04), M(0xc8d3ee)); t.position.set(NM2X(nm), y - 0.7, 0); g.add(t); rulerLabs.push([label(nm + ' nm', [NM2X(nm), y - 1.05, 0], { color: '#475569', size: 11 }), g]); }); }
       /* ================= 🔭 분광기 ================= */
-      const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.6, 20, 14), M(0xfff3c4, { emissive: 0xffc800, emissiveIntensity: 0.7 })); lamp.position.set(-8.5, 2.2, 0); gS.add(lamp);
-      const tubeS = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 2.2, 16), M(0xe879f9, { emissive: 0x7a2d8a, emissiveIntensity: 0.6 })); tubeS.rotation.z = Math.PI / 2; tubeS.position.set(-8.5, 2.2, 0); gS.add(tubeS);
-      const slit = [1, -1].map((s) => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.7, 0.5), M(0x394258)); b.position.set(-6.0, 2.2 + s * 0.55, 0); gS.add(b); return b; });
-      const prism = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 1.2, 3), new THREE.MeshStandardMaterial({ color: 0x9ad0ff, roughness: 0.1, transparent: true, opacity: 0.6 })); prism.rotation.x = Math.PI / 2; prism.position.set(-3.2, 2.2, 0); gS.add(prism);
+      const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.6, 32, 24), ctx.mats.emissive(0xffe9a8, 1.1)); lamp.position.set(-8.5, 2.2, 0); gS.add(lamp); ctx.halo(lamp, 0xffd27a, 2.2, 0.55);
+      const tubeS = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 2.2, 32), ctx.mats.emissive(0xe879f9, 1.0)); tubeS.rotation.z = Math.PI / 2; tubeS.position.set(-8.5, 2.2, 0); gS.add(tubeS); ctx.halo(tubeS, 0xe070f0, 2.4, 0.5);
+      const slit = [1, -1].map((s) => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.7, 0.5), ctx.mats.metal('iron', { roughness: 0.4 })); b.position.set(-6.0, 2.2 + s * 0.55, 0); gS.add(b); return b; });
+      const prism = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 1.2, 3), ctx.mats.glass({ tint: 0xbfe2ff, opacity: 0.42 })); prism.rotation.x = Math.PI / 2; prism.position.set(-3.2, 2.2, 0); gS.add(prism);
       const beamS = new THREE.Mesh(new THREE.BoxGeometry(1, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: 0xfff3c4, transparent: true, opacity: 0.8 })); gS.add(beamS);
       const fan = new THREE.Group(); gS.add(fan);
       const stS = strip(gS, -3, -2.3, 10, 1.2); ruler(gS, -3, -2.3, 10);
@@ -89,7 +89,7 @@
       let spKey = '';
       function spec(A, S) {
         const s = S.s, src = A.SRC[s.src], H = s.src === 'incand';
-        lamp.visible = H; tubeS.visible = !H; tubeS.material.color.set(src.tint); tubeS.material.emissive.set(src.tint); tubeS.material.emissiveIntensity = 0.5;
+        lamp.visible = H; tubeS.visible = !H; tubeS.material.color.set(src.tint); tubeS.material.emissive.set(src.tint); tubeS.material.emissiveIntensity = 0.9; tubeS.children.forEach((c) => { if (c.isSprite) c.material.color.set(src.tint); });
         lSrc.set(src.name); lSrc.off = [0, 1.1, 0];
         const key = s.src + '|' + Object.keys(s.rec).join(','); const lines = H ? [] : (s.src === 'H' ? A.LINES.H.map((l) => ({ nm: l.nm, a: l.a * (s.rec[l.nm] ? 1 : 0.88) })) : A.LINES[s.src]);
         if (key !== spKey) {
@@ -134,11 +134,11 @@
       /* ================= ⚛️ 보어 모형 ================= */
       const R = (n) => (24 + 28 * (n - 1)) / 32;
       const lad = (n) => -3 + 6 * (1 - 1 / (n * n));        // 에너지 사다리의 높이 (En에 비례)
-      const nuc = new THREE.Mesh(new THREE.SphereGeometry(0.3, 32, 24), M(0xff6b6b, { emissive: 0x7f1d1d, roughness: 0.35 })); gB.add(nuc);
+      const nuc = new THREE.Mesh(new THREE.SphereGeometry(0.3, 32, 24), ctx.mats.plastic(0xff6b6b, { roughness: 0.25, extra: { emissive: 0x5f1515 } })); gB.add(nuc);
       const lN = label('원자핵(양성자)', nuc, { color: '#e2464b', size: 12 }); lN.off = [0, 0.55, 0];
       const orbs = []; for (let n = 1; n <= 6; n++) { const o = new THREE.Mesh(new THREE.TorusGeometry(R(n), 0.016, 8, 140), new THREE.MeshBasicMaterial({ color: 0x9db8ff, transparent: true, opacity: 0.55 })); gB.add(o); orbs.push(o); }
       const orbL = [1, 2, 3, 4].map((n) => label('n = ' + n, [R(n) * Math.cos(-0.7), R(n) * Math.sin(-0.7), 0], { color: '#475569', size: 11 }));
-      const el = new THREE.Mesh(new THREE.SphereGeometry(0.17, 24, 16), M(0x4c8dff, { emissive: 0x1e3a8a, roughness: 0.3 })); gB.add(el); const lE = label('전자', el, { color: '#2f6df6', size: 12 }); lE.off = [0, 0.45, 0];
+      const el = new THREE.Mesh(new THREE.SphereGeometry(0.17, 24, 16), ctx.mats.plastic(0x4c8dff, { roughness: 0.22, extra: { emissive: 0x1e3a8a } })); gB.add(el); const lE = label('전자', el, { color: '#2f6df6', size: 12 }); lE.off = [0, 0.45, 0];
       // 사다리 (오른쪽)
       const LX = 9.5, ladLines = [], ladLabs = [];
       for (let n = 1; n <= 6; n++) { const b = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.07, 0.07), M(0x2f6df6)); b.position.set(LX, lad(n), 0); gB.add(b); ladLines.push(b); ladLabs.push(label('n=' + n + '  ' + (-13.6 / (n * n)).toFixed(2) + ' eV', [LX - 2.8, lad(n), 0], { color: '#475569', size: 10.5 })); }
@@ -202,13 +202,13 @@
       /* ================= 🔬 한계 ①: 헬륨 비교 · ③: 흡수선 (분광기 두 줄) ================= */
       const gHe = new THREE.Group(), gAb = new THREE.Group(); root.add(gHe, gAb); gHe.visible = gAb.visible = false;
       const labHe = [], labAb = [];
-      const glassM = (c, op) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.1, transparent: true, opacity: op, depthWrite: false });
+      const glassM = (c, op) => ctx.mats.glass({ tint: c, opacity: op * 0.8 });
       function mkRow(g, y0, kind, tint, labs, name) {
         const ay = y0 + 1.6;
-        if (kind === 'lamp') { const m = new THREE.Mesh(new THREE.SphereGeometry(0.6, 20, 14), M(0xfff3c4, { emissive: 0xffc800, emissiveIntensity: 0.7 })); m.position.set(-9.2, ay, 0); g.add(m); }
+        if (kind === 'lamp') { const m = new THREE.Mesh(new THREE.SphereGeometry(0.6, 32, 24), ctx.mats.emissive(0xffe9a8, 1.1)); m.position.set(-9.2, ay, 0); g.add(m); ctx.halo(m, 0xffd27a, 2.2, 0.55); }
         else { const t = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 2.2, 16), M(new THREE.Color(tint).getHex(), { emissive: new THREE.Color(tint).getHex(), emissiveIntensity: 0.6 })); t.rotation.z = Math.PI / 2; t.position.set(-9.2, ay, 0); g.add(t); }
         if (kind === 'lamp') { const cell = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 1.5, 24), glassM(0xbfe7ff, 0.35)); cell.rotation.z = Math.PI / 2; cell.position.set(-7.0, ay, 0); g.add(cell); labs.push(label('차가운 수소 기체', cell, { color: '#3b6fb0', size: 12 })); labs[labs.length - 1].off = [0, 1.1, 0]; }
-        [1, -1].forEach((sg) => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.7, 0.5), M(0x394258)); b.position.set(-5.3, ay + sg * 0.55, 0); g.add(b); });
+        [1, -1].forEach((sg) => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.7, 0.5), ctx.mats.metal('iron', { roughness: 0.4 })); b.position.set(-5.3, ay + sg * 0.55, 0); g.add(b); });
         const pr = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 1.2, 3), glassM(0x9ad0ff, 0.6)); pr.rotation.x = Math.PI / 2; pr.position.set(-3.6, ay, 0); g.add(pr);
         const bm = new THREE.Mesh(new THREE.BoxGeometry(5.8, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: kind === 'lamp' ? 0xfff3c4 : new THREE.Color(tint).getHex(), transparent: true, opacity: 0.8 })); bm.position.set(-6.3, ay, 0); g.add(bm);
         const st = strip(g, -3, y0 - 0.1, 10, 1.1);

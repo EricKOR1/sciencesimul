@@ -23,18 +23,20 @@
       /* 기압 지도: 북쪽이 저기압(파랑), 남쪽이 고기압(주황) */
       const cv = document.createElement('canvas'); cv.width = 8; cv.height = 256; { const g = cv.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#7fb0e6'); gr.addColorStop(0.5, '#c9d6e6'); gr.addColorStop(1, '#e9b88a'); g.fillStyle = gr; g.fillRect(0, 0, 8, 256); }
       const mapTex = new THREE.CanvasTexture(cv); if ('encoding' in mapTex) mapTex.encoding = THREE.sRGBEncoding;
-      const map = new THREE.Mesh(new THREE.BoxGeometry(MX * 2, 0.18, MY * 2), [0, 1, 2, 3, 4, 5].map((i) => new THREE.MeshStandardMaterial(i === 2 ? { map: mapTex, roughness: 0.9 } : { color: 0x56627a, roughness: 0.9 })));
+      const map = new THREE.Mesh(new THREE.BoxGeometry(MX * 2, 0.18, MY * 2), [0, 1, 2, 3, 4, 5].map((i) => (i === 2 ? ctx.mats.plastic(0xffffff, { roughness: 0.55, extra: { map: mapTex, clearcoat: 0.3 } }) : ctx.mats.plastic(0x2c3446, { roughness: 0.42 }))));
       map.position.y = -0.09; root.add(map);
+      { const b = new THREE.Mesh(new THREE.BoxGeometry(MX * 2 + 0.5, 0.12, MY * 2 + 0.5), ctx.mats.metal('aluminium', { brushed: true, roughness: 0.4 })); b.position.y = -0.24; b.userData.v3bg = true; root.add(b); }   // 지도를 받친 받침판
       /* 등압선 (남북으로 기압이 달라요) */
       const isoG = new THREE.Group(); root.add(isoG);
       const isoLabs = [];
+      const isoMat = ctx.mats.plastic(0x1e3a6e, { roughness: 0.3 });
       function buildIso() {
         while (isoG.children.length) { const o = isoG.children.pop(); o.geometry.dispose(); }
         const gap = Math.max(0.55, Math.min(2.3, st.spc / 400 * 1.2));          // 간격이 넓을수록 경도력이 약해요
         const ys = [];
         for (let k = -3; k <= 3; k++) { const y = k * gap; if (Math.abs(y) < MY - 0.25) ys.push([k, y]); }
         ys.forEach(([k, y]) => {
-          const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(-MX + 0.1, 0.02, -y), new THREE.Vector3(MX - 0.1, 0.02, -y)]), 2, 0.05, 6, false), new THREE.MeshStandardMaterial({ color: 0x1e3a6e, roughness: 0.6 }));
+          const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(-MX + 0.1, 0.02, -y), new THREE.Vector3(MX - 0.1, 0.02, -y)]), 2, 0.05, 6, false), isoMat);
           isoG.add(m);
         });
         isoLabs.forEach((l, i) => { const e = ys[i]; if (e) { l.show(true); l.obj = [MX - 0.5, 0.15, -e[1]]; l.set((1004 - 4 * e[0]) + ' hPa'); } else l.show(false); });
@@ -45,8 +47,8 @@
       /* 북쪽 화살표 */
 
       /* 공기 덩어리 · 화살표 */
-      const parcel = new THREE.Mesh(new THREE.SphereGeometry(0.2, 28, 20), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35, emissive: 0x334466, emissiveIntensity: 0.3 })); root.add(parcel);
-      function mkArrow(col) { const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({ color: col, roughness: 0.4, emissive: col, emissiveIntensity: 0.25 }); const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 1, 10), m), hd = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.3, 14), m); g.add(sh, hd); g.userData = { sh, hd }; root.add(g); return g; }
+      const parcel = new THREE.Mesh(new THREE.SphereGeometry(0.2, 36, 24), ctx.mats.plastic(0xffffff, { roughness: 0.25, extra: { emissive: 0x334466, emissiveIntensity: 0.25 } })); root.add(parcel);
+      function mkArrow(col) { const g = new THREE.Group(), m = ctx.mats.plastic(col, { roughness: 0.3, extra: { emissive: col, emissiveIntensity: 0.2 } }); const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 1, 16), m), hd = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.3, 24), m); g.add(sh, hd); g.userData = { sh, hd }; root.add(g); return g; }
       const up = new THREE.Vector3(0, 1, 0);
       function setArrow(g, from, dir, len) {            // dir: 단위벡터(장면), len 길이
         if (len < 0.08) { g.visible = false; return; } g.visible = true; const { sh, hd } = g.userData, hl = Math.min(0.3, len * 0.5);

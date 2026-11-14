@@ -58,7 +58,7 @@
       /* ===== 상태 ===== */
       let scene = 'star', si = 0, tYr = 0, showComp = true;
       let dipT = 0, showArrows = false, showLines = true, yaw = 0, yawGoal = null, zoomOn = false, zm = 0;
-      const earthCol = 0x3b82f6;
+      const earthCol = 0x3b82f6, nTex = ctx.mats.tex('noise');
 
       /* ===================== ① 한 별 ===================== */
       const sg = new THREE.Group(); root.add(sg);
@@ -80,7 +80,7 @@
         const u = d / 10;                                                                               // 그림 크기 단위
         const P = posAt(tYr), tmin = Math.max(0, s.d * Math.abs(s.vr) / (s.v * s.v) / KMS_PC_YR), dmin = d * s.vt / s.v;
         // 지구
-        const earth = new THREE.Mesh(new THREE.SphereGeometry(0.34 * u, 20, 14), new THREE.MeshStandardMaterial({ color: earthCol, roughness: 0.6 })); sg.add(earth);
+        const earth = new THREE.Mesh(new THREE.SphereGeometry(0.34 * u, 32, 22), ctx.mats.plastic(earthCol, { roughness: 0.3, extra: { bumpMap: nTex, bumpScale: 0.01 } })); sg.add(earth); ctx.halo(earth, 0x6fb4ff, 1.1 * u, 0.4);
         // 별 (현재 위치)
         const st = new THREE.Mesh(new THREE.SphereGeometry(0.42 * u, 20, 14), new THREE.MeshBasicMaterial({ color: new THREE.Color(s.c) })); st.position.set(P[0], P[1], P[2]); st.add(glow(s.c, 0.9, 3 * u)); sg.add(st);
         // 처음 위치(t=0)와 경로
@@ -140,7 +140,7 @@
         const v = new THREE.Vector3(-Math.tan(dx), Math.tan(dy), -1).normalize().multiplyScalar(s.d);
         return v;
       }
-      const dipEarth = new THREE.Mesh(new THREE.SphereGeometry(0.55, 20, 14), new THREE.MeshStandardMaterial({ color: earthCol, roughness: 0.6 })); dg.add(dipEarth);
+      const dipEarth = new THREE.Mesh(new THREE.SphereGeometry(0.55, 32, 22), ctx.mats.plastic(earthCol, { roughness: 0.3, extra: { bumpMap: ctx.mats.tex('noise'), bumpScale: 0.01 } })); dg.add(dipEarth); ctx.halo(dipEarth, 0x6fb4ff, 1.7, 0.4);
       const labDipE = label('🌍 지구', dipEarth, { size: LS, color: 'rgba(20,60,140,.92)', offset: [0, 1.4, 0] });
       DIP.forEach((s, i) => {
         const m = new THREE.Mesh(new THREE.SphereGeometry(0.42, 18, 12), new THREE.MeshBasicMaterial({ color: 0xdfe9ff })); m.add(glow(0xbfd2ff, 0.8, 2.2)); dg.add(m); dipMeshes.push(m);

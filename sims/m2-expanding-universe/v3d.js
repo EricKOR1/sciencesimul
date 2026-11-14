@@ -22,11 +22,18 @@
       const sm = () => window.__sim;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o || {}));
       const R0 = 2.4;
+      const MT = ctx.mats, lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 색이 바래지 않게 (진한 색)
       const balloon = new THREE.Group(), lattice = new THREE.Group(); root.add(balloon, lattice);
 
       /* ---------- 풍선 ---------- */
-      const bal = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 40), new THREE.MeshStandardMaterial({ color: 0x7fb7ff, transparent: true, opacity: 0.45, roughness: 0.12, metalness: 0, depthWrite: false })); bal.renderOrder = 1; balloon.add(bal);
-      const knot = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.3, 16), mat(0x5c93d8, { roughness: 0.4 })); knot.position.y = -1.02; knot.rotation.x = Math.PI; balloon.add(knot);
+      const bal = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 40), MT.liquid(lc(0x4f8ff0), { opacity: 0.5, extra: { roughness: 0.1, envMapIntensity: 1.8 } })); bal.renderOrder = 1; balloon.add(bal);   // 고무풍선: 반투명하고 반짝이는 겉면
+      const knot = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.3, 24), MT.plastic(lc(0x3f7fe0), { roughness: 0.3 })); knot.position.y = -1.02; knot.rotation.x = Math.PI; balloon.add(knot);
+      { const lip = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.022, 10, 24), knot.material); lip.rotation.x = Math.PI / 2; lip.position.y = 0.16; lip.userData.v3bg = true; knot.add(lip);   // 풍선 꼭지의 말린 끝과 실
+        const str = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(0, 0.17, 0), new V3(0.05, 0.5, 0.02), new V3(-0.04, 0.9, -0.02), new V3(0.03, 1.4, 0.01)]), 24, 0.012, 6, false), MT.fabric(0xe8ecf4)); str.userData.v3bg = true; knot.add(str); }
+      /* 배경의 별 (우주 느낌): 자동 맞춤에는 넣지 않아요 */
+      { const pos = []; let sd = 9; const rr = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+        for (let i = 0; i < 260; i++) { const u = rr() * 2 - 1, a = rr() * 6.283, q = Math.sqrt(1 - u * u), r = 24 + rr() * 10; pos.push(Math.cos(a) * q * r, u * r, Math.sin(a) * q * r); }
+        const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); const st = new THREE.Points(bg, new THREE.PointsMaterial({ color: 0xbfd0ff, size: 2, sizeAttenuation: false, transparent: true, opacity: 0.55 })); st.userData.v3bg = true; root.add(st); }
       // 은하 스티커: 소용돌이 그림 (크기는 늘 일정)
       function galTex(col) {
         const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
@@ -51,11 +58,11 @@
 
       /* ---------- 은하 격자 ---------- */
       const G = 5, NG = G * G * G, SPC = 0.78;
-      const gInst = new THREE.InstancedMesh(new THREE.SphereGeometry(0.085, 14, 10), new THREE.MeshStandardMaterial({ color: 0xcfe0ff, emissive: 0x8fb0ff, emissiveIntensity: 0.6, roughness: 0.3 }), NG); gInst.frustumCulled = false; lattice.add(gInst);
+      const gInst = new THREE.InstancedMesh(new THREE.SphereGeometry(0.085, 14, 10), new THREE.MeshStandardMaterial({ color: lc(0xcfe0ff), emissive: lc(0x86a8ff), emissiveIntensity: 0.9, roughness: 0.3 }), NG); gInst.frustumCulled = false; lattice.add(gInst);
       const home = []; for (let i = 0; i < G; i++) for (let j = 0; j < G; j++) for (let k = 0; k < G; k++) home.push(new V3(i - 2, j - 2, k - 2).multiplyScalar(SPC));
       const trail = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xffd34d, transparent: true, opacity: 0.8 })); trail.frustumCulled = false; lattice.add(trail);
       trail.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(NG * 6), 3));
-      const refM = new THREE.Mesh(new THREE.SphereGeometry(0.22, 20, 14), new THREE.MeshBasicMaterial({ color: 0xffd34d })); lattice.add(refM);
+      const refM = new THREE.Mesh(new THREE.SphereGeometry(0.22, 28, 20), new THREE.MeshBasicMaterial({ color: lc(0xffd34d) })); lattice.add(refM); ctx.halo(refM, 0xffd34d, 1.5, 0.6);
       const ghost = new THREE.InstancedMesh(new THREE.SphereGeometry(0.06, 8, 6), new THREE.MeshBasicMaterial({ color: 0x8fa0c8, transparent: true, opacity: 0.4 }), NG); ghost.frustumCulled = false; lattice.add(ghost);
       const lRef = label('나 (기준 은하)', refM, { offset: [0, 0.5, 0] });
       lattice.visible = false;

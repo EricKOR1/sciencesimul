@@ -44,7 +44,8 @@
       const V = THREE.Vector3;
       renderer.localClippingEnabled = true;
       let key = 'nuc';
-      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.03 }, o || {}));
+      const deep = (c, k) => { const a = new THREE.Color(c); return a.lerp(a.clone().convertSRGBToLinear(), k == null ? 0.7 : k); };   // 화면에서 색이 옅어지지 않게 조금 진하게
+      const std = (c, o) => ctx.mats.organic(deep(c, 0.6), { extra: Object.assign({ roughness: 0.45 }, o || {}) });   // 세포 소기관: 촉촉한 생체 조직 느낌
       const glass = (c, op, o) => std(c, Object.assign({ transparent: true, opacity: op, side: THREE.DoubleSide, depthWrite: false, roughness: 0.3 }, o || {}));
       const G = {};                    // 소기관별 그룹
       const labs = {};

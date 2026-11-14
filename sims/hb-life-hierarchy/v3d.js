@@ -35,13 +35,13 @@
         const g = new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: true, bevelThickness: depth * 0.5, bevelSize: 0.18, bevelSegments: 6, curveSegments: 28 });
         g.translate(0, 0, -depth / 2); return g;
       }
-      const heartMat = () => std(0xd63a52, { roughness: 0.4 });
+      const heartMat = () => ctx.mats.organic(0xc42a44);
 
       /* ================= 확대 장면 (2D 'zoom') ================= */
       const zg = [], zl = [];   // zg[j]: 2D LV[j] 단계 장면
       const mkz = (j) => { const g = new THREE.Group(); g.visible = false; root.add(g); zg[j] = g; zl[j] = []; return g; };
       const zlab = (j, t, o, off, opt) => { const l = label(t, o, Object.assign({ offset: off }, opt || {})); l.show(false); zl[j].push(l); return l; };
-      const skin = std(0xf5c9a0, { roughness: 0.7 }), shirt = std(0x4f86f7), pants = std(0x2f3e5e);
+      const skin = ctx.mats.organic(0xe8b890, { extra: { roughness: 0.6, clearcoat: 0.1 } }), shirt = ctx.mats.fabric(0x3f76e8), pants = ctx.mats.fabric(0x26324e);   // 피부 · 면 셔츠 · 청바지
       const beatObjs = [];     // [obj, 기본 크기, 진폭]
       const addBeat = (o, a) => { beatObjs.push([o, o.scale.clone(), a]); };
 
@@ -75,7 +75,7 @@
       /* 1 기관계 : 순환계 */
       { const g = mkz(1), body = new THREE.Group(); g.add(body);
         body.add(cap(0.7, 1.7, ghost(0x4f86f7, 0.12, { roughness: 0.2 }), 0, 0.9, 0), sph(0.5, ghost(0x4f86f7, 0.12), 0, 2.55, 0));
-        const red = std(0xd63a52, { roughness: 0.4 }), blue = std(0x3b6fe0, { roughness: 0.4 });
+        const red = ctx.mats.organic(0xc42a44), blue = ctx.mats.organic(0x2f5fd0);
         const paths = [[[0.1, 1.3, 0], [0.12, 2.0, 0.05], [0.05, 2.6, 0]], [[0.1, 1.3, 0], [1.0, 1.4, 0], [1.5, 0.5, 0.1]], [[0.1, 1.3, 0], [-1.0, 1.4, 0], [-1.5, 0.5, 0.1]],
           [[0.1, 1.0, 0], [0.35, 0.0, 0], [0.6, -1.8, 0]], [[0.1, 1.0, 0], [-0.25, 0.0, 0], [-0.55, -1.8, 0]]];
         paths.forEach((p) => {
@@ -90,9 +90,9 @@
       }
       /* 2 기관 : 심장 */
       { const g = mkz(2);
-        const h = new THREE.Mesh(heartGeo(1.1), std(0xd63a52, { roughness: 0.35 })); h.scale.setScalar(2.0); g.add(h); addBeat(h, 0.05);
-        const bl = tube([V3(-0.7, 1.2, 0), V3(-0.85, 2.2, 0), V3(-1.0, 3.0, 0)], 0.2, std(0x3b6fe0, { roughness: 0.4 }));
-        const rd = tube([V3(0.2, 1.1, 0), V3(0.3, 2.3, 0), V3(1.4, 2.6, 0)], 0.26, std(0xd63a52, { roughness: 0.4 }));
+        const h = new THREE.Mesh(heartGeo(1.1), ctx.mats.organic(0xc42a44)); h.scale.setScalar(2.0); g.add(h); addBeat(h, 0.05);
+        const bl = tube([V3(-0.7, 1.2, 0), V3(-0.85, 2.2, 0), V3(-1.0, 3.0, 0)], 0.2, ctx.mats.organic(0x2f5fd0));
+        const rd = tube([V3(0.2, 1.1, 0), V3(0.3, 2.3, 0), V3(1.4, 2.6, 0)], 0.26, ctx.mats.organic(0xc42a44));
         g.add(bl, rd);
         zlab(2, '심장 (기관)', h, [0, 0.4, 1.6], { size: 16 }); zlab(2, '혈액을 내보내는 펌프', h, [0, -2.1, 0.6]);
       }
@@ -113,8 +113,8 @@
       /* 4 세포 : 심근 세포 */
       { const g = mkz(4), cell = new THREE.Group(); g.add(cell);
         cell.add(cap(1.0, 2.6, ghost(0xf4a3b0, 0.72, { roughness: 0.2 }), 0, 0, 0, 0, 0, Math.PI / 2));
-        const nuc = sph(0.55, std(0x8b6fcf, { roughness: 0.35 }), 0, 0, 0.1); cell.add(nuc);
-        const mm = std(0xf5a25b, { roughness: 0.45 });
+        const nuc = sph(0.55, ctx.mats.organic(0x7a5ec0), 0, 0, 0.1); cell.add(nuc);
+        const mm = ctx.mats.organic(0xe58c40);
         [[-1.55, -0.45, 0.3], [-1.55, 0.45, -0.3], [1.55, -0.45, -0.3], [1.55, 0.45, 0.3], [-0.8, 0.75, 0.2], [0.8, -0.75, -0.2], [-0.85, -0.7, -0.35], [0.85, 0.7, 0.35]].forEach((q, i) => { const m = sph(0.2, mm, q[0], q[1], q[2], 1.9, 0.95, 0.95); m.rotation.z = i * 0.4; cell.add(m); });
         for (let k = -2.2; k <= 2.2; k += 0.28) { const t = new THREE.Mesh(new THREE.TorusGeometry(0.97, 0.012, 6, 36), std(0xa03246, { roughness: 0.8, transparent: true, opacity: 0.3 })); t.rotation.y = Math.PI / 2; t.position.x = k; if (Math.abs(k) > 0.8) cell.add(t); }
         [-1, 1].forEach((sd) => { const d = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 0.12, 24), std(0x6e1e32)); d.rotation.z = Math.PI / 2; d.position.x = sd * 2.25; cell.add(d); });
@@ -136,7 +136,7 @@
         g.scale.setScalar(s); return g;
       }
       function oak(s) {
-        const g = new THREE.Group(); const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.24, 1.5, 12), std(0x5e3d20, { roughness: 0.85 })); tr.position.y = 0.75; g.add(tr);
+        const g = new THREE.Group(); const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.24, 1.5, 16), ctx.mats.wood(0x5e3d20, { repeat: 1 })); tr.position.y = 0.75; g.add(tr);
         const cols = [0x1f6b2a, 0x2a7d32, 0x1a5e2e];
         [[0, 2.1, 0, 0.8], [0.5, 1.8, 0.2, 0.55], [-0.45, 1.9, -0.2, 0.6], [0.1, 2.6, 0.1, 0.55], [-0.1, 1.8, 0.5, 0.5]].forEach((q, i) => g.add(sph(q[3], std(cols[i % 3], { roughness: 0.8 }), q[0], q[1], q[2])));
         g.scale.setScalar(s * 0.8); return g;
@@ -150,7 +150,7 @@
       }
       function mushroom(s) { const g = new THREE.Group(); const st = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.3, 10), std(0xf0e6d2)); st.position.y = 0.15; g.add(st); const c = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 10, 0, TAU, 0, Math.PI / 2), std(0xd9423f)); c.position.y = 0.3; g.add(c); g.scale.setScalar(s); return g; }
       function bird(s) { const g = new THREE.Group(), m = std(0x3b82c4); g.add(sph(0.18, m, 0, 0, 0, 1.3, 1, 1), sph(0.1, m, 0.2, 0.1, 0), sph(0.04, std(0xf2a33a), 0.3, 0.1, 0, 1.6, 0.7, 0.7)); const w = sph(0.12, std(0x2a64a0), -0.02, 0.04, 0.14, 1.4, 0.4, 1); g.add(w, sph(0.12, std(0x2a64a0), -0.02, 0.04, -0.14, 1.4, 0.4, 1)); g.scale.setScalar(s); return g; }
-      const soil = new THREE.Mesh(new THREE.CylinderGeometry(5.6, 5.2, 0.7, 72), std(0x6b4a2f, { roughness: 0.95 })); soil.position.y = -0.4; gg.add(soil);
+      const soil = new THREE.Mesh(new THREE.CylinderGeometry(5.6, 5.2, 0.7, 72), ctx.mats.stone(0x5a3e26, { repeat: 6, bump: 0.05 })); soil.position.y = -0.4; gg.add(soil);   // 흙 단면
       const grassTex = (function () { const c = document.createElement('canvas'); c.width = c.height = 512; const x = c.getContext('2d'); x.fillStyle = '#3f8a35'; x.fillRect(0, 0, 512, 512);
         const r = rng(9); for (let i = 0; i < 2600; i++) { const g = 90 + r() * 90; x.fillStyle = 'rgba(' + (40 + r() * 40 | 0) + ',' + (g | 0) + ',' + (30 + r() * 30 | 0) + ',' + (0.25 + r() * 0.35) + ')'; x.fillRect(r() * 512, r() * 512, 2 + r() * 3, 3 + r() * 6); }
         for (let i = 0; i < 40; i++) { const gx = r() * 512, gy = r() * 512, gr = x.createRadialGradient(gx, gy, 2, gx, gy, 40 + r() * 40); gr.addColorStop(0, 'rgba(70,140,50,.25)'); gr.addColorStop(1, 'rgba(70,140,50,0)'); x.fillStyle = gr; x.fillRect(gx - 90, gy - 90, 180, 180); }
@@ -162,7 +162,7 @@
         const fl = new THREE.InstancedMesh(new THREE.SphereGeometry(0.06, 8, 6), std(0xffe066, { emissive: 0x3a2a00 }), 26); const fc = [0xffe066, 0xff9ec7, 0xffffff];
         for (let i = 0; i < 26; i++) { const a = r() * TAU, d = Math.sqrt(r()) * 5.2; dm.position.set(Math.cos(a) * d, 0.28, Math.sin(a) * d); dm.rotation.set(0, 0, 0); dm.scale.setScalar(1); dm.updateMatrix(); fl.setMatrixAt(i, dm.matrix); fl.setColorAt(i, new THREE.Color(fc[i % 3])); }
         gg.add(fl);
-        const rk = std(0x8a8f98, { roughness: 0.95 }); [[-4.2, 3.6, 0.35], [4.6, -2.2, 0.28], [-1.2, 4.7, 0.22], [2.4, -4.4, 0.3]].forEach((q) => { const m = new THREE.Mesh(new THREE.DodecahedronGeometry(q[2], 0), rk); m.position.set(q[0], q[2] * 0.5, q[1]); m.scale.y = 0.7; m.rotation.set(q[0], q[1], 0); gg.add(m); }); }
+        const rk = ctx.mats.stone(0x7a7f88, { cracks: true, bump: 0.05 }); [[-4.2, 3.6, 0.35], [4.6, -2.2, 0.28], [-1.2, 4.7, 0.22], [2.4, -4.4, 0.3]].forEach((q) => { const m = new THREE.Mesh(new THREE.DodecahedronGeometry(q[2], 0), rk); m.position.set(q[0], q[2] * 0.5, q[1]); m.scale.y = 0.7; m.rotation.set(q[0], q[1], 0); gg.add(m); }); }
 
       const ORGS = [];   // {id, sp, g, ring}
       const sim0 = L2();
@@ -182,7 +182,7 @@
       /* 생태계: 비생물 환경 */
       const eco = new THREE.Group(); eco.visible = false; gg.add(eco);
       const pond = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.1, 40), ghost(0x4aa3e0, 0.85, { roughness: 0.1, metalness: 0.1 })); pond.position.set(3.3, 0.02, 3.2); eco.add(pond);
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.7, 28, 20), new THREE.MeshBasicMaterial({ color: 0xffd34d })); sun.position.set(-4.4, 5.6, -2.6); eco.add(sun);
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.7, 28, 20), new THREE.MeshBasicMaterial({ color: 0xffd34d })); sun.position.set(-4.4, 5.6, -2.6); eco.add(sun); ctx.halo(sun, 0xffd34d, 3.2, 0.6);
       const cl = new THREE.Group(); [[0, 0, 0, 0.5], [0.5, 0.1, 0, 0.4], [-0.5, -0.05, 0, 0.38]].forEach((q) => cl.add(sph(q[3], std(0xffffff, { roughness: 1 }), q[0], q[1], q[2], 1.3, 0.8, 1))); cl.position.set(2.2, 5.4, -1.8); eco.add(cl);
       const dome = new THREE.Mesh(new THREE.SphereGeometry(6.3, 40, 20, 0, TAU, 0, Math.PI / 2), ghost(0x7c3aed, 0.08, { side: THREE.DoubleSide })); dome.position.y = -0.05; eco.add(dome);
       const rim = (c, r) => { const t = new THREE.Mesh(new THREE.TorusGeometry(r, 0.07, 8, 80), std(c, { emissive: c, emissiveIntensity: 0.25 })); t.rotation.x = Math.PI / 2; t.position.y = 0.05; t.visible = false; gg.add(t); return t; };

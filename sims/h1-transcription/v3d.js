@@ -20,7 +20,7 @@
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
-      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.05 }, o || {}));
+      const std = (c, o) => new THREE.MeshPhysicalMaterial(Object.assign({ color: c, roughness: 0.32, metalness: 0, clearcoat: 0.7, clearcoatRoughness: 0.15 }, o || {}));   // 매끈하고 윤기 나는 분자 모형
       let p = -2, names = true, demoP = 0, lastN = 0;
       const R = 0.85, TW = 0.62; // 나선 반지름, 염기쌍당 회전각
       const xo = (i) => (i - (N - 1) / 2) * DX;
@@ -35,7 +35,7 @@
       const tubeMat = std(0x9fb4e8, { roughness: 0.5 }), rTubeMat = std(0xff8a5c, { roughness: 0.5 });
       let tCod = null, tTmp = null, tRna = null;
       // 중합효소
-      const pol = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), std(0xc9a0ff, { transparent: true, opacity: 0.42, depthWrite: false, roughness: 0.3 })); pol.scale.set(0.95, 1.35, 1.1); root.add(pol);
+      const pol = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), ctx.mats.organic(0xa070e8, { opacity: 0.42, extra: { depthWrite: false } })); pol.scale.set(0.95, 1.35, 1.1); root.add(pol);
       const lPol = label('RNA 중합효소', pol, { offset: [0, 1.8, 0], color: 'rgba(110,60,220,.92)' });
       const lDir = label('전사 방향 →', [3.5, -2.0, 0], { size: 12 });
       const lT = label('주형 가닥', [-5.2, -1.7, 0], { size: 12 }), lC = label('DNA 다른 가닥', [-5.2, 1.7, 0], { size: 12 }), lM = label('mRNA', [4.5, 2.9, 0], { color: 'rgba(200,90,30,.92)' });

@@ -16,13 +16,14 @@
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, C = THREE.Color;
       let mode = 'cold', f = -5, sc = 'front', sig = '', tkSig = '', wmSegs = null;
-      const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.6, metalness: 0 }, o || {}));
-      const gnd = new THREE.Mesh(new THREE.BoxGeometry(XW * 2 + 0.6, 0.4, DZ + 0.4), sm(0x2f6a2c, { roughness: 0.95 })); gnd.position.y = -0.2; gnd.userData.v3bg = true; root.add(gnd);   // 땅은 배경: 자동 맞춤이 공기 덩어리 · 전선면에 맞춰요
+      const MT = ctx.mats, lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 색이 바래지 않게 (찬 공기 파랑 · 따뜻한 공기 주황이 또렷하게)
+      const sm = (c, o) => { const q = Object.assign({ color: lc(c), roughness: 0.6, metalness: 0 }, o || {}); if (typeof q.emissive === 'number') q.emissive = lc(q.emissive); return new THREE.MeshStandardMaterial(q); };
+      const gnd = new THREE.Mesh(new THREE.BoxGeometry(XW * 2 + 0.6, 0.4, DZ + 0.4), MT.stone(lc(0x2f6a2c), { repeat: 6, bump: 0.04 })); gnd.position.y = -0.2; gnd.userData.v3bg = true; root.add(gnd);   // 땅은 배경: 자동 맞춤이 공기 덩어리 · 전선면에 맞춰요
       const home = new THREE.Group(); const hb = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.5, 0.7), sm(0xf1f5f9)); hb.position.y = 0.25; const hr = new THREE.Mesh(new THREE.ConeGeometry(0.6, 0.45, 4), sm(0xdc2626)); hr.position.y = 0.72; hr.rotation.y = Math.PI / 4; home.add(hb, hr); home.position.set(XH, 0, 0.9); root.add(home);
       label('우리 동네', home, { offset: [0, 1.0, 0], size: 13, color: 'rgba(15,23,42,.9)' });
       const fronts = new THREE.Group(); root.add(fronts);
       const hl = new THREE.Group(); root.add(hl);
-      const coldM = sm(0x3b82f6, { transparent: true, opacity: 0.5, roughness: 0.3, depthWrite: false }), warmM = sm(0xf59e0b, { transparent: true, opacity: 0.4, roughness: 0.3, depthWrite: false });
+      const coldM = MT.liquid(lc(0x3b82f6), { opacity: 0.52, extra: { roughness: 0.14 } }), warmM = MT.liquid(lc(0xf59e0b), { opacity: 0.44, extra: { roughness: 0.14 } });
       const edgeM = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
       function slab(pts, mat) { const sh = new THREE.Shape(pts.map((p) => new THREE.Vector2(p[0], p[1]))); const g = new THREE.ExtrudeGeometry(sh, { depth: DZ, bevelEnabled: false }); g.translate(0, 0, -DZ / 2); const m = new THREE.Mesh(g, mat); const e = new THREE.LineSegments(new THREE.EdgesGeometry(g), edgeM); const gg = new THREE.Group(); gg.add(m, e); return gg; }
       const sub = new THREE.Group(); root.add(sub);
@@ -258,7 +259,11 @@
       const TW = 3.5, TH = 2.4;
       const frame = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(TW * 2, TH, DZ)), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 })); frame.position.y = TH / 2; tank.add(frame);
       const tkLive = new THREE.Group(); tank.add(tkLive);
-      const part = new THREE.Mesh(new THREE.BoxGeometry(0.06, TH, DZ), sm(0xe2e8f0, { transparent: true, opacity: 0.8 })); part.position.set(0, TH / 2, 0); tank.add(part);
+      const part = new THREE.Mesh(new THREE.BoxGeometry(0.06, TH, DZ), MT.plastic(0xdfe5ee, { roughness: 0.25, extra: { transparent: true, opacity: 0.85 } })); part.position.set(0, TH / 2, 0); tank.add(part);
+      /* 수조 꾸밈: 유리 벽 · 받침판 · 칸막이 손잡이 */
+      { const gl = new THREE.Mesh(new THREE.BoxGeometry(TW * 2 + 0.08, TH + 0.25, DZ + 0.08), MT.glass({ opacity: 0.1 })); gl.position.y = TH / 2 + 0.12; gl.userData.v3bg = true; gl.renderOrder = 3; tank.add(gl);
+        const bs = new THREE.Mesh(new THREE.BoxGeometry(TW * 2 + 0.5, 0.06, DZ + 0.5), MT.plastic(lc(0x2a3142), { roughness: 0.5 })); bs.position.y = 0.025; bs.userData.v3bg = true; tank.add(bs);
+        const hd = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.14, DZ * 0.5), MT.plastic(lc(0xdc2626))); hd.position.y = TH / 2 + 0.07; hd.userData.v3bg = true; part.add(hd); }
       const tkW = label('따뜻한 물', [-TW + 0.2, TH + 0.2, 0], { color: 'rgba(180,83,9,.92)', size: 13 }), tkC = label('찬물', [TW - 0.2, TH + 0.2, 0], { color: 'rgba(29,78,216,.92)', size: 13 });
       function buildTank(o) {
         clearG(tkLive); const e = 0.0001;

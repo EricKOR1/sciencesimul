@@ -8,10 +8,10 @@
     const COL = { H: 0xf3f6fb, C: 0x8a93a3, N: 0x4f7cff, O: 0xf0524f, F: 0x9be36b, Cl: 0x34c759, Na: 0xb07cf5, B: 0xf4a6a6, S: 0xf5c518, Cu: 0xe08a3c, Ca: 0x6fd0c4, e: 0xffd34d };
     const RAD = { H: 0.26, C: 0.38, N: 0.37, O: 0.36, F: 0.32, Cl: 0.48, Na: 0.5, B: 0.36, S: 0.48, Cu: 0.5, Ca: 0.55 };
     const mats = {};
-    const mat = (k) => mats[k] || (mats[k] = new THREE.MeshStandardMaterial({ color: COL[k] !== undefined ? COL[k] : k, roughness: 0.36, metalness: 0.06 }));
+    const mat = (k) => mats[k] || (mats[k] = new THREE.MeshStandardMaterial({ color: COL[k] !== undefined ? COL[k] : k, roughness: 0.26, metalness: 0, envMapIntensity: 1.2 }));
     const SG = new THREE.SphereGeometry(1, 28, 20);
     const CG = new THREE.CylinderGeometry(1, 1, 1, 16);
-    const stickMat = new THREE.MeshStandardMaterial({ color: 0xc3ccdd, roughness: 0.45, metalness: 0.1 });
+    const stickMat = new THREE.MeshStandardMaterial({ color: 0xc3ccdd, roughness: 0.3, metalness: 0.25, envMapIntensity: 1.2 });
     const V = (x, y, z) => new THREE.Vector3(x, y, z);
     function atom(k, s, pal) { const m = new THREE.Mesh(SG, mat(pal && pal[k] !== undefined ? pal[k] : k)); m.scale.setScalar((RAD[k] || 0.4) * (s || 1)); return m; }
     function stick(a, b, r, m) {
@@ -53,18 +53,18 @@
     /* 반투명 유리 상자 (가장자리 선 포함). 크기는 scale로 조절 */
     function glassBox(w, h, d, color, op) {
       const g = new THREE.Group();
-      const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: color || 0x9ec5ff, transparent: true, opacity: op === undefined ? 0.13 : op, roughness: 0.15, metalness: 0, depthWrite: false }));
+      const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshPhysicalMaterial({ color: color || 0xcfe4ff, transparent: true, opacity: op === undefined ? 0.13 : op, roughness: 0.05, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 2, side: THREE.DoubleSide, depthWrite: false }));
       const e = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.75 }));
       g.add(m, e); g.scale.set(w, h, d); g.userData.fill = m; return g;
     }
     function tube(pts, r, color, seg) {
       const c = new THREE.CatmullRomCurve3(pts.map((p) => (p.isVector3 ? p : V(p[0], p[1], p[2]))));
-      return new THREE.Mesh(new THREE.TubeGeometry(c, seg || 40, r, 10, false), new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.2 }));
+      return new THREE.Mesh(new THREE.TubeGeometry(c, seg || 40, r, 10, false), new THREE.MeshPhysicalMaterial({ color, roughness: 0.32, metalness: 0.15, clearcoat: 0.4, clearcoatRoughness: 0.25 }));
     }
     /* 화살표: from → to */
     function arrow(from, to, color, r, headLen) {
       const g = new THREE.Group(); const a = V(from[0], from[1], from[2]), b = V(to[0], to[1], to[2]); const d = b.clone().sub(a), len = d.length();
-      if (len < 1e-3) return g; const hl = Math.min(headLen || 0.4, len * 0.6); const m = new THREE.MeshStandardMaterial({ color, roughness: 0.35, metalness: 0.1 });
+      if (len < 1e-3) return g; const hl = Math.min(headLen || 0.4, len * 0.6); const m = new THREE.MeshPhysicalMaterial({ color, roughness: 0.3, metalness: 0, clearcoat: 0.5, clearcoatRoughness: 0.2 });
       const dir = d.clone().normalize(); const tip = b.clone();
       const sh = new THREE.Mesh(CG, m); sh.scale.set(r, len - hl, r); sh.position.copy(a).addScaledVector(dir, (len - hl) / 2); sh.quaternion.setFromUnitVectors(V(0, 1, 0), dir);
       const hd = new THREE.Mesh(new THREE.ConeGeometry(r * 2.6, hl, 20), m); hd.position.copy(tip).addScaledVector(dir, -hl / 2); hd.quaternion.setFromUnitVectors(V(0, 1, 0), dir);
@@ -84,7 +84,7 @@
     autoRotate: 0.12,
     levels: [1],   // pH 계산(시료 단추 · 답 칸 · 맞히면 pH 측정기와 입자가 바뀌어요). 로그 눈금 · 기록 그래프 · 물질 끌기 단계는 2D
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, mats } = ctx;
       const L = makeLib(THREE);
       const R = 2.4, HGT = 4.4;
       /* 실험대 */
@@ -112,11 +112,11 @@
       const top = new THREE.Mesh(new THREE.CircleGeometry(R - 0.04, 64), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, roughness: 0.03, metalness: 0.2, depthWrite: false })); top.rotation.x = -Math.PI / 2; top.position.y = LV + 0.2; root.add(top);
       const menis = new THREE.Mesh(new THREE.TorusGeometry(R - 0.06, 0.035, 8, 72), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55 })); menis.rotation.x = Math.PI / 2; menis.position.y = LV + 0.2; root.add(menis);
       /* pH 측정기: 스탠드 + 전극 + 화면 */
-      const metal = new THREE.MeshStandardMaterial({ color: 0x9aa3b2, roughness: 0.3, metalness: 0.85 });
-      const stBase = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.2, 1.6), metal); stBase.position.set(4.6, 0.0, -1.2); root.add(stBase);
+      const metal = mats.metal('steel', { brushed: true });
+      const stBase = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.2, 1.6), mats.metal('iron', { roughness: 0.45 })); stBase.position.set(4.6, 0.0, -1.2); root.add(stBase);
       const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 6.4, 14), metal); rod.position.set(4.6, 3.2, -1.2); root.add(rod);
       const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 3.7, 12), metal); arm.rotation.z = Math.PI / 2; arm.position.set(2.75, 5.9, -1.2); root.add(arm);
-      const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.2, 8), new THREE.MeshStandardMaterial({ color: 0x222831 })); wire.position.set(0.9, 6.5, -1.2); root.add(wire);
+      const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.2, 8), mats.rubber(0x222831)); wire.position.set(0.9, 6.5, -1.2); root.add(wire);
       const probe = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 3.6, 18), new THREE.MeshPhysicalMaterial({ color: 0x2b3340, roughness: 0.35, clearcoat: 0.6 })); probe.position.set(0.9, 4.2, -0.1); probe.rotation.x = 0; root.add(probe);
       const clampM = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.35, 0.4), metal); clampM.position.set(0.9, 5.9, -1.2); root.add(clampM);
       const arm2 = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.2, 10), metal); arm2.rotation.x = Math.PI / 2; arm2.position.set(0.9, 5.9, -0.65); root.add(arm2);
@@ -125,7 +125,7 @@
       const dc = document.createElement('canvas'); dc.width = 256; dc.height = 128; const dx = dc.getContext('2d'); const dtex = new THREE.CanvasTexture(dc);
       function drawMeter(ph) { dx.fillStyle = '#10201a'; dx.fillRect(0, 0, 256, 128); dx.fillStyle = '#8affb0'; dx.font = 'bold 30px monospace'; dx.textAlign = 'left'; dx.fillText('pH', 14, 48); dx.font = 'bold 66px monospace'; dx.textAlign = 'right'; dx.fillText(ph.toFixed(1), 244, 100); dtex.needsUpdate = true; }
       const meter = new THREE.Group(); meter.position.set(4.6, 0.8, 1.0); meter.rotation.y = -0.5;
-      meter.add(new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.2, 0.9), new THREE.MeshPhysicalMaterial({ color: 0xe6e9ef, roughness: 0.4, clearcoat: 0.5 })));
+      meter.add(new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.2, 0.9), mats.plastic(0xe6e9ef, { roughness: 0.32 })));
       const scr = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 0.85), new THREE.MeshBasicMaterial({ map: dtex })); scr.position.set(0, 0.05, 0.46); meter.add(scr); root.add(meter);
       const cable = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0.9, 6.6, -1.2), new THREE.Vector3(2.5, 6.9, -1.2), new THREE.Vector3(4.4, 6.4, -1.0), new THREE.Vector3(4.6, 3, 0), new THREE.Vector3(4.6, 1.4, 0.6)]), 40, 0.03, 6), new THREE.MeshStandardMaterial({ color: 0x222831 })); root.add(cable);
       drawMeter(7);

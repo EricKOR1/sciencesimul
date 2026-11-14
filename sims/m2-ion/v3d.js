@@ -18,9 +18,10 @@
       const { THREE, root, label, info, controls } = ctx;
       const sm = () => window.__sim;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.05 }, o || {}));
-      const geo = new THREE.SphereGeometry(1, 32, 20);
-      const mP = mat(0xe2464b, { roughness: 0.35 }), mN = mat(0xaab3c2, { roughness: 0.5 });
-      const mE = mat(0x4a78ff, { roughness: 0.25, emissive: 0x1b3aa8, emissiveIntensity: 0.55 });
+      const geo = new THREE.SphereGeometry(1, 40, 28);
+      const MT = ctx.mats, lin = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 2D와 같은 진한 색(양성자 빨강 · 전자 파랑)으로 보이게
+      const mP = MT.plastic(lin(0xe2464b), { roughness: 0.26, extra: { clearcoat: 0.8, clearcoatRoughness: 0.15 } }), mN = MT.plastic(lin(0xb4bcc9), { roughness: 0.34 });
+      const mE = mat(lin(0x4a78ff), { roughness: 0.22, metalness: 0, emissive: lin(0x2f5cf0), emissiveIntensity: 0.9 });
       const nuc = new THREE.Group(), shells = new THREE.Group(); root.add(nuc, shells);
       const R = [1.45, 2.25, 3.05, 3.8];
       const tilt = [[0.4, 0], [1.1, 0.9], [0.2, 2.1], [1.5, 3.3]];
@@ -30,7 +31,11 @@
         const ring = new THREE.Mesh(new THREE.TorusGeometry(R[k], 0.018, 8, 128), new THREE.MeshBasicMaterial({ color: 0x9db6ff, transparent: true, opacity: 0.5 }));
         ring.rotation.x = Math.PI / 2; g.add(ring); rings.push(ring);
       }
-      for (let i = 0; i < 20; i++) { const m = new THREE.Mesh(geo, mE); m.scale.setScalar(0.2); m.castShadow = true; shells.add(m); elM.push(m); }
+      for (let i = 0; i < 20; i++) { const m = new THREE.Mesh(geo, mE); m.scale.setScalar(0.2); m.castShadow = true; ctx.halo(m, 0x6f9dff, 6.5, 0.6); shells.add(m); elM.push(m); }
+      /* 배경의 떠다니는 빛 알갱이 (원자가 빈 공간에 떠 있지 않게) */
+      { const pos = []; let sd = 5; const rr = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+        for (let i = 0; i < 160; i++) { const u = rr() * 2 - 1, a = rr() * 6.283, r = 6 + rr() * 6, q = Math.sqrt(1 - u * u); pos.push(Math.cos(a) * q * r, u * r, Math.sin(a) * q * r); }
+        const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); const bgp = new THREE.Points(bg, new THREE.PointsMaterial({ color: 0x9fc0ff, size: 3, sizeAttenuation: false, transparent: true, opacity: 0.45 })); bgp.userData.v3bg = true; root.add(bgp); }
       const aura = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0x3ddc84, transparent: true, opacity: 0.12, depthWrite: false }));
       root.add(aura);
       const labA = label('', aura, { offset: [0, 0, 0] });

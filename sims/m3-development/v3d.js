@@ -26,14 +26,15 @@
       const V3 = THREE.Vector3;
       const R = 2.1;
       let st = 0, names = true, cur = 1, tnow = 0, act = -9, lastAct = -9, ign = false;
-      const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0 }, o || {}));
+      const MT = ctx.mats, lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 색이 바래지 않게 (진한 색)
+      const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: lc(c), roughness: 0.4, metalness: 0 }, o || {}));
       /* 껍질 */
-      const zona = new THREE.Mesh(new THREE.SphereGeometry(R * 1.2, 56, 40), sm(0xfde68a, { transparent: true, opacity: 0.16, roughness: 0.2, depthWrite: false })); root.add(zona);
+      const zona = new THREE.Mesh(new THREE.SphereGeometry(R * 1.2, 56, 40), MT.organic(lc(0xfde68a), { opacity: 0.17, extra: { roughness: 0.18, clearcoat: 0.6, clearcoatRoughness: 0.2, envMapIntensity: 1.3 } })); root.add(zona);
       /* 세포 풀 */
       const POOL = 64, cellG = new THREE.SphereGeometry(1, 28, 20), nucG = new THREE.SphereGeometry(1, 16, 12);
       const cm = [], cells = [];
       for (let i = 0; i < POOL; i++) {
-        const body = new THREE.Mesh(cellG, sm(0xfcd9a8, { transparent: true, opacity: 0.82, roughness: 0.35 })); const nuc = new THREE.Mesh(nucG, sm(0xb45309, { roughness: 0.5 })); body.add(nuc); root.add(body);
+        const body = new THREE.Mesh(cellG, MT.organic(lc(0xfad0a0), { opacity: 0.84, extra: { roughness: 0.38 } })); const nuc = new THREE.Mesh(nucG, MT.organic(lc(0xb45309))); body.add(nuc); root.add(body);
         cells.push({ m: body, nuc, p: new V3(), tp: new V3(), r: 0.01, tr: 0.01, par: -1 });
       }
       /* 배치 계산: 반지름 r인 구 n개를 큰 구 안에 서로 겹치지 않게 (반발 계산) */
@@ -72,7 +73,7 @@
       /* 비교 보기: 보통의 체세포분열(분열 사이에 자라요) vs 난할(자라지 않고 바로 분열해요) — 2D 비교 보기와 같아요 */
       const cmpG = new THREE.Group(); cmpG.visible = false; root.add(cmpG); if (PHN) cmpG.scale.setScalar(0.6);
       const CR0 = 0.72, cmpC = [];
-      const mkC = (col, row) => { const b = new THREE.Mesh(cellG, sm(col, { transparent: true, opacity: 0.85, roughness: 0.35 })); const n = new THREE.Mesh(nucG, sm(0xb45309, { roughness: 0.5 })); n.scale.setScalar(0.3); b.add(n); cmpG.add(b); return b; };
+      const mkC = (col, row) => { const b = new THREE.Mesh(cellG, MT.organic(lc(col), { opacity: 0.86, extra: { roughness: 0.38 } })); const n = new THREE.Mesh(nucG, MT.organic(lc(0xb45309))); n.scale.setScalar(0.3); b.add(n); cmpG.add(b); return b; };
       const ROWY = [1.55, -1.55], COLX = [-3.0, 0, 3.0];
       const specs = [  // [행, 열, 개수 중 몇째, 개수, 등장 시각]
         [0, 0, 0, 1, 0], [0, 1, 0, 2, 1.2], [0, 1, 1, 2, 1.2], [0, 2, 0, 2, 3.6], [0, 2, 1, 2, 3.6],
@@ -95,7 +96,7 @@
         });
       }
       /* 정자 */
-      const NSP = 7, tails = new THREE.InstancedMesh(new THREE.SphereGeometry(0.045, 8, 6), sm(0xe2e8f0, { roughness: 0.5 }), NSP * 12), heads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.14, 14, 10), sm(0x93c5fd, { roughness: 0.3 }), NSP);
+      const NSP = 7, tails = new THREE.InstancedMesh(new THREE.SphereGeometry(0.045, 8, 6), sm(0xe2e8f0, { roughness: 0.5 }), NSP * 12), heads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.14, 14, 10), sm(0x7fb6fb, { roughness: 0.25 }), NSP);
       root.add(tails, heads); heads.visible = tails.visible = true;
       const sp = []; for (let i = 0; i < NSP; i++) { const a = (i - 3) * 0.28; sp.push({ a, ph: i * 1.3, sp: 0.9 + (i % 3) * 0.15, off: i * 0.13 }); }
       const dm = new THREE.Object3D();
@@ -145,7 +146,7 @@
           cells.forEach((c, i) => {
             c.p.lerp(c.tp, k); c.r += (c.tr - c.r) * k; c.m.position.copy(c.p); c.m.scale.setScalar(Math.max(0.0001, c.r)); c.m.visible = c.r > 0.02 && !cmpG.visible;
             c.nuc.scale.setScalar(st === 0 ? 0.42 : st === 1 ? 0.3 : Math.max(0.2, 0.35 * (st === 7 ? 0.9 : 1))); c.nuc.position.set(0.0, 0.0, 0.0);
-            c.m.material.color.set(i < 52 || st < 7 ? 0xfcd9a8 : 0xf9a8d4);
+            c.m.material.color.set(i < 52 || st < 7 ? 0xfad0a0 : 0xf9a8d4).convertSRGBToLinear();
           });
           zona.scale.setScalar(st === 0 ? 1 : 0.97 + Math.sin(t) * 0.004);
           /* 정자 */

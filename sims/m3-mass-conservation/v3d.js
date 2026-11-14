@@ -26,7 +26,7 @@
     Object.keys(SP).forEach((k) => { SP[k].p = SP[k].p.map((q) => q.map((v) => v * 1.3)); });
     const smooth = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
     const matCache = {};
-    const mat = (el) => matCache[el] || (matCache[el] = new THREE.MeshStandardMaterial({ color: COL[el], roughness: 0.32, metalness: el === 'Cu' ? 0.45 : 0.05 }));
+    const mat = (el) => matCache[el] || (matCache[el] = new THREE.MeshPhysicalMaterial({ color: COL[el], roughness: 0.28, metalness: el === 'Cu' ? 0.45 : 0.05, clearcoat: 0.7, clearcoatRoughness: 0.2 }));   // 원자 모형: 매끈한 광택
     const sphG = new THREE.SphereGeometry(1, 36, 24), cylG = new THREE.CylinderGeometry(1, 1, 1, 16);
     const bondMat = new THREE.MeshStandardMaterial({ color: 0xcfd8e6, roughness: 0.5, metalness: 0.1 });
     const Y = new THREE.Vector3(0, 1, 0);
@@ -148,14 +148,15 @@
       const K = ChemKit(THREE);
       let rx = null, rxS = null, sig = '', cur = null, pp = 0;
       const CX = 3.7, R = 2.1;
-      const glass = new THREE.MeshStandardMaterial({ color: 0xbfe3ff, roughness: 0.08, metalness: 0, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide });
-      const metal = new THREE.MeshStandardMaterial({ color: 0x8b95a7, roughness: 0.4, metalness: 0.7 });
-      const stopMat = new THREE.MeshStandardMaterial({ color: 0xe8a14b, roughness: 0.7 });
+      const glass = ctx.mats.glass({ opacity: 0.18 });   // 유리 용기
+      const metal = ctx.mats.metal('steel', { brushed: true, roughness: 0.26 });   // 전자저울 몸체
+      const stopMat = ctx.mats.rubber(0xb8742e, { extra: { roughness: 0.8 } });   // 고무마개
       const stoppers = [];
       [-CX, CX].forEach((cx) => {
         const base = new THREE.Mesh(new THREE.BoxGeometry(2 * R + 0.5, 0.45, 2 * R + 0.5), metal); base.position.set(cx, -1.55, 0); root.add(base);
-        const top = new THREE.Mesh(new THREE.BoxGeometry(2 * R + 0.1, 0.08, 2 * R + 0.1), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.3 })); top.position.set(cx, -1.3, 0); root.add(top);
-        const fl = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 3.8, 48, 1, true), glass); fl.position.set(cx, 0.6, 0); root.add(fl);
+        const top = new THREE.Mesh(new THREE.BoxGeometry(2 * R + 0.1, 0.08, 2 * R + 0.1), ctx.mats.plastic(0x1e293b, { roughness: 0.25 })); top.position.set(cx, -1.3, 0); root.add(top);
+        const fl = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 3.8, 64, 1, true), glass); fl.position.set(cx, 0.6, 0); root.add(fl);
+        const fb = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.1, 64), glass); fb.position.set(cx, -1.25, 0); root.add(fb);   // 유리 바닥
         const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.05, 10, 56), glass); rim.rotation.x = Math.PI / 2; rim.position.set(cx, 2.5, 0); root.add(rim);
         const st = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.6, R - 0.8, 0.6, 32), stopMat); st.position.set(cx, 2.7, 0); root.add(st); stoppers.push(st);
       });

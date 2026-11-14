@@ -54,10 +54,10 @@
 
       /* ---- 폭발 전: 양파 껍질 모양의 별 (한 쪽을 잘라 속을 보여 줘요) ---- */
       const onion = new THREE.Group(); root.add(onion);
-      const wedge = 3 * Math.PI / 2;
+      const wedge = 3 * Math.PI / 2, NZ = ctx.mats.tex('noise');
       LAY.forEach((L, i) => {
-        const rr = L[0] * SR, mt = () => std(L[1], { emissive: L[1], emissiveIntensity: 0.35, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -i, polygonOffsetUnits: -i });
-        onion.add(new THREE.Mesh(new THREE.SphereGeometry(rr, 56, 36, 0, wedge), mt()));
+        const rr = L[0] * SR, dk = new THREE.Color(L[1]).multiplyScalar(0.3), mt = (o) => std(dk, Object.assign({ emissive: L[1], emissiveIntensity: 0.22, roughness: 0.85, envMapIntensity: 0.25, bumpMap: NZ, bumpScale: 0.02, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -i, polygonOffsetUnits: -i }, o || {}));   // 층 색이 옅게 바래지 않게 짙게
+        onion.add(new THREE.Mesh(new THREE.SphereGeometry(rr, 56, 36, 0, wedge), mt({ emissiveMap: NZ, emissiveIntensity: 0.45 })));   // 겉면: 끓어오르는 별 표면
         [Math.PI / 2, Math.PI].forEach((rot) => { const d = new THREE.Mesh(new THREE.CircleGeometry(rr, 64, -Math.PI / 2, Math.PI), mt()); d.rotation.y = rot; onion.add(d); });
       });
       const add = (c, op) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: op, depthWrite: false, blending: THREE.AdditiveBlending });
@@ -70,7 +70,7 @@
       const sunGlow = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 20), add(0xffd76a, 0)); root.add(sunGlow);
       const PL = [{ r: 0.3, c: 0xc9b7a1, sz: 0.14, sp: 1.3 }, { r: 0.5, c: 0xe8c07a, sz: 0.2, sp: 0.95 }, { r: 0.72, c: 0x3b82f6, sz: 0.26, sp: 0.7, earth: true }, { r: 0.92, c: 0xe07b54, sz: 0.2, sp: 0.5 }];
       const planets = PL.map((p, i) => {
-        const m = new THREE.Mesh(new THREE.SphereGeometry(p.sz, 24, 16), std(p.c, { roughness: 0.6 }));
+        const m = new THREE.Mesh(new THREE.SphereGeometry(p.sz, 32, 20), std(p.c, { roughness: 0.6, bumpMap: ctx.mats.tex('stone'), bumpScale: 0.02 }));
         const pts = []; for (let k = 0; k <= 64; k++) { const a = k / 64 * Math.PI * 2; pts.push(new V(Math.cos(a) * p.r * RD, 0, Math.sin(a) * p.r * RD)); }
         const orbit1 = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x9fb4ff, transparent: true, opacity: 0 }));
         root.add(m, orbit1); return { m, o: orbit1, p, a0: i * 1.7 };
@@ -79,7 +79,7 @@
 
       /* ---- 무거운 원소 알갱이 (눌러 보기) ---- */
       const tokMesh = TOK.map((k) => {
-        const m = new THREE.Mesh(new THREE.SphereGeometry(0.3, 24, 16), std(EL[k.el].c, { emissive: EL[k.el].c, emissiveIntensity: 0.5, roughness: 0.3 }));
+        const m = new THREE.Mesh(new THREE.SphereGeometry(0.3, 32, 20), ctx.mats.plastic(EL[k.el].c, { roughness: 0.2, extra: { emissive: EL[k.el].c, emissiveIntensity: 0.35 } }));
         m.userData.tok = k; k.dir = new V(Math.cos(k.a0), (rnd() - 0.5) * 0.7, Math.sin(k.a0)).normalize(); root.add(m); return m;
       });
       const tokLab = tokMesh.map((m) => label('', m, { size: 12, offset: [0, 0.55, 0], tap: () => { const L = lesson(); if (L && L.S && m.visible) L.S.heavy.add(m.userData.tok.el); m.scale.setScalar(1.6); } }));   // 움직이는 알갱이: 이름표를 눌러도 돼요

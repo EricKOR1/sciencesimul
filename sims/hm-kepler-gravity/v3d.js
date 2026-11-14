@@ -54,7 +54,7 @@
       const { V3, M, tube, mkArrow, setArrow } = tools(THREE);
       const sim = () => ctx.lesson();
       const pl = new THREE.PointLight(0xfff1cf, 2.2, 0, 0); scene.add(pl); scene.add(new THREE.AmbientLight(0x6070a0, 0.75));
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.4, 40, 28), new THREE.MeshBasicMaterial({ color: 0xffd45a })); root.add(sun);
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.4, 40, 28), ctx.mats.emissive(0xffc23a, 1.6, { extra: { toneMapped: false } })); root.add(sun); ctx.halo(sun, 0xffc860, 2.6, 0.7);
       const halo = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 20), new THREE.MeshBasicMaterial({ color: 0xffa726, transparent: true, opacity: 0.25, depthWrite: false })); root.add(halo);
       const lSun = label('태양', sun, { color: '#b45309', size: 12 }); lSun.off = [0, 0.8, 0];
       const G = {}; ['sys', 'mars', 'area', 'graph', 'force', 'moon'].forEach((k) => { G[k] = new THREE.Group(); root.add(G[k]); });
@@ -78,7 +78,7 @@
       /* ================= 🔭 화성 관측 (티코) ================= */
       const marsRing = ring(G.mars, 1.524 * 2.6, 0x8fb0ff, 0.0, 0.015); const marsPts = [];
       for (let i = 0; i < 12; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 10), M(0xff7a59, { emissive: 0x7a2d1a, transparent: true })); G.mars.add(m); marsPts.push(m); reg('mars', label(String(i + 1), m, { color: '#7a2d1a', size: 11 })); }
-      const earthM = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 14), M(0x3b82f6)); G.mars.add(earthM); const mTrail = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: 0x8fb0ff })); void mTrail;
+      const earthM = new THREE.Mesh(new THREE.SphereGeometry(0.2, 32, 22), ctx.mats.plastic(0x3b82f6)); G.mars.add(earthM); const mTrail = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: 0x8fb0ff })); void mTrail;
       let marsArc = null, marsArcOn = false; const demoM = { p: 0, on: false };
       function marsScene(A, S) {
         const o = S.ob; let nk = o.mk, arc = o.arc;
@@ -90,7 +90,7 @@
         info('<b>🔭 화성의 관측 점 (티코 브라헤)</b> · 같은 시각(간격 1/12 공전 주기)마다 잰 화성의 위치<br>찍은 점 ' + nk + ' / 12' + (nk >= 12 ? ' → 점들을 이으면 태양을 둘러싼 거의 둥근 궤도가 돼요 (타원, 이심률이 작아요).' : ' · 정밀한 관측 자료가 케플러의 법칙을 낳았어요.') + '');
       }
       /* ================= ⏱ 같은 시간, 같은 넓이 (이심률을 크게 그린 모형) ================= */
-      const EA = 0.6, AA = 3.4, planA = new THREE.Mesh(new THREE.SphereGeometry(0.2, 24, 18), M(0x3b82f6, { roughness: 0.5 })); G.area.add(planA);
+      const EA = 0.6, AA = 3.4, planA = new THREE.Mesh(new THREE.SphereGeometry(0.2, 32, 22), ctx.mats.plastic(0x3b82f6)); G.area.add(planA);
       const orbA = (() => { const pts = []; for (let i = 0; i < 120; i++) { const q = A_kpos(i / 120 * TAU); pts.push(new V3(q[0], 0.01, q[1])); } const t = tube(pts, 0.018, 0x8fb0ff, { basic: true, op: 0.8 }, true); G.area.add(t); return t; })();
       function A_kpos(M) { let E = M + EA * Math.sin(M); for (let i = 0; i < 12; i++) E -= (E - EA * Math.sin(E) - M) / (1 - EA * Math.cos(E)); const x = AA * (Math.cos(E) - EA), y = AA * Math.sqrt(1 - EA * EA) * Math.sin(E); return [-x, -y]; }   // 근일점이 왼쪽 (2D와 같게)
       const aVel = mkArrow(0xffd447, 0.05); G.area.add(aVel);
@@ -130,7 +130,7 @@
       /* ================= 🔗 힘과 거리의 제곱 ================= */
       const fFloor = new THREE.Mesh(new THREE.CylinderGeometry(7.2, 7.2, 0.06, 64), M(0x1a2238, { roughness: 1 })); fFloor.position.y = -0.1; G.force.add(fFloor);
       [1, 2, 3, 4].forEach((r) => { ring(G.force, r * 1.6, 0xb4c8ff, 0.25); reg('force', label(r + ' AU', [r * 1.6, 0, 0.3], { color: '#475569', size: 11 })); });
-      const fP = new THREE.Mesh(new THREE.SphereGeometry(0.24, 24, 18), M(0x3b82f6)); G.force.add(fP); const fA = mkArrow(0xff5a5f, 0.07); G.force.add(fA); const fR = rodMk(G.force, 0xffffff, 0.015, 0.6);
+      const fP = new THREE.Mesh(new THREE.SphereGeometry(0.24, 32, 22), ctx.mats.plastic(0x3b82f6)); G.force.add(fP); const fA = mkArrow(0xff5a5f, 0.07); G.force.add(fA); const fR = rodMk(G.force, 0xffffff, 0.015, 0.6);
       const lfP = reg('force', label('', fP, { color: '#1d4ed8', size: 12 })), lfF = reg('force', label('', fA, { color: '#e2464b', size: 13 })), lfR = reg('force', label('', [0, 0, 0], { color: '#475569', size: 12 }));
       function forceScene(A, S) {
         const f = S.fo, R = f.r * 1.6, th = f.th || 0; const p = new V3(R * Math.cos(th), 0.2, -R * Math.sin(th)); fP.position.copy(p);
@@ -140,9 +140,10 @@
         info('<b>🔗 태양이 행성을 당기는 힘</b> · 같은 질량의 행성이 태양에서 r = ' + f.r.toFixed(1) + ' AU 떨어져 돌 때<br>빨간 화살표 길이 = 태양이 당기는 힘의 크기 (F₀ = 1 AU에서의 힘)<br>지금 힘의 크기: <b>F = ' + (f.r === 1 ? 'F₀' : (1 / (f.r * f.r)).toFixed(3).replace(/0+$/, '') + ' F₀') + '</b> · r를 바꿔 화살표 길이를 비교해 봐요.<br><span style="opacity:.8">거리 r은 옆 조작판에서 바꿔요.</span>');
       }
       /* ================= 🍎 사과와 달 (크기는 과장해서 그렸어요) ================= */
-      const earth = new THREE.Mesh(new THREE.SphereGeometry(1.1, 36, 28), M(0x3b82f6, { roughness: 0.6 })); G.moon.add(earth); const land = new THREE.Mesh(new THREE.SphereGeometry(1.11, 12, 10), M(0x4caf6a, { transparent: true, opacity: 0.6, wireframe: true })); G.moon.add(land);
-      const moonM = new THREE.Mesh(new THREE.SphereGeometry(0.3, 24, 18), M(0xd1d5db, { roughness: 0.9 })); G.moon.add(moonM); const moonOrb = ring(G.moon, 6, 0xb4c8ff, 0.5);
-      const apple = new THREE.Mesh(new THREE.SphereGeometry(0.14, 14, 10), M(0xe2464b)); apple.position.set(0, 1.3, 0); G.moon.add(apple);
+      /* 지구: 바다 · 대륙 · 구름 무늬 (그림으로 만든 무늬) */ const eTex = (() => { const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d'); g.fillStyle = '#1d5fae'; g.fillRect(0, 0, 512, 256); let sd = 7; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; }; for (let k = 0; k < 9; k++) { const cx = rnd() * 512, cy = 50 + rnd() * 156, r = 18 + rnd() * 40; g.fillStyle = k % 3 ? '#4f9a4a' : '#8a9a54'; for (let i = 0; i < 26; i++) { g.beginPath(); g.arc(cx + (rnd() - 0.5) * r * 2.2, cy + (rnd() - 0.5) * r * 1.2, r * (0.3 + rnd() * 0.5), 0, Math.PI * 2); g.fill(); } } g.fillStyle = '#eef4fb'; g.fillRect(0, 0, 512, 14); g.fillRect(0, 242, 512, 14); g.fillStyle = 'rgba(255,255,255,.35)'; for (let i = 0; i < 70; i++) { g.beginPath(); g.ellipse(rnd() * 512, rnd() * 256, 10 + rnd() * 30, 3 + rnd() * 6, 0, 0, Math.PI * 2); g.fill(); } const t = new THREE.CanvasTexture(c); if ('encoding' in t) t.encoding = THREE.sRGBEncoding; return t; })();
+      const earth = new THREE.Mesh(new THREE.SphereGeometry(1.1, 64, 44), ctx.mats.plastic(0xffffff, { roughness: 0.55, extra: { map: eTex, clearcoat: 0.3 } })); G.moon.add(earth); const land = new THREE.Mesh(new THREE.SphereGeometry(1.16, 48, 32), new THREE.MeshBasicMaterial({ color: 0x7fb8ff, transparent: true, opacity: 0.12, depthWrite: false, side: THREE.BackSide })); G.moon.add(land);   // 얇은 대기
+      const moonM = new THREE.Mesh(new THREE.SphereGeometry(0.3, 40, 28), ctx.mats.stone(0xb8bcc4, { cracks: true, bump: 0.02 })); G.moon.add(moonM); const moonOrb = ring(G.moon, 6, 0xb4c8ff, 0.5);
+      const apple = new THREE.Mesh(new THREE.SphereGeometry(0.14, 28, 20).scale(1, 0.9, 1), ctx.mats.plastic(0xc8242c, { roughness: 0.3 })); apple.position.set(0, 1.3, 0); G.moon.add(apple); { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.016, 0.09, 8), ctx.mats.wood(0x5a3a1c)); st.position.y = 0.15; apple.add(st); const lf = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 8).scale(1, 0.3, 0.5), ctx.mats.organic(0x3f8f3a)); lf.position.set(0.05, 0.17, 0); lf.rotation.z = -0.5; apple.add(lf); }
       const aGA = mkArrow(0xe2464b, 0.04), mGA = mkArrow(0xe2464b, 0.04); G.moon.add(aGA, mGA);
       const lmA = reg('moon', label('사과', apple, { color: '#c0392b', size: 12 })), lmM = reg('moon', label('달', moonM, { color: '#475569', size: 12 })), lmE = reg('moon', label('지구', earth, { color: '#1d4ed8', size: 12 })), lmR = reg('moon', label('달의 궤도 (거리는 줄여서 그렸어요)', [4.2, 0, 4.4], { color: '#475569', size: 11 })), lmG = reg('moon', label('중력', mGA, { color: '#c0392b', size: 12 }));
       function moonScene(A, S) {

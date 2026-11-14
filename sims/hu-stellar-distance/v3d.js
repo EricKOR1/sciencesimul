@@ -43,7 +43,7 @@
         let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
         for (let i = 0; i < 16; i++) { const x = rnd() * 256, y = 20 + rnd() * 88; for (let j = 0; j < 7; j++) { g.beginPath(); g.ellipse(x + (rnd() - 0.5) * 30, y + (rnd() - 0.5) * 18, 6 + rnd() * 16, 4 + rnd() * 9, rnd() * 3, 0, 7); g.fill(); } }
         g.fillStyle = '#f2f6fa'; g.fillRect(0, 0, 256, 7); g.fillRect(0, 121, 256, 7); return new THREE.CanvasTexture(c); })();
-      const earth = new THREE.Mesh(new THREE.SphereGeometry(0.22, 32, 24), new THREE.MeshStandardMaterial({ map: earthTex, roughness: 0.7 })); root.add(earth);
+      const earth = new THREE.Mesh(new THREE.SphereGeometry(0.22, 40, 28), new THREE.MeshStandardMaterial({ map: earthTex, roughness: 0.6, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.004, envMapIntensity: 0.7 })); root.add(earth); ctx.halo(earth, 0x6fb4ff, 0.75, 0.4);
       label('지구', earth, { offset: [0, 0.5, 0] });
 
       /* 가까운 별 */

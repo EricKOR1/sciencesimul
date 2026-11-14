@@ -63,21 +63,21 @@
       }
       /* ================= 🔧 스패너 (위에서 본 모습, 1 m = 10칸) ================= */
       const U = 10;
-      const table = new THREE.Mesh(new THREE.BoxGeometry(10.5, 0.3, 6), M(0xdfe6f1, { roughness: 0.9, metalness: 0 })); table.position.set(2.4, -0.15, 0); table.receiveShadow = true; gSp.add(table);
-      const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.26 * 1.0 + 0.0, 0.26, 0.5, 6), M(0xa0522d, { metalness: 0.5, roughness: 0.6 })); bolt.position.y = 0.25; gSp.add(bolt);
-      const boltCap = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.12, 16), M(0x8f9bb0, { metalness: 0.7 })); boltCap.position.y = 0.55; bolt.add(boltCap); boltCap.position.y = 0.28;
+      const table = new THREE.Mesh(new THREE.BoxGeometry(10.5, 0.3, 6), ctx.mats.wood(0xe6d3b8, { repeat: 2 })); table.position.set(2.4, -0.15, 0); table.receiveShadow = true; gSp.add(table);
+      const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.26 * 1.0 + 0.0, 0.26, 0.5, 6), ctx.mats.metal('brass', { roughness: 0.35 })); bolt.position.y = 0.25; gSp.add(bolt);
+      const boltCap = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.12, 16), ctx.mats.metal('steel')); boltCap.position.y = 0.55; bolt.add(boltCap); boltCap.position.y = 0.28;
       const wr = new THREE.Group(); wr.position.y = 0.62; gSp.add(wr);
-      const wMat = M(0xaab3c4, { metalness: 0.75, roughness: 0.3 });
+      const wMat = ctx.mats.metal('chrome', { roughness: 0.2, brushed: true });
       const wHandle = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.2, 0.3), wMat); wHandle.position.x = 0.1 + 2.3; wHandle.castShadow = true; wr.add(wHandle);
       { const fitBox = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.7, 1.2), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); fitBox.position.x = 2.1; wr.add(fitBox); }   // 보이지 않는 맞춤 상자: 길고 얇은 손잡이도 자동 맞춤이 스패너 전체로 재게 해요
       const wHead = new THREE.Mesh(new THREE.CylinderGeometry(0.49, 0.49, 0.2, 40), wMat); wHead.castShadow = true; wr.add(wHead);
-      const wHole = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.31, 0.22, 6), M(0x4b5566, { metalness: 0.6 })); wr.add(wHole);
+      const wHole = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.31, 0.22, 6), ctx.mats.metal('iron')); wr.add(wHole);
       const tickAnchors = [];
       [0.1, 0.2, 0.3, 0.4].forEach((m) => {
         const t = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.22, 0.2), M(0x2b3445)); t.position.set(m * U, 0, 0.12); wr.add(t);
         const a = new THREE.Object3D(); a.position.set(m * U, 0, 0.55); wr.add(a); tickAnchors.push([m, a, label(m.toFixed(1), a, { color: '#475569', size: 11 })]);
       });
-      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 16), M(0xf3cfa8, { roughness: 0.6 })); hand.position.y = 0.9; gSp.add(hand);
+      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 16), ctx.mats.organic(0xf3cfa8)); hand.position.y = 0.9; gSp.add(hand);
       const fA = mkArrow(0xe2464b, 0.07); gSp.add(fA);
       const lineAct = rod(new V3(), new V3(), 0.025, 0x7c5cff, 0.7), lineEll = rod(new V3(), new V3(), 0.05, 0x7c5cff); lineAct.userData.v3bg = true; gSp.add(lineAct, lineEll);   // 긴 작용선은 자동 맞춤에서 빼요: 스패너 전체가 화면에 크게 들어오게
       const lF = label('', fA, { color: '#c0392b', size: 13 }), lEll = label('', [0, 0, 0], { color: '#6d4fe0', size: 13 }), lTau = label('', [0, 0, 0], { color: '#c2410c', size: 13 });
@@ -133,11 +133,11 @@
       let phaseName = '';
       /* ================= ⚖️ 시소 ================= */
       const SC = new V3(0, 1.7, 0), HB = 2.5;
-      const ground = new THREE.Mesh(new THREE.BoxGeometry(9, 0.1, 4), M(0x8a96ab, { roughness: 1 })); ground.position.y = -0.05; ground.receiveShadow = true; gSs.add(ground);
-      const stand = new THREE.Mesh(new THREE.ConeGeometry(0.8, SC.y, 4), M(0x6b7689, { metalness: 0.4 })); stand.position.y = SC.y / 2 - 0.1; stand.rotation.y = Math.PI / 4; stand.scale.set(1, 1, 0.6); gSs.add(stand);
+      const ground = new THREE.Mesh(new THREE.BoxGeometry(9, 0.1, 4), ctx.mats.stone(0x8a96ab, { repeat: 4 })); ground.position.y = -0.05; ground.receiveShadow = true; gSs.add(ground);
+      const stand = new THREE.Mesh(new THREE.ConeGeometry(0.8, SC.y, 4), ctx.mats.metal('iron', { roughness: 0.4 })); stand.position.y = SC.y / 2 - 0.1; stand.rotation.y = Math.PI / 4; stand.scale.set(1, 1, 0.6); gSs.add(stand);
       [-1, 1].forEach((sg) => { const post = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.9, 0.5), M(0x9aa5b8)); post.position.set(sg * (HB + 0.05), 0.45, 0); gSs.add(post); });
       const beamG = new THREE.Group(); beamG.position.copy(SC); gSs.add(beamG);
-      const beam = new THREE.Mesh(new THREE.BoxGeometry(HB * 2, 0.16, 0.7), M(0xd6a15c, { roughness: 0.55 })); beam.castShadow = true; beamG.add(beam);
+      const beam = new THREE.Mesh(new THREE.BoxGeometry(HB * 2, 0.16, 0.7), ctx.mats.wood(0xd6a15c, { repeat: 2 })); beam.castShadow = true; beamG.add(beam);
       for (let m = -2; m <= 2.001; m += 0.5) { const t = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.18, 0.72), M(m === 0 ? 0xe2464b : 0x7c5a2f)); t.position.x = m; beamG.add(t); }
       const piv = new THREE.Mesh(new THREE.SphereGeometry(0.14, 20, 16), M(0xe2464b)); piv.position.copy(SC); gSs.add(piv);
       const numL = [];
@@ -169,7 +169,7 @@
         info('<b>⚖️ 돌림힘 비교 (받침점 기준, N·m)</b><br>↺ 반시계 (왼쪽 추): ' + nf(s.mA * 10) + ' N × ' + s.xA.toFixed(1) + ' m = <b>' + nf(tA) + ' N·m</b><br>↻ 시계 (오른쪽 추): ' + nf(s.mB * 10) + ' N × ' + s.xB.toFixed(1) + ' m = <b>' + nf(tB) + ' N·m</b><br>' + (eq ? '두 돌림힘이 같아요 → 알짜 돌림힘 0 → 수평!' : (tB > tA ? '시계 방향이 더 커요 → 오른쪽이 내려가요' : '반시계 방향이 더 커요 → 왼쪽이 내려가요')) + '<br><span style="opacity:.8">알짜힘 0: 받침 힘 N = (' + s.mA + ' + ' + s.mB + ') kg × 10 = ' + nf(N) + ' N</span>');
       }
       /* ================= 📦 기울기 · 📚 책장 ================= */
-      const floorT = new THREE.Mesh(new THREE.BoxGeometry(9, 0.1, 3), M(0x8a96ab, { roughness: 1 })); floorT.position.set(-1.2, -0.05, 0); floorT.receiveShadow = true; gTp.add(floorT);
+      const floorT = new THREE.Mesh(new THREE.BoxGeometry(9, 0.1, 3), ctx.mats.wood(0xb89a7a, { repeat: 3 })); floorT.position.set(-1.2, -0.05, 0); floorT.receiveShadow = true; gTp.add(floorT);
       const supW = new THREE.Mesh(new THREE.BoxGeometry(1, 0.03, 0.9), M(0x14a058, { emissive: 0x0a5a30 })); supW.position.y = 0.015; gTp.add(supW);
       const edge = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.26, 3), M(0x26324a)); edge.rotation.x = Math.PI / 2; edge.position.set(0, -0.1, 0); gTp.add(edge);
       const body = new THREE.Group(); gTp.add(body);
@@ -185,10 +185,10 @@
           body.userData.fall = m;
         } else {
           const W = SHELF.W, H = SHELF.H;
-          const fr = new THREE.Mesh(new THREE.BoxGeometry(W, H, 0.5), M(0xc99a62, { roughness: 0.6 })); fr.position.set(-W / 2, H / 2, -0.06); fr.castShadow = true; body.add(fr);
+          const fr = new THREE.Mesh(new THREE.BoxGeometry(W, H, 0.5), ctx.mats.wood(0xc99a62)); fr.position.set(-W / 2, H / 2, -0.06); fr.castShadow = true; body.add(fr);
           const back = new THREE.Mesh(new THREE.BoxGeometry(W - 0.1, H - 0.1, 0.02), M(0xecd9b8)); back.position.set(-W / 2, H / 2, 0.21); body.add(back);
           ['bottom', 'mid', 'top'].forEach((k) => {
-            const bd = new THREE.Mesh(new THREE.BoxGeometry(W - 0.08, 0.06, 0.46), M(0xa97c45)); bd.position.set(-W / 2, SHELF.BOARD[k], 0.12); body.add(bd);
+            const bd = new THREE.Mesh(new THREE.BoxGeometry(W - 0.08, 0.06, 0.46), ctx.mats.wood(0xa97c45)); bd.position.set(-W / 2, SHELF.BOARD[k], 0.12); body.add(bd);
             const by = SHELF.BOARD[k] + 0.03;
             if (k === pos) { const hb = new THREE.Mesh(new THREE.BoxGeometry(W - 0.16, SHELF.BOOK, 0.4), M(0x3b3f52)); hb.position.set(-W / 2, by + SHELF.BOOK / 2, 0.12); body.add(hb); const a = new THREE.Object3D(); a.position.set(-W / 2, by + SHELF.BOOK / 2, 0.36); body.add(a); body.userData.bookA = a; }
             else { const cols = [0xe07a5f, 0x81b29a, 0xf2cc8f, 0x6c8ebf]; for (let i = 0; i < 4; i++) { const bk = new THREE.Mesh(new THREE.BoxGeometry((W - 0.16) / 4 - 0.02, SHELF.BOOK * 0.7, 0.36), M(cols[i])); bk.position.set(-W / 2 + 0.08 - (W - 0.16) / 2 + (i + 0.5) * ((W - 0.16) / 4), by + SHELF.BOOK * 0.35, 0.12); body.add(bk); } }
@@ -221,10 +221,10 @@
 
       /* ================= 🌀 우력: 얼음 위의 막대 (위에서 본 모습, 1 m = 8칸, 위쪽 힘 = 화면 위 = −z) ================= */
       const CS = 8, CPX = [-0.2, 0, 0.2], CFS = 0.08, labCp = [];
-      const ice = new THREE.Mesh(new THREE.BoxGeometry(9, 0.3, 5.6), M(0x5f93bb, { roughness: 0.25, metalness: 0.05 })); ice.position.y = -0.15; ice.receiveShadow = true; gCp.add(ice);
+      const ice = new THREE.Mesh(new THREE.BoxGeometry(9, 0.3, 5.6), ctx.mats.ice({ extra: { color: 0x9cc8e6, opacity: 0.92 } })); ice.position.y = -0.15; ice.receiveShadow = true; gCp.add(ice);
       const startBox = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(0.4 * CS, 0.3, 0.55)), new THREE.LineBasicMaterial({ color: 0x3c506e })); startBox.position.y = 0.17; gCp.add(startBox);
       const rodG = new THREE.Group(); gCp.add(rodG);
-      const rodM = new THREE.Mesh(new THREE.BoxGeometry(0.4 * CS, 0.3, 0.55), M(0xa8742f, { roughness: 0.55 })); rodM.position.y = 0.15; rodM.castShadow = true; rodG.add(rodM);
+      const rodM = new THREE.Mesh(new THREE.BoxGeometry(0.4 * CS, 0.3, 0.55), ctx.mats.wood(0xa8742f, { repeat: 2 })); rodM.position.y = 0.15; rodM.castShadow = true; rodG.add(rodM);
       CPX.forEach((x) => { const d = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 10), M(0x5a6679)); d.position.set(x * CS, 0.31, 0); rodG.add(d); });
       const cDot = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 12), M(0xe2464b)); cDot.position.set(0, 0.34, 0); rodG.add(cDot);
       const cpArr = [0, 1, 2].map((i) => { const a = mkArrow(i === 1 ? 0x6d4fe0 : 0xd22a30, 0.07); gCp.add(a); return a; });
@@ -263,11 +263,11 @@
       /* ================= 🌉 널빤지 다리 (옆에서 본 모습, 1 m = 1칸) ================= */
       const PH = 1.8, PTH = 0.25, FSC3 = 0.0025, PLK = { SPAN: 4, LEN: 8, WP: 200, WL: 400, OVER: 2 }, labPk = [];
       const gnd = new THREE.Mesh(new THREE.BoxGeometry(13, 0.2, 3.4), M(0x56627a, { roughness: 1 })); gnd.position.set(2, -0.1, 0); gnd.receiveShadow = true; gPk.add(gnd);
-      [0, PLK.SPAN].forEach((x) => { const pil = new THREE.Mesh(new THREE.BoxGeometry(0.34, PH, 0.9), M(0x8e9ab0, { metalness: 0.3 })); pil.position.set(x, PH / 2, 0); pil.castShadow = true; gPk.add(pil); const sen = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.5, 0.5), M(0x1f2937)); sen.position.set(x, 0.25, 1.05); gPk.add(sen); });
+      [0, PLK.SPAN].forEach((x) => { const pil = new THREE.Mesh(new THREE.BoxGeometry(0.34, PH, 0.9), ctx.mats.stone(0x9aa3b0, { repeat: 1 })); pil.position.set(x, PH / 2, 0); pil.castShadow = true; gPk.add(pil); const sen = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.5, 0.5), M(0x1f2937)); sen.position.set(x, 0.25, 1.05); gPk.add(sen); });
       const plankG = new THREE.Group(); plankG.position.set(PLK.SPAN, PH, 0); gPk.add(plankG);
-      const plankM = new THREE.Mesh(new THREE.BoxGeometry(PLK.LEN, PTH, 0.8), M(0xa8742f, { roughness: 0.55 })); plankM.position.set((-PLK.OVER - PLK.SPAN + PLK.LEN / 2), PTH / 2, 0); plankM.castShadow = true; plankG.add(plankM);
+      const plankM = new THREE.Mesh(new THREE.BoxGeometry(PLK.LEN, PTH, 0.8), ctx.mats.wood(0xa8742f, { repeat: 3 })); plankM.position.set((-PLK.OVER - PLK.SPAN + PLK.LEN / 2), PTH / 2, 0); plankM.castShadow = true; plankG.add(plankM);
       for (let m = 0; m <= 6; m++) { const tk = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.06, 0.82), M(0x5a3d1a)); tk.position.set(m - PLK.SPAN, PTH, 0); plankG.add(tk); const a = new THREE.Object3D(); a.position.set(m - PLK.SPAN, PTH, 0.55); plankG.add(a); labPk.push(label(String(m), a, { color: '#5a3d1a', size: 11 })); }
-      const loadM = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), M(0xf2873a, { roughness: 0.4, metalness: 0.2 })); loadM.castShadow = true; plankG.add(loadM);
+      const loadM = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), ctx.mats.plastic(0xf2873a, { roughness: 0.3 })); loadM.castShadow = true; plankG.add(loadM);
       const loadArr = mkArrow(0xe2464b, 0.05), plkArr = mkArrow(0xc0392b, 0.05), nArr = [mkArrow(0x14a058, 0.05), mkArrow(0x14a058, 0.05)]; gPk.add(loadArr, plkArr, nArr[0], nArr[1]);
       const lLoadW = label('짐 400 N', [0, 0, 0], { color: '#c0392b', size: 12 }), lPlkW = label('판 200 N', [0, 0, 0], { color: '#c0392b', size: 12 });
       const lNA = label('', [0, 0, 0], { color: '#14a058', size: 12 }), lNB = label('', [0, 0, 0], { color: '#14a058', size: 12 });
@@ -307,16 +307,16 @@
       /* ================= 🏗️ 크레인 (옆에서 본 모습, 1 m = 0.45칸) ================= */
       const CSC = 0.45, TH = 5.2, JL = 6.8, JR = 8.6, WCW = 3000, labCr = [];
       const gnd2 = new THREE.Mesh(new THREE.BoxGeometry(12, 0.2, 3.4), M(0x56627a, { roughness: 1 })); gnd2.position.set(0, -0.1, 0); gnd2.receiveShadow = true; gCr.add(gnd2);
-      const towerM = M(0xe0a82e, { roughness: 0.5, metalness: 0.2 });
+      const towerM = ctx.mats.metal(0xd9a02a, { roughness: 0.4 });
       const tower = new THREE.Mesh(new THREE.BoxGeometry(0.5, TH, 0.5), towerM); tower.position.y = TH / 2; tower.castShadow = true; gCr.add(tower);
       for (let y = 0.6; y < TH - 0.3; y += 0.8) { const rg = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.07, 0.58), M(0xb07d0a)); rg.position.y = y; gCr.add(rg); }
       const base = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.3, 1.2), M(0x8e9ab0)); base.position.y = 0.15; gCr.add(base);
       const armG = new THREE.Group(); armG.position.y = TH; gCr.add(armG);
-      const arm = new THREE.Mesh(new THREE.BoxGeometry((JL + JR) * CSC, 0.22, 0.32), M(0xf5b83d, { roughness: 0.45 })); arm.position.x = (JR - JL) / 2 * CSC; arm.castShadow = true; armG.add(arm);
+      const arm = new THREE.Mesh(new THREE.BoxGeometry((JL + JR) * CSC, 0.22, 0.32), ctx.mats.metal(0xe8b23a, { roughness: 0.38 })); arm.position.x = (JR - JL) / 2 * CSC; arm.castShadow = true; armG.add(arm);
       for (let m = -6; m <= 8; m++) { if (!m) continue; const tk = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.1, 0.34), M(0x3c2a00)); tk.position.set(m * CSC, 0.14, 0); armG.add(tk); if (m % 2 === 0) { const a = new THREE.Object3D(); a.position.set(m * CSC, 0.42, 0); armG.add(a); labCr.push(label(String(Math.abs(m)), a, { color: '#7a5a00', size: 11 })); } }
       const pivC = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), M(0xe2464b)); pivC.position.y = TH; gCr.add(pivC);
       const loadG = new THREE.Group(); gCr.add(loadG); const cwG = new THREE.Group(); gCr.add(cwG);
-      const loadBox = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), M(0xf2873a, { roughness: 0.4, metalness: 0.2 })); loadBox.castShadow = true; loadG.add(loadBox);
+      const loadBox = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), ctx.mats.plastic(0xf2873a, { roughness: 0.3 })); loadBox.castShadow = true; loadG.add(loadBox);
       const cwBox = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.8, 0.9), M(0x6b7280, { roughness: 0.4, metalness: 0.5 })); cwBox.castShadow = true; cwG.add(cwBox); cwBox.position.y = -1.05;
       const cabL = rod(new V3(), new V3(), 0.02, 0x4b5563), cabC = rod(new V3(), new V3(), 0.02, 0x4b5563); gCr.add(cabL, cabC);
       const supArr = mkArrow(0x14a058, 0.06); gCr.add(supArr);

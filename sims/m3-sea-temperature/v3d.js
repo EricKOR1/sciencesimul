@@ -28,12 +28,12 @@
       /* ---------- 바다 물기둥 ---------- */
       const NS = 80, geo = new THREE.BoxGeometry(BW, HY, BW, 1, NS, 1); geo.translate(0, -HY / 2, 0);
       geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(geo.attributes.position.count * 3), 3));
-      const water = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.3, transparent: true, opacity: 0.82 })); seaG.add(water);
+      const water = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.12, transparent: true, opacity: 0.82, clearcoat: 1, clearcoatRoughness: 0.06, envMapIntensity: 1.5 })); seaG.add(water);   // 바닷물: 수온 색 + 반짝이는 겉면
       const edge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(BW, HY, BW).translate(0, -HY / 2, 0)), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45 })); seaG.add(edge);
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(BW + 0.3, 0.25, BW + 0.3), sm(0xb08d57, { roughness: 0.95 })); floor.position.y = -HY - 0.12; seaG.add(floor);
-      const surf = new THREE.Mesh(new THREE.PlaneGeometry(BW + 0.01, BW + 0.01, 30, 30), sm(0x5fb4f0, { roughness: 0.15, transparent: true, opacity: 0.55, side: THREE.DoubleSide })); surf.rotation.x = -Math.PI / 2; surf.position.y = 0.01; seaG.add(surf);
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(BW + 0.3, 0.25, BW + 0.3), ctx.mats.stone(0xb08d57, { repeat: 3, bump: 0.04 })); floor.position.y = -HY - 0.12; seaG.add(floor);   // 바다 밑 모래
+      const surf = new THREE.Mesh(new THREE.PlaneGeometry(BW + 0.01, BW + 0.01, 30, 30), ctx.mats.liquid(0x5fb4f0, { opacity: 0.55, extra: { side: THREE.DoubleSide } })); surf.rotation.x = -Math.PI / 2; surf.position.y = 0.01; seaG.add(surf);
       const sp0 = surf.geometry.attributes.position; const sx = [], sz = []; for (let i = 0; i < sp0.count; i++) { sx.push(sp0.getX(i)); sz.push(sp0.getY(i)); }
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.6, 24, 16), new THREE.MeshBasicMaterial({ color: 0xffd34d })); sun.position.set(1.0, 2.4, -1.4); seaG.add(sun);
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.6, 24, 16), new THREE.MeshBasicMaterial({ color: 0xffd34d })); sun.position.set(1.0, 2.4, -1.4); seaG.add(sun); ctx.halo(sun, 0xffd34d, 2.6, 0.6);   // 햇빛 번짐
       /* 그래프 벽 (수온 축) */
       const wall = new THREE.Mesh(new THREE.PlaneGeometry(4.0, HY + 0.2), sm(0x0f172a, { transparent: true, opacity: 0.5, side: THREE.DoubleSide })); wall.position.set(4.7, -HY / 2, -BW / 2 + 0.01); seaG.add(wall);
       [0, 10, 20, 30].forEach((T) => { const g = new THREE.Mesh(new THREE.BoxGeometry(0.02, HY, 0.02), sm(0x94a3b8, { transparent: true, opacity: 0.5 })); g.position.set(xT(T), -HY / 2, -BW / 2 + 0.03); seaG.add(g); label(T + '°C', [xT(T), 0.65, -BW / 2 + 0.03], { size: 11, color: 'rgba(30,41,59,.85)' }); });
@@ -51,11 +51,11 @@
       /* ---------- 수조 실험 (적외선등 · 바람) ---------- */
       const tgeo = new THREE.BoxGeometry(TWD, TH, 2.2, 1, 48, 1); tgeo.translate(0, -TH / 2, 0);
       tgeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(tgeo.attributes.position.count * 3), 3));
-      tankG.add(new THREE.Mesh(tgeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.3, transparent: true, opacity: 0.85 })));
+      tankG.add(new THREE.Mesh(tgeo, new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.12, transparent: true, opacity: 0.85, clearcoat: 1, clearcoatRoughness: 0.06, envMapIntensity: 1.5 })));
       tankG.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(TWD, TH, 2.2).translate(0, -TH / 2, 0)), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 })));
-      const lampM = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.3, 0.35, 24), sm(0xcbd5e1)); lampM.position.set(0.6, 1.3, 0); tankG.add(lampM);
+      const lampM = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.3, 0.35, 32), ctx.mats.metal('aluminium', { roughness: 0.28 })); lampM.position.set(0.6, 1.3, 0); tankG.add(lampM);
       const beamM = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 1.5, 1.1, 24, 1, true), new THREE.MeshBasicMaterial({ color: 0xfff1a8, transparent: true, opacity: 0.0, depthWrite: false, side: THREE.DoubleSide })); beamM.position.set(0.6, 0.55, 0); tankG.add(beamM);
-      const fan = new THREE.Group(); const fb = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.12, 20), sm(0x64748b)); fb.rotation.z = Math.PI / 2; fan.add(fb);
+      const fan = new THREE.Group(); const fb = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.12, 28), ctx.mats.plastic(0x64748b, { roughness: 0.35 })); fb.rotation.z = Math.PI / 2; fan.add(fb);
       for (let i = 0; i < 3; i++) { const bl = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.6, 0.18), sm(0xe2e8f0)); bl.rotation.x = i * 2.09; bl.position.x = 0.1; fan.add(bl); }
       fan.position.set(-TWD / 2 - 0.9, 0.35, 0); tankG.add(fan);
       const winds = []; for (let i = 0; i < 4; i++) { const m = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.4, 10), new THREE.MeshBasicMaterial({ color: 0xe2e8f0, transparent: true, opacity: 0.85 })); m.rotation.z = -Math.PI / 2; tankG.add(m); winds.push(m); }

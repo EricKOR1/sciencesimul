@@ -40,13 +40,14 @@
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
       let mode = 'mito', st = 0, s2 = 0, names = true, lastAct = -9, tnow = 0, act = -9, ign = false, sepNow = [false, false], sepSig = '';
-      const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0 }, o || {}));
+      const lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 색이 바래지 않게 (어머니 · 아버지 염색체 색이 또렷하게)
+      const sm = (c, o) => { const q = Object.assign({ color: lc(c), roughness: 0.4, metalness: 0 }, o || {}); if (typeof q.emissive === 'number') q.emissive = lc(q.emissive); return new THREE.MeshStandardMaterial(q); };
       /* 세포막 (최대 4개): 막 + 가장자리 빛 + 세포 속 세포소기관 (막 크기와 함께 움직여요) */
       const cells = [];
       const orgRnd = (() => { let a = 7; return () => { a = (a * 16807) % 2147483647; return a / 2147483647; }; })();
       const mitoG = new THREE.CapsuleGeometry(0.035, 0.07, 4, 8), erG = new THREE.TorusGeometry(0.06, 0.012, 6, 14), ribG = new THREE.SphereGeometry(0.014, 6, 5);
       for (let i = 0; i < 4; i++) {
-        const m = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), new THREE.MeshPhysicalMaterial({ color: 0x93c5fd, transparent: true, opacity: 0.16, roughness: 0.08, clearcoat: 1, depthWrite: false })); root.add(m);
+        const m = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), new THREE.MeshPhysicalMaterial({ color: 0x93c5fd, transparent: true, opacity: 0.16, roughness: 0.08, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 1.8, depthWrite: false })); root.add(m);
         const rim = new THREE.Mesh(new THREE.SphereGeometry(1.025, 40, 28), new THREE.MeshBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.1, side: THREE.BackSide, depthWrite: false })); m.add(rim);
         const org = new THREE.Group(); m.add(org);
         const mmat = sm(0xfb923c, { roughness: 0.35, emissive: 0xc2410c, emissiveIntensity: 0.25, transparent: true }), emat = sm(0xa78bfa, { roughness: 0.4, transparent: true }), rmat = sm(0x38bdf8, { roughness: 0.4, transparent: true });
@@ -65,7 +66,7 @@
       const bandTex = (() => { const c = document.createElement('canvas'); c.width = 8; c.height = 64; const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 8, 64); for (let i = 0; i < 9; i++) { x.fillStyle = 'rgba(0,0,0,' + (0.12 + (i % 3) * 0.1) + ')'; x.fillRect(0, 4 + i * 7 + (i % 2) * 2, 8, 3); } return new THREE.CanvasTexture(c); })();
       for (let ci = 0; ci < 4; ci++) for (let j = 0; j < 2; j++) {
         const geo = new THREE.CapsuleGeometry(0.12, CLEN[ci] - 0.24, 6, 16);
-        const m = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({ color: CCOL[ci], map: bandTex, roughness: 0.3, clearcoat: 0.6, emissive: CCOL[ci], emissiveIntensity: 0.14 })); root.add(m);
+        const m = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({ color: lc(CCOL[ci]), map: bandTex, roughness: 0.28, clearcoat: 0.8, clearcoatRoughness: 0.15, emissive: lc(CCOL[ci]), emissiveIntensity: 0.14 })); root.add(m);
         const cp = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 8), sm(0xffffff, { roughness: 0.5 })); cp.scale.set(1, 0.55, 1); m.add(cp);
         const c = new V3(...S0[ci]); m.position.copy(c);
         chs.push({ m, ci, j, p: c.clone(), rz: RB[ci], th: 0.04, tp: c.clone(), trz: RB[ci], tth: 0.04, pole: null });

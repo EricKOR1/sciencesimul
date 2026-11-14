@@ -61,7 +61,7 @@
       spin.add(rod(new V3(-W, 0, -ZF), new V3(W, 0, -ZF), 0.07, cuMat));                       // 뒤쪽 연결
       spin.add(rod(new V3(W, 0, ZF), new V3(0.28, 0.28, ZF), 0.07, cuMat), rod(new V3(-W, 0, ZF), new V3(-0.28, -0.28, ZF), 0.07, cuMat));
       spin.add(rod(new V3(0.28, 0.28, ZF), new V3(0.28, 0.28, ZC), 0.06, cuMat), rod(new V3(-0.28, -0.28, ZF), new V3(-0.28, -0.28, ZC + 0.4), 0.06, cuMat));
-      const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, LEN + 2.4, 12), mat(0x9aa3b2, { metalness: 0.6 })); axle.rotation.x = Math.PI / 2; axle.position.z = 0.25; spin.add(axle);
+      const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, LEN + 2.4, 12), ctx.mats.metal('steel')); axle.rotation.x = Math.PI / 2; axle.position.z = 0.25; spin.add(axle);
       // 정류자 반원 두 개 (갈라진 틈이 코일 면과 나란해요): H1(+y쪽, A와 연결, 붉은색) / H2(−y쪽, B와 연결, 파란색)
       function half(a0, col) { const g = new THREE.CylinderGeometry(0.5, 0.5, 0.5, 20, 1, false, 0, Math.PI); const m = new THREE.Mesh(g, mat(col, { metalness: 0.5 })); m.rotation.set(Math.PI / 2, 0, 0); const h = new THREE.Group(); h.add(m); h.rotation.z = a0; h.position.z = ZC; return h; }
       // CylinderGeometry의 thetaStart=0 은 +z 방향에서 시작 → x축 둘레 회전 후 xy 평면의 +x에서 y>0 쪽 반원이 되도록 맞춰요
@@ -73,12 +73,12 @@
       ringA.rotation.x = ringB.rotation.x = Math.PI / 2; ringA.position.z = ZC; ringB.position.z = ZC + 0.4; spin.add(ringA, ringB); ringA.visible = ringB.visible = false;
 
       /* ---------- 솔(고정) · 전원 ---------- */
-      const brushT = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.45, 0.5), mat(0x374151)), brushB = brushT.clone();
+      const brushT = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.45, 0.5), ctx.mats.stone(0x2e3138, { repeat: 1 })), brushB = brushT.clone();
       brushT.position.set(0, 0.72, ZC); brushB.position.set(0, -0.72, ZC); motorG.add(brushT, brushB);
-      const batt = new THREE.Group(); const bBody = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.6, 0.6), mat(0x374151));
+      const batt = new THREE.Group(); const bBody = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.6, 0.6), ctx.mats.plastic(0x2a313d, { roughness: 0.3 }));
       const bR = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.62, 0.62), mat(0xe2464b)), bL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.62, 0.62), mat(0x2f6df6)); bR.position.x = 0.65; bL.position.x = -0.65;
       batt.add(bBody, bR, bL); batt.position.set(0, -3.3, ZC + 0.4); motorG.add(batt);
-      const wMat = mat(0xb7791f, { metalness: 0.3 });
+      const wMat = ctx.mats.metal('copper', { roughness: 0.28 });
       const wp1 = [new V3(0, 0.95, ZC), new V3(1.6, 0.95, ZC), new V3(1.6, -3.3, ZC + 0.4), new V3(0.9, -3.3, ZC + 0.4)];
       const wp2 = [new V3(0, -0.95, ZC), new V3(-1.6, -0.95, ZC), new V3(-1.6, -3.3, ZC + 0.4), new V3(-0.9, -3.3, ZC + 0.4)];
       [wp1, wp2].forEach((pp) => { for (let i = 0; i < pp.length - 1; i++) motorG.add(rod(pp[i], pp[i + 1], 0.035, wMat)); });
@@ -157,15 +157,15 @@
       /* ================= ⚡ 자기장 속 도선이 받는 힘 (위에서 본 모습, 1 m = 6칸) ================= */
       const fG = new THREE.Group(); root.add(fG);
       const UF = 6, LPX = 600;
-      const floorF = new THREE.Mesh(new THREE.BoxGeometry(8, 0.1, 5.2), mat(0x2a3550, { roughness: 1 })); floorF.position.set(-0.4, -0.08, 0); floorF.userData.v3bg = true; fG.add(floorF);   // 바닥판은 배경: 레일 · 도선 · 자기장에 맞춰요
-      [-1.2, 1.2].forEach((z) => { const r = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 4.6, 10), mat(0x8a95a8, { metalness: 0.6 })); r.rotation.z = Math.PI / 2; r.position.set(0.1, 0.05, z); fG.add(r); });
+      const floorF = new THREE.Mesh(new THREE.BoxGeometry(8, 0.1, 5.2), ctx.mats.wood(0x6a5038, { repeat: 2 })); floorF.position.set(-0.4, -0.08, 0); floorF.userData.v3bg = true; fG.add(floorF);   // 바닥판은 배경: 레일 · 도선 · 자기장에 맞춰요
+      [-1.2, 1.2].forEach((z) => { const r = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 4.6, 10), ctx.mats.metal('steel')); r.rotation.z = Math.PI / 2; r.position.set(0.1, 0.05, z); fG.add(r); });
       const fieldBox = new THREE.Mesh(new THREE.BoxGeometry(1, 0.06, 1), new THREE.MeshBasicMaterial({ color: 0x7c5cff, transparent: true, opacity: 0.22, depthWrite: false })); fG.add(fieldBox);
       const fieldArr = []; for (let i = 0; i < 40; i++) { const a = mkArrow(0xb79bff, 0.03); fG.add(a); fieldArr.push(a); }
-      const posts = [-1.3, 1.3].map((x) => { const p = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.5), mat(0x6b7488)); p.position.set(x, 0.25, 0); fG.add(p); return p; });
-      const springs = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.BufferGeometry(), mat(0x9aa3b2, { metalness: 0.7 })); fG.add(m); return m; });
-      const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.4 + 0.5, 16), mat(0xb9c2d0, { metalness: 0.7, roughness: 0.3 })); wire.rotation.x = Math.PI / 2; wire.position.y = 0.12; wire.castShadow = true; fG.add(wire);
+      const posts = [-1.3, 1.3].map((x) => { const p = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.5), ctx.mats.plastic(0x4a5263)); p.position.set(x, 0.25, 0); fG.add(p); return p; });
+      const springs = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.BufferGeometry(), ctx.mats.metal('steel')); fG.add(m); return m; });
+      const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.4 + 0.5, 16), ctx.mats.metal('copper', { roughness: 0.25 })); wire.rotation.x = Math.PI / 2; wire.position.y = 0.12; wire.castShadow = true; fG.add(wire);
       const hot = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 1, 16), new THREE.MeshBasicMaterial({ color: 0xffb400, transparent: true, opacity: 0.55 })); hot.rotation.x = Math.PI / 2; hot.position.y = 0.12; fG.add(hot);
-      const supply = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 1.9), mat(0x394258)); supply.position.set(-3.3, 0.4, 0); supply.userData.v3bg = true; fG.add(supply);
+      const supply = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 1.9), ctx.mats.plastic(0x2f3747, { roughness: 0.3 })); supply.position.set(-3.3, 0.4, 0); supply.userData.v3bg = true; fG.add(supply);
       const aI = mkArrow(0xe2552a, 0.05), aFw = mkArrow(0x14a058, 0.09); fG.add(aI, aFw);
       const lSup = label('', supply, { color: '#394258', size: 13 }), lL = label('', [0, 0, 0], { color: '#26324a', size: 13 }), lB = label('', [0, 0.4, 0], { color: '#5b3fd0', size: 13 }), lFo = label('F', aFw, { color: '#0f7a43', size: 14 }), lIo = label('I', aI, { color: '#c2410c', size: 13 });
       const dots = []; for (let i = 0; i < 6; i++) { const d = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshBasicMaterial({ color: 0xe2552a })); fG.add(d); dots.push(d); }
@@ -209,12 +209,12 @@
       const lathe = (pts, col, o) => { const m = new THREE.Mesh(new THREE.LatheGeometry(pts.map((p) => new THREE.Vector2(p[0], p[1])), 48), mat(col, Object.assign({ side: THREE.DoubleSide }, o || {}))); return m; };
       const ringMag = lathe([[1.7, 0], [2.6, 0], [2.6, 1.1], [1.7, 1.1], [1.7, 0]], 0xe2464b, { metalness: 0.3 }); spG.add(ringMag);
       const poleMag = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 1.5, 36), mat(0x2f6df6, { metalness: 0.3 })); poleMag.position.y = 0.75; spG.add(poleMag);
-      const baseMag = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 0.3, 48), mat(0x6b7488, { metalness: 0.6 })); baseMag.position.y = -0.15; spG.add(baseMag);
+      const baseMag = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 0.3, 48), ctx.mats.metal('iron', { brushed: true })); baseMag.position.y = -0.15; spG.add(baseMag);
       const diaph = new THREE.Group(); diaph.position.y = 0; spG.add(diaph);
-      const coilRings = []; for (let i = 0; i < 6; i++) { const t = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.07, 8, 40), mat(0xe39a45, { metalness: 0.4 })); t.rotation.x = Math.PI / 2; t.position.y = 0.4 + i * 0.16; diaph.add(t); }
+      const coilRings = []; for (let i = 0; i < 6; i++) { const t = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.07, 8, 40), ctx.mats.metal('copper', { roughness: 0.3 })); t.rotation.x = Math.PI / 2; t.position.y = 0.4 + i * 0.16; diaph.add(t); }
       const coilCyl = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 1.0, 36, 1, true), new THREE.MeshStandardMaterial({ color: 0xf4f0e6, side: THREE.DoubleSide, roughness: 0.7 })); coilCyl.position.y = 0.7; diaph.add(coilCyl);
       const cone = lathe([[1.2, 1.2], [4.2, 2.3], [4.35, 2.3], [4.35, 2.2], [1.25, 1.1]], 0xdfe6f2, { transparent: true, opacity: 0.8, roughness: 0.5 }); diaph.add(cone);
-      const susp = new THREE.Mesh(new THREE.TorusGeometry(4.35, 0.1, 8, 48), mat(0x6b7488)); susp.rotation.x = Math.PI / 2; susp.position.y = 2.25; spG.add(susp);
+      const susp = new THREE.Mesh(new THREE.TorusGeometry(4.35, 0.1, 12, 72), ctx.mats.rubber(0x2a2e36)); susp.rotation.x = Math.PI / 2; susp.position.y = 2.25; spG.add(susp);
       const sBarr = []; [0.35, 0.8].forEach((y) => [0, 1.57, 3.14, 4.71].forEach((a) => { const ar = mkArrow(0xb79bff, 0.03); spG.add(ar); setArrow(ar, new V3(2.1 * Math.cos(a), y, 2.1 * Math.sin(a)), new V3(1.1 * Math.cos(a), y, 1.1 * Math.sin(a))); sBarr.push(ar); }));
       const aFs = mkArrow(0x14a058, 0.08); spG.add(aFs);
       const waves = []; for (let i = 0; i < 12; i++) { const w = new THREE.Mesh(new THREE.TorusGeometry(1, 0.025, 6, 48), new THREE.MeshBasicMaterial({ color: 0x6aa0ff, transparent: true, opacity: 0.5, depthWrite: false })); w.rotation.x = Math.PI / 2; w.visible = false; spG.add(w); waves.push(w); }
@@ -246,13 +246,13 @@
         const R = d.cup === 'large' ? 4.5 : 2.9, thick = d.mat === 'thick', bc = clamp((d.B - 0.2) / 0.4, 0, 1), th = thick ? 0.16 : 0.07;
         const ring = lathe([[1.7, 0], [2.6, 0], [2.6, 1.1], [1.7, 1.1], [1.7, 0]], 0xe2464b, { metalness: 0.3 }); ring.material.color.copy(mixc(0xf2a0a3, 0xe2464b, bc)); dFix.add(ring);
         const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 1.5, 36), mat(0x2f6df6, { metalness: 0.3 })); pole.material.color.copy(mixc(0x8aa7f2, 0x2f6df6, bc)); pole.position.y = 0.75; dFix.add(pole);
-        const base = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 0.3, 48), mat(0x6b7488, { metalness: 0.6 })); base.position.y = -0.15; dFix.add(base);
-        for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; dFix.add(rod(new V3(2.6 * Math.cos(a), 1.1, 2.6 * Math.sin(a)), new V3(R * Math.cos(a), 2.15, R * Math.sin(a)), 0.05, mat(0x8a95a8, { metalness: 0.6 }))); }
-        const sus = new THREE.Mesh(new THREE.TorusGeometry(R, 0.1, 8, 48), mat(0x6b7488)); sus.rotation.x = Math.PI / 2; sus.position.y = 2.25; dFix.add(sus);
+        const base = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 0.3, 48), ctx.mats.metal('iron', { brushed: true })); base.position.y = -0.15; dFix.add(base);
+        for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; dFix.add(rod(new V3(2.6 * Math.cos(a), 1.1, 2.6 * Math.sin(a)), new V3(R * Math.cos(a), 2.15, R * Math.sin(a)), 0.05, ctx.mats.metal('steel'))); }
+        const sus = new THREE.Mesh(new THREE.TorusGeometry(R, 0.1, 12, 72), ctx.mats.rubber(0x2a2e36)); sus.rotation.x = Math.PI / 2; sus.position.y = 2.25; dFix.add(sus);
         for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2, ar = mkArrow(0xb79bff, 0.03); dFix.add(ar); setArrow(ar, new V3(2.1 * Math.cos(a), 0.55, 2.1 * Math.sin(a)), new V3(1.1 * Math.cos(a), 0.55, 1.1 * Math.sin(a))); ar.children.forEach((c) => { c.material = mat(0xb79bff, { transparent: true, opacity: 0.25 + 0.7 * bc }); }); }
         const n = clamp(Math.round(d.N / 10), 2, 7), wr = d.wire === 'thin' ? 0.05 : 0.1, step = 0.14;
         const tube0 = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 1.0, 36, 1, true), new THREE.MeshStandardMaterial({ color: 0xf4f0e6, side: THREE.DoubleSide, roughness: 0.7 })); tube0.position.y = 0.7; dMv.add(tube0);
-        for (let i = 0; i < n; i++) { const t = new THREE.Mesh(new THREE.TorusGeometry(1.2, wr, 8, 40), mat(0xe39a45, { metalness: 0.4 })); t.rotation.x = Math.PI / 2; t.position.y = 0.3 + i * step * (d.wire === 'thin' ? 1 : 1.35); dMv.add(t); }
+        for (let i = 0; i < n; i++) { const t = new THREE.Mesh(new THREE.TorusGeometry(1.2, wr, 8, 40), ctx.mats.metal('copper', { roughness: 0.3 })); t.rotation.x = Math.PI / 2; t.position.y = 0.3 + i * step * (d.wire === 'thin' ? 1 : 1.35); dMv.add(t); }
         const cone = lathe([[1.2, 1.2], [R, 2.3], [R + 0.1, 2.3], [R + 0.1, 2.3 - th], [1.25, 1.2 - th]], thick ? 0xb88a4a : 0xf1e7d0, { roughness: 0.6 }); dMv.add(cone);
         dKey = [d.N, d.B, d.cup, d.mat, d.wire].join('|'); dN = n;
         lDm.off = [R * 0.8, 1.5, 0.8]; lDc.off = [-2.0, 1.0, 0.6]; lDmag.obj = [0, -0.7, 2.7];

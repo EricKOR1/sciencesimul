@@ -28,7 +28,7 @@
       const GW = 15, GD = 9, nx = 90, nz = 36;
       const tg = new THREE.PlaneGeometry(GW, GD, nx, nz); tg.rotateX(-Math.PI / 2);
       tg.setAttribute('color', new THREE.BufferAttribute(new Float32Array(tg.attributes.position.count * 3), 3));
-      const terrain = new THREE.Mesh(tg, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, flatShading: false })); root.add(terrain);
+      const terrain = new THREE.Mesh(tg, ctx.mats.stone(0xffffff, { cracks: true, repeat: 7, bump: 0.05, extra: { vertexColors: true } })); terrain.receiveShadow = true; root.add(terrain);   // 땅: 높이에 따른 색 + 흙·바위 잔무늬
       function shape() {
         const p = tg.attributes.position, c = tg.attributes.color, col = new C();
         for (let i = 0; i < p.count; i++) {
@@ -47,7 +47,7 @@
       [sky, farG, terrain].forEach((m) => { m.userData.v3bg = true; });
       // 자동 맞춤용 보이지 않는 상자: 먼 산 · 넓은 들판 대신 가운데 산과 공기 덩어리가 오르내리는 곳에 맞춰요
       { const fb = new THREE.Mesh(new THREE.BoxGeometry(9, 5.2, 1.3), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); fb.position.set(-0.5, 2.5, 0); root.add(fb); }
-      const NT = 110, trunkI = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.03, 0.045, 0.22, 5), sm(0x6b4423), NT), leafI = new THREE.InstancedMesh(new THREE.ConeGeometry(0.2, 0.55, 7), sm(0x2d7a3c, { roughness: 0.9 }), NT), tseed = [];
+      const NT = 110, trunkI = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.03, 0.045, 0.22, 6), ctx.mats.wood(0x6b4423), NT), leafI = new THREE.InstancedMesh(new THREE.ConeGeometry(0.2, 0.55, 8, 2), sm(0x2a6f37, { roughness: 0.85, flatShading: true }), NT), tseed = [];
       { let rr = 3; const rn = () => { rr = (rr * 16807) % 2147483647; return rr / 2147483647; }; for (let i = 0; i < NT; i++) tseed.push([(rn() - 0.5) * (GW - 1), (rn() - 0.5) * (GD - 1), 0.7 + rn() * 0.7]); }
       trunkI.userData.v3bg = leafI.userData.v3bg = true; root.add(trunkI, leafI);   // 들판의 나무는 배경
       const tdm = new THREE.Object3D();
@@ -61,7 +61,7 @@
         let lo = -4, hi = 1; for (let i = 0; i < 24; i++) { const m = (lo + hi) / 2; if (hill(m) < y) lo = m; else hi = m; }
         const x = hh <= 0 ? -4.6 + hh * 0 : (lo + hi) / 2; return new V3(x, ground(x, 0) + 0.2 + (hh <= 0 ? 0.35 : 0.2) , 0);
       }
-      const air = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), sm(0xff9a3c, { transparent: true, opacity: 0.55, roughness: 0.2, depthWrite: false })); root.add(air);
+      const air = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), new THREE.MeshPhysicalMaterial({ color: 0xff9a3c, transparent: true, opacity: 0.55, roughness: 0.15, clearcoat: 1, clearcoatRoughness: 0.1, envMapIntensity: 1.4, depthWrite: false })); root.add(air);   // 공기 덩어리: 매끈하고 반짝이는 막
       const airIn = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), sm(0xfff3d6, { transparent: true, opacity: 0.25, depthWrite: false })); air.add(airIn);
       const dots = new THREE.InstancedMesh(new THREE.SphereGeometry(0.05, 10, 8), new THREE.MeshBasicMaterial({ color: 0xbdefff }), 36); air.add(dots);
       const dseed = []; for (let i = 0; i < 36; i++) { const v = new V3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar(0.25 + Math.random() * 0.55); dseed.push({ v, ph: Math.random() * 6.28 }); }
@@ -88,7 +88,7 @@
       const rainI = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.012, 0.012, 0.25, 5), new THREE.MeshBasicMaterial({ color: 0x9bd4ff, transparent: true, opacity: 0.8 }), 60); root.add(rainI);
       const rseed = []; for (let i = 0; i < 60; i++) rseed.push({ k: Math.random(), z: (Math.random() - 0.5) * 2.2, x: Math.random() - 0.5 });
       /* 해, 바람 */
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.6, 28, 20), new THREE.MeshBasicMaterial({ color: 0xffd34d })); sun.position.set(-3.8, 5.6, -1.5); root.add(sun);
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.6, 28, 20), new THREE.MeshBasicMaterial({ color: 0xffd34d })); sun.position.set(-3.8, 5.6, -1.5); root.add(sun); ctx.halo(sun, 0xffd34d, 3.0, 0.6);   // 햇빛 번짐
       const glow = new THREE.Mesh(new THREE.SphereGeometry(1.1, 24, 16), new THREE.MeshBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.25, depthWrite: false })); sun.add(glow);
       const winds = []; for (let i = 0; i < 5; i++) { const m = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.4, 10), new THREE.MeshBasicMaterial({ color: 0xcbd5e1, transparent: true, opacity: 0.8 })); m.rotation.z = -Math.PI / 2; m.userData.v3bg = true; root.add(m); winds.push(m); }
       const airLab = label('', air, { color: 'rgba(15,23,42,.9)', size: 13, offset: [0, 1.2, 0] });

@@ -40,7 +40,9 @@
       g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = 1; [-60, -30, 0, 30, 60].forEach((la) => { g.beginPath(); g.moveTo(0, Y(la)); g.lineTo(W, Y(la)); g.stroke(); });
       for (let lo = -180; lo < 180; lo += 30) { g.beginPath(); g.moveTo(X(lo), 0); g.lineTo(X(lo), H); g.stroke(); }
       const tex = new THREE.CanvasTexture(cv); tex.anisotropy = 4; if ('encoding' in tex) tex.encoding = THREE.sRGBEncoding;
-      earth.add(new THREE.Mesh(new THREE.SphereGeometry(R, 96, 64), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.7, metalness: 0 })));
+      earth.add(new THREE.Mesh(new THREE.SphereGeometry(R, 96, 64), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6, metalness: 0 })));
+      const MT = ctx.mats, lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 색이 바래지 않게 (난류 빨강 · 한류 파랑이 또렷하게)
+      ctx.halo(earth, 0x62aaff, R * 3.0, 0.4);   // 대기의 푸른 빛 번짐
       /* 해류 */
       const WARM = 0xe0381f, COLD = 0x1b8cf0, MAJOR = ['쿠로시오 해류', '캘리포니아 해류', '멕시코 만류', '카나리아 해류', '동오스트레일리아 해류', '페루 해류', '브라질 해류', '벵겔라 해류', '남극 순환류'];
       const items = [];
@@ -51,10 +53,10 @@
         const dense = new THREE.CatmullRomCurve3(pts, c[2] === 'an').getPoints(pts.length * 12).map((p) => p.normalize().multiplyScalar(R * 1.012));
         const curve = new THREE.CatmullRomCurve3(dense, c[2] === 'an');
         const col = c[1] === 'w' ? WARM : COLD;
-        const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, dense.length * 2, c[2] === 'kr' ? 0.026 : 0.034, 8, c[2] === 'an'), new THREE.MeshStandardMaterial({ color: col, roughness: 0.35, emissive: col, emissiveIntensity: 0.12 }));
+        const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, dense.length * 2, c[2] === 'kr' ? 0.026 : 0.034, 8, c[2] === 'an'), new THREE.MeshStandardMaterial({ color: lc(col), roughness: 0.3, emissive: lc(col), emissiveIntensity: 0.18 }));
         earth.add(tube);
         const arrows = []; const na = c[2] === 'an' ? 4 : 2;
-        for (let k = 0; k < na; k++) { const m = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.22, 12), new THREE.MeshStandardMaterial({ color: 0xfef3c7, emissive: col, emissiveIntensity: 0.25, roughness: 0.4 })); earth.add(m); arrows.push(m); }
+        for (let k = 0; k < na; k++) { const m = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.22, 12), new THREE.MeshStandardMaterial({ color: 0xfef3c7, emissive: lc(col), emissiveIntensity: 0.3, roughness: 0.4 })); earth.add(m); arrows.push(m); }
         const anchor = new THREE.Object3D(); anchor.position.copy(curve.getPoint(0.5)).multiplyScalar(1.03); earth.add(anchor);
         const lb = label(c[0] + (c[1] === 'w' ? ' (난류)' : ' (한류)'), anchor, { color: c[1] === 'w' ? 'rgba(185,28,28,.92)' : 'rgba(3,105,161,.92)', size: 12 });
         items.push({ c, curve, tube, arrows, anchor, lb, col, i });
@@ -85,20 +87,21 @@
       /* ===== 단계 1: 수조에 바람 불기 (2D 실험과 같은 값: 바람 세기 · 방향 · 종이 조각 · 물속 흐름) ===== */
       const tankG = new THREE.Group(); root.add(tankG); tankG.visible = false;
       const U = 55, TXc = (px) => (px - 400) / U, TYc = (py) => (482 - py) / U, TWd = 500 / U, TD = 2.2, WH = TYc(334);
-      const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0 }, o || {}));
-      tankG.add(new THREE.Mesh(new THREE.BoxGeometry(TWd, WH, TD), sm(0x38a0e0, { transparent: true, opacity: 0.32, roughness: 0.2, depthWrite: false })).translateY(WH / 2));
+      const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: lc(c), roughness: 0.5, metalness: 0 }, o || {}));
+      tankG.add(new THREE.Mesh(new THREE.BoxGeometry(TWd, WH, TD), MT.liquid(lc(0x38a0e0), { opacity: 0.4 })).translateY(WH / 2));
+      { const gl = new THREE.Mesh(new THREE.BoxGeometry(TWd + 0.06, TYc(292), TD + 0.06), MT.glass({ opacity: 0.1 })); gl.position.y = TYc(292) / 2; gl.userData.v3bg = true; gl.renderOrder = 3; tankG.add(gl); }   // 수조의 유리 벽
       const glassBox = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(TWd, TYc(292), TD)), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 })); glassBox.position.y = TYc(292) / 2; tankG.add(glassBox);
       const surfG = new THREE.PlaneGeometry(TWd, TD, 50, 4); surfG.rotateX(-Math.PI / 2);
       const surf = new THREE.Mesh(surfG, sm(0x8fd0ff, { transparent: true, opacity: 0.55, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false })); tankG.add(surf);
-      const base = new THREE.Mesh(new THREE.BoxGeometry(TWd + 14, 0.2, 5), sm(0xc3ccd6, { roughness: 0.8 })); base.position.y = -0.1; tankG.add(base);
-      const ruler = new THREE.Mesh(new THREE.BoxGeometry(TWd, 0.04, 0.4), sm(0xf2c14e)); ruler.position.set(0, 0.02, TD / 2 + 0.3); tankG.add(ruler);
+      const base = new THREE.Mesh(new THREE.BoxGeometry(TWd + 14, 0.2, 5), MT.wood(0xd9c7a8, { repeat: 2 })); base.position.y = -0.1; tankG.add(base);
+      const ruler = new THREE.Mesh(new THREE.BoxGeometry(TWd, 0.04, 0.4), MT.plastic(lc(0xf2c14e))); ruler.position.set(0, 0.02, TD / 2 + 0.3); tankG.add(ruler);
       const rlA = new THREE.Object3D(); rlA.position.set(0, 0.2, TD / 2 + 0.7); tankG.add(rlA);   // 눈금자 이름표: 수조를 볼 때만 보여요
       const rl = label('0 ~ 30 cm', rlA, { size: 11, color: 'rgba(107,74,0,.9)' });
       const fan = new THREE.Group(); tankG.add(fan);
-      { const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 3.0, 12), sm(0x7b8ca0)); stand.position.set(0, 1.5 - 0, 0); fan.add(stand);
-        const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.6, 24), sm(0xe5eaf0)); motor.rotation.z = Math.PI / 2; motor.position.set(-0.1, 3.2, 0); fan.add(motor);
+      { const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 3.0, 16), MT.metal('steel', { roughness: 0.28 })); stand.position.set(0, 1.5 - 0, 0); fan.add(stand);
+        const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.6, 32), MT.plastic(0xdfe5ec, { roughness: 0.3 })); motor.rotation.z = Math.PI / 2; motor.position.set(-0.1, 3.2, 0); fan.add(motor);
         const hub = new THREE.Group(); hub.position.set(0.35, 3.2, 0); fan.add(hub); fan.userData.hub = hub;
-        for (let k = 0; k < 4; k++) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.85, 0.32), sm(0x93c5fd, { transparent: true, opacity: 0.9 })); b.position.y = 0.45; const gg = new THREE.Group(); gg.rotation.x = k * Math.PI / 2; gg.add(b); hub.add(gg); } }
+        for (let k = 0; k < 4; k++) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.85, 0.32), MT.plastic(lc(0x7fb6fb), { roughness: 0.2, extra: { transparent: true, opacity: 0.9 } })); b.position.y = 0.45; const gg = new THREE.Group(); gg.rotation.x = k * Math.PI / 2; gg.add(b); hub.add(gg); } }
       const fanL = label('선풍기', fan, { offset: [0, 4.2, 0], size: 12, color: 'rgba(27,35,51,.85)' });
       const NST = 18, strI = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 0.025, 0.025), new THREE.MeshBasicMaterial({ color: 0xf1f5f9, transparent: true, opacity: 0.7 }), NST); tankG.add(strI);
       const NFP = 80, fpI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.035, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85 }), NFP); tankG.add(fpI);

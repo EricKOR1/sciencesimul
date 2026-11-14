@@ -54,7 +54,7 @@
     autoRotate: 0,
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, mats } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.0 }, o || {}));
       const XS = [-3.6, -1.2, 1.2, 3.6], CW = 1.7;
       const slices = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), std(0xffffff, { roughness: 0.45 }), 4 * NS); root.add(slices);
@@ -62,10 +62,10 @@
       /* 수면 + 받침 */
       const tops = [], nlab = [];
       REG.forEach((r, i) => {
-        const top = new THREE.Mesh(new THREE.BoxGeometry(CW, 0.06, CW), std(0x66c7ff, { transparent: true, opacity: 0.55, roughness: 0.2, metalness: 0.1 })); top.position.set(XS[i], 0.03, 0); root.add(top); tops.push(top);
+        const top = new THREE.Mesh(new THREE.BoxGeometry(CW, 0.06, CW), mats.liquid(0x4fb6f5, { opacity: 0.55 })); top.position.set(XS[i], 0.03, 0); root.add(top); tops.push(top);
         nlab[i] = label(r.name, [XS[i], 0.2, 0], { size: 12.5, offset: [0, 0.2, 0] });
       });
-      const base = new THREE.Mesh(new THREE.BoxGeometry(9.2, 0.14, 2.6), std(0x2a3550, { roughness: 0.9 })); base.position.set(0, -HS - 0.1, 0); root.add(base);
+      const base = new THREE.Mesh(new THREE.BoxGeometry(9.2, 0.14, 2.6), mats.metal(0x2a3346, { brushed: true, roughness: 0.4 })); base.position.set(0, -HS - 0.1, 0); root.add(base);
       if (!PHONE) { const fb = new THREE.Mesh(new THREE.BoxGeometry(9.2, 1.6, 2.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.2, colorWrite: false, depthWrite: false })); fb.position.set(0, 0.8, 0); root.add(fb); }   // 화면 맞춤용 보이지 않는 상자: 기둥 위 이름표 자리까지 넣어 설명 상자에 가리지 않게
       /* 수심 판 */
       const plane = new THREE.Mesh(new THREE.BoxGeometry(9.0, 0.05, 2.3), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.4, depthWrite: false })); root.add(plane);
@@ -138,7 +138,7 @@
       /* ARGO 부이: 2D 조작판에서 고른 부이가 그 바다의 기둥을 따라 2000 m까지 내려가요 (2D와 같은 진행 S.prog) */
       const BCOL = { low: 0xef4444, mid: 0xf59e0b, high: 0x7c3aed }, BCOLX = { low: 0, mid: 1, high: 3 };
       const argo = new THREE.Group(); root.add(argo);
-      const argoM = std(0xffffff, { roughness: 0.35, metalness: 0.2 });
+      const argoM = mats.plastic(0xf0f2f5, { roughness: 0.3 });
       { const body = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.7, 16), argoM); argo.add(body); const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.4, 6), std(0x1f2937)); ant.position.y = 0.55; argo.add(ant); }
       const argoRing = new THREE.Mesh(new THREE.TorusGeometry(CW * 0.62, 0.035, 8, 48), new THREE.MeshBasicMaterial({ color: 0xffffff })); argoRing.rotation.x = Math.PI / 2; root.add(argoRing);
       const argoL = label('', argo, { size: 12, offset: [0, 0.75, 0] });

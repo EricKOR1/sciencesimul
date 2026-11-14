@@ -17,7 +17,14 @@
       const { THREE, root, label, info, controls } = ctx;
       const V = THREE.Vector3, M4 = new THREE.Matrix4();
       if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 눕혀 둔 모형을 세워서 보여 줘요
-      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.42, metalness: 0.04 }, o || {}));
+      /* 재질: 모형(DNA·인자)은 매끈한 플라스틱, 단백질 덩어리는 촉촉한 생체 조직 느낌 + 울퉁불퉁한 표면 */
+      const std = (c, o) => ctx.mats.plastic(c, { roughness: 0.32, extra: o });
+      const bio = (c, op, o) => ctx.mats.organic(c, { opacity: op, extra: o });
+      const lumpy = (geo, amp, f) => {
+        const p = geo.attributes.position, v = new V(), n = new V();
+        for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); n.copy(v).normalize(); v.multiplyScalar(1 + amp * (Math.sin(n.x * f + 1.3) * Math.cos(n.y * f * 1.3 + 0.4) + 0.6 * Math.sin(n.z * f * 1.7 + n.x * 2.1))); p.setXYZ(i, v.x, v.y, v.z); }
+        geo.computeVertexNormals(); return geo;
+      };
       const ease = (k) => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
       const lerp = (a, b, k) => a + (b - a) * k;
       const An = (x, y, z) => { const o = new THREE.Object3D(); o.position.set(x, y, z); root.add(o); return o; };
@@ -41,7 +48,7 @@
       function buildDNA() {
         if (dnaMesh) { root.remove(dnaMesh); dnaMesh.geometry.dispose(); }
         const pts = []; for (let x = X0; x <= X1 + 1e-6; x += 0.2) pts.push(posAt(x, loop));
-        dnaMesh = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 160, 0.09, 8, false), dnaMat); root.add(dnaMesh);
+        dnaMesh = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 220, 0.09, 12, false), dnaMat); root.add(dnaMesh);
       }
       // 구간 표지
       const eBlock = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.3, 0.3), std(0xf97316, { emissive: 0x4a1e00 })), pBlock = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.3, 0.3), std(0x84cc16, { emissive: 0x1f3300 }));
@@ -51,16 +58,16 @@
       const nucs = [];
       for (let i = 0; i < NUC_N; i++) {
         const g = new THREE.Group(), x = X0 + 0.5 + i * NUC_DX;
-        const core = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.5, 28), std(0x2dd4bf, { roughness: 0.4 })); core.rotation.x = Math.PI / 2; g.add(core);
+        const core = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.5, 32, 1), bio(0x2dd4bf)); core.rotation.x = Math.PI / 2; g.add(core);
         [-0.1, 0.1].forEach((z) => { const t = new THREE.Mesh(new THREE.TorusGeometry(0.41, 0.06, 12, 36), dnaMat); t.position.z = z; g.add(t); });
         root.add(g); nucs.push({ g, x, away: (x > E - 1.3 && x < E + 1.0) || (x > P - 1.0 && x < P + 1.8) });
       }
       /* 전사 인자 · 매개 단백질 · RNA 중합 효소 */
-      const tfs = [0xef4444, 0x2563eb, 0xf59e0b].map((c, i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.24, 20, 14), std(c, { roughness: 0.35 })); root.add(m); return m; });
-      const med = new THREE.Mesh(new THREE.SphereGeometry(0.55, 28, 20), std(0xa855f7, { roughness: 0.4, transparent: true, opacity: 0.85 })); root.add(med); med.scale.set(1.6, 0.8, 1);
+      const tfs = [0xef4444, 0x2563eb, 0xf59e0b].map((c, i) => { const m = new THREE.Mesh(lumpy(new THREE.SphereGeometry(0.24, 28, 20), 0.06, 3.8), bio(c)); root.add(m); return m; });
+      const med = new THREE.Mesh(lumpy(new THREE.SphereGeometry(0.55, 40, 28), 0.06, 3.4), bio(0xa855f7, 0.85)); root.add(med); med.scale.set(1.6, 0.8, 1);
       const pol = new THREE.Group(); root.add(pol);
-      { const b = new THREE.Mesh(new THREE.SphereGeometry(0.7, 30, 22), std(0x14b8a6, { transparent: true, opacity: 0.55, depthWrite: false, roughness: 0.3 })); b.scale.set(1.0, 0.9, 0.9); pol.add(b);
-        const c = new THREE.Mesh(new THREE.SphereGeometry(0.34, 18, 14), std(0x0d9488)); c.position.set(0.1, 0.2, -0.2); pol.add(c); }
+      { const b = new THREE.Mesh(lumpy(new THREE.SphereGeometry(0.7, 44, 30), 0.07, 3.2), bio(0x14b8a6, 0.55)); b.scale.set(1.0, 0.9, 0.9); pol.add(b);
+        const c = new THREE.Mesh(lumpy(new THREE.SphereGeometry(0.34, 28, 20), 0.08, 3.6), bio(0x0d9488)); c.position.set(0.1, 0.2, -0.2); pol.add(c); }
       const basal = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), std(0x8b5cf6)); root.add(m); return m; });
       const rnaMax = 50, rna = new THREE.InstancedMesh(new THREE.SphereGeometry(0.09, 12, 10), std(0xfb923c, { emissive: 0x3a1a00, roughness: 0.35 }), rnaMax); root.add(rna);
 

@@ -16,8 +16,8 @@
       /* ---------- 공통 도구 ---------- */
       const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
       const V3 = THREE.Vector3, Yax = new V3(0, 1, 0);
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o || {}));
-      const glass = (c, op, o) => mat(c || 0xbfe3ff, Object.assign({ transparent: true, opacity: op || 0.16, roughness: 0.12, metalness: 0, depthWrite: false, side: THREE.DoubleSide }, o || {}));
+      const mat = (c, o) => { o = o || {}; if (o.metalness >= 0.5 && !o.transparent) { const q = Object.assign({}, o), r = q.roughness; delete q.metalness; delete q.roughness; return ctx.mats.metal(c, { roughness: r == null ? 0.3 : r, extra: q }); } return new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o)); };   // 금속 부품은 실제 금속 재질(환경 반사)
+      const glass = (c, op, o) => ctx.mats.glass({ tint: c || 0xeaf6ff, opacity: op || 0.16, extra: o || {} });   // 유리: 맑고 또렷한 반사
       const rnd = (() => { let s = 12345; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; })();
       const _m = new THREE.Matrix4(), _c = new THREE.Color();
       function spheres(N, r, color, seg) {
@@ -89,17 +89,17 @@
 
       /* 용기 + 가열판 */
       const barrel = new THREE.Mesh(new THREE.CylinderGeometry(RC + 0.08, RC + 0.08, 6.4, 56, 1, true), glass(0xcfe6ff, 0.2)); barrel.position.y = Y0 + 3.2; root.add(barrel);
-      const base = new THREE.Mesh(new THREE.CylinderGeometry(RC + 0.12, RC + 0.12, 0.3, 56), mat(0xb7c2d4, { metalness: 0.3, roughness: 0.35 })); base.position.y = Y0 - 0.15; root.add(base);
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(RC + 0.12, RC + 0.12, 0.3, 56), mat(0xb7c2d4, { metalness: 0.9, roughness: 0.35 })); base.position.y = Y0 - 0.15; root.add(base);
       const plate = new THREE.Mesh(new THREE.CylinderGeometry(RC + 0.5, RC + 0.5, 0.36, 56), mat(0x64748b, { metalness: 0.5, roughness: 0.4, emissive: 0x000000 })); plate.position.y = Y0 - 0.48; root.add(plate);
-      const rim = new THREE.Mesh(new THREE.TorusGeometry(RC + 0.08, 0.06, 10, 64), mat(0xb7c2d4, { metalness: 0.3 })); rim.rotation.x = Math.PI / 2; rim.position.y = Y0 + 6.4; root.add(rim);
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(RC + 0.08, 0.06, 10, 64), mat(0xb7c2d4, { metalness: 0.9 })); rim.rotation.x = Math.PI / 2; rim.position.y = Y0 + 6.4; root.add(rim);
       label('가열·냉각 장치', plate, { size: 11.5, offset: [0, -0.55, 1.3] });
 
       /* 피스톤 + 추 */
       const piston = new THREE.Group();
-      const pd = new THREE.Mesh(new THREE.CylinderGeometry(RC, RC, 0.34, 56), mat(0x5b6577, { roughness: 0.8 })); pd.position.y = 0.17; piston.add(pd);
+      const pd = new THREE.Mesh(new THREE.CylinderGeometry(RC, RC, 0.34, 56), ctx.mats.rubber(0x23272e)); pd.position.y = 0.17; piston.add(pd);
       const wt = new THREE.Mesh(new THREE.CylinderGeometry(RC * 0.78, RC * 0.78, 0.7, 40), mat(0x475569, { metalness: 0.6, roughness: 0.35 })); wt.position.y = 0.69; piston.add(wt);
       const wt2 = new THREE.Mesh(new THREE.CylinderGeometry(RC * 0.5, RC * 0.5, 0.45, 40), mat(0x64748b, { metalness: 0.6, roughness: 0.35 })); wt2.position.y = 1.27; piston.add(wt2);
-      const kn = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), mat(0xf59e0b)); kn.position.y = 1.62; piston.add(kn);
+      const kn = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), ctx.mats.plastic(0xe08a00)); kn.position.y = 1.62; piston.add(kn);
       root.add(piston);
       const arrow = mkArrow(0xf59e0b, 0.07); root.add(arrow);
       label('추 (압력 일정)', piston, { size: 12, offset: [0, 1.3, 0] });

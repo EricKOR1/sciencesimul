@@ -11,7 +11,7 @@
     camera: { dist: phone ? 15 : 12, theta: 0.5, phi: 1.1, min: 5, max: 24, target: [0, 1.5, 0] },
     autoRotate: 0.1,
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, mats } = ctx;
       /* 미션 보조 판: 미션이 말하는 표·기록·카드를 3D 화면 구석에 작게 보여 줘요 (2D 상태를 그대로 읽어요) */
       const mxBox = (pos) => {
         const v = ctx.renderer.domElement.parentElement;
@@ -29,19 +29,21 @@
       const PU = 0.0003;
       const SG = new THREE.SphereGeometry(1, 16, 12);
       const MAT = {
-        D: new THREE.MeshStandardMaterial({ color: 0xeaf1ff, roughness: 0.35, transparent: true, opacity: 0.92 }),
-        M: new THREE.MeshStandardMaterial({ color: 0xa65a2a, roughness: 0.45 }),
-        Dt: new THREE.MeshStandardMaterial({ color: 0xff3b3b, emissive: 0x991111, emissiveIntensity: 0.5, roughness: 0.35 }),
-        Mt: new THREE.MeshStandardMaterial({ color: 0xff3b3b, emissive: 0x991111, emissiveIntensity: 0.5, roughness: 0.45 }),
+        // 입자가 많아서 가벼운 기본 재질로 매끈하게 (광택만 살려요)
+        D: new THREE.MeshStandardMaterial({ color: 0xe4ebf7, roughness: 0.22, metalness: 0, envMapIntensity: 1.2, transparent: true, opacity: 0.92 }),   // N₂O₄: 무색
+        M: new THREE.MeshStandardMaterial({ color: 0x8f4718, roughness: 0.26, metalness: 0, envMapIntensity: 1.2 }),                                      // NO₂: 갈색
+        Dt: new THREE.MeshStandardMaterial({ color: 0xe02a2a, emissive: 0x881010, emissiveIntensity: 0.5, roughness: 0.25, envMapIntensity: 1.2 }),
+        Mt: new THREE.MeshStandardMaterial({ color: 0xe02a2a, emissive: 0x881010, emissiveIntensity: 0.5, roughness: 0.3, envMapIntensity: 1.2 }),
       };
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 })); floor.scale.set(15, 0.1, 11); floor.position.y = -0.06; root.add(floor); floor.userData.v3bg = true;   // 바닥은 화면 맞춤에서 빼요
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mats.stone(0x0f131c, { repeat: 4, bump: 0.01, extra: { roughness: 0.85, envMapIntensity: 0.35 } })); floor.scale.set(15, 0.1, 11); floor.position.y = -0.06; floor.receiveShadow = true; root.add(floor); floor.userData.v3bg = true;   // 실험대 상판 (어두운 에폭시)   // 바닥은 화면 맞춤에서 빼요
       const dum = new THREE.Object3D();
       function makeBox() {
         const g = new THREE.Group(); root.add(g);
-        const glass = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x9ec5ff, transparent: true, opacity: 0.15, roughness: 0.15, depthWrite: false }));
-        const edge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.75 }));
-        const lid = new THREE.Mesh(new THREE.BoxGeometry(1, 0.14, 1), new THREE.MeshStandardMaterial({ color: 0x8a95a8, roughness: 0.5, transparent: true, opacity: 0.45 }));
-        g.add(glass, edge, lid);
+        const glass = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mats.glass({ tint: 0xdcecff, opacity: 0.13 })); glass.renderOrder = 4;
+        const edge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: 0xe6f1ff, transparent: true, opacity: 0.85 }));
+        const lid = new THREE.Mesh(new THREE.BoxGeometry(1, 0.14, 1), mats.metal('aluminium', { brushed: true, extra: { transparent: true, opacity: 0.55 } }));   // 금속 뚜껑 (속이 비쳐 보이게 반투명)
+        const pad = new THREE.Mesh(new THREE.BoxGeometry(1, 0.08, 1), mats.rubber(0x20242c)); pad.position.y = -0.03; pad.receiveShadow = true;   // 고무 받침
+        g.add(glass, edge, lid, pad);
         const mk = (key, n, rx, ry) => { const m = new THREE.InstancedMesh(SG, MAT[key], n); m.frustumCulled = false; m.userData = { rx, ry }; g.add(m); return m; };
         const B = { g, glass, edge, lid, D: mk('D', 130, 0.2, 0.13), M: mk('M', 230, 0.12, 0.12), Dt: mk('Dt', 130, 0.2, 0.13), Mt: mk('Mt', 130, 0.12, 0.12), W: 4, H: 3, Dp: 3, w: [] };
         for (let i = 0; i < 480; i++) B.w.push({ u: Math.random(), v: Math.random(), y: Math.random(), du: Math.random() * 2 - 1, dv: Math.random() * 2 - 1, dy: Math.random() * 2 - 1 });
@@ -52,7 +54,7 @@
       const fitP = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.2, colorWrite: false, depthWrite: false })); root.add(fitP);   // 화면 맞춤용 보이지 않는 상자: 용기보다 조금 크게 (돌아가도 모서리가 잘리지 않게)
       function layout(B, x, z, W, H, D) {
         B.W = W; B.H = H; B.Dp = D; B.g.position.set(x, 0, z);
-        B.glass.scale.set(W, H, D); B.glass.position.y = H / 2; B.edge.scale.copy(B.glass.scale); B.edge.position.y = H / 2;
+        B.glass.scale.set(W, H, D); B.glass.position.y = H / 2; B.edge.scale.copy(B.glass.scale); B.edge.position.y = H / 2; B.g.children[3].scale.set(W + 0.3, 1, D + 0.3);
         B.lid.scale.set(W * 0.9, 1, D * 0.9);
       }
       const setInst = (B, key, list, tNow) => {

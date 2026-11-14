@@ -65,7 +65,7 @@
       /* 추적하는 별 3개 (2 · 8 · 16 kpc 근처) + 태양 */
       const TR = [{ r: 3, c: 0x7dd3fc, n: '안쪽' }, { r: 8.2, c: 0xffd23f, n: '태양' }, { r: 16, c: 0xff7a7a, n: '바깥쪽' }];
       const trs = TR.map((t) => {
-        const m = new THREE.Mesh(new THREE.SphereGeometry(t.n === '태양' ? 0.13 : 0.1, 20, 14), new THREE.MeshBasicMaterial({ color: t.c })); root.add(m);
+        const m = new THREE.Mesh(new THREE.SphereGeometry(t.n === '태양' ? 0.13 : 0.1, 28, 20), new THREE.MeshBasicMaterial({ color: t.c })); root.add(m); ctx.halo(m, t.c, t.n === '태양' ? 0.85 : 0.65, 0.6);   // 별빛 번짐
         const pl = []; for (let i = 0; i < 96; i++) { const a = i / 96 * TAU; pl.push(new THREE.Vector3(t.r * SC * Math.cos(a), 0, t.r * SC * Math.sin(a))); }
         root.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pl, true), 128, 0.012, 5, true), new THREE.MeshBasicMaterial({ color: t.c, transparent: true, opacity: 0.55 })));
         const lb = label(t.n, m, { offset: [0, 0.4, 0], size: 11.5, color: 'rgba(15,25,60,.9)' }); return { m, t, lb, th: t.r * 0.37 };

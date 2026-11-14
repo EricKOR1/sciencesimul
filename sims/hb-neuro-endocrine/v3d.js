@@ -29,13 +29,13 @@
       const NG = new THREE.Group(); root.add(NG);
       const X = (u) => (u - 385) / 62;
       const spinal = new THREE.Mesh(new THREE.BoxGeometry(X(432) - X(296), 1.5, 1.8), ghost(0x94a3b8, 0.22)); spinal.position.set((X(296) + X(432)) / 2, 0, 0); NG.add(spinal);
-      const neuron = (u0, u1, col, sx, sCol) => { const g = new THREE.Group(); g.add(tube([V3(X(u0), 0, 0), V3(X(u1), 0, 0)], 0.1, std(col, { roughness: 0.35 }), 20)); const so = new THREE.Mesh(new THREE.SphereGeometry(0.28, 24, 16), std(sCol)); so.position.set(X(sx), 0.5, 0); g.add(so); g.add(tube([V3(X(sx), 0.25, 0), V3(X(sx), 0, 0)], 0.05, std(col), 6)); NG.add(g); return so; };
+      const neuron = (u0, u1, col, sx, sCol) => { const g = new THREE.Group(); g.add(tube([V3(X(u0), 0, 0), V3(X(u1), 0, 0)], 0.1, ctx.mats.organic(col), 20)); const so = new THREE.Mesh(new THREE.SphereGeometry(0.28, 28, 20), ctx.mats.organic(sCol)); so.position.set(X(sx), 0.5, 0); g.add(so); g.add(tube([V3(X(sx), 0.25, 0), V3(X(sx), 0, 0)], 0.05, std(col), 6)); NG.add(g); return so; };
       const sen = neuron(100, 300, 0x2563eb, 230, 0x3b82f6), asn = neuron(324, 408, 0x7c3aed, 366, 0x8b5cf6), mot = neuron(440, 646, 0xea580c, 490, 0xf97316);
       const syn = [316, 432].map((u) => { const s = new THREE.Mesh(new THREE.SphereGeometry(0.17, 18, 12), std(0xffffff)); s.position.set(X(u), 0, 0); NG.add(s); return s; });
-      const finger = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.7, 6, 14), std(0xf5c9a0)); finger.rotation.z = Math.PI / 2; finger.position.set(X(52), 0.1, 0); NG.add(finger);
-      const thorn = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.7, 14), std(0x3f9b4a)); thorn.position.set(X(52), -0.95, 0); NG.add(thorn);
-      const muscle = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 18), std(0xdc4a4a, { roughness: 0.5 })); muscle.position.set(X(718), 0, 0); NG.add(muscle);
-      const pulse = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 12), new THREE.MeshBasicMaterial({ color: 0xffe27a })); NG.add(pulse);
+      const finger = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.7, 8, 20), ctx.mats.organic(0xe8b890, { extra: { roughness: 0.55 } })); finger.rotation.z = Math.PI / 2; finger.position.set(X(52), 0.1, 0); NG.add(finger);
+      const thorn = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.7, 20), ctx.mats.plastic(0x2f7a38, { roughness: 0.35 })); thorn.position.set(X(52), -0.95, 0); NG.add(thorn);
+      const muscle = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), ctx.mats.organic(0xc83a3a, { extra: { bumpMap: ctx.mats.tex('fabric'), bumpScale: 0.02 } })); muscle.position.set(X(718), 0, 0); NG.add(muscle);
+      const pulse = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 12), new THREE.MeshBasicMaterial({ color: 0xffe27a })); NG.add(pulse); ctx.halo(pulse, 0xffe27a, 1.1, 0.7);   // 신호 빛
       const others = [['심장', 0xd7263d, -3.8], ['위', 0xe8918a, 0], ['다리 근육', 0xc77a5a, 3.8]].map(([n, c, x]) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 14), ghost(c, 0.55)); m.position.set(x, -1.0, 2.4); NG.add(m); const l = label(n + ' · 연결 없음 → 반응 없음', m, { offset: [0, -0.7, 0], size: 12 }); return { m, l }; });
       const NL = [label('감각 뉴런', sen, { offset: [0, 0.6, 0], color: 'rgba(37,99,235,.92)' }), label('연합 뉴런', asn, { offset: [0, 0.6, 0], color: 'rgba(124,58,237,.92)' }), label('운동 뉴런', mot, { offset: [0, 0.6, 0], color: 'rgba(234,88,12,.92)' }),
         label('척수 (중추)', spinal, { offset: [0, -1.0, 0.5] }), label('시냅스', syn[0], { offset: [0, -0.5, 0] }), label('가시', thorn, { offset: [0.4, -0.5, 0] }), label('', muscle, { offset: [0, -1.5, 0] }), label('', NG, { offset: [0, 2.6, 0], color: 'rgba(40,50,80,.92)', size: 14 })];
@@ -46,7 +46,7 @@
       const loopPt = (phi, off) => { const p = LS.LOOP ? LS.LOOP.at(phi) : { x: HL.cx, y: HL.cy, nx: 0, ny: -1 }; return V3((p.x - HL.cx) / S2 + (off ? p.nx * off : 0), 0, (p.y - HL.cy) / S2 + (off ? p.ny * off : 0)); };
       const lp = []; for (let k = 0; k < 96; k++) lp.push(loopPt(k / 96));
       const vessel = tube(lp, 0.42, ghost(0xff8a80, 0.32, { side: THREE.DoubleSide }), 220, true); vessel.renderOrder = 2; HG.add(vessel);
-      const gp = loopPt(0, -1.7), gland = new THREE.Mesh(new THREE.SphereGeometry(0.62, 28, 18), std(0xb560c4)); gland.position.copy(gp); HG.add(gland);
+      const gp = loopPt(0, -1.7), gland = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 24), ctx.mats.organic(0xa04cb4)); gland.position.copy(gp); HG.add(gland);
       const cells = LS.HCELLS.map((c, i) => {
         const p = LS.LOOP.at(c.phi), pos = V3((p.x - HL.cx) / S2 + p.nx * HL.off / S2 * 1.0, 0, (p.y - HL.cy) / S2 + p.ny * HL.off / S2 * 1.0);
         const m = std(0x8fb4e8, { roughness: 0.4, emissive: 0x000000 }), g = new THREE.Group(); g.position.copy(pos); g.add(new THREE.Mesh(new THREE.SphereGeometry(0.5, 28, 18), m)); const nu = new THREE.Mesh(new THREE.SphereGeometry(0.2, 14, 10), std(0x3a5a96)); nu.position.set(0.05, 0.12, 0.05); g.add(nu);

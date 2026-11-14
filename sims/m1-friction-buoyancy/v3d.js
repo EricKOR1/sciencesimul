@@ -17,8 +17,8 @@
       /* ---------- 공통 도구 ---------- */
       const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
       const V3 = THREE.Vector3, Yax = new V3(0, 1, 0);
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o || {}));
-      const glass = (c, op, o) => mat(c || 0xbfe3ff, Object.assign({ transparent: true, opacity: op || 0.16, roughness: 0.12, metalness: 0, depthWrite: false, side: THREE.DoubleSide }, o || {}));
+      const mat = (c, o) => { o = o || {}; if (o.metalness >= 0.5 && !o.transparent) { const q = Object.assign({}, o), r = q.roughness; delete q.metalness; delete q.roughness; return ctx.mats.metal(c, { roughness: r == null ? 0.3 : r, extra: q }); } return new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o)); };   // 금속 부품은 실제 금속 재질(환경 반사)
+      const glass = (c, op, o) => ctx.mats.glass({ tint: c || 0xeaf6ff, opacity: op || 0.16, extra: o || {} });   // 유리: 맑고 또렷한 반사
       const rnd = (() => { let s = 12345; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; })();
       const _m = new THREE.Matrix4(), _c = new THREE.Color();
       function spheres(N, r, color, seg) {
@@ -94,8 +94,8 @@
       const bStart = root.children.length;
       const tank = new THREE.Mesh(new THREE.BoxGeometry(2 * TW, 5.6, 2 * TD), glass(0xcfe6ff, 0.12)); tank.position.y = TB + 2.8; root.add(tank);
       { const te = new THREE.LineSegments(new THREE.EdgesGeometry(tank.geometry), new THREE.LineBasicMaterial({ color: 0x9cc3ff })); te.position.copy(tank.position); root.add(te); }
-      const water = new THREE.Mesh(new THREE.BoxGeometry(2 * TW - 0.06, 1, 2 * TD - 0.06), glass(0x3d9cff, 0.3, { side: THREE.FrontSide })); root.add(water);
-      const surf = new THREE.Mesh(new THREE.PlaneGeometry(2 * TW - 0.06, 2 * TD - 0.06), new THREE.MeshBasicMaterial({ color: 0x9fd0ff, transparent: true, opacity: 0.35, depthWrite: false, side: THREE.DoubleSide })); surf.rotation.x = -Math.PI / 2; root.add(surf);
+      const water = new THREE.Mesh(new THREE.BoxGeometry(2 * TW - 0.06, 1, 2 * TD - 0.06), ctx.mats.liquid(0x2f86e6, { opacity: 0.38, extra: { side: THREE.FrontSide } })); root.add(water);
+      const surf = new THREE.Mesh(new THREE.PlaneGeometry(2 * TW - 0.06, 2 * TD - 0.06), ctx.mats.liquid(0x8cc8ff, { opacity: 0.35, extra: { side: THREE.DoubleSide } })); surf.rotation.x = -Math.PI / 2; root.add(surf);
       const table = new THREE.Mesh(new THREE.BoxGeometry(2 * TW + 1.2, 0.25, 2 * TD + 1.2), mat(0xffffff, { map: woodT, roughness: 0.65 })); table.position.y = TB - 0.12; root.add(table);
       { const tm = mat(0xcbd5e1, { metalness: 0.7, roughness: 0.3 }); const fr = new THREE.Mesh(new THREE.BoxGeometry(2 * TW + 0.2, 0.12, 2 * TD + 0.2), tm); fr.position.y = TB + 0.02; root.add(fr);
         for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const pl = new THREE.Mesh(new THREE.BoxGeometry(0.12, 5.6, 0.12), tm); pl.position.set(sx * TW, TB + 2.8, sz * TD); root.add(pl); }
@@ -105,7 +105,7 @@
 
       /* 비치볼 */
       const ballTex = canvasTex(256, 128, (c, w, h) => { const cols = ['#ef4444', '#ffffff', '#3b82f6', '#ffffff', '#facc15', '#ffffff']; for (let i = 0; i < 6; i++) { c.fillStyle = cols[i]; c.fillRect(i * w / 6, 0, w / 6 + 1, h); } });
-      const ball = new THREE.Mesh(new THREE.SphereGeometry(RB, 32, 24), mat(0xffffff, { map: ballTex, roughness: 0.4 })); root.add(ball);
+      const ball = new THREE.Mesh(new THREE.SphereGeometry(RB, 32, 24), ctx.mats.plastic(0xffffff, { roughness: 0.3, extra: { map: ballTex } })); root.add(ball);
       /* 금속 원기둥 + 용수철저울 */
       const cyl = new THREE.Mesh(new THREE.CylinderGeometry(RC, RC, HC, 32), mat(0x9aa7b8, { metalness: 0.7, roughness: 0.3 })); root.add(cyl);
       const thread = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 1, 6), mat(0xe5e7eb)); root.add(thread);

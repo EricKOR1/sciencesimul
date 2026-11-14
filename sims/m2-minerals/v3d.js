@@ -29,6 +29,7 @@
       const sm = () => window.__sim;
       const V3 = THREE.Vector3;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.05 }, o || {}));
+      const MT = ctx.mats;
       const flat = (g) => { const n = g.toNonIndexed(); n.computeVertexNormals(); return n; };
       function dispIco(r, seed, amp, sx, sy, sz) {
         const g = new THREE.SphereGeometry(r, 56, 40); const p = g.attributes.position, v = new V3();
@@ -42,25 +43,25 @@
       const spec = {};
       const add = (k, g) => { spec[k] = g; g.visible = false; root.add(g); return g; };
       // 금: 울퉁불퉁한 덩어리
-      { const g = new THREE.Group(); const m = mat(0xe6b422, { metalness: 1, roughness: 0.28 });
+      { const g = new THREE.Group(); const m = MT.metal('gold', { roughness: 0.26 });
         const a = new THREE.Mesh(dispIco(1.0, 1, 0.16, 1.25, 0.75, 1), m); a.position.y = 0.75;
         const b = new THREE.Mesh(dispIco(0.55, 4, 0.2, 1, 0.8, 1), m); b.position.set(0.9, 0.5, 0.3);
         const c = new THREE.Mesh(dispIco(0.4, 7, 0.2, 1, 0.9, 1), m); c.position.set(-0.8, 0.4, -0.5);
         g.add(a, b, c); add('gold', g); }
       // 황동석: 쐐기 모양(정사면체에 가까운 결정)이 모인 덩어리
-      { const g = new THREE.Group(); const m = mat(0xcfa83a, { metalness: 0.85, roughness: 0.38 });
+      { const g = new THREE.Group(); const m = MT.metal(0xc79a34, { roughness: 0.36, extra: { flatShading: true } });
         [[0, 0.7, 0, 1.1, 0.2], [0.9, 0.4, 0.4, 0.7, 1.3], [-0.8, 0.45, -0.3, 0.75, 2.2], [0.1, 0.35, -0.9, 0.6, 3]].forEach((q) => {
           const t = new THREE.Mesh(flat(new THREE.TetrahedronGeometry(q[3], 0)), m); t.position.set(q[0], q[1], q[2]); t.rotation.set(0.6 + q[4], q[4], 0.3); g.add(t);
         }); add('chalco', g); }
       // 황철석: 정육면체 결정
-      { const g = new THREE.Group(); const m = mat(0xdcc55a, { metalness: 0.9, roughness: 0.3 });
+      { const g = new THREE.Group(); const m = MT.metal(0xe0cc78, { roughness: 0.2 });
         [[0, 0.8, 0, 1.4, 0.3], [1.15, 0.45, 0.4, 0.9, 0.8], [-0.95, 0.4, -0.5, 0.8, 1.9]].forEach((q) => {
           const b = new THREE.Mesh(new THREE.BoxGeometry(q[3], q[3], q[3]), m); b.position.set(q[0], q[1], q[2]); b.rotation.y = q[4]; b.castShadow = true; g.add(b);
           // 가는 줄무늬 (황철석 결정면의 줄무늬)
-          for (let i = -2; i <= 2; i++) { const s = new THREE.Mesh(new THREE.BoxGeometry(q[3] * 1.005, 0.012, q[3] * 1.005), mat(0xa88f28, { metalness: 0.9, roughness: 0.4 })); s.position.set(0, i * q[3] * 0.17, 0); b.add(s); }
+          for (let i = -2; i <= 2; i++) { const s = new THREE.Mesh(new THREE.BoxGeometry(q[3] * 1.005, 0.012, q[3] * 1.005), MT.metal(0x9a8430, { roughness: 0.42 })); s.position.set(0, i * q[3] * 0.17, 0); b.add(s); }
         }); add('pyrite', g); }
       // 석영: 육각 기둥 + 뾰족한 끝
-      { const g = new THREE.Group(); const m = mat(0xeaf4fb, { roughness: 0.06, metalness: 0, transparent: true, opacity: 0.62, depthWrite: false });
+      { const g = new THREE.Group(); const m = MT.glass({ tint: 0xf1f7fd, opacity: 0.55, extra: { roughness: 0.03, envMapIntensity: 2.6 } });
         [[0, 0, 0, 0.55, 2.0, 0.15, 0], [0.8, 0, 0.3, 0.4, 1.4, 0.15, 0.35], [-0.7, 0, -0.35, 0.4, 1.2, -0.2, 0.2]].forEach((q) => {
           const c = new THREE.Group();
           const body = new THREE.Mesh(flat(new THREE.CylinderGeometry(q[3], q[3], q[4], 6)), m); body.position.y = q[4] / 2;
@@ -68,7 +69,7 @@
           c.add(body, tip); c.position.set(q[0], 0.05, q[2]); c.rotation.set(q[5], q[6], q[5] * 0.5); g.add(c);
         }); add('quartz', g); }
       // 방해석: 마름모꼴 (정육면체를 대각선 방향으로 눌러 찌그러뜨림)
-      { const g = new THREE.Group(); const m = mat(0xf2ede0, { roughness: 0.18, transparent: true, opacity: 0.86 });
+      { const g = new THREE.Group(); const m = MT.ice({ extra: { color: 0xf3eee2, opacity: 0.86, roughness: 0.12, envMapIntensity: 1.8 } });
         const geo = new THREE.BoxGeometry(1.5, 1.5, 1.5); const p = geo.attributes.position; const d = new V3(1, 1, 1).normalize();
         for (let i = 0; i < p.count; i++) { const v = new V3().fromBufferAttribute(p, i); const k = v.dot(d); v.addScaledVector(d, k * -0.38); p.setXYZ(i, v.x, v.y, v.z); }
         geo.computeVertexNormals();
@@ -78,17 +79,17 @@
         add('calcite', g); }
       // 자철석: 팔면체 + 클립
       let clip;
-      { const g = new THREE.Group(); const m = mat(0x3a3d4a, { metalness: 0.85, roughness: 0.32 });
+      { const g = new THREE.Group(); const m = MT.metal(0x2b2d36, { roughness: 0.3 });
         [[0, 0.95, 0, 1.0, 0.3], [0.95, 0.5, 0.45, 0.55, 1.1], [-0.85, 0.45, -0.4, 0.5, 2]].forEach((q) => {
           const o = new THREE.Mesh(flat(new THREE.OctahedronGeometry(q[3], 0)), m); o.position.set(q[0], q[1], q[2]); o.rotation.y = q[4]; o.castShadow = true; g.add(o);
         });
         // 종이 클립
         const pts = [[-0.3, 0.1], [0.3, 0.1], [0.3, -0.35], [-0.2, -0.35], [-0.2, 0.0], [0.15, 0.0], [0.15, -0.25]].map((q) => new V3(q[0], q[1], 0));
-        clip = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.2), 60, 0.028, 8), mat(0xc9ced8, { metalness: 0.9, roughness: 0.25 }));
+        clip = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.2), 60, 0.028, 8), MT.metal('steel', { roughness: 0.22 }));
         clip.scale.setScalar(1.1); clip.visible = false; g.add(clip); g.userData.clip = clip; add('magnetite', g); }
       // 조흔판 (흰색 타일 + 긁힌 선)
       const plate = new THREE.Group(); root.add(plate);
-      const tile = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.1, 1.2), mat(0xd8d3c6, { roughness: 0.85 })); tile.receiveShadow = true; plate.add(tile);
+      const tile = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.1, 1.2), MT.ceramic(0xe4dfd2, { extra: { roughness: 0.62, clearcoat: 0.15 } })); tile.receiveShadow = true; plate.add(tile);
       const strk = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.02, 0.2), mat(0xe8b800, { roughness: 0.9 })); strk.position.set(0, 0.06, 0); plate.add(strk);
       plate.position.set(2.0, 0.07, 1.5); plate.rotation.y = -0.6; plate.scale.setScalar(0.8);
       plate.visible = false;   // 조흔색은 2단계에서 직접 긁어 찾아요
@@ -98,9 +99,9 @@
       const woodT = cTex(512, 512, (c, w, h) => { c.fillStyle = '#4a3020'; c.fillRect(0, 0, w, h); for (let i = 0; i < 90; i++) { c.strokeStyle = 'rgba(' + (20 + (i * 17) % 40) + ',12,4,' + (0.15 + (i % 4) * 0.05) + ')'; c.lineWidth = 1 + (i % 3); c.beginPath(); const y = i / 90 * h; c.moveTo(0, y); for (let x = 0; x <= w; x += 32) c.lineTo(x, y + Math.sin(x * 0.04 + i) * 3); c.stroke(); } });
       woodT.repeat.set(2, 2); rockT.repeat.set(2, 2);
       const table = new THREE.Mesh(new THREE.CylinderGeometry(8, 8, 0.3, 64), mat(0xffffff, { map: woodT, roughness: 0.55 })); table.position.y = -0.4; table.receiveShadow = true; root.add(table);
-      const ring = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.35, 0.14, 48), mat(0x2a3042, { roughness: 0.35, metalness: 0.5 }));
+      const ring = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.35, 0.14, 48), MT.metal(0x1f2330, { roughness: 0.38 }));
       ring.position.y = -0.08; ring.receiveShadow = true; root.add(ring);
-      const rim = new THREE.Mesh(new THREE.TorusGeometry(2.25, 0.04, 8, 64), mat(0xd9b45a, { metalness: 0.9, roughness: 0.3 })); rim.rotation.x = Math.PI / 2; rim.position.y = -0.01; root.add(rim);
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(2.25, 0.04, 8, 64), MT.metal('brass', { roughness: 0.28 })); rim.rotation.x = Math.PI / 2; rim.position.y = -0.01; root.add(rim);
       // 표본이 놓인 바탕 암석
       const matrix = new THREE.Mesh(dispIco(1, 5, 0.1, 2.0, 0.17, 1.55), mat(0xffffff, { map: rockT, roughness: 0.95 })); matrix.position.y = 0.0; matrix.receiveShadow = true; root.add(matrix);
 

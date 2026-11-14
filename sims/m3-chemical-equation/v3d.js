@@ -30,7 +30,7 @@
     const matCache = {};
     const mat = (el) => matCache[el] || (matCache[el] = new THREE.MeshPhysicalMaterial({ color: COL[el], roughness: 0.28, metalness: el === "Cu" ? 0.45 : 0.05, clearcoat: 0.7, clearcoatRoughness: 0.2 }));
     const sphG = new THREE.SphereGeometry(1, 36, 24), cylG = new THREE.CylinderGeometry(1, 1, 1, 16);
-    const bondMat = new THREE.MeshStandardMaterial({ color: 0xcfd8e6, roughness: 0.5, metalness: 0.1 });
+    const bondMat = new THREE.MeshPhysicalMaterial({ color: 0xcfd8e6, roughness: 0.3, metalness: 0.1, clearcoat: 0.6, clearcoatRoughness: 0.2 });
     const Y = new THREE.Vector3(0, 1, 0);
     function atomMesh(el, k) { const m = new THREE.Mesh(sphG, mat(el)); m.scale.setScalar(RAD[el] * (k || 1)); return m; }
     function setBond(m, a, b, s) {
@@ -92,9 +92,9 @@
       PM.forEach((sp, j) => { if (!rigidP.has(j)) SP[sp].b.forEach((b) => mkBond(pIdx[j][b[0]], pIdx[j][b[1]], b[2], bondsP)); });
       /* 바닥판과 화살표 */
       /* 반응 접시: 금속 받침 + 유리 윗면 + 빛나는 테두리 */
-      const trayBase = new THREE.MeshStandardMaterial({ color: 0x2a3650, roughness: 0.35, metalness: 0.65 });
-      const trayTop = [new THREE.MeshStandardMaterial({ color: 0x1d4f7a, roughness: 0.12, metalness: 0.2, emissive: 0x0b3b66, emissiveIntensity: 0.5, transparent: true, opacity: 0.88 }),
-        new THREE.MeshStandardMaterial({ color: 0x1e6b45, roughness: 0.12, metalness: 0.2, emissive: 0x0b4d2a, emissiveIntensity: 0.5, transparent: true, opacity: 0.88 })];
+      const trayBase = new THREE.MeshStandardMaterial({ color: 0x5a6578, roughness: 0.3, metalness: 1, envMapIntensity: 1.35 });   // 받침: 반짝이는 금속
+      const trayTop = [new THREE.MeshPhysicalMaterial({ color: 0x1d4f7a, roughness: 0.1, metalness: 0.1, emissive: 0x0b3b66, emissiveIntensity: 0.45, transparent: true, opacity: 0.88, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 1.6 }),   // 윗면: 매끈한 유리판
+        new THREE.MeshPhysicalMaterial({ color: 0x1e6b45, roughness: 0.1, metalness: 0.1, emissive: 0x0b4d2a, emissiveIntensity: 0.45, transparent: true, opacity: 0.88, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 1.6 })];
       const edgeCol = [0x38bdf8, 0x4ade80];
       if (!o.noPlate) [cxR, cxP].forEach((cx, k) => {
         const n = (k ? sP : sR).length, cols = n <= 1 ? 1 : n <= 4 ? 2 : 3, rows = Math.ceil(n / cols);
@@ -102,7 +102,7 @@
         const base = new THREE.Mesh(new THREE.BoxGeometry(W + 0.3, 0.22, D + 0.3), trayBase); base.position.y = -0.1; tg.add(base);
         const top = new THREE.Mesh(new THREE.BoxGeometry(W, 0.06, D), trayTop[k]); top.position.y = 0.04; tg.add(top);
         const ed = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(W, 0.06, D)), new THREE.LineBasicMaterial({ color: edgeCol[k] })); ed.position.y = 0.04; tg.add(ed);
-        for (let i = -1; i <= 1; i += 2) for (let j = -1; j <= 1; j += 2) { const ft = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.16, 12), trayBase); ft.position.set(i * W / 2, -0.28, j * D / 2); tg.add(ft); }
+        for (let i = -1; i <= 1; i += 2) for (let j = -1; j <= 1; j += 2) { const ft = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.16, 24), trayBase); ft.position.set(i * W / 2, -0.28, j * D / 2); tg.add(ft); }
         grp.add(tg);
       });
       /* 반응 후 모습 미리보기(투명한 분자): 반응이 진행되면 흐려져요 */
@@ -186,7 +186,7 @@
       const hd = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.6, 20), am); hd.rotation.z = -Math.PI / 2; hd.position.x = 0.95;
       /* ⚖️ 원자 수 저울(2단계): 2D 저울처럼 원자 수가 다르면 두 판이 기울고, 같으면 수평이 돼요 */
       const balG = new THREE.Group(); root.add(balG);
-      const fulM = new THREE.MeshStandardMaterial({ color: 0x9aa7ba, roughness: 0.4, metalness: 0.5 });
+      const fulM = ctx.mats.metal('steel', { brushed: true, roughness: 0.22 });   // 저울: 결 있는 금속
       const ful = new THREE.Group(); const fc = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.6, 4), fulM); fc.position.y = -0.85; ful.add(fc);
       const beam = new THREE.Mesh(new THREE.BoxGeometry(6.6, 0.12, 0.3), fulM); beam.position.y = -0.05; balG.add(beam); root.add(ful); ful.visible = beam.visible = false;
       const balLab = label('', [0, 1.6, 0], { size: 13 }); balLab.show(false);

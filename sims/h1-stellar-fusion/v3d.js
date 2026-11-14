@@ -120,8 +120,8 @@
       const NPC = 110, coreDust = new THREE.InstancedMesh(new THREE.SphereGeometry(0.04, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffd9a0, transparent: true, opacity: 0.6 }), NPC); gCore.add(coreDust);
       const cdD = []; for (let i = 0; i < NPC; i++) cdD.push({ p: new V(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).normalize().multiplyScalar(0.8 + rnd() * 1.8), v: new V(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5) });
       const cdO = new THREE.Object3D();
-      const hMat = std(0xff6b5e, { emissive: 0x7a1710, emissiveIntensity: 0.5, roughness: 0.3 });
-      const nMat = std(0x7a8cff, { emissive: 0x1b2a7a, emissiveIntensity: 0.4, roughness: 0.3 });
+      const hMat = ctx.mats.plastic(0xe0402e, { roughness: 0.2, extra: { emissive: 0x7a1710, emissiveIntensity: 0.4 } });
+      const nMat = ctx.mats.plastic(0x4a5ee0, { roughness: 0.2, extra: { emissive: 0x1b2a7a, emissiveIntensity: 0.35 } });
       const START = [[1.5, 0.9, 0.5], [-1.4, 1.1, -0.6], [-1.1, -1.4, 0.9], [1.3, -1.2, -0.8]].map((a) => new V(...a));
       const hs = START.map(() => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.34, 24, 16), hMat); gCore.add(m); return m; });
       const heG = new THREE.Group(); gCore.add(heG);
@@ -182,19 +182,20 @@
       const body = new THREE.Group(); gOn.add(body);
       const layerG = LAYERS.map((ly, i) => {
         const g = new THREE.Group();
-        const mat = () => std(ly.col, { emissive: ly.col, emissiveIntensity: 0.35, roughness: 0.55, polygonOffset: true, polygonOffsetFactor: -i, polygonOffsetUnits: -i });
-        g.add(new THREE.Mesh(new THREE.SphereGeometry(1, 64, 40, 0, wedge), mat()));
+        const dk = new THREE.Color(ly.col).multiplyScalar(0.22);   // 화면에서 옅어 보이지 않게 조금 짙게
+        const mat = (o) => std(dk, Object.assign({ emissive: ly.col, emissiveIntensity: 0.2, roughness: 0.85, envMapIntensity: 0.25, bumpMap: granTex, bumpScale: 0.02, polygonOffset: true, polygonOffsetFactor: -i, polygonOffsetUnits: -i }, o || {}));
+        g.add(new THREE.Mesh(new THREE.SphereGeometry(1, 64, 40, 0, wedge), mat({ map: granTex, emissiveMap: granTex, emissiveIntensity: 0.55 })));   // 겉면: 끓어오르는 별 표면 무늬
         [Math.PI / 2, Math.PI].forEach((rot) => { const d = new THREE.Mesh(new THREE.CircleGeometry(1, 64, -Math.PI / 2, Math.PI), mat()); d.rotation.y = rot; g.add(d); });
         body.add(g); return g;
       });
       { const og = mkGlow(0xffb060, 0.35); og.scale.set(OR * 3.6, OR * 3.6, 1); gOn.add(og); }
-      const pulse = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 20), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending }));
+      const pulse = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 20), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.12, depthWrite: false, blending: THREE.AdditiveBlending }));
       body.add(pulse);
       const layLab = LAYERS.map((ly) => label(ly.name, body, { size: 12 }));
       // 진화의 끝 (질량 1배): 행성상 성운 + 백색 왜성
       const neb = new THREE.Group(); gOn.add(neb);
       const shells = [0, 1, 2].map(() => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), glowMat(0xa5f3fc, 0.2)); neb.add(m); return m; });
-      neb.add(new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 20), new THREE.MeshBasicMaterial({ color: 0xf8fafc })));
+      { const wd = new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 20), new THREE.MeshBasicMaterial({ color: 0xf8fafc })); neb.add(wd); ctx.halo(wd, 0xdfefff, 2.2, 0.7); }
       neb.add(new THREE.Mesh(new THREE.SphereGeometry(0.9, 32, 20), glowMat(0xffffff, 0.35)));
       const nebLab = label('행성상 성운 + 백색 왜성 (탄소·산소 핵)', [0, -OR - 0.4, 0], { size: 12 });
       const ironLab = label('Fe', [0, 0, 0.1], { size: 13 });

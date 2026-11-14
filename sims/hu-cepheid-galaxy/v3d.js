@@ -52,7 +52,7 @@
       const labNP = label('북은하극', [0, 12, 0], { size: LS, color: 'rgba(20,80,110,.9)' });
 
       /* ---- 태양 ---- */
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.55, 20, 14), new THREE.MeshBasicMaterial({ color: 0xffd34d }));
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.55, 32, 22), new THREE.MeshBasicMaterial({ color: 0xffd34d }));
       const sg = new THREE.Sprite(glowMat(0xffe08a, 0.9)); sg.scale.set(4, 4, 1); sun.add(sg); root.add(sun);
       label('☀ 태양', sun, { size: LS, color: 'rgba(120,80,0,.92)', offset: [0, 1.3, 0] });
 
@@ -61,7 +61,7 @@
       const dropPts = [], dist = [];
       GC.forEach((c, i) => {
         const p = G(c.x, c.y, c.z);
-        const m = new THREE.Mesh(new THREE.SphereGeometry(0.36, 16, 12), new THREE.MeshStandardMaterial({ color: 0xffa94d, emissive: 0x7a3a00, roughness: 0.5 }));
+        const m = new THREE.Mesh(new THREE.SphereGeometry(0.36, 16, 12), ctx.mats.emissive(0xffa94d, 0.75));
         m.position.set(p[0], p[1], p[2]); root.add(m); balls.push(m);
         const s = new THREE.Sprite(glowMat(0xff9a3c, 0.4)); s.scale.set(1.5, 1.5, 1); m.add(s);
         const ring = new THREE.Sprite(new THREE.SpriteMaterial({ map: ringTex, transparent: true, depthTest: false })); ring.scale.set(1.9, 1.9, 1); ring.visible = false; m.add(ring); rings.push(ring);

@@ -97,11 +97,11 @@
       const g = new THREE.Group(); root.add(g);
       let unitGroups = [];
       const gSi = new THREE.SphereGeometry(0.2, 16, 12), gO = new THREE.SphereGeometry(0.15, 14, 10), gOs = new THREE.SphereGeometry(0.205, 16, 12), gHalo = new THREE.SphereGeometry(0.3, 14, 10);
-      const mSi = new THREE.MeshStandardMaterial({ color: SI, roughness: 0.4 });
-      const mO = new THREE.MeshStandardMaterial({ color: OX, roughness: 0.45 });
-      const mOs = new THREE.MeshStandardMaterial({ color: OX, roughness: 0.4, emissive: 0x7a2020 });
+      const mSi = ctx.mats.plastic(SI, { roughness: 0.22 });   // 매끈한 분자 모형 공
+      const mO = ctx.mats.plastic(OX, { roughness: 0.25 });
+      const mOs = ctx.mats.plastic(OX, { roughness: 0.22, extra: { emissive: 0x7a2020 } });
       const mHalo = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.28, depthWrite: false });
-      const mFace = new THREE.MeshStandardMaterial({ color: SI, transparent: true, opacity: 0.2, roughness: 0.6, side: THREE.DoubleSide, depthWrite: false });
+      const mFace = ctx.mats.glass({ tint: SI, opacity: 0.22 });   // 사면체 면: 맑은 유리판
       const mEdge = new THREE.LineBasicMaterial({ color: 0xb8860b, transparent: true, opacity: 0.8 });
       const mGhost = new THREE.LineBasicMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.35 });   // 아직 놓지 않은 블록 자리 (2D의 점선 자리)
       const mProxy = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });   // 보이지 않는 면: 자동 맞춤이 완성될 모양(흐린 선)까지 재도록

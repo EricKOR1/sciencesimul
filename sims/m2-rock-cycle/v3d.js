@@ -24,6 +24,7 @@
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
       const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.85, metalness: 0.02 }, o || {}));
+      const MT = ctx.mats, lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 색이 바래지 않게 (암석 색이 또렷하게)
       function poly(pts, depth, m, z0) {
         const sh = new THREE.Shape(); pts.forEach((p, i) => i ? sh.lineTo(p[0], p[1]) : sh.moveTo(p[0], p[1]));
         const g = new THREE.ExtrudeGeometry(sh, { depth, bevelEnabled: false }); g.translate(0, 0, -depth / 2 + (z0 || 0));
@@ -39,34 +40,36 @@
       const top = XS.map((x) => [x, h(x)]);
       const B = -3.3;
       // 바탕 (화성암 바위층)
-      root.add(poly([[-5, B], ...top, [5, B]], D, mat(0x4d4857, { roughness: 0.9 })));
+      root.add(poly([[-5, B], ...top, [5, B]], D, MT.stone(lc(0x625c6e), { cracks: true, repeat: 1, bump: 0.05 })));
       // 분지의 퇴적층 (모래 · 진흙 · 자갈) : 오른쪽
       const sedCols = [0xd9c27a, 0xa77c58, 0x8d8277];
       sedCols.forEach((c, i) => {
         const y0 = -0.45 - i * 0.38, y1 = y0 - 0.38;
-        root.add(poly([[1.4, y0], [5, y0], [5, y1], [1.4, y1]], D + 0.03, mat(c, { roughness: 0.9 })));
+        root.add(poly([[1.4, y0], [5, y0], [5, y1], [1.4, y1]], D + 0.03, MT.stone(lc(c), { repeat: 2, bump: 0.035 })));
       });
       // 변성암 영역: 줄무늬(엽리)
       const metaBand = [0x7a6e94, 0xb7aac9, 0x6a5f86, 0xa89ac0, 0x7a6e94, 0xb7aac9];
       metaBand.forEach((c, i) => {
         const y0 = -1.65 - i * 0.2, y1 = y0 - 0.2;
-        root.add(poly([[1.2, y0 + 0.0], [5, y0], [5, y1], [1.2, y1]], D + 0.03, mat(c, { roughness: 0.6 })));
+        root.add(poly([[1.2, y0 + 0.0], [5, y0], [5, y1], [1.2, y1]], D + 0.03, MT.stone(lc(c), { repeat: 1, bump: 0.02, extra: { roughness: 0.7 } })));
       });
       // 마그마방
-      const chamber = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 24), mat(0xff6a1f, { emissive: 0xff4a10, emissiveIntensity: 1.1, roughness: 0.3 }));
+      const chamber = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 24), mat(lc(0xff6a1f), { emissive: lc(0xff4a10), emissiveIntensity: 1.1, roughness: 0.3 }));
       chamber.scale.set(2.2, 0.75, 0.7); chamber.position.set(-1.4, -2.55, D / 2 - 0.2); root.add(chamber);
+      ctx.halo(chamber, 0xff7a30, 2.6, 0.5);   // 뜨거운 마그마의 빛 번짐
       // 마그마 관 (굴뚝)
-      const conduit = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(-1.9, -2.2, D / 2 - 0.15), new V3(-2.5, -0.6, D / 2 - 0.15), new V3(-3.0, 1.0, D / 2 - 0.15), new V3(-3.1, 2.25, 0)]), 40, 0.22, 10), mat(0xff7a2a, { emissive: 0xff4a10, emissiveIntensity: 1.0 }));
+      const conduit = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V3(-1.9, -2.2, D / 2 - 0.15), new V3(-2.5, -0.6, D / 2 - 0.15), new V3(-3.0, 1.0, D / 2 - 0.15), new V3(-3.1, 2.25, 0)]), 40, 0.22, 14), mat(lc(0xff7a2a), { emissive: lc(0xff4a10), emissiveIntensity: 1.0, roughness: 0.35 }));
       root.add(conduit);
+      { const vent = new THREE.Object3D(); vent.position.set(-3.1, 2.35, 0); root.add(vent); ctx.halo(vent, 0xff8a3a, 1.7, 0.6); }   // 분화구의 붉은 빛
       // 바다
-      const sea = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.5, D), new THREE.MeshStandardMaterial({ color: 0x2f8fd8, transparent: true, opacity: 0.4, roughness: 0.1, depthWrite: false }));
+      const sea = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.5, D), MT.liquid(lc(0x2f8fd8), { opacity: 0.5 }));
       sea.position.set(3.2, -0.2, 0); sea.renderOrder = 3; root.add(sea);
       // 앞면 레이어가 보이도록 앞쪽 투명 안내 (생략)
 
       // 알갱이 (풍화된 조각이 비탈을 구름)
       const grains = [];
       const gG = new THREE.IcosahedronGeometry(0.1, 0);
-      for (let i = 0; i < 16; i++) { const m = new THREE.Mesh(gG, mat(0xb7a58a)); m.userData = { u: i / 16, z: (Math.random() - 0.5) * D * 0.7, s: 0.6 + Math.random() * 0.8 }; m.castShadow = true; root.add(m); grains.push(m); }
+      for (let i = 0; i < 16; i++) { const m = new THREE.Mesh(gG, mat(lc(0xb7a58a), { flatShading: true })); m.userData = { u: i / 16, z: (Math.random() - 0.5) * D * 0.7, s: 0.6 + Math.random() * 0.8 }; m.castShadow = true; root.add(m); grains.push(m); }
 
       // 순환 경로 (앞면 앞쪽을 따라 한 바퀴)
       const Z = D / 2 + 0.18;
@@ -85,8 +88,7 @@
       const heads = [];
       for (let i = 0; i < 8; i++) { const c = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.3, 14), new THREE.MeshBasicMaterial({ color: 0xffd34d })); const u = i / 8; c.position.copy(curve.getPointAt(u)); c.quaternion.setFromUnitVectors(new V3(0, 1, 0), curve.getTangentAt(u)); root.add(c); heads.push(c); }
       const token = new THREE.Mesh(new THREE.SphereGeometry(0.2, 24, 16), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-      const glow = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 16), new THREE.MeshBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.35, depthWrite: false }));
-      token.add(glow); root.add(token);
+      const glow = ctx.halo(token, 0xffe08a, 1.5, 0.75); root.add(token);
       // 단계 구간 표시 (굵은 띠)
       const segTubes = STAGES.map((st) => {
         const pp = []; for (let i = 0; i <= 30; i++) pp.push(curve.getPointAt(Math.min(0.9999, st.u[0] + (st.u[1] - st.u[0]) * i / 30)));
@@ -156,13 +158,13 @@
           if (s !== lastS && !cm) { lastS = s; segCtl.set(s); info(`<b>${STAGES[s].name}</b><br>${STAGES[s].t}<br>화성암 → 퇴적물 → 퇴적암 → 변성암 → 마그마 …` + (extraOn ? '<br><span style="color:#ffd34d">점선은 다른 길이에요. 암석은 한 가지 길로만 바뀌지 않아요.</span>' : '')); labStage.set(STAGES[s].name); }
           segTubes.forEach((m, i) => { m.material.opacity = i === s && !cm ? 0.5 : 0; });
           token.position.copy(curve.getPointAt(u));
-          glow.scale.setScalar(1 + 0.2 * Math.sin(t * 6));
+          glow.scale.setScalar(1.5 * (1 + 0.2 * Math.sin(t * 6)));
           chamber.material.emissiveIntensity = 0.9 + 0.3 * Math.sin(t * 2);
           // 알갱이: 풍화 구간에서 비탈을 따라 굴러요
           grains.forEach((g) => {
             const k = (g.userData.u + t * 0.05 * g.userData.s) % 1, x = -2.3 + k * 4.6, y = h(x) + 0.08;
             g.position.set(x, y, g.userData.z); g.rotation.x = t * 3 * g.userData.s; g.visible = x < 3.4;
-            g.material.color.setHex(x < 1 ? 0xa6968a : 0xd9c27a);
+            g.material.color.copy(lc(x < 1 ? 0xa6968a : 0xd9c27a));
           });
         },
       };

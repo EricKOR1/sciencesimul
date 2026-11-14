@@ -32,7 +32,7 @@
       const dotTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 32; const x = c.getContext('2d'), gr = x.createRadialGradient(16, 16, 0, 16, 16, 16); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.5, 'rgba(255,255,255,.6)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, 32, 32); return new THREE.CanvasTexture(c); })();
 
       /* 원시 태양 */
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), new THREE.MeshBasicMaterial({ color: 0xffc83d })); root.add(sun);
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), new THREE.MeshBasicMaterial({ color: 0xffc83d })); root.add(sun);
       const sunGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); root.add(sunGlow);
       const sunLab = label('원시 태양', sun, { offset: [0, 0.7, 0], color: 'rgba(146,84,0,.9)' });
 
@@ -55,7 +55,7 @@
       const snowLab = label('눈선 약 2.7 AU', [SNOW * AU, 0, 0], { offset: [0.2, 0.3, 0], color: 'rgba(3,105,161,.92)' });
       const probe = new THREE.Mesh(new THREE.SphereGeometry(0.1, 20, 14), new THREE.MeshBasicMaterial({ color: 0xffffff })); root.add(probe);
       const probeRing = new THREE.Mesh(new THREE.TorusGeometry(1, 0.012, 8, 96), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 })); probeRing.rotation.x = Math.PI / 2; root.add(probeRing);
-      const planets = PL.map(([a, r, c], i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 36, 26), new THREE.MeshStandardMaterial({ color: c, roughness: 0.65 })); m.userData = { a, r, th: i * 1.7 }; root.add(m); return m; });
+      const planets = PL.map(([a, r, c], i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 36, 26), i < 4 ? ctx.mats.stone(c, { repeat: 1, bump: 0.02, extra: { roughness: 0.8 } }) : ctx.mats.plastic(c, { roughness: 0.5, extra: { clearcoat: 0.1 } })); m.userData = { a, r, th: i * 1.7 }; root.add(m); return m; });
       /* 자동 맞춤용 보이지 않는 상자: 수축 단계에서는 점 구름 전체(반지름 약 3.8)를 화면에 담아 수축이 보이게 해요 */
       const fitCloud = new THREE.Mesh(new THREE.SphereGeometry(3.2, 12, 8), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); root.add(fitCloud);
       const labPl = [label('지구형 행성(암석)', [0, 0, 0], { size: 11.5, color: 'rgba(120,70,20,.9)' }), label('목성형 행성(거대)', [0, 0, 0], { size: 11.5, color: 'rgba(30,64,140,.9)' })];
@@ -63,8 +63,8 @@
       /* 분화 모형: 철(어두운 금속) · 규산염(밝은 암석) 입자가 섞여 있다가 층으로 나뉘어요 */
       const diffG = new THREE.Group(); root.add(diffG);
       const ND = 700, dStart = [], dEnd = [], isFe = [];
-      const diffMeshFe = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 9), new THREE.MeshStandardMaterial({ color: 0x5f6b80, roughness: 0.35, metalness: 0.6 }), ND);
-      const diffMeshSi = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 9), new THREE.MeshStandardMaterial({ color: 0xc2602a, roughness: 0.65 }), ND);
+      const diffMeshFe = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 9), new THREE.MeshStandardMaterial({ color: 0x5f6b80, roughness: 0.28, metalness: 0.8, envMapIntensity: 1.2 }), ND);
+      const diffMeshSi = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 9), new THREE.MeshStandardMaterial({ color: 0xa8521f, roughness: 0.75, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.01 }), ND);
       const diffMeshLt = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 12, 9), new THREE.MeshStandardMaterial({ color: 0xf3e3b5, roughness: 0.7 }), ND);   // 가장 가벼운 물질 → 바깥 얇은 층
       diffMeshFe.frustumCulled = diffMeshSi.frustumCulled = diffMeshLt.frustumCulled = false; diffG.add(diffMeshFe, diffMeshSi, diffMeshLt);
       const shell = new THREE.Mesh(new THREE.SphereGeometry(2.55, 48, 32), new THREE.MeshStandardMaterial({ color: 0xff7a3a, roughness: 0.5, transparent: true, opacity: 0.16, depthWrite: false, emissive: 0xff4a10, emissiveIntensity: 0.35 })); diffG.add(shell);

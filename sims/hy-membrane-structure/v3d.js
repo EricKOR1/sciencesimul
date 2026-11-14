@@ -36,7 +36,8 @@
       const rnd = mulberry(11);
       const plane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 0);
       const allMats = [];
-      const M = (c, ex) => { const m = new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.05, side: THREE.DoubleSide }, ex || {})); allMats.push(m); return m; };
+      const deep = (c, k) => { const a = new THREE.Color(c); return a.lerp(a.clone().convertSRGBToLinear(), k == null ? 0.7 : k); };   // 화면에서 색이 옅어지지 않게 조금 진하게
+      const M = (c, ex) => { const p = Object.assign({}, ex || {}); delete p.plain; const m = ex && (ex.transparent || ex.plain) ? new THREE.MeshStandardMaterial(Object.assign({ color: ex.plain ? c : deep(c), roughness: 0.4, metalness: 0, side: THREE.DoubleSide }, p)) : ctx.mats.organic(deep(c), { extra: Object.assign({ side: THREE.DoubleSide }, p) }); allMats.push(m); return m; };   // 막단백질 · 당 · 콜레스테롤: 촉촉한 생체 조직 느낌 (인지질처럼 수가 많은 것은 가벼운 재질)
 
       /* ----- 단백질 ----- */
       const prots = [
@@ -104,13 +105,13 @@
       lip[0].filter((o) => !o.hidden && !o.site && o.z < 0.1).sort(() => rnd() - 0.5).slice(0, 5).forEach((o) => { const g = new THREE.Group(); root.add(g); hexBead(g, 0, 0.3, 0); hexBead(g, 0.1, 0.45, 0.03); hexBead(g, 0.03, 0.6, -0.02); glyco.push({ o, g }); });
 
       /* 인스턴스: 머리 · 꼬리 */
-      const headMat = M(0xffffff, { roughness: 0.35 }), tailMat = M(TAILC, { roughness: 0.55 });   // 머리 색은 인스턴스 색(평소 파랑, 유동성 단계에서는 형광 빨강 · 초록)
+      const headMat = M(0xffffff, { roughness: 0.28, plain: true }), tailMat = M(deep(TAILC), { roughness: 0.5, plain: true });   // 머리 색은 인스턴스 색(평소 파랑, 유동성 단계에서는 형광 빨강 · 초록)
       const heads = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 14, 10), headMat, NL);
       const tg = new THREE.CylinderGeometry(0.036, 0.03, 0.3, 6); tg.translate(0, -0.15, 0);
       const tails = new THREE.InstancedMesh(tg, tailMat, NL * 4);
       heads.frustumCulled = false; tails.frustumCulled = false; root.add(heads, tails);
       /* 3단계(유동성): 2D의 세포 융합 실험처럼 머리를 사람 세포(빨강) · 생쥐 세포(초록) 형광으로 칠하고, 2D 막 평면의 섞인 모습을 그대로 따라가요 */
-      const cHead = new THREE.Color(HEADC), cR = new THREE.Color(0xef4444), cG = new THREE.Color(0x22c55e), cTmp = new THREE.Color();
+      const cHead = deep(HEADC), cR = deep(0xef4444), cG = deep(0x22c55e), cTmp = new THREE.Color();
       for (let i = 0; i < NL; i++) heads.setColorAt(i, cHead);
       const xs = all.map((o) => o.x), zs = all.map((o) => o.z), X0 = Math.min.apply(null, xs), X1 = Math.max.apply(null, xs), Z0 = Math.min.apply(null, zs), Z1 = Math.max.apply(null, zs);
       const BX = 10, BY = 6, binF = new Float32Array(BX * BY).fill(-1); let fluoOn = false, fluoT = 0;

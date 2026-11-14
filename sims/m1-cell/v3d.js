@@ -32,7 +32,8 @@
       const clipOf = { plant: {}, animal: {} };     // 잘린 영역 (c: x,y,z > c 가 잘림)
       const Vv = THREE.Vector3;
 
-      function std(color, o) { return new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.55, metalness: 0.02 }, o || {})); }
+      const deep = (c, k) => { const a = new THREE.Color(c); return a.lerp(a.clone().convertSRGBToLinear(), k == null ? 0.7 : k); };   // 화면에서 색이 옅어지지 않게 조금 진하게
+      function std(color, o) { return ctx.mats.organic(deep(color, 0.6), { extra: Object.assign({ roughness: 0.48 }, o || {}) }); }   // 세포 · 소기관: 촉촉한 생체 조직 느낌
       // 둥근 상자꼴/공꼴 곡면 (|x/a|^n+|y/b|^n+|z/c|^n = 1)
       function superGeo(a, b, c, n) {
         const g = new THREE.SphereGeometry(1, 56, 36), p = g.attributes.position;

@@ -8,10 +8,10 @@
     const COL = { H: 0xf3f6fb, C: 0x8a93a3, N: 0x4f7cff, O: 0xf0524f, F: 0x9be36b, Cl: 0x34c759, Na: 0xb07cf5, B: 0xf4a6a6, S: 0xf5c518, Cu: 0xe08a3c, Ca: 0x6fd0c4, e: 0xffd34d };
     const RAD = { H: 0.26, C: 0.38, N: 0.37, O: 0.36, F: 0.32, Cl: 0.48, Na: 0.5, B: 0.36, S: 0.48, Cu: 0.5, Ca: 0.55 };
     const mats = {};
-    const mat = (k) => mats[k] || (mats[k] = new THREE.MeshStandardMaterial({ color: COL[k] !== undefined ? COL[k] : k, roughness: 0.36, metalness: 0.06 }));
+    const mat = (k) => mats[k] || (mats[k] = new THREE.MeshStandardMaterial({ color: COL[k] !== undefined ? COL[k] : k, roughness: 0.26, metalness: 0, envMapIntensity: 1.2 }));
     const SG = new THREE.SphereGeometry(1, 28, 20);
     const CG = new THREE.CylinderGeometry(1, 1, 1, 16);
-    const stickMat = new THREE.MeshStandardMaterial({ color: 0xc3ccdd, roughness: 0.45, metalness: 0.1 });
+    const stickMat = new THREE.MeshStandardMaterial({ color: 0xc3ccdd, roughness: 0.3, metalness: 0.25, envMapIntensity: 1.2 });
     const V = (x, y, z) => new THREE.Vector3(x, y, z);
     function atom(k, s, pal) { const m = new THREE.Mesh(SG, mat(pal && pal[k] !== undefined ? pal[k] : k)); m.scale.setScalar((RAD[k] || 0.4) * (s || 1)); return m; }
     function stick(a, b, r, m) {
@@ -53,18 +53,18 @@
     /* 반투명 유리 상자 (가장자리 선 포함). 크기는 scale로 조절 */
     function glassBox(w, h, d, color, op) {
       const g = new THREE.Group();
-      const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: color || 0x9ec5ff, transparent: true, opacity: op === undefined ? 0.13 : op, roughness: 0.15, metalness: 0, depthWrite: false }));
+      const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshPhysicalMaterial({ color: color || 0xcfe4ff, transparent: true, opacity: op === undefined ? 0.13 : op, roughness: 0.05, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 2, side: THREE.DoubleSide, depthWrite: false }));
       const e = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.75 }));
       g.add(m, e); g.scale.set(w, h, d); g.userData.fill = m; return g;
     }
     function tube(pts, r, color, seg) {
       const c = new THREE.CatmullRomCurve3(pts.map((p) => (p.isVector3 ? p : V(p[0], p[1], p[2]))));
-      return new THREE.Mesh(new THREE.TubeGeometry(c, seg || 40, r, 10, false), new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.2 }));
+      return new THREE.Mesh(new THREE.TubeGeometry(c, seg || 40, r, 10, false), new THREE.MeshPhysicalMaterial({ color, roughness: 0.32, metalness: 0.15, clearcoat: 0.4, clearcoatRoughness: 0.25 }));
     }
     /* 화살표: from → to */
     function arrow(from, to, color, r, headLen) {
       const g = new THREE.Group(); const a = V(from[0], from[1], from[2]), b = V(to[0], to[1], to[2]); const d = b.clone().sub(a), len = d.length();
-      if (len < 1e-3) return g; const hl = Math.min(headLen || 0.4, len * 0.6); const m = new THREE.MeshStandardMaterial({ color, roughness: 0.35, metalness: 0.1 });
+      if (len < 1e-3) return g; const hl = Math.min(headLen || 0.4, len * 0.6); const m = new THREE.MeshPhysicalMaterial({ color, roughness: 0.3, metalness: 0, clearcoat: 0.5, clearcoatRoughness: 0.2 });
       const dir = d.clone().normalize(); const tip = b.clone();
       const sh = new THREE.Mesh(CG, m); sh.scale.set(r, len - hl, r); sh.position.copy(a).addScaledVector(dir, (len - hl) / 2); sh.quaternion.setFromUnitVectors(V(0, 1, 0), dir);
       const hd = new THREE.Mesh(new THREE.ConeGeometry(r * 2.6, hl, 20), m); hd.position.copy(tip).addScaledVector(dir, -hl / 2); hd.quaternion.setFromUnitVectors(V(0, 1, 0), dir);
@@ -84,7 +84,7 @@
     autoRotate: 0.1,
     levels: [0, 1],
     build(ctx) {
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, mats } = ctx;
       const L = makeLib(THREE);
       const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
       const sm = L.sstep;
@@ -92,15 +92,15 @@
       const fmt = (v) => String(+v.toFixed(3));
       const gEgg = new THREE.Group(), gDrop = new THREE.Group(), gMol = new THREE.Group();
       root.add(gEgg, gDrop, gMol);
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x050b18 }));
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mats.stone(0x0f131c, { repeat: 4, bump: 0.01, extra: { roughness: 0.85, envMapIntensity: 0.35 } })); floor.receiveShadow = true;   // 실험대 상판
       floor.scale.set(15, 0.1, 12); floor.position.set(0, -0.06, -0.8); root.add(floor); floor.userData.v3bg = true;
       const dum = new THREE.Object3D();
 
       /* ---- 달걀과 다스 상자 (2D: 세기의 한계 · 달걀) ---- */
-      const eggGeo = new THREE.SphereGeometry(1, 20, 14), eggMat = new THREE.MeshStandardMaterial({ color: 0xfff1d6, roughness: 0.4 });
+      const eggGeo = new THREE.LatheGeometry(Array.from({ length: 17 }, (_, i) => { const a = Math.PI * i / 16, y = -Math.cos(a); return new THREE.Vector2(Math.max(1e-3, Math.sin(a) * (1 - 0.13 * y)), y); }), 28), eggMat = mats.plastic(0xe8d2b2, { roughness: 0.55, extra: { clearcoat: 0.12 } });   // 달걀 모양 (위가 좁아요) · 껍데기 질감
       const eggs = [], boxes = [], boxLabs = [];
       for (let j = 0; j < 60; j++) { const m = new THREE.Mesh(eggGeo, eggMat); m.scale.set(0.22, 0.3, 0.22); gEgg.add(m); eggs.push(m); }
-      const carMat = new THREE.MeshStandardMaterial({ color: 0xd9b88a, roughness: 0.9 });
+      const carMat = mats.fabric(0x9a7650, { repeat: 3 });   // 종이 펄프 달걀판
       for (let i = 0; i < 5; i++) {
         const car = new THREE.Mesh(new THREE.BoxGeometry(3, 0.4, 1.5), carMat); gEgg.add(car); boxes.push(car);
         const l = label('', [0, 1.2, 0], { size: 12.5 }); l.show(false); boxLabs.push(l);
@@ -135,13 +135,13 @@
       }
 
       /* ---- 물 한 방울 (2D: 세기의 한계 · 물 한 방울) ---- */
-      const dropMat = new THREE.MeshStandardMaterial({ color: 0x5bb4f5, transparent: true, opacity: 0.35, roughness: 0.1 });
+      const dropMat = mats.liquid(0x4aa3ec, { opacity: 0.35 });
       const dr = new THREE.Mesh(new THREE.SphereGeometry(1.15, 28, 20), dropMat); dr.position.set(0, 1.5, -1.2); gDrop.add(dr);
       const drTop = new THREE.Mesh(new THREE.ConeGeometry(0.98, 1.3, 24), dropMat); drTop.position.set(0, 2.95, -1.2); gDrop.add(drTop);
       const dms = [];
       for (let i = 0; i < 10; i++) { const m = L.mol(L.MOLS.H2O, 0.3); gDrop.add(m); dms.push(m); }
       const RX0 = -4.6, RX1 = 4.6, RZ = 1.8, rx = (e) => RX0 + (RX1 - RX0) * e / 24;
-      const ruler = new THREE.Mesh(new THREE.BoxGeometry(RX1 - RX0, 0.07, 0.07), new THREE.MeshStandardMaterial({ color: 0x8a95a6 })); ruler.position.set(0, 0.1, RZ); gDrop.add(ruler);
+      const ruler = new THREE.Mesh(new THREE.BoxGeometry(RX1 - RX0, 0.07, 0.07), mats.metal('aluminium', { brushed: true })); ruler.position.set(0, 0.1, RZ); gDrop.add(ruler);
       const SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹', dropLabs = [];
       [0, 6, 12, 18, 24].forEach((e) => {
         const t = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.3, 0.06), ruler.material); t.position.set(rx(e), 0.1, RZ); gDrop.add(t);
@@ -149,7 +149,7 @@
       });
       const dropE = Math.log10(0.05 / 18 * NA), molE = Math.log10(NA);
       [[dropE, '한 방울', 0x0e7490, 0.9], [molE, '1 mol', 0xb45309, 1.5]].forEach((m) => {
-        const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, m[3], 8), new THREE.MeshStandardMaterial({ color: m[2] })); pil.position.set(rx(m[0]), 0.1 + m[3] / 2, RZ); gDrop.add(pil);
+        const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, m[3], 12), mats.plastic(m[2])); pil.position.set(rx(m[0]), 0.1 + m[3] / 2, RZ); gDrop.add(pil);
         dropLabs.push(label(m[1], [rx(m[0]), 0.2 + m[3] + 0.15, RZ], { size: 12, color: '#' + m[2].toString(16).padStart(6, '0') }));
       });
       const mk = new THREE.Mesh(L.SG, L.mat(0x8b5cf6)); mk.scale.setScalar(0.2); mk.position.set(RX0, 0.1, RZ); gDrop.add(mk);
@@ -176,7 +176,7 @@
         for (let q = 0; q < 10; q++) {
           const m = L.mol(L.MOLS.H2O, 0.42); m.position.set(CX(i) - 1.8 + (q % 5) * 0.9, 0.55, CZ(i) - 0.45 + Math.floor(q / 5) * 0.9); m.visible = false; gMol.add(m); molGs.push(m);
         }
-        const slab = new THREE.Mesh(new THREE.BoxGeometry(4.9, 0.1, 2.4), new THREE.MeshStandardMaterial({ color: 0x1b2540, roughness: 0.8 })); slab.position.set(CX(i), 0.0, CZ(i)); gMol.add(slab);
+        const slab = new THREE.Mesh(new THREE.BoxGeometry(4.9, 0.1, 2.4), mats.metal(0x2c3446, { brushed: true, roughness: 0.4 })); slab.position.set(CX(i), 0.0, CZ(i)); gMol.add(slab);
       }
       { const fb = new THREE.Mesh(new THREE.BoxGeometry(phone ? 4.9 : 14.9, 2.0, phone ? 7.6 : 2.4), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.2, colorWrite: false, depthWrite: false })); fb.position.set(0, 0.9, -0.8); gMol.add(fb); }   // 화면 맞춤용 보이지 않는 상자: 1 mol 상자 3개가 다 들어가요
       function molScene(Z, own, p) {

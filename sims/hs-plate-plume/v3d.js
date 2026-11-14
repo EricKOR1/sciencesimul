@@ -25,24 +25,25 @@
       /* 맨틀 */
       const mantle = new THREE.Mesh(new THREE.BoxGeometry(13.4, -MB - 0.12, DEP), new THREE.MeshStandardMaterial({ color: 0xe8741c, roughness: 0.7, transparent: true, opacity: 0.55, emissive: 0x9a2f08, emissiveIntensity: 0.3, depthWrite: false, side: THREE.BackSide }));
       mantle.position.set(0.3, (MB - 0.12) / 2, 0); root.add(mantle);
-      const base = new THREE.Mesh(new THREE.BoxGeometry(13.4, 0.18, DEP), new THREE.MeshStandardMaterial({ color: 0xd9480f, roughness: 0.6, emissive: 0xb91c1c, emissiveIntensity: 0.5 })); base.position.set(0.3, MB - 0.09, 0); root.add(base);
+      const base = new THREE.Mesh(new THREE.BoxGeometry(13.4, 0.18, DEP), ctx.mats.stone(0xd9480f, { repeat: 3, bump: 0.04, extra: { emissive: 0xb91c1c, emissiveIntensity: 0.55 } })); base.position.set(0.3, MB - 0.09, 0); root.add(base);
       /* 바다 */
-      const sea = new THREE.Mesh(new THREE.BoxGeometry(XT - XR + 1.2, 0.4, DEP), new THREE.MeshStandardMaterial({ color: 0x2f86d6, roughness: 0.2, transparent: true, opacity: 0.35, depthWrite: false }));
+      const sea = new THREE.Mesh(new THREE.BoxGeometry(XT - XR + 1.2, 0.4, DEP), ctx.mats.liquid(0x1f6fbf, { opacity: 0.4, extra: { bumpMap: ctx.mats.tex('noise'), bumpScale: 0.01 } }));
       sea.position.set((XR + XT) / 2 - 0.3 + 0.2, 0.2, 0); root.add(sea);
       /* 해양 암석권 + 섭입하는 판 (단면 도형을 압출) */
       const th = thick(XT), dir = [Math.cos(ANG), -Math.sin(ANG)], nrm = [Math.sin(ANG), Math.cos(ANG)];   // 슬래브 진행 방향 · 아래쪽 법선(−nrm)
-      const lithoMat = new THREE.MeshStandardMaterial({ color: 0x3f78b0, roughness: 0.75 }), slabMat = new THREE.MeshStandardMaterial({ color: 0x2f5a8a, roughness: 0.75 });
+      const lithoMat = ctx.mats.stone(0x3a6fa6, { repeat: 0.35, bump: 0.04 }), slabMat = ctx.mats.stone(0x2a5282, { repeat: 0.35, bump: 0.04 });   // 해양 암석권 (파랑 유지)
       { const shp = new THREE.Shape(); shp.moveTo(XR, 0); shp.lineTo(XT, 0);
         for (let i = 28; i >= 0; i--) { const x = XR + (XT - XR) * i / 28; shp.lineTo(x, -thick(x)); }
         const m = new THREE.Mesh(new THREE.ExtrudeGeometry(shp, { depth: DEP, bevelEnabled: false }), lithoMat); m.position.z = -DEP / 2; root.add(m); }
       const slabMesh = (() => { const shp = new THREE.Shape(); shp.moveTo(0, 0); shp.lineTo(1, 0); shp.lineTo(1, -th); shp.lineTo(0, -th); shp.lineTo(0, 0);
         const m = new THREE.Mesh(new THREE.ExtrudeGeometry(shp, { depth: DEP, bevelEnabled: false }), slabMat); m.position.set(XT, 0, -DEP / 2); m.rotation.z = -ANG; m.scale.x = SL; root.add(m); return m; })();
       /* 해령 (갈라지는 틈) */
-      const ridge = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.3, 5, 1), new THREE.MeshStandardMaterial({ color: 0xff6a2e, emissive: 0xff3b10, emissiveIntensity: 0.7, roughness: 0.5 })); ridge.scale.set(1, 1, DEP / 0.68 * 0.8); ridge.rotation.y = 0; ridge.position.set(XR - 0.02, 0.1, 0); root.add(ridge);
+      const ridge = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.3, 5, 1), ctx.mats.emissive(0xff6a2e, 1.1)); ridge.scale.set(1, 1, DEP / 0.68 * 0.8); ridge.rotation.y = 0; ridge.position.set(XR - 0.02, 0.1, 0); root.add(ridge);
+      { const h = ctx.halo(null, 0xff7a3a, 1.4, 0.55); h.position.set(XR - 0.02, 0.2, 0); root.add(h); }   // 해령의 뜨거운 마그마 빛
       /* 대륙 (오른쪽, 위에 얹힌 판) */
-      const cont = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.95, DEP), new THREE.MeshStandardMaterial({ color: 0x8a7a5c, roughness: 0.9 })); cont.position.set(XT + 1.8 + 0.12, 0.2, 0); root.add(cont);
-      const contTop = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.14, DEP), new THREE.MeshStandardMaterial({ color: 0x5aa05a, roughness: 0.9 })); contTop.position.set(XT + 1.92, 0.7, 0); root.add(contTop);
-      const contRoot = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.6, DEP), new THREE.MeshStandardMaterial({ color: 0x6d5a40, roughness: 0.9 })); contRoot.position.set(XT + 1.92, -0.58, 0); root.add(contRoot);
+      const cont = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.95, DEP), ctx.mats.stone(0x7a6a4c, { cracks: true, repeat: 0.5, bump: 0.05 })); cont.position.set(XT + 1.8 + 0.12, 0.2, 0); root.add(cont);
+      const contTop = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.14, DEP), ctx.mats.stone(0x3f7f3f, { repeat: 0.8, bump: 0.05 })); contTop.position.set(XT + 1.92, 0.7, 0); root.add(contTop);
+      const contRoot = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.6, DEP), ctx.mats.stone(0x5d4a32, { repeat: 0.5, bump: 0.05 })); contRoot.position.set(XT + 1.92, -0.58, 0); root.add(contRoot);
 
       /* 판의 이동을 보여 주는 점 (해령 → 해구 → 슬래브) */
       const pathPt = (s) => {                                 // s: 0..1 경로 위의 점 (판의 가운데 높이)
@@ -83,7 +84,7 @@
       const lPlume = label('맨틀 플룸', [PX + 0.4, -2.6, 0.2], { color: 'rgba(194,65,12,.92)' }), lHot = label('열점', [PX, 0.8, 0.2], { color: 'rgba(146,64,14,.92)' });
       /* 화산섬 */
       const islG = new THREE.Group(); root.add(islG);
-      const islMat = new THREE.MeshStandardMaterial({ color: 0x6b4f3a, roughness: 0.85 }), islTop = new THREE.MeshStandardMaterial({ color: 0x4caf6a, roughness: 0.85 });
+      const islMat = ctx.mats.stone(0x5b4030, { repeat: 1, bump: 0.04 }), islTop = ctx.mats.stone(0x3f8f55, { repeat: 1, bump: 0.03 });
 
       /* 지진파 단층 촬영 (2D '🩻 단층 촬영 영상 보기'와 같은 색: 빨강 = 지진파 느림 = 뜨거움, 파랑 = 빠름 = 차가움) — 단면 앞면에 겹쳐요 */
       const TX0 = -6.4, TX1 = 7.0, TW = 512, TH = 160, tcv = document.createElement('canvas'); tcv.width = TW; tcv.height = TH;

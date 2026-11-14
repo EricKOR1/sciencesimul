@@ -16,13 +16,14 @@
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3;
       let mode = 'neuron', myelin = true, names = true, rpath = 'reflex';
-      const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0 }, o || {}));
+      const MT = ctx.mats, lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 색이 바래지 않게 (진한 색)
+      const sm = (c, o) => { const q = Object.assign({}, o || {}); if (typeof q.emissive === 'number') q.emissive = lc(q.emissive); return MT.organic(lc(c), { extra: q }); };   // 신경 · 조직: 부드럽고 촉촉한 겉면
       const nG = new THREE.Group(), rG = new THREE.Group(); root.add(nG, rG);
       const labs = { n: [], r: [] };
       const L = (g, text, pos, col) => { const l = label(text, pos, { size: 12, color: col || 'rgba(15,23,42,.9)' }); labs[g].push(l); return l; };
-      const tube = (pts, r, c, o) => { const cu = new THREE.CatmullRomCurve3(pts.map((p) => new V3(p[0], p[1], p[2]))); return { cu, mesh: new THREE.Mesh(new THREE.TubeGeometry(cu, Math.max(8, pts.length * 14), r, 10, false), sm(c, o)) }; };
+      const tube = (pts, r, c, o) => { const cu = new THREE.CatmullRomCurve3(pts.map((p) => new V3(p[0], p[1], p[2]))); return { cu, mesh: new THREE.Mesh(new THREE.TubeGeometry(cu, Math.max(8, pts.length * 14), r, 14, false), sm(c, o)) }; };
       const glowM = new THREE.MeshBasicMaterial({ color: 0xfff176 });
-      const pulse = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 14), glowM); const halo = new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 14), new THREE.MeshBasicMaterial({ color: 0xfde047, transparent: true, opacity: 0.35, depthWrite: false })); pulse.add(halo); root.add(pulse); pulse.visible = false;
+      const pulse = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 14), glowM); const halo = new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 14), new THREE.MeshBasicMaterial({ color: 0xfde047, transparent: true, opacity: 0.35, depthWrite: false })); pulse.add(halo); ctx.halo(pulse, 0xfde047, 1.7, 0.6); root.add(pulse); pulse.visible = false;
       /* ============ 뉴런 ============ */
       const NC = 0xf59e0b;
       const soma = new THREE.Mesh(new THREE.SphereGeometry(0.85, 40, 28), sm(NC, { roughness: 0.35 })); soma.position.set(0, 0, 0); nG.add(soma);
@@ -50,7 +51,7 @@
       const gdisc = [[-0.45, 0.62, 0.38, 0.55], [0.45, 0.62, 0.38, 0.55], [-0.45, -0.62, 0.38, 0.55], [0.45, -0.62, 0.38, 0.55], [0, 0, 0.55, 0.45]].map((q) => { const m = new THREE.Mesh(new THREE.CircleGeometry(1, 28), sm(0x9ca3af, { roughness: 0.7 })); m.scale.set(q[2], q[3], 1); m.position.set(q[0], q[1], 0.615); rG.add(m); return m; });
       const SENSO = 0x38bdf8, ASSOC = 0xa78bfa, MOTOR = 0xfb923c;
       const finger = new THREE.Group(); const fm = new THREE.Mesh(new THREE.CapsuleGeometry(0.28, 1.2, 8, 16), sm(0xf3b79a, { roughness: 0.7 })); fm.rotation.z = Math.PI / 2; finger.add(fm); finger.position.set(5.6, 3.6, 0); rG.add(finger);
-      const flame = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1.0, 20), new THREE.MeshBasicMaterial({ color: 0xff7a1a })); flame.position.set(7.2, 3.0, 0); rG.add(flame); const flame2 = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.6, 16), new THREE.MeshBasicMaterial({ color: 0xffd34d })); flame2.position.set(7.2, 2.85, 0.02); rG.add(flame2);
+      const flame = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1.0, 20), new THREE.MeshBasicMaterial({ color: 0xff7a1a })); flame.position.set(7.2, 3.0, 0); rG.add(flame); ctx.halo(flame, 0xff9a3a, 2.4, 0.55); const flame2 = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.6, 16), new THREE.MeshBasicMaterial({ color: 0xffd34d })); flame2.position.set(7.2, 2.85, 0.02); rG.add(flame2);
       const muscle = new THREE.Mesh(new THREE.CapsuleGeometry(0.4, 2.2, 8, 20), sm(0xdc2626, { roughness: 0.5 })); muscle.rotation.z = Math.PI / 2 - 0.5; muscle.position.set(5.2, -2.6, 0); rG.add(muscle);
       const sens = tube([[5.0, 3.5, 0.15], [3.6, 3.3, 0.2], [2.4, 2.6, 0.2], [1.4, 1.6, 0.4], [0.7, 0.95, 0.62]], 0.075, SENSO, { emissive: SENSO, emissiveIntensity: 0.25 }); rG.add(sens.mesh);
       const gang = new THREE.Mesh(new THREE.SphereGeometry(0.26, 18, 14), sm(SENSO)); gang.position.set(2.4, 2.6, 0.2); rG.add(gang);

@@ -39,8 +39,9 @@
       let mode = 'name', cn = false, cut = 0.65;
 
       const mats = [];
+      const deep = (c, k) => { const a = new THREE.Color(c); return a.lerp(a.clone().convertSRGBToLinear(), k == null ? 0.7 : k); };   // 화면에서 색이 옅어지지 않게 조금 진하게
       function M(color, o) {
-        const m = new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.5, metalness: 0.02, clippingPlanes: planes }, o || {}));
+        const m = ctx.mats.organic(deep(color, 0.6), { extra: Object.assign({ roughness: 0.5, clippingPlanes: planes }, o || {}) });   // 세포 소기관: 촉촉한 생체 조직 느낌
         mats.push(m); return m;
       }
       function glass(color, opa, o) { return M(color, Object.assign({ transparent: true, opacity: opa, side: THREE.DoubleSide, depthWrite: false, roughness: 0.8 }, o || {})); }
@@ -55,7 +56,7 @@
 
       /* 절개 단면의 테두리 */
       const rimG = new THREE.Group(); root.add(rimG);
-      const rimM = { o: new THREE.MeshStandardMaterial({ color: 0x7a3a12, roughness: 0.5 }), i: new THREE.MeshStandardMaterial({ color: 0xe0407a, roughness: 0.5 }) };
+      const rimM = { o: ctx.mats.organic(0x6e3210), i: ctx.mats.organic(0xc92a66) };
       function stadium(R, c, rad, mat) {
         const rc = Math.sqrt(Math.max(0, R * R - c * c)); if (rc < 0.02) return null;
         const pts = [];

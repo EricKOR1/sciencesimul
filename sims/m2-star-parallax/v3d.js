@@ -18,19 +18,20 @@
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3;
       const sm = () => window.__sim;
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o || {}));
+      const MT = ctx.mats, lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 색이 바래지 않게 (진한 색)
+      const mat = (c, o) => { const q = Object.assign({ color: lc(c), roughness: 0.5, metalness: 0.05 }, o || {}); if (typeof q.emissive === 'number') q.emissive = lc(q.emissive); return new THREE.MeshStandardMaterial(q); };
 
       // 태양
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.55, 32, 24), new THREE.MeshBasicMaterial({ color: 0xffd34d })); root.add(sun);
-      const sunHalo = new THREE.Mesh(new THREE.SphereGeometry(0.95, 24, 16), new THREE.MeshBasicMaterial({ color: 0xffb02e, transparent: true, opacity: 0.25, depthWrite: false })); root.add(sunHalo);
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.55, 40, 28), new THREE.MeshBasicMaterial({ color: lc(0xffcf45) })); root.add(sun); ctx.halo(sun, 0xffc040, 3.6, 0.75);
+      const sunHalo = new THREE.Mesh(new THREE.SphereGeometry(0.95, 24, 16), new THREE.MeshBasicMaterial({ color: 0xffb02e, transparent: true, opacity: 0.15, depthWrite: false })); root.add(sunHalo);
       const orbitRing = new THREE.Mesh(new THREE.TorusGeometry(R, 0.025, 8, 128), new THREE.MeshBasicMaterial({ color: 0x8fb0ff, transparent: true, opacity: 0.7 })); orbitRing.rotation.x = Math.PI / 2; root.add(orbitRing);
       // 지구 (현재 위치) · 1월 · 7월 위치 표시
-      const earth = new THREE.Mesh(new THREE.SphereGeometry(0.3, 32, 24), mat(0x3f86e0, { roughness: 0.55, emissive: 0x0a2a60, emissiveIntensity: 0.35 })); earth.castShadow = true; root.add(earth);
+      const earth = new THREE.Mesh(new THREE.SphereGeometry(0.3, 32, 24), MT.plastic(lc(0x2f7ae0), { roughness: 0.35, extra: { emissive: lc(0x0a2a60), emissiveIntensity: 0.35 } })); earth.castShadow = true; root.add(earth);
       const eJan = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 14), new THREE.MeshBasicMaterial({ color: 0x9fe8ff, transparent: true, opacity: 0.8 })), eJul = eJan.clone();
       eJan.position.set(-R, 0, 0); eJul.position.set(R, 0, 0); root.add(eJan, eJul);
       // 가까운 별
-      const star = new THREE.Mesh(new THREE.SphereGeometry(0.34, 28, 20), new THREE.MeshBasicMaterial({ color: 0xfff6c8 })); root.add(star);
-      const starG = new THREE.Mesh(new THREE.SphereGeometry(0.75, 24, 16), new THREE.MeshBasicMaterial({ color: 0xfff0a0, transparent: true, opacity: 0.25, depthWrite: false })); star.add(starG);
+      const star = new THREE.Mesh(new THREE.SphereGeometry(0.34, 32, 24), new THREE.MeshBasicMaterial({ color: 0xfff6c8 })); root.add(star); ctx.halo(star, 0xfff0b0, 2.6, 0.8);
+      const starG = new THREE.Mesh(new THREE.SphereGeometry(0.75, 24, 16), new THREE.MeshBasicMaterial({ color: 0xfff0a0, transparent: true, opacity: 0.15, depthWrite: false })); star.add(starG);
       // 먼 배경별 (하늘 돔)
       const NS = 260, sp = new Float32Array(NS * 3);
       for (let i = 0; i < NS; i++) { const a = Math.random() * Math.PI * 2, b = Math.acos(0.15 + Math.random() * 0.85), r = DOME; sp[i * 3] = r * Math.sin(b) * Math.cos(a); sp[i * 3 + 1] = r * Math.cos(b) + 1; sp[i * 3 + 2] = r * Math.sin(b) * Math.sin(a); }

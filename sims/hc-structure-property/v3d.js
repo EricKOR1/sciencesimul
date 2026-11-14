@@ -61,8 +61,8 @@
       const labs = [], extra = [];
       const UP = new THREE.Vector3(0, 1, 0);
       const V = (a) => new THREE.Vector3(a[0], a[1], a[2]);
-      const stickMat = new THREE.MeshStandardMaterial({ color: 0x9aa6bf, roughness: 0.6 });
-      function sphere(r, col) { return new THREE.Mesh(new THREE.SphereGeometry(r, 28, 18), new THREE.MeshStandardMaterial({ color: col, roughness: 0.45, metalness: 0.05 })); }
+      const stickMat = new THREE.MeshPhysicalMaterial({ color: 0x9aa6bf, roughness: 0.32, metalness: 0.2, clearcoat: 0.4, clearcoatRoughness: 0.25 });
+      function sphere(r, col) { return new THREE.Mesh(new THREE.SphereGeometry(r, 28, 18), new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.28, metalness: 0, clearcoat: 0.55, clearcoatRoughness: 0.18 })); }
       function stick(a, b, r) {
         const d = b.clone().sub(a), len = d.length();
         const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 12), stickMat);
@@ -73,7 +73,7 @@
         const grp = new THREE.Group(), d = to.clone().sub(from), len = d.length();
         if (len < 0.02) return grp;
         const head = Math.min(len * 0.45, r * 4.2), shaft = Math.max(0.01, len - head);
-        const mat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.4, emissive: col, emissiveIntensity: 0.25 });
+        const mat = new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.3, emissive: col, emissiveIntensity: 0.25, clearcoat: 0.5, clearcoatRoughness: 0.2 });
         const sh = new THREE.Mesh(new THREE.CylinderGeometry(r, r, shaft, 12), mat); sh.position.y = shaft / 2;
         const hd = new THREE.Mesh(new THREE.ConeGeometry(r * 2.1, head, 16), mat); hd.position.y = shaft + head / 2;
         grp.add(sh, hd); grp.position.copy(from); grp.quaternion.setFromUnitVectors(UP, d.normalize()); return grp;

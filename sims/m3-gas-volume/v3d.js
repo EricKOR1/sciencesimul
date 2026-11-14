@@ -29,7 +29,7 @@
     Object.keys(SP).forEach((k) => { SP[k].p = SP[k].p.map((q) => q.map((v) => v * 1.3)); });
     const smooth = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
     const matCache = {};
-    const mat = (el) => matCache[el] || (matCache[el] = new THREE.MeshStandardMaterial({ color: COL[el], roughness: 0.32, metalness: el === 'Cu' ? 0.45 : 0.05 }));
+    const mat = (el) => matCache[el] || (matCache[el] = new THREE.MeshPhysicalMaterial({ color: COL[el], roughness: 0.28, metalness: el === 'Cu' ? 0.45 : 0.05, clearcoat: 0.7, clearcoatRoughness: 0.2 }));   // 원자 모형: 매끈한 광택
     const sphG = new THREE.SphereGeometry(1, 36, 24), cylG = new THREE.CylinderGeometry(1, 1, 1, 16);
     const bondMat = new THREE.MeshStandardMaterial({ color: 0xcfd8e6, roughness: 0.5, metalness: 0.1 });
     const Y = new THREE.Vector3(0, 1, 0);
@@ -150,9 +150,9 @@
       const { THREE, root, label, info, controls } = ctx;
       const K = ChemKit(THREE);
       let cyl = [], sig = '', q = 0, cur = null;
-      const glass = new THREE.MeshStandardMaterial({ color: 0xbfe3ff, roughness: 0.08, transparent: true, opacity: 0.14, depthWrite: false, side: THREE.DoubleSide });
-      const ringM = new THREE.MeshStandardMaterial({ color: 0xaab7cc, roughness: 0.4, metalness: 0.4 });
-      const pistM = new THREE.MeshStandardMaterial({ color: 0xe8a14b, roughness: 0.5, metalness: 0.2 });
+      const glass = ctx.mats.glass({ opacity: 0.15 });   // 유리 실린더
+      const ringM = ctx.mats.metal('steel', { roughness: 0.24 });   // 받침 · 눈금 고리 · 피스톤 막대
+      const pistM = ctx.mats.plastic(0xe8a14b, { roughness: 0.3 });   // 피스톤
       const R = 1.05, HMAX = 4 * HU + 0.3;
       const arrow = new THREE.Group(); const am = new THREE.MeshStandardMaterial({ color: 0xffd34d, roughness: 0.4, emissive: 0x6b4a00, emissiveIntensity: 0.5 });
       const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.9, 16), am); sh.rotation.z = Math.PI / 2;
@@ -162,10 +162,11 @@
       function clear() { while (g.children.length) g.remove(g.children[0]); cyl = []; }
       function mkCyl(x, sp, n0, used, isProd) {
         const c = { x, sp, n0, used, isProd, mols: [], piston: null };
-        const tube = new THREE.Mesh(new THREE.CylinderGeometry(R, R, HMAX, 40, 1, true), glass); tube.position.set(x, HMAX / 2, 0); g.add(tube);
+        const tube = new THREE.Mesh(new THREE.CylinderGeometry(R, R, HMAX, 56, 1, true), glass); tube.position.set(x, HMAX / 2, 0); g.add(tube);
+        const lip = new THREE.Mesh(new THREE.TorusGeometry(R, 0.04, 10, 56), glass); lip.rotation.x = Math.PI / 2; lip.position.set(x, HMAX, 0); g.add(lip);   // 실린더 입구 테두리
         const base = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.12, R + 0.12, 0.18, 40), ringM); base.position.set(x, -0.09, 0); g.add(base);
         for (let i = 1; i <= 4; i++) { const t = new THREE.Mesh(new THREE.TorusGeometry(R + 0.01, 0.018, 8, 48), ringM); t.rotation.x = Math.PI / 2; t.position.set(x, i * HU, 0); g.add(t); }
-        c.piston = new THREE.Group(); const pd = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.03, R - 0.03, 0.14, 40), pistM); const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.3, 12), ringM); rod.position.y = 0.7; c.piston.add(pd, rod); g.add(c.piston);
+        c.piston = new THREE.Group(); const pd = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.03, R - 0.03, 0.14, 40), pistM); const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.3, 20), ringM); rod.position.y = 0.7; c.piston.add(pd, rod); g.add(c.piston);
         for (let i = 0; i < n0; i++) {
           const m = K.molGroup(sp, 0.75); g.add(m);
           const a = Math.random() * 6.28, r = Math.random() * (R - 0.4);

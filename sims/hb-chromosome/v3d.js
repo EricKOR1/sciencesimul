@@ -23,7 +23,7 @@
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = (x, y, z) => new THREE.Vector3(x, y, z || 0);
-      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.42, metalness: 0.03 }, o || {}));
+      const std = (c, o) => new THREE.MeshPhysicalMaterial(Object.assign({ color: c, roughness: 0.34, metalness: 0, clearcoat: 0.6, clearcoatRoughness: 0.2, sheen: 0.3 }, o || {}));   // 촉촉하고 윤기 나는 분자 모형
       const R = rng(41), D = new THREE.Object3D(), AR = (x, y, z) => { const o = new THREE.Object3D(); o.position.set(x, y, z || 0); curG.add(o); return o; };
       let curG = root;
       const groups = [], labs = [];

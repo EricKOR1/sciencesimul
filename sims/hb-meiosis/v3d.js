@@ -54,7 +54,7 @@
       let envUpd = () => {};
       /* 세포 4개 + 핵 */
       const cellM = new THREE.MeshPhysicalMaterial({ color: 0x9ec7ff, transparent: true, opacity: 0.17, depthWrite: false, roughness: 0.1, clearcoat: 1, clearcoatRoughness: 0.1, side: THREE.DoubleSide });
-      const mitoM = std(0xf59e4b, { roughness: 0.4, transparent: true, opacity: 0.9 }), erM2 = std(0xc9b6f2, { roughness: 0.5 });
+      const mitoM = ctx.mats.organic(0xe08a34, { opacity: 0.9 }), erM2 = ctx.mats.organic(0xb8a2e8);
       const cells = CELL.map((_, ci) => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), cellM); m.renderOrder = 1; root.add(m);
         for (let k = 0; k < 7; k++) { const a = k * 2.399 + ci, y = 1 - (k + 0.5) * 2 / 7, rr = Math.sqrt(1 - y * y), d = 0.78 + 0.06 * (k % 2); const o = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), k % 3 ? mitoM : erM2); o.scale.set(0.11, 0.055, 0.055); o.position.set(Math.cos(a) * rr * d, y * d * 0.9, Math.sin(a) * rr * d); o.rotation.set(a, a * 1.3, a * 0.7); m.add(o); }
         return m; });
@@ -72,7 +72,7 @@
         dots.frustumCulled = false; root.add(dots); dots.userData.v3bg = true;   // 떠다니는 알갱이는 배경
         envUpd = (t) => { P0.forEach((q, i) => { dm.position.set(q.x + Math.sin(t * q.sp + q.ph) * 0.5, q.y + Math.cos(t * q.sp * 1.3 + q.ph) * 0.4, q.z); dm.scale.setScalar(q.s); dm.updateMatrix(); dots.setMatrixAt(i, dm.matrix); }); dots.instanceMatrix.needsUpdate = true; };
       })();
-      const nuc = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), std(0xd6b6ff, { transparent: true, opacity: 0.2, depthWrite: false, roughness: 0.2 })); nuc.renderOrder = 1; root.add(nuc);
+      const nuc = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), ctx.mats.organic(0xc8a6ff, { opacity: 0.2, extra: { depthWrite: false } })); nuc.renderOrder = 1; root.add(nuc);
 
       /* 염색 분체 (가운데가 잘록한 막대) */
       function bar(len) {
@@ -80,7 +80,7 @@
         for (let j = 0; j <= N; j++) { const s = j / N, pin = 1 - 0.6 * Math.exp(-Math.pow((s - 0.5) / 0.045, 2)), cap = Math.sqrt(Math.max(0, 1 - Math.pow(1 - Math.min(1, s / 0.12), 2))) * Math.sqrt(Math.max(0, 1 - Math.pow(1 - Math.min(1, (1 - s) / 0.12), 2))); prof.push(new THREE.Vector2(Math.max(0.001, 0.15 * pin * cap), (s - 0.5) * len)); }
         return new THREE.LatheGeometry(prof, 22);
       }
-      const LEN = [2.2, 2.2, 1.5, 1.5], RED = std(0xe5485f, { roughness: 0.4 }), BLUE = std(0x3b82f0, { roughness: 0.4 });
+      const LEN = [2.2, 2.2, 1.5, 1.5], RED = ctx.mats.organic(0xd23048), BLUE = ctx.mats.organic(0x2a6ee0);   // 염색체: 촉촉한 생체 질감 (빨강=어머니, 파랑=아버지)
       const chrs = [0, 1, 2, 3].map((c) => {
         const outer = new THREE.Group(), mid = new THREE.Group(); outer.add(mid); root.add(outer);
         const ks = [0, 1].map((k) => { const m = new THREE.Mesh(bar(LEN[c]), c % 2 ? BLUE : RED); mid.add(m); return m; });
@@ -127,7 +127,7 @@
         m.scale.set(1, len, 1); m.quaternion.setFromUnitVectors(_up, _d.normalize());
         m.material.opacity = 0.75 * w;
       }
-      const poleM = std(0xffd34d, { emissive: 0x7a5a00, emissiveIntensity: 0.5 }), poleI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.14, 12, 8), poleM, 6); root.add(poleI);
+      const poleM = ctx.mats.plastic(0xf0c020, { extra: { emissive: 0x7a5a00, emissiveIntensity: 0.45 } }), poleI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.14, 12, 8), poleM, 6); root.add(poleI);
 
       const lab2 = label('2가 염색체', null, { color: 'rgba(255,122,70,.92)' }), labS = label('방추사', null, {}), labN = label('핵막', null, {}), labH = label('상동 염색체', null, {});
       let s = 0, tgt = 0, auto = false, hold = 0, lastKey = '', playing = false, seen2D = -1, plGuard = false;

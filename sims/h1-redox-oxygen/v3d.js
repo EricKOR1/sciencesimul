@@ -111,7 +111,7 @@
         R.atoms.forEach((a, i) => {
           const [col, rad] = EL[a[0]];
           const isMet = a[0] === 'Cu' || a[0] === 'Mg' || a[0] === 'Fe';
-          const m = new THREE.Mesh(new THREE.SphereGeometry(rad, 40, 28), isMet ? ctx.mats.metal(col, { roughness: 0.28, extra: { emissive: col, emissiveIntensity: 0.05 } }) : ctx.mats.plastic(col, { roughness: 0.24, extra: { clearcoat: 0.9, clearcoatRoughness: 0.1, emissive: col, emissiveIntensity: a[0] === 'O' ? 0.2 : 0.05 } }));   // 금속 원자는 금속 광택, 나머지는 매끈한 모형 공 m.castShadow = true; m.position.set(a[1][0], a[1][1], 0); g.add(m);
+          const m = new THREE.Mesh(new THREE.SphereGeometry(rad, 40, 28), isMet ? ctx.mats.metal(col, { roughness: 0.28, extra: { emissive: col, emissiveIntensity: 0.05 } }) : ctx.mats.plastic(col, { roughness: 0.24, extra: { clearcoat: 0.9, clearcoatRoughness: 0.1, emissive: col, emissiveIntensity: a[0] === 'O' ? 0.2 : 0.05 } })); m.castShadow = true; m.position.set(a[1][0], a[1][1], 0); g.add(m);   // 금속 원자는 금속 광택, 나머지는 매끈한 모형 공
           C.atoms.push({ m, a, p0: new V3(a[1][0], a[1][1], 0), p1: new V3(a[2][0], a[2][1], 0) });
           if (a[0] === 'O' && new V3(a[1][0], a[1][1], 0).distanceTo(new V3(a[2][0], a[2][1], 0)) > 2.2) {
             // 산소가 지나갈 길 (희미한 곡선)

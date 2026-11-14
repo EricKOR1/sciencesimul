@@ -18,14 +18,15 @@
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
-      const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.3 }, o || {}));
-      const gnd = new THREE.Mesh(new THREE.BoxGeometry(17, 0.3, 5), sm(0x3d6f3a, { roughness: 0.95, metalness: 0 })); gnd.position.set(1.0, -0.15, 0); gnd.userData.v3bg = true; root.add(gnd);   // 바닥은 배경: 자동 맞춤이 진자(코스터)와 에너지 막대에 맞춰요
+      const MT = ctx.mats, lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 색이 바래지 않게 (위치 에너지 파랑 · 운동 에너지 주황 · 역학적 에너지 보라가 또렷하게)
+      const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: lc(c), roughness: 0.45, metalness: 0.3 }, o || {}));
+      const gnd = new THREE.Mesh(new THREE.BoxGeometry(17, 0.3, 5), MT.stone(lc(0x3d6f3a), { repeat: 6, bump: 0.04 })); gnd.position.set(1.0, -0.15, 0); gnd.userData.v3bg = true; root.add(gnd);   // 바닥은 배경: 자동 맞춤이 진자(코스터)와 에너지 막대에 맞춰요
       const pendG = new THREE.Group(), coasterG = new THREE.Group(); root.add(pendG, coasterG);
       /* ---------- 진자 ---------- */
-      const beam = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.14, 0.5), sm(0x64748b)); beam.position.set(0, 4.3 + 0.1, 0); pendG.add(beam);
-      [-1.3, 1.3].forEach((x) => { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 4.4, 10), sm(0x94a3b8, { metalness: 0.6 })); l.position.set(x, 2.2, -0.2); pendG.add(l); });
+      const beam = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.14, 0.5), MT.metal('steel', { brushed: true })); beam.position.set(0, 4.3 + 0.1, 0); pendG.add(beam);
+      [-1.3, 1.3].forEach((x) => { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 4.4, 16), MT.metal('steel', { roughness: 0.28 })); l.position.set(x, 2.2, -0.2); pendG.add(l); });
       const str = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1, 6), new THREE.MeshBasicMaterial({ color: 0xe2e8f0 })); pendG.add(str);
-      const bob = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 22), sm(0xf26b3a, { metalness: 0.4, roughness: 0.3 })); pendG.add(bob);
+      const bob = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 22), MT.plastic(lc(0xf26b3a), { roughness: 0.2, extra: { clearcoat: 0.9, clearcoatRoughness: 0.1 } })); pendG.add(bob);
       const hP = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.014, 0.014), new THREE.MeshBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.6 })); hP.position.z = 0.6; pendG.add(hP);
       const hPL = label('', [-2.9, 0, 0.6], { size: 12, color: 'rgba(29,78,216,.92)' });
       const low = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.014, 0.014), new THREE.MeshBasicMaterial({ color: 0x16a34a, transparent: true, opacity: 0.6 })); low.position.set(0, 0.02, 0.6); pendG.add(low);
@@ -36,8 +37,8 @@
       /* ---------- 롤러코스터 ---------- */
       const trackG = new THREE.Group(); coasterG.add(trackG);
       const cart = new THREE.Group();
-      const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.28, 0.5), sm(0xf26b3a, { metalness: 0.2 })); body.position.y = 0.3; cart.add(body);
-      [[-0.26, 0.25], [0.26, 0.25], [-0.26, -0.25], [0.26, -0.25]].forEach((q) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.07, 16), sm(0x1f2937)); w.rotation.x = Math.PI / 2; w.position.set(q[0], 0.12, q[1]); cart.add(w); });
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.28, 0.5), MT.plastic(lc(0xf26b3a), { roughness: 0.25 })); body.position.y = 0.3; cart.add(body);
+      [[-0.26, 0.25], [0.26, 0.25], [-0.26, -0.25], [0.26, -0.25]].forEach((q) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.07, 20), MT.rubber()); w.rotation.x = Math.PI / 2; w.position.set(q[0], 0.12, q[1]); cart.add(w); });
       coasterG.add(cart);
       const flagM = new THREE.Group(); const fp = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.9, 6), sm(0xe2e8f0)); fp.position.y = 0.45; const fc = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.3, 0.02), sm(0xef4444, { metalness: 0 })); fc.position.set(0.25, 0.75, 0); flagM.add(fp, fc); coasterG.add(flagM);
       const hS = new THREE.Mesh(new THREE.BoxGeometry(9, 0.014, 0.014), new THREE.MeshBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.55 })); hS.position.z = 0.6; coasterG.add(hS);
@@ -50,9 +51,9 @@
         X0c = -XE * KC / 2;
         for (let i = 0; i <= NS; i++) { const x = XE * i / NS; pts.push(new V3(X0c + x * KC, heightAt(L, x) * KC + 0.03, 0)); }
         const curve = new THREE.CatmullRomCurve3(pts);
-        const mats = sm(0x94a3b8, { metalness: 0.7, roughness: 0.3 });
-        [-0.25, 0.25].forEach((z) => { const cp = pts.map((p) => new V3(p.x, p.y, z)); trackG.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(cp), NS, 0.04, 8, false), mats)); });
-        const woodM = sm(0x8b5e34, { roughness: 0.9, metalness: 0 }), supM = sm(0x64748b, { roughness: 0.6 });
+        const mats = MT.metal('steel', { roughness: 0.22 });
+        [-0.25, 0.25].forEach((z) => { const cp = pts.map((p) => new V3(p.x, p.y, z)); trackG.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(cp), NS, 0.04, 10, false), mats)); });
+        const woodM = sm(0x8b5e34, { roughness: 0.9, metalness: 0 }), supM = MT.metal('iron', { roughness: 0.45 });
         for (let i = 0; i <= 60; i++) { const p = curve.getPointAt(i / 60), t = curve.getTangentAt(i / 60); const s = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.04, 0.62), woodM); s.position.copy(p); s.position.y -= 0.05; s.rotation.z = Math.atan2(t.y, t.x); trackG.add(s); }
         for (let i = 0; i <= 24; i++) { const p = curve.getPointAt(i / 24); if (p.y < 0.2) continue; [-0.28, 0.28].forEach((z) => { const s = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, p.y - 0.08, 8), supM); s.position.set(p.x, (p.y - 0.08) / 2, z); trackG.add(s); }); }
         // 도착 게이트
@@ -61,9 +62,9 @@
       /* ---------- 에너지 막대 ---------- */
       const bars = {}; const BX = 5.8;
       [['ep', '위치 에너지', 0], ['ek', '운동 에너지', 1.3], ['me', '역학적 에너지', 2.6]].forEach(([k, t, dx]) => {
-        const m = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1, 0.7), sm(EC[k], { roughness: 0.35, metalness: 0.05 })); m.position.set(BX + dx, 0, -1.4); root.add(m); bars[k] = { m, L: label('', [BX + dx, -0.45, -1.4 + 0.45], { size: 12, color: { ep: 'rgba(29,78,216,.92)', ek: 'rgba(194,65,12,.92)', me: 'rgba(109,40,217,.92)' }[k] }), t };
+        const m = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1, 0.7), MT.plastic(lc(EC[k]), { roughness: 0.3 })); m.position.set(BX + dx, 0, -1.4); root.add(m); bars[k] = { m, L: label('', [BX + dx, -0.45, -1.4 + 0.45], { size: 12, color: { ep: 'rgba(29,78,216,.92)', ek: 'rgba(194,65,12,.92)', me: 'rgba(109,40,217,.92)' }[k] }), t };
       });
-      const base = new THREE.Mesh(new THREE.BoxGeometry(3.9, 0.08, 1.1), sm(0x64748b)); base.position.set(BX + 1.3, -0.04, -1.4); root.add(base);
+      const base = new THREE.Mesh(new THREE.BoxGeometry(3.9, 0.08, 1.1), MT.metal('steel', { brushed: true })); base.position.set(BX + 1.3, -0.04, -1.4); root.add(base);
       const topLine = new THREE.Mesh(new THREE.BoxGeometry(3.9, 0.02, 0.02), new THREE.MeshBasicMaterial({ color: 0xa78bfa, transparent: true, opacity: 0.7 })); topLine.position.set(BX + 1.3, 0, -1.4); root.add(topLine);
       const cLab = label('', cart, { size: 12, color: 'rgba(15,23,42,.9)', offset: [0, 1.0, 0] });
       const bLab = label('', bob, { size: 12, color: 'rgba(15,23,42,.9)', offset: [0, 0.9, 0] });

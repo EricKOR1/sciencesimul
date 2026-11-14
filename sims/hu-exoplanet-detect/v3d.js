@@ -43,7 +43,7 @@
       const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,240,200,.9)'); gr.addColorStop(0.35, 'rgba(255,200,100,.35)'); gr.addColorStop(1, 'rgba(255,170,60,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
       const glowMat = new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
       const glow = new THREE.Sprite(glowMat); glow.scale.set(RS * 4.2, RS * 4.2, 1); root.add(glow);
-      const planet = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), new THREE.MeshStandardMaterial({ color: 0x3f78c8, roughness: 0.6 })); root.add(planet);
+      const planet = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), new THREE.MeshStandardMaterial({ color: 0x3a70bd, roughness: 0.55, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.02, envMapIntensity: 0.8 })); root.add(planet);
       const bary = new THREE.Mesh(new THREE.OctahedronGeometry(0.1), new THREE.MeshBasicMaterial({ color: 0xffffff })); root.add(bary);
       const labBary = label('질량 중심', bary, { offset: [0.5, -0.45, 0], size: 11.5, color: 'rgba(60,70,100,.9)' });
       const labStar = label('별', star, { offset: [0, RS + 0.35, 0], size: 12.5 });
@@ -51,7 +51,7 @@
 
       /* 지구(관측자) 쪽: +z 방향 */
       const earthG = new THREE.Group(); earthG.position.set(0, 0, 6.2); root.add(earthG);
-      earthG.add(new THREE.Mesh(new THREE.SphereGeometry(0.3, 32, 22), new THREE.MeshStandardMaterial({ color: 0x2f7fd8, roughness: 0.6, emissive: 0x0a2a55, emissiveIntensity: 0.5 })));
+      { const e = new THREE.Mesh(new THREE.SphereGeometry(0.3, 40, 28), ctx.mats.plastic(0x2f7fd8, { roughness: 0.3, extra: { emissive: 0x0a2a55, emissiveIntensity: 0.45, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.01 } })); earthG.add(e); ctx.halo(e, 0x6fb4ff, 0.95, 0.45); }   // 관측자 지구 + 대기 빛
       label('지구(관측)', [0, 0.55, 6.2], { size: 12, color: 'rgba(20,70,140,.92)' });
       const los = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 5.4, 6), new THREE.MeshBasicMaterial({ color: 0x9fb4e8, transparent: true, opacity: 0.4 })); los.rotation.x = Math.PI / 2; los.position.set(0, 0, 3.0); root.add(los);
 

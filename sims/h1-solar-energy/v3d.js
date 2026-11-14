@@ -30,7 +30,7 @@
       /* ================= ② 핵융합 ================= */
       const gFu = new THREE.Group(); root.add(gFu);
       const BOX = 1.7, RP = 0.36, KC = 0.3, D0 = 0.8, VTH = 2.5;   // VTH: 이 속도보다 빠르게 부딪혀야 융합해요
-      const pMat = mat(0xe32a32, { roughness: 0.4, metalness: 0, emissive: 0x8a0a12, emissiveIntensity: 0.55 }), nMat = mat(0xb9c0cc, { roughness: 0.35, metalness: 0.2 });
+      const pMat = ctx.mats.plastic(0xd41e26, { roughness: 0.2, extra: { emissive: 0x8a0a12, emissiveIntensity: 0.45 } }), nMat = ctx.mats.plastic(0xaab2c0, { roughness: 0.22 });
       const ps = [];   // { g, v, kind: 'p'|'d'|'he', n }
       function mkP(kind) {
         const g = new THREE.Group();
@@ -146,22 +146,22 @@
         for (let i = 0; i < 600; i++) { const v = new V3(rr() - 0.5, rr() - 0.5, rr() - 0.5).normalize().multiplyScalar(28 + rr() * 6); sa.push(v.x, v.y, v.z); const c = 0.5 + rr() * 0.5; sc.push(c, c * 0.95, c * 0.85); }
         const sgm = new THREE.BufferGeometry(); sgm.setAttribute('position', new THREE.Float32BufferAttribute(sa, 3)); sgm.setAttribute('color', new THREE.Float32BufferAttribute(sc, 3));
         root.add(new THREE.Points(sgm, new THREE.PointsMaterial({ size: 0.15, vertexColors: true, sizeAttenuation: true, transparent: true, opacity: 0.85, depthWrite: false }))); root.children[root.children.length - 1].userData.v3bg = true;   /* 별·먼지는 배경 */ }
-      function plate(grp, y, r) { const p = new THREE.Mesh(new THREE.CylinderGeometry(r, r + 0.2, 0.22, 72), mat(0x141c30, { roughness: 0.6, metalness: 0.3 })); p.position.y = y; grp.add(p);
+      function plate(grp, y, r) { const p = new THREE.Mesh(new THREE.CylinderGeometry(r, r + 0.2, 0.22, 72), ctx.mats.metal(0x1a2236, { brushed: true, roughness: 0.62 })); p.position.y = y; grp.add(p);
         [r - 0.1, r * 0.66, r * 0.33].forEach((rad, k) => { const t = new THREE.Mesh(new THREE.TorusGeometry(rad, 0.025, 8, 96), new THREE.MeshBasicMaterial({ color: k % 2 ? 0xff9a3c : 0xffd24a })); t.rotation.x = Math.PI / 2; t.position.y = y + 0.12; grp.add(t); }); }
       plate(gFu, -BOX - 0.5, 2.6); plate(gMa, -2.7, 3.3);
-      [-0.95, 0, 0.95].forEach((y) => { const c = new THREE.Mesh(new THREE.TorusGeometry(BOX * 1.3, 0.05, 12, 64), mat(0xc77b3a, { metalness: 0.85, roughness: 0.28 })); c.rotation.x = Math.PI / 2; c.position.y = y * BOX * 0.9; gFu.add(c); });
-      [[1, 1], [-1, 1], [1, -1], [-1, -1]].forEach((q) => { const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, BOX * 2.2, 10), mat(0x9aa7bd, { metalness: 0.8, roughness: 0.3 })); post.position.set(q[0] * BOX * 1.3 * 0.72, 0, q[1] * BOX * 1.3 * 0.72); gFu.add(post); });
-      const glass = new THREE.Mesh(new THREE.BoxGeometry(BOX * 2, BOX * 2, BOX * 2), new THREE.MeshPhysicalMaterial({ color: 0xffc58a, transparent: true, opacity: 0.07, roughness: 0.05, depthWrite: false, side: THREE.DoubleSide })); gFu.add(glass);
+      [-0.95, 0, 0.95].forEach((y) => { const c = new THREE.Mesh(new THREE.TorusGeometry(BOX * 1.3, 0.06, 14, 96), ctx.mats.metal('copper', { roughness: 0.26 })); c.rotation.x = Math.PI / 2; c.position.y = y * BOX * 0.9; gFu.add(c); });
+      [[1, 1], [-1, 1], [1, -1], [-1, -1]].forEach((q) => { const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, BOX * 2.2, 16), ctx.mats.metal('steel', { brushed: true })); post.position.set(q[0] * BOX * 1.3 * 0.72, 0, q[1] * BOX * 1.3 * 0.72); gFu.add(post); });
+      const glass = new THREE.Mesh(new THREE.BoxGeometry(BOX * 2, BOX * 2, BOX * 2), ctx.mats.glass({ tint: 0xffc58a, opacity: 0.08 })); gFu.add(glass);
       const NPL = 90, plasma = new THREE.InstancedMesh(new THREE.SphereGeometry(0.04, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffb36b, transparent: true, opacity: 0.55 }), NPL); gFu.add(plasma);
       const plD = []; for (let i = 0; i < NPL; i++) plD.push({ p: new V3((Math.random() * 2 - 1) * BOX * 0.95, (Math.random() * 2 - 1) * BOX * 0.95, (Math.random() * 2 - 1) * BOX * 0.95), v: rv().multiplyScalar(0.5 + Math.random() * 0.8) });
       const plO = new THREE.Object3D();
 
       /* ================= ③ 지구의 에너지 흐름 ================= */
       const gEa = new THREE.Group(); root.add(gEa);
-      const sun3 = new THREE.Mesh(new THREE.SphereGeometry(1.8, 40, 28), new THREE.MeshStandardMaterial({ color: 0xffb62a, emissive: 0xff9410, emissiveIntensity: 0.9, roughness: 0.8 })); sun3.position.set(-5.2, 0, 0); gEa.add(sun3);
+      const sun3 = new THREE.Mesh(new THREE.SphereGeometry(1.8, 40, 28), new THREE.MeshStandardMaterial({ color: 0xffb62a, emissive: 0xff9410, emissiveIntensity: 0.9, roughness: 0.8 })); sun3.position.set(-5.2, 0, 0); gEa.add(sun3); sun3.material.emissiveMap = ctx.mats.tex('noise'); sun3.material.emissiveIntensity = 1.4;   // 쌀알 무늬 표면
       const sg = new THREE.Sprite(glowMat(0.7)); sg.scale.set(9, 9, 1); sg.position.copy(sun3.position); gEa.add(sg);
       const ec = document.createElement('canvas'); ec.width = 256; ec.height = 128; { const g = ec.getContext('2d'); g.fillStyle = '#2f7fd8'; g.fillRect(0, 0, 256, 128); g.fillStyle = '#4caf6a'; let sd = 7; const rn = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; }; for (let i = 0; i < 16; i++) { const x = rn() * 256, y = 20 + rn() * 88; for (let j = 0; j < 7; j++) { g.beginPath(); g.ellipse(x + (rn() - 0.5) * 30, y + (rn() - 0.5) * 18, 6 + rn() * 16, 4 + rn() * 9, rn() * 3, 0, 7); g.fill(); } } g.fillStyle = '#f2f6fa'; g.fillRect(0, 0, 256, 7); g.fillRect(0, 121, 256, 7); }
-      const earth = new THREE.Mesh(new THREE.SphereGeometry(0.75, 36, 24), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(ec), roughness: 0.7 })); earth.position.set(1.4, 0, 0); gEa.add(earth);
+      const earth = new THREE.Mesh(new THREE.SphereGeometry(0.75, 36, 24), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(ec), roughness: 0.55, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.02 })); earth.position.set(1.4, 0, 0); gEa.add(earth);
       const eAtm = new THREE.Mesh(new THREE.SphereGeometry(0.84, 36, 24), new THREE.MeshBasicMaterial({ color: 0x7ab8ff, transparent: true, opacity: 0.16, side: THREE.BackSide, depthWrite: false })); eAtm.position.copy(earth.position); gEa.add(eAtm);
       const eCl = new THREE.Mesh(new THREE.SphereGeometry(0.775, 36, 24), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.2, roughness: 1, depthWrite: false })); eCl.position.copy(earth.position); gEa.add(eCl);
       const sCor = new THREE.Sprite(glowMat(0.5)); sCor.scale.set(13, 13, 1); sCor.position.copy(sun3.position); gEa.add(sCor);

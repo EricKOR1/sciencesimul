@@ -39,8 +39,8 @@
       label('태양(초점)', [0, 0.1, 0], { offset: [0, 0.65, 0], color: 'rgba(146,84,0,.9)' });
 
       /* 행성 */
-      const planet = new THREE.Mesh(new THREE.SphereGeometry(0.2, 28, 20), new THREE.MeshStandardMaterial({ color: 0x2f86e8, roughness: 0.5, metalness: 0.05 })); root.add(planet);
-      const arrowM = new THREE.MeshStandardMaterial({ color: 0xffe066, roughness: 0.4, emissive: 0x805f00, emissiveIntensity: 0.5 });
+      const planet = new THREE.Mesh(new THREE.SphereGeometry(0.2, 40, 28), ctx.mats.plastic(0x2f86e8, { roughness: 0.32, extra: { bumpMap: ctx.mats.tex('noise'), bumpScale: 0.01 } })); root.add(planet);
+      const arrowM = ctx.mats.plastic(0xffe066, { roughness: 0.3, extra: { emissive: 0x805f00, emissiveIntensity: 0.45 } });
       const arrow = new THREE.Group(); const ash = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 1, 10), arrowM), ahd = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.32, 14), arrowM); arrow.add(ash, ahd); root.add(arrow);
       const sLab = label('', planet, { offset: [0, 0.85, 0], color: 'rgba(14,60,120,.9)', size: 11.5 });
 

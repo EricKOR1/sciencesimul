@@ -137,16 +137,18 @@
       }
       /* ================= 📏 길이 수축: 우주선 ================= */
       function shipMk(col) {
-        const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 4, 24), M(col, { roughness: 0.3, metalness: 0.5 })); b.rotation.z = Math.PI / 2; g.add(b);
-        const n = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.1, 24), M(0xef4444, { roughness: 0.3 })); n.rotation.z = -Math.PI / 2; n.position.x = 2.55; g.add(n);
-        [-1, 1].forEach((s) => { const f = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.06, 0.9), M(0x64748b)); f.position.set(-1.6, 0, s * 0.7); g.add(f); });
-        for (let i = 0; i < 3; i++) { const w = new THREE.Mesh(new THREE.SphereGeometry(0.17, 12, 10), M(0x93c5fd, { emissive: 0x1e40af })); w.position.set(-0.8 + i * 0.9, 0.3, 0.45); g.add(w); }
+        const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.CapsuleGeometry(0.55, 3.0, 10, 40), ctx.mats.metal(col, { roughness: 0.22, brushed: true })); b.rotation.z = Math.PI / 2; g.add(b);
+        [-1.2, 0.2, 1.4].forEach((x) => { const bd = new THREE.Mesh(new THREE.TorusGeometry(0.56, 0.025, 8, 48), ctx.mats.metal('iron', { roughness: 0.4 })); bd.rotation.y = Math.PI / 2; bd.position.x = x; g.add(bd); });   // 동체 이음매
+        const nz = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.45, 0.45, 32, 1, true), ctx.mats.metal('iron', { roughness: 0.35, extra: { side: THREE.DoubleSide } })); nz.rotation.z = Math.PI / 2; nz.position.x = -2.25; g.add(nz);   // 엔진 노즐
+        const n = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.1, 24), ctx.mats.plastic(0xd8343a, { roughness: 0.2 })); n.rotation.z = -Math.PI / 2; n.position.x = 2.55; g.add(n);
+        [-1, 1].forEach((s) => { const f = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.06, 0.9), ctx.mats.plastic(0xc23a3f, { roughness: 0.25 })); f.position.set(-1.6, 0, s * 0.7); g.add(f); });
+        for (let i = 0; i < 3; i++) { const w = new THREE.Mesh(new THREE.SphereGeometry(0.17, 24, 16), ctx.mats.glass({ tint: 0x93c5fd, opacity: 0.9, extra: { depthWrite: true, emissive: 0x1e40af, emissiveIntensity: 0.6 } })); w.position.set(-0.8 + i * 0.9, 0.3, 0.45); g.add(w); }
         return g;
       }
       const s0 = shipMk(0xe5e7eb), sg = shipMk(0x94a3b8); s0.position.set(0, 1.2, 0.8); sg.position.set(0, 1.2, -1.6); gL.add(s0, sg);
       sg.traverse((o) => { if (o.material) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.3; o.material.depthWrite = false; } });
       const rodG = new THREE.Mesh(new THREE.BoxGeometry(1, 0.1, 0.1), M(0xfbbf24, { emissive: 0x8a6a00 })); rodG.position.set(0, -0.2, 0.8); gL.add(rodG);
-      const floorL = new THREE.Mesh(new THREE.BoxGeometry(14, 0.08, 6), M(0x1a2238, { roughness: 1 })); floorL.position.set(0, -0.3, -0.4); gL.add(floorL);
+      const floorL = new THREE.Mesh(new THREE.BoxGeometry(14, 0.08, 6), ctx.mats.stone(0x1e2538, { repeat: 6 })); floorL.position.set(0, -0.3, -0.4); gL.add(floorL);
       const lS = label('운동하는 우주선 (지면에서 본 모습)', s0, { color: '#475569', size: 12 }), lSg = label('정지했을 때의 우주선 (기준)', sg, { color: '#475569', size: 12 }), lRod = label('지면의 막대 (길이 L)', rodG, { color: '#a16207', size: 12 }), lLen = label('', s0, { color: '#2563eb', size: 13 });
       const demoL = { p: 0, on: false };
       function lenShip(A, S) {

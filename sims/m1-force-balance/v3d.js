@@ -50,7 +50,7 @@
       /* 눈금이 있는 둥근 계기판 (0 ~ max, 270도) */
       function makeDial(R, max, unit, tickStep, labStep) {
         const g = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.34, 48), mat(0x8b95a7, { metalness: 0.6, roughness: 0.3 })); body.rotation.x = Math.PI / 2; g.add(body);
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.34, 48), ctx.mats.metal('steel', { brushed: true })); body.rotation.x = Math.PI / 2; g.add(body);
         const tex = canvasTex(256, 256, (c, w) => {
           c.fillStyle = '#f7f9fc'; c.beginPath(); c.arc(128, 128, 126, 0, 7); c.fill();
           c.strokeStyle = '#334155'; c.fillStyle = '#1f2937'; c.textAlign = 'center'; c.textBaseline = 'middle';
@@ -64,7 +64,7 @@
         const face = new THREE.Mesh(new THREE.CircleGeometry(R * 0.93, 48), new THREE.MeshBasicMaterial({ map: tex })); face.position.z = 0.18; g.add(face);
         const needle = new THREE.Group(); needle.position.z = 0.24;
         const nb = new THREE.Mesh(new THREE.BoxGeometry(R * 0.7, 0.07, 0.04), mat(0xe11d48, { roughness: 0.4 })); nb.position.x = R * 0.3; needle.add(nb);
-        const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.06, 16), mat(0x475569, { metalness: 0.5 })); cap.rotation.x = Math.PI / 2; needle.add(cap);
+        const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.06, 16), ctx.mats.metal('chrome')); cap.rotation.x = Math.PI / 2; needle.add(cap);
         g.add(needle);
         g.userData.set = (v) => { needle.rotation.z = (-225 + 270 * Math.max(0, Math.min(max, v)) / max) * Math.PI / 180; };
         g.userData.set(0); return g;
@@ -81,15 +81,16 @@
 
       /* 2D '얼음판' 장면과 같은 구성(위에서 본 얼음판 위의 상자, 왼쪽 고리 · 오른쪽 고리 + 작용점 위/가운데/아래, 핀).
          힘 F(+ 오른쪽 / − 왼쪽, N)과 작용점은 2D의 값을 그대로 읽어 와요. */
+      const rbox = (w, h, d, r) => { const s = new THREE.Shape(), b = Math.min(r, h / 2) * 0.6, x = w / 2 - r - b, z = d / 2 - r - b; s.absarc(x, z, r, 0, Math.PI / 2); s.absarc(-x, z, r, Math.PI / 2, Math.PI); s.absarc(-x, -z, r, Math.PI, Math.PI * 1.5); s.absarc(x, -z, r, Math.PI * 1.5, Math.PI * 2); const g = new THREE.ExtrudeGeometry(s, { depth: h - 2 * b, bevelEnabled: true, bevelThickness: b, bevelSize: b, bevelSegments: 3, curveSegments: 6 }); g.rotateX(-Math.PI / 2); g.translate(0, -h / 2 + b, 0); return g; };   // 모서리가 둥근 상자
       const PX = 44.4, SLOTS = [-26 / 44.4, 0, 26 / 44.4], HOOK = 48 / 44.4, KN = 0.4, LIM = 3.4;
       const bStart = root.children.length;
-      const ice = new THREE.Mesh(new THREE.BoxGeometry(2 * LIM + 3.4, 0.2, 4.6), mat(0xcfe8ff, { roughness: 0.15, metalness: 0.1, transparent: true, opacity: 0.92 })); ice.position.y = -0.7; root.add(ice);
+      const ice = new THREE.Mesh(new THREE.BoxGeometry(2 * LIM + 3.4, 0.2, 4.6), ctx.mats.ice({ extra: { opacity: 0.9 } })); ice.position.y = -0.7; root.add(ice);
       for (let i = -3; i <= 3; i++) { const tk = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.02, 4.6), mat(0xb6d4ef)); tk.position.set(i * 1.1, -0.59, 0); root.add(tk); }
       const cart = new THREE.Group(); root.add(cart);
-      const body = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.9, 1.8), mat(0xf59e0b, { roughness: 0.45 })); cart.add(body);
-      const hk1 = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 10), mat(0xcbd5e1, { metalness: 0.8 })); hk1.position.set(-HOOK, 0, 0); cart.add(hk1);
-      const hk2 = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 10), mat(0xcbd5e1, { metalness: 0.8 })); cart.add(hk2);
-      const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.6, 12), mat(0xef4444)); pin.position.set(0, 0.7, 0); cart.add(pin);
+      const body = new THREE.Mesh(rbox(1.8, 0.9, 1.8, 0.1), ctx.mats.plastic(0xe08a00)); cart.add(body);
+      const hk1 = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 10), ctx.mats.metal('steel')); hk1.position.set(-HOOK, 0, 0); cart.add(hk1);
+      const hk2 = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 10), ctx.mats.metal('steel')); cart.add(hk2);
+      const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.6, 12), ctx.mats.plastic(0xd92e2e)); pin.position.set(0, 0.7, 0); cart.add(pin);
       const a1 = mkArrow(0x2f6df6, 0.07), a2 = mkArrow(0xe5484d, 0.07), an = mkArrow(0x16a34a, 0.09); root.add(a1, a2, an);
       const l1 = label('', a1, { size: 12.5, color: 'rgba(40,90,230,.92)' }), l2 = label('', a2, { size: 12.5, color: 'rgba(200,40,50,.92)' }), ln = label('', an, { size: 12.5, color: 'rgba(20,130,60,.92)' });
       const mkLine = (c, o) => new THREE.Line(new THREE.BufferGeometry().setFromPoints([new V3(-5.5, 0, 0), new V3(5.5, 0, 0)]), new THREE.LineDashedMaterial({ color: c, dashSize: 0.18, gapSize: 0.12, transparent: true, opacity: o }));
@@ -105,14 +106,14 @@
       gA.position.y = -0.2;
       const WP = 800, UNIT = 0.01, KA3 = 0.34;   // 힘 1 N당 화살표 길이 0.34
       const xray = (g) => g.children.forEach((c) => { c.material.depthTest = false; c.renderOrder = 8; });
-      { const top = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.18, 2.4), mat(0xe0a96d, { roughness: 0.7 })); top.position.set(0, -0.09, 0); top.receiveShadow = true; gA.add(top);
-        [-3.4, 3.4].forEach((x) => [0.9, -0.9].forEach((z) => { const lg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.3, 0.2), mat(0xa86a35)); lg.position.set(x, -0.83, z); gA.add(lg); })); }
-      const stopA = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.5, 1.0), mat(0xdc2626, { roughness: 0.5 })); m.castShadow = true; gA.add(m); return m; });
+      { const top = new THREE.Mesh(rbox(7.6, 0.18, 2.4, 0.08), ctx.mats.wood(0xe8b884, { repeat: 2 })); top.position.set(0, -0.09, 0); top.receiveShadow = true; gA.add(top);
+        [-3.4, 3.4].forEach((x) => [0.9, -0.9].forEach((z) => { const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 1.3, 14), ctx.mats.wood(0xa86a35)); lg.position.set(x, -0.83, z); gA.add(lg); })); }
+      const stopA = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.5, 1.0), ctx.mats.rubber(0xb91c1c)); m.castShadow = true; gA.add(m); return m; });
       const claySeg = 44, clayRing = 10, clayGeo = new THREE.BufferGeometry();
       { const pos = new Float32Array((claySeg + 1) * (clayRing + 1) * 3), idx = [];
         for (let i = 0; i < claySeg; i++) for (let j = 0; j < clayRing; j++) { const a = i * (clayRing + 1) + j, b = a + 1, c = a + clayRing + 1, d = c + 1; idx.push(a, c, b, b, c, d); }
         clayGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); clayGeo.setIndex(idx); }
-      const clayMesh = new THREE.Mesh(clayGeo, mat(0xfdb88a, { roughness: 0.75, side: THREE.DoubleSide })); clayMesh.frustumCulled = false; clayMesh.castShadow = true; gA.add(clayMesh);
+      const clayMesh = new THREE.Mesh(clayGeo, ctx.mats.organic(0xf2a070, { extra: { roughness: 0.72, side: THREE.DoubleSide } })); clayMesh.frustumCulled = false; clayMesh.castShadow = true; gA.add(clayMesh);
       let CTY = 382;
       function setClay(pts) {
         const P = clayGeo.attributes.position.array, n = claySeg;
@@ -123,11 +124,11 @@
         clayGeo.attributes.position.needsUpdate = true; clayGeo.computeVertexNormals();
       }
       const cartA = new THREE.Group(); gA.add(cartA);
-      { const b = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.4, 0.8), mat(0x2563eb, { roughness: 0.4 })); b.position.y = 0.36; b.castShadow = true; cartA.add(b);
+      { const b = new THREE.Mesh(rbox(1.18, 0.4, 0.8, 0.06), ctx.mats.plastic(0x1f56d6)); b.position.y = 0.36; b.castShadow = true; cartA.add(b);
         const st = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.07, 0.82), mat(0xfacc15)); st.position.y = 0.57; cartA.add(st); }
       const wheelsA = [];
-      [[-0.47, 0.43], [0.47, 0.43], [-0.47, -0.43], [0.47, -0.43]].forEach(([x, z]) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.1, 20), mat(0x1e293b, { roughness: 0.6 })); w.rotation.x = Math.PI / 2; w.add(new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.22, 0.12), mat(0xcbd5e1))); const g = new THREE.Group(); g.position.set(x, 0.15, z); g.add(w); cartA.add(g); wheelsA.push(g); });
-      { const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.18, 8), mat(0x64748b)); rod.rotation.z = Math.PI / 2; rod.position.set(0.68, 0.4, 0); cartA.add(rod);
+      [[-0.47, 0.43], [0.47, 0.43], [-0.47, -0.43], [0.47, -0.43]].forEach(([x, z]) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.1, 20), ctx.mats.rubber(0x1b1f27)); w.rotation.x = Math.PI / 2; w.add(new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.12, 16), ctx.mats.metal('chrome'))); const g = new THREE.Group(); g.position.set(x, 0.15, z); g.add(w); cartA.add(g); wheelsA.push(g); });
+      { const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.18, 8), ctx.mats.metal('steel')); rod.rotation.z = Math.PI / 2; rod.position.set(0.68, 0.4, 0); cartA.add(rod);
         const ring = new THREE.Mesh(new THREE.TorusGeometry(0.065, 0.025, 8, 18), mat(0x22c55e)); ring.position.set(0.8, 0.4, 0); cartA.add(ring); }
       const arA = mkArrow(0xf97316, 0.06); gA.add(arA); arA.visible = false; xray(arA);
       const arLab = label('', [0, 0, 0], { size: 12.5, color: 'rgba(200,90,10,.95)' });
@@ -178,18 +179,18 @@
 
       /* ===== 장면 T · 줄다리기(위에서 본 모습): 왼쪽 팀 3명(300 N) · 오른쪽 팀 1~5명(1명 = 100 N) ===== */
       const TS = 1 / 70, TRY = 0;         // 2D px → 그림 단위
-      { const f = new THREE.Mesh(new THREE.BoxGeometry(12, 0.1, 4.6), mat(0x86c97a, { roughness: 0.9 })); f.position.y = -0.05; f.receiveShadow = true; gT.add(f);
+      { const f = new THREE.Mesh(new THREE.BoxGeometry(12, 0.1, 4.6), ctx.mats.stone(0x2e6a2a, { repeat: 8, bump: 0.02 })); f.position.y = -0.05; f.receiveShadow = true; gT.add(f);
         const c = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.02, 4.6), mat(0xffffff)); c.position.y = 0.01; gT.add(c);
         [-1, 1].forEach((s) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.02, 4.6), mat(0xe8f5e3)); m.position.set(s * 84 * TS, 0.012, 0); m.userData.v3bg = true; gT.add(m); }); f.userData.v3bg = c.userData.v3bg = true; }   // 잔디 운동장은 배경: 자동 맞춤은 줄다리기 선수 · 줄 · 화살표에 맞춰요
-      const ropeM = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1, 12), mat(0xb8864b, { roughness: 0.8 })); ropeM.rotation.z = Math.PI / 2; ropeM.position.y = 0.8; gT.add(ropeM);
+      const ropeM = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1, 12), ctx.mats.fabric(0xb8864b, { repeat: 8 })); ropeM.rotation.z = Math.PI / 2; ropeM.position.y = 0.8; gT.add(ropeM);
       const flag = new THREE.Group(); { const f1 = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.34, 0.14), mat(0xef4444)); f1.position.y = 0.8; flag.add(f1); const f2 = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.4, 3), mat(0xdc2626)); f2.rotation.x = Math.PI; f2.position.y = 0.5; flag.add(f2); } gT.add(flag);
       const KID = [];
       function mkKid(team, i) {
         const g = new THREE.Group(), col = team < 0 ? 0x2563eb : 0xe0a800, hair = [0x3b2a1e, 0x5b3a24, 0x1f2937, 0x7c4a2a, 0x2b2118][(i + (team > 0 ? 2 : 0)) % 5];
-        const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.42, 4, 10), mat(col, { roughness: 0.55 })); body.position.y = 0.78; body.castShadow = true; g.add(body);
+        const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.42, 4, 10), ctx.mats.fabric(col, { repeat: 3 })); body.position.y = 0.78; body.castShadow = true; g.add(body);
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 10), mat(0xf1c39b, { roughness: 0.6 })); head.position.y = 1.26; head.castShadow = true; g.add(head);
         const hr = new THREE.Mesh(new THREE.SphereGeometry(0.155, 14, 10, 0, 6.283, 0, 1.9), mat(hair, { roughness: 0.8 })); hr.position.y = 1.28; hr.rotation.x = -0.25; g.add(hr);
-        [-0.09, 0.09].forEach((z) => { const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.5, 8), mat(0x334155)); lg.position.set(-team * 0.0, 0.28, z); g.add(lg); });
+        [-0.09, 0.09].forEach((z) => { const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.5, 8), ctx.mats.fabric(0x2b3545, { repeat: 3 })); lg.position.set(-team * 0.0, 0.28, z); g.add(lg); });
         const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1, 8), mat(0xf1c39b)); gT.add(arm);
         const k = { g, arm, team, i }; gT.add(g); KID.push(k); return k;
       }

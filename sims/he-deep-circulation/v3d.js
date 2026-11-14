@@ -45,7 +45,7 @@
     autoRotate: 0.12,
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, mats } = ctx;
       /* ---- 장면 꾸미기 도우미: 나무 · 암석 무늬, 하늘 · 우주 배경, 빛 번짐 (모양만 꾸며요) ---- */
       const FX = (() => {
         const scn = ctx.scene; let sd = 7; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
@@ -70,7 +70,7 @@
       /* 우주 배경 · 대기 빛무리 · 지구본 받침(자오선 고리 · 축 · 나무 받침) */
       const spaceDome = FX.dome('#02040c', '#07102a', '#0d1a3a', 520), labDome = FX.dome('#1b2a48', '#2b3e63', '#40557c', 0); labDome.visible = false;
       { const halo = FX.glow('90,170,255', R * 3.1, 0.55); halo.renderOrder = -1; root.add(halo);
-        const brass = new THREE.MeshStandardMaterial({ color: 0xc9a14a, roughness: 0.3, metalness: 0.85 });
+        const brass = mats.metal('brass', { roughness: 0.26 });
         const mer = new THREE.Mesh(new THREE.TorusGeometry(R * 1.14, 0.06, 12, 96), brass); mer.rotation.y = 0.0; mer.rotation.z = 0; mer.position.set(0, 0, 0); root.add(mer);
         const axis = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, R * 2.5, 10), brass); root.add(axis);
         [-1, 1].forEach((sg) => { const cap = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 10), brass); cap.position.y = sg * R * 1.25; root.add(cap); });
@@ -138,7 +138,7 @@
       const NAMES = ['① 구간', '② 구간', '③ 구간', '④ 구간'];   // 이름은 학생이 고르는 미션이라 번호만 보여 줘요
       const vS = new THREE.Vector3(), vE = new THREE.Vector3(), vT = new THREE.Vector3();
       const surfEnd = FL[0].curve.getPointAt(1), nadwStart = FL[1].curve.getPointAt(0);
-      const bead = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 14), new THREE.MeshBasicMaterial({ color: 0xfde047 })); grp.add(bead);
+      const bead = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 14), new THREE.MeshBasicMaterial({ color: 0xfde047 })); grp.add(bead); ctx.halo(bead, 0xffe066, 1.1, 0.7);
       const trailM = new THREE.MeshBasicMaterial({ color: 0xfde047, transparent: true, opacity: 0.35 }), trail = [];
       for (let i = 0; i < 10; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.12 - i * 0.008, 10, 8), trailM); grp.add(m); trail.push(m); }
       const bl = label('', [0, 0, 0], { size: 12.5, color: 'rgba(120,80,0,.95)', offset: [0, 0.4, 0] }); bl.obj = bead;
@@ -169,7 +169,7 @@
       /* ================= 1단계 침강 실험(tank) · 2단계 단면 모형(sect): 2D와 같은 값으로 보여 줘요 ================= */
       const gG = new THREE.Group(); while (root.children.length) gG.add(root.children[0]); root.add(gG);
       const gTk = new THREE.Group(), gSc = new THREE.Group(); root.add(gTk, gSc); gTk.visible = gSc.visible = false;
-      const chromeM = new THREE.MeshStandardMaterial({ color: 0xdfe6ee, roughness: 0.22, metalness: 0.85 });
+      const chromeM = mats.metal('chrome');
       const benchG = (w, d, y, rep) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, 0.4, d), new THREE.MeshStandardMaterial({ map: FX.wood(rep), roughness: 0.55 })); b.position.y = y; b.receiveShadow = true; const e = new THREE.Mesh(new THREE.BoxGeometry(w + 0.04, 0.08, d + 0.04), new THREE.MeshStandardMaterial({ color: 0x6b4a2b, roughness: 0.6 })); e.position.y = y + 0.14; const g2 = new THREE.Group(); g2.add(b, e); return g2; };
       const probe = controls.text(''); probe.style.display = 'none'; const ctlEl = probe.parentElement;
       const globeEls = Array.prototype.filter.call(ctlEl.children, (e) => e !== probe);
@@ -178,7 +178,7 @@
       const MT = (c, o) => std(c, o);
       /* --- tank --- */
       const TW = 8.2, TH = 3.6, TD = 2.4;
-      { const gl = new THREE.Mesh(new THREE.BoxGeometry(TW, TH, TD), new THREE.MeshStandardMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.12, roughness: 0.08, depthWrite: false })); gTk.add(gl);
+      { const gl = new THREE.Mesh(new THREE.BoxGeometry(TW, TH, TD), mats.glass({ opacity: 0.12 })); gTk.add(gl);
         const ed = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(TW, TH, TD)), new THREE.LineBasicMaterial({ color: 0x9ab4d6 })); gTk.add(ed);
         const wt = new THREE.Mesh(new THREE.BoxGeometry(TW - 0.06, TH * 0.92, TD - 0.06), MT(0xbfe0f5, { transparent: true, opacity: 0.35, roughness: 0.15, depthWrite: false })); wt.position.y = -TH * 0.04; gTk.add(wt); }
       { gTk.add(benchG(TW + 5, TD + 4, -TH / 2 - 0.25, [3.5, 1.4]));

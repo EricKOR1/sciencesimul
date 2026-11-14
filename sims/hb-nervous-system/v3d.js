@@ -45,13 +45,14 @@
         col[i * 3] = cc.r; col[i * 3 + 1] = cc.g; col[i * 3 + 2] = cc.b;
       }
       cg.setAttribute('color', new THREE.BufferAttribute(col, 3)); cg.computeVertexNormals();
-      const lobeM = std(0xffffff, { vertexColors: true, roughness: 0.55 }), shellM = ghost(0xf0a0b4, 0.22, { roughness: 0.3, side: THREE.DoubleSide });
+      const lobeM = ctx.mats.organic(0xffffff, { extra: { vertexColors: true, roughness: 0.45 } }),   // 촉촉한 뇌 표면
+        shellM = ghost(0xf0a0b4, 0.22, { roughness: 0.3, side: THREE.DoubleSide });
       const cerebrum = new THREE.Mesh(cg, lobeM); cerebrum.position.set(0.15, 0.7, 0); brain.add(cerebrum);
       /* 소뇌 (가로 주름) */
       const cbg = new THREE.SphereGeometry(1, 64, 44), cp2 = cbg.attributes.position;
       for (let i = 0; i < cp2.count; i++) { const x = cp2.getX(i), y = cp2.getY(i), z = cp2.getZ(i), k = 1 + 0.045 * Math.sin(y * 34); cp2.setXYZ(i, x * k * 0.95, y * k * 0.58, z * k * 1.05); }
       cbg.computeVertexNormals();
-      const cb = new THREE.Mesh(cbg, std(0x6fc76a, { roughness: 0.6 })); cb.position.set(-1.15, -0.95, 0); brain.add(cb);
+      const cb = new THREE.Mesh(cbg, ctx.mats.organic(0x5ab856, { extra: { roughness: 0.5 } })); cb.position.set(-1.15, -0.95, 0); brain.add(cb);
       /* 뇌 줄기 : 간뇌 · 중간뇌 · 뇌교 · 연수 · 척수 */
       const mDien = std(0xf5a65b, { roughness: 0.4 }), mMid = std(0x2bb5a0, { roughness: 0.4 }), mPons = std(0xe0b34a, { roughness: 0.4 }), mMed = std(0x9a7fe0, { roughness: 0.4 }), mCord = std(0x6aa0dd, { roughness: 0.4 });
       const dien = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 22), mDien); dien.scale.set(1.2, 0.85, 1.0); dien.position.set(0.2, -0.05, 0); brain.add(dien);
@@ -76,14 +77,14 @@
       });
       for (let k = 0; k < 8; k++) { const y = -3.1 - k * 0.5; [-1, 1].forEach((s) => body.add(tube([V3(-0.3, y), V3(-0.3 + s * 0.6, y - 0.1, 0.1), V3(-0.3 + s * 1.3, y - 0.25, 0.15)], 0.035, nerveM, 12))); }
       // 자율 신경 : 심장 · 위
-      const heart = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 16), std(0xd7263d, { roughness: 0.4 })); heart.position.set(0.4, -4.2, 0.45); body.add(heart);
-      const stom = new THREE.Mesh(new THREE.SphereGeometry(0.5, 24, 16), std(0xe8918a, { roughness: 0.4 })); stom.scale.set(1.3, 0.8, 0.9); stom.position.set(0.6, -6.0, 0.4); body.add(stom);
+      const heart = new THREE.Mesh(new THREE.SphereGeometry(0.42, 28, 20), ctx.mats.organic(0xc41e34)); heart.position.set(0.4, -4.2, 0.45); body.add(heart);
+      const stom = new THREE.Mesh(new THREE.SphereGeometry(0.5, 28, 20), ctx.mats.organic(0xe0807a)); stom.scale.set(1.3, 0.8, 0.9); stom.position.set(0.6, -6.0, 0.4); body.add(stom);
       const eyes = [-1, 1].map((s) => { const e = new THREE.Mesh(new THREE.SphereGeometry(0.34, 20, 14), std(0xffffff, { roughness: 0.3 })); e.position.set(0.1 + s * 0.85, 0.75, 2.05); body.add(e); const pu = new THREE.Mesh(new THREE.CircleGeometry(1, 24), std(0x1a1a2a, { roughness: 0.2 })); pu.position.set(0, 0, 0.345); e.add(pu); return pu; });
-      const bronchM = std(0x9fd6e8, { roughness: 0.4 });
+      const bronchM = ctx.mats.organic(0x8ac8e0);
       const bronch = new THREE.Group(); bronch.position.set(-0.3, -3.8, 0.35); body.add(bronch);
       bronch.add(tube([V3(0, 0.6), V3(0, 0.1)], 0.08, bronchM, 6), tube([V3(0, 0.1), V3(-0.3, -0.2, 0), V3(-0.7, -0.6)], 0.06, bronchM, 10), tube([V3(0, 0.1), V3(0.3, -0.2, 0), V3(0.7, -0.6)], 0.06, bronchM, 10));
-      const gut = new THREE.Mesh(new THREE.TorusKnotGeometry(0.34, 0.1, 80, 10, 2, 3), std(0xf2b79a, { roughness: 0.45 })); gut.position.set(-0.3, -7.2, 0.35); body.add(gut);
-      const bladder = new THREE.Mesh(new THREE.SphereGeometry(0.34, 20, 14), std(0xf0dc8a, { roughness: 0.4 })); bladder.position.set(-0.3, -8.5, 0.3); body.add(bladder);
+      const gut = new THREE.Mesh(new THREE.TorusKnotGeometry(0.34, 0.1, 100, 12, 2, 3), ctx.mats.organic(0xeaa588)); gut.position.set(-0.3, -7.2, 0.35); body.add(gut);
+      const bladder = new THREE.Mesh(new THREE.SphereGeometry(0.34, 24, 18), ctx.mats.organic(0xe8cc70)); bladder.position.set(-0.3, -8.5, 0.3); body.add(bladder);
       body.add(tube([V3(-0.3, -3.7), V3(0.0, -3.9, 0.3), V3(0.35, -4.0, 0.42)], 0.05, autoM, 16), tube([V3(-0.3, -4.5), V3(0.1, -5.2, 0.3), V3(0.5, -5.8, 0.4)], 0.05, autoM, 20));
       const NPT = 16, pulseI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.11, 12, 9), new THREE.MeshBasicMaterial({ color: 0xffffff }), NPT * 2);
       body.add(pulseI);

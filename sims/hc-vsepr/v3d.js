@@ -42,10 +42,10 @@
       const L = 1.6; // 결합 길이
       const angLab = label('', [0, 0, 0], { color: 'rgba(255,211,77,.92)' }); angLab.el.style.color = '#1b2333';
       const atomLabs = []; for (let i = 0; i < 4; i++) { const l = label('', [0, 0, 0], { size: 12.5 }); l.show(false); atomLabs.push(l); }
-      function sphere(r, col, opa) { return new THREE.Mesh(new THREE.SphereGeometry(r, 32, 20), new THREE.MeshStandardMaterial({ color: col, roughness: 0.45, metalness: 0.05, transparent: opa < 1, opacity: opa })); }
+      function sphere(r, col, opa) { return new THREE.Mesh(new THREE.SphereGeometry(r, 32, 20), new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.28, metalness: 0, clearcoat: 0.55, clearcoatRoughness: 0.18, transparent: opa < 1, opacity: opa })); }
       function stick(a, b, r, col) {
         const va = new THREE.Vector3(...a), vb = new THREE.Vector3(...b), d = vb.clone().sub(va), len = d.length();
-        const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 16), new THREE.MeshStandardMaterial({ color: col, roughness: 0.6 }));
+        const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 24), new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.32, metalness: 0.15, clearcoat: 0.4, clearcoatRoughness: 0.25 }));
         m.position.copy(va).add(vb).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); return m;
       }
       function lobe(dir) { // 비공유 전자쌍: 반투명 물방울
@@ -91,7 +91,7 @@
         const core = sphere(0.22, 0x9aa6bf, 1); g.add(core);
         const dirs = IDEAL3[n].map((d, i) => { const v = new THREE.Vector3(...d), s = new THREE.Vector3(0, 1, 0).multiplyScalar(1.3).addScaledVector(v, 0.45 + 0.1 * i); return s.normalize().lerp(v, f).normalize(); });
         dirs.forEach((v, i) => {
-          const m = new THREE.Mesh(new THREE.SphereGeometry(0.62, 28, 18), new THREE.MeshStandardMaterial({ color: BAL_COL[i], transparent: true, opacity: 0.55, roughness: 0.25, depthWrite: false }));
+          const m = new THREE.Mesh(new THREE.SphereGeometry(0.62, 28, 18), new THREE.MeshPhysicalMaterial({ color: BAL_COL[i], transparent: true, opacity: 0.55, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.1, envMapIntensity: 1.6, depthWrite: false }));
           m.scale.set(0.82, 1.45, 0.82); m.position.copy(v.clone().multiplyScalar(1.15)); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), v); g.add(m);
         });
         if (prot && n >= 2) { const ar = arc(dirs[0].toArray(), dirs[1].toArray()); g.add(ar.line); const ang = Math.round(Math.acos(clamp(dirs[0].dot(dirs[1]), -1, 1)) * 1800 / Math.PI) / 10; angLab.obj = ar.mid.toArray(); angLab.set(ang + '°'); angLab.show(true); } else angLab.show(false);
@@ -103,7 +103,7 @@
         if (!liveM || liveM[0].parent !== g) {
           clearG(); atomLabs.forEach((x) => x.show(false)); liveArc = null; liveArcKey = '';
           g.add(sphere(0.22, 0x9aa6bf, 1));
-          liveM = BAL_COL.map((c) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.62, 28, 18), new THREE.MeshStandardMaterial({ color: c, transparent: true, opacity: 0.55, roughness: 0.25, depthWrite: false })); g.add(m); return m; });
+          liveM = BAL_COL.map((c) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.62, 28, 18), new THREE.MeshPhysicalMaterial({ color: c, transparent: true, opacity: 0.55, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.1, envMapIntensity: 1.6, depthWrite: false })); g.add(m); return m; });
         }
         const up = new THREE.Vector3(0, 1, 0);
         liveM.forEach((m, i) => {

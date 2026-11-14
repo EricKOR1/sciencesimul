@@ -28,7 +28,7 @@
         heads.push([jx, 0.4, jz], [jx, -0.4, jz]);
         [-1, 1].forEach((sd) => { tails.push([jx + sd * 0.07, 0.215, jz], [jx + sd * 0.07, -0.215, jz]); });
       }
-      const hI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.17, 12, 8), std(0xf5cfa8, { roughness: 0.5 }), heads.length);
+      const hI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.17, 12, 8), new THREE.MeshPhysicalMaterial({ color: 0xf0c8a0, roughness: 0.35, clearcoat: 0.6, clearcoatRoughness: 0.2 }), heads.length);   // 인지질 머리: 촉촉한 윤기
       const tI = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.035, 0.035, 0.34, 8), std(0xe0a95a, { roughness: 0.6 }), tails.length);
       heads.forEach((p, i) => { D.position.set(p[0], p[1], p[2]); D.scale.setScalar(1); D.updateMatrix(); hI.setMatrixAt(i, D.matrix); });
       tails.forEach((p, i) => { D.position.set(p[0], p[1], p[2]); D.updateMatrix(); tI.setMatrixAt(i, D.matrix); });
@@ -37,7 +37,7 @@
       /* 통로 단백질 */
       function barrel(x, col) {
         const g = new THREE.Group(); g.position.set(x, 0, 0);
-        const m = std(col, { roughness: 0.35, side: THREE.DoubleSide });
+        const m = ctx.mats.organic(col, { extra: { side: THREE.DoubleSide } });
         g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 1.3, 36, 1, true), m));
         [0.65, -0.65].forEach((y) => { const t = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.09, 12, 36), m); t.rotation.x = Math.PI / 2; t.position.y = y; g.add(t); });
         root.add(g); return g;
@@ -48,15 +48,15 @@
       const naGate = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.1, 28), naGateM); naGate.position.set(XNA, 0.7, 0); root.add(naGate);
       const kGate = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.1, 28), kGateM); kGate.position.set(XK, -0.7, 0); root.add(kGate);
       const pump = new THREE.Group(); pump.position.set(XP, 0, 0); root.add(pump);
-      const pumpM = std(0x9a7fe0, { roughness: 0.35 });
+      const pumpM = ctx.mats.organic(0x8a6ed8);
       const pb = new THREE.Mesh(new THREE.SphereGeometry(0.72, 36, 24), pumpM); pb.scale.set(1, 0.95, 1); pump.add(pb);
-      const pr = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.07, 10, 28), std(0x6c4fc4)); pr.rotation.x = Math.PI / 2; pr.position.y = 0.62; pump.add(pr);
+      const pr = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.07, 12, 36), ctx.mats.organic(0x5c40b8)); pr.rotation.x = Math.PI / 2; pr.position.y = 0.62; pump.add(pr);
       const atp = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), std(0xffd34d, { emissive: 0xffa800, emissiveIntensity: 0.6 })); atp.position.set(0.1, -0.88, 0.1); pump.add(atp);
 
       /* 이온 : Na⁺(많음: 세포 밖) · K⁺(많음: 세포 안) */
       const NA_OUT = 56, NA_IN = 7, K_IN = 46, K_OUT = 6, NF = 9, NP = 3, KP = 2;
       const naTotal = NA_OUT + NA_IN + NF + NP, kTotal = K_IN + K_OUT + NF + KP;
-      const naI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.15, 16, 12), std(0xffb02e, { roughness: 0.3, emissive: 0x6a4000, emissiveIntensity: 0.5 }), naTotal);
+      const naI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.15, 16, 12), std(0xffb02e, { roughness: 0.22, metalness: 0, emissive: 0x6a4000, emissiveIntensity: 0.45 }), naTotal);
       const kI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.15, 16, 12), std(0x4aa8ff, { roughness: 0.3, emissive: 0x0a3a78, emissiveIntensity: 0.5 }), kTotal);
       root.add(naI, kI);
       const ions = (n, side) => Array.from({ length: n }, () => ({ x: (R() - 0.5) * 11, y: side * (0.9 + R() * 2.6), z: (R() - 0.5) * 3.2, vx: (R() - 0.5), vy: (R() - 0.5), vz: (R() - 0.5), side }));

@@ -141,11 +141,11 @@
       /* ================= 🔦 이중 슬릿 · 📏 간섭 조건 (빛은 +x 방향, 1 m = 2.2칸, 스크린 ±30 mm = ±3칸) ================= */
       const ZU = 2.2, MMU = 3 / 30;
       const table = new THREE.Mesh(new THREE.BoxGeometry(16, 0.1, 7), M(0x0d1530, { roughness: 1 })); table.position.set(2, -0.06, 0); gS.add(table);
-      const laser = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.5, 0.6), M(0x4b5878, { metalness: 0.5 })); laser.position.set(-4.6, 0.3, 0); gS.add(laser);
+      const laser = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.5, 0.6), ctx.mats.metal('aluminium', { brushed: true })); laser.position.set(-4.6, 0.3, 0); gS.add(laser);
       const lLas = label('레이저', laser, { color: '#4b5878', size: 12 }); lLas.off = [0, 0.6, 0];
       const beam = new THREE.Mesh(new THREE.BoxGeometry(1, 0.14, 0.14), new THREE.MeshBasicMaterial({ color: 0xff4040, transparent: true, opacity: 0.6, depthWrite: false })); gS.add(beam);
       const plate = new THREE.Group(); gS.add(plate);
-      const wallM = M(0x64748b, { metalness: 0.3 });
+      const wallM = ctx.mats.metal('iron', { roughness: 0.45 });
       const wallParts = [0, 1, 2].map(() => { const w = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.4, 1), wallM); w.position.y = 0.6; plate.add(w); return w; });
       const lPl = label('가림판 (슬릿)', plate, { color: '#64748b', size: 12 }); lPl.off = [0, 1.6, 0];
       const screen = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.6, 6.2), M(0x1a1f33, { roughness: 1 })); gS.add(screen);
@@ -237,8 +237,8 @@
       }
       const waveMesh = (col, par) => { const m = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: col })); par.add(m); return m; };
       /* --- 🔍 무반사 코팅 (단면, 빛은 20°로 비스듬히) --- */
-      const glassC = new THREE.Mesh(new THREE.BoxGeometry(6.4, 2.2, 2), M(0x5f8fb0, { roughness: 0.2, transparent: true, opacity: 0.85 })); glassC.position.set(-0.8, -1.1, 0); gC.add(glassC);
-      const filmC = new THREE.Mesh(new THREE.BoxGeometry(6.4, 1, 2.02), M(0xffc44d, { roughness: 0.3, transparent: true, opacity: 0.85 })); gC.add(filmC);
+      const glassC = new THREE.Mesh(new THREE.BoxGeometry(6.4, 2.2, 2), ctx.mats.glass({ tint: 0x8fb8d8, opacity: 0.62, extra: { depthWrite: true, side: THREE.FrontSide } })); glassC.position.set(-0.8, -1.1, 0); gC.add(glassC);
+      const filmC = new THREE.Mesh(new THREE.BoxGeometry(6.4, 1, 2.02), ctx.mats.glass({ tint: 0xffc44d, opacity: 0.78, extra: { depthWrite: true, side: THREE.FrontSide, iridescence: 1, iridescenceIOR: 1.38, iridescenceThicknessRange: [200, 600], roughness: 0.08 } })); gC.add(filmC);
       const aIn = mkArrow(0xffffff, 0.04), aR1 = mkArrow(0xff7a45, 0.04), aR2 = mkArrow(0x3a8dff, 0.04), aF1 = mkArrow(0xffffff, 0.03), aF2 = mkArrow(0xffffff, 0.03), aTr = mkArrow(0xffffff, 0.03); gC.add(aIn, aR1, aR2, aF1, aF2, aTr);
       const glowC = new THREE.Mesh(new THREE.SphereGeometry(0.5, 20, 16), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6, depthWrite: false })); gC.add(glowC);
       const wC = [waveMesh(0xff7a45, gC), waveMesh(0x3a8dff, gC), waveMesh(0x1b2333, gC)];
@@ -294,8 +294,8 @@
       /* --- 🎧 소음 제거 헤드폰 --- */
       const wH = [waveMesh(0xe2464b, gH), waveMesh(0x2f6df6, gH), waveMesh(0x14a058, gH)];
       const hpG = new THREE.Group(); gH.add(hpG);
-      { const band = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.1, 10, 36, Math.PI), M(0x394258, { metalness: 0.4 })); band.position.y = 0.1; hpG.add(band);
-        [-1.5, 1.5].forEach((x) => { const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.5, 28), M(0x4b5878, { metalness: 0.3 })); cup.rotation.z = Math.PI / 2; cup.position.set(x, 0.1, 0); hpG.add(cup); const pad = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.12, 24), M(0xe8edf6)); pad.rotation.z = Math.PI / 2; pad.position.set(x * 0.8, 0.1, 0); hpG.add(pad); });
+      { const band = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.1, 10, 36, Math.PI), ctx.mats.plastic(0x2c3444, { roughness: 0.3 })); band.position.y = 0.1; hpG.add(band);
+        [-1.5, 1.5].forEach((x) => { const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.5, 28), ctx.mats.plastic(0x3a4458, { roughness: 0.3 })); cup.rotation.z = Math.PI / 2; cup.position.set(x, 0.1, 0); hpG.add(cup); const pad = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.12, 24), M(0xe8edf6)); pad.rotation.z = Math.PI / 2; pad.position.set(x * 0.8, 0.1, 0); hpG.add(pad); });
         const mic = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), M(0xe2464b, { emissive: 0x7a1d1d })); mic.position.set(-1.78, 0.5, 0.2); hpG.add(mic);
         const ear = new THREE.Mesh(new THREE.SphereGeometry(0.28, 14, 10), M(0xf3cfa8)); ear.scale.set(0.4, 1, 0.8); ear.position.set(0, 0.1, 0); hpG.add(ear); }
       hpG.position.set(5.2, -0.2, 0);
@@ -316,9 +316,9 @@
       }
       /* --- 🛰️ 간섭계 (위에서 본 모습, 광학 테이블) --- */
       const tblL = new THREE.Mesh(new THREE.BoxGeometry(10, 0.2, 7), M(0x0d1224, { roughness: 0.9 })); tblL.position.set(0.5, -0.12, 0.2); tblL.receiveShadow = true; gL.add(tblL);
-      const laserB = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.5, 0.6), M(0x4b5878, { metalness: 0.4 })); laserB.position.set(-3.6, 0.25, 0); gL.add(laserB);
-      const splitB = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.5, 1.1), new THREE.MeshStandardMaterial({ color: 0x9cc8ff, transparent: true, opacity: 0.6, roughness: 0.1 })); splitB.rotation.y = Math.PI / 4; splitB.position.set(0, 0.25, 0); gL.add(splitB);
-      const mir1 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.6, 1.0), M(0xaab3c4, { metalness: 0.9, roughness: 0.2 })), mir2 = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.6, 0.12), M(0xaab3c4, { metalness: 0.9, roughness: 0.2 })); gL.add(mir1, mir2);
+      const laserB = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.5, 0.6), ctx.mats.metal('aluminium', { brushed: true })); laserB.position.set(-3.6, 0.25, 0); gL.add(laserB);
+      const splitB = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.5, 1.1), ctx.mats.glass({ tint: 0x9cc8ff, opacity: 0.45 })); splitB.rotation.y = Math.PI / 4; splitB.position.set(0, 0.25, 0); gL.add(splitB);
+      const mir1 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.6, 1.0), ctx.mats.metal('chrome', { roughness: 0.04 })), mir2 = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.6, 0.12), ctx.mats.metal('chrome', { roughness: 0.04 })); gL.add(mir1, mir2);
       const detD = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.25, 28), M(0x2a1215, { roughness: 0.4 })); detD.position.set(0, 0.12, 3.0); gL.add(detD);
       const bm = (col, r) => new THREE.Mesh(new THREE.CylinderGeometry(r, r, 1, 8), new THREE.MeshBasicMaterial({ color: col, transparent: true }));
       const beams = { in: bm(0xe2464b, 0.04), a1: bm(0xe2464b, 0.04), a1b: bm(0xff9a3c, 0.04), a2: bm(0xe2464b, 0.04), a2b: bm(0xff9a3c, 0.04), out: bm(0xff6a6a, 0.07) };

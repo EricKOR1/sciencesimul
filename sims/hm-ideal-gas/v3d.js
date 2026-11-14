@@ -54,13 +54,13 @@
       const NMAX = 200, LX = 6, LY = 3.4, LZ = 3.4;
       const pos = new Float32Array(NMAX * 3), vel = new Float32Array(NMAX * 3);
       const im = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 14, 10), M(0xffffff, { roughness: 0.3 }), NMAX); im.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(NMAX * 3), 3); im.frustumCulled = false; root.add(im);
-      const box = new THREE.Mesh(new THREE.BoxGeometry(1, LY, LZ), new THREE.MeshStandardMaterial({ color: 0x9ec5ff, transparent: true, opacity: 0.1, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false })); root.add(box);
+      const box = new THREE.Mesh(new THREE.BoxGeometry(1, LY, LZ), ctx.mats.glass({ tint: 0xd6e9ff, opacity: 0.12 })); root.add(box);
       const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, LY, LZ)), new THREE.LineBasicMaterial({ color: 0xbcd4ff, transparent: true, opacity: 0.6 })); root.add(edges);
-      const pis = new THREE.Mesh(new THREE.BoxGeometry(0.22, LY + 0.1, LZ + 0.1), M(0x64748b, { metalness: 0.6 })); root.add(pis);
-      const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 3, 16), M(0x94a3b8, { metalness: 0.7 })); rod.rotation.z = Math.PI / 2; root.add(rod);
-      const handle = new THREE.Mesh(new THREE.BoxGeometry(0.25, 1.1, 1.1), M(0xe2464b)); root.add(handle);
+      const pis = new THREE.Mesh(new THREE.BoxGeometry(0.22, LY + 0.1, LZ + 0.1), ctx.mats.metal('steel', { brushed: true })); root.add(pis);
+      const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 3, 16), ctx.mats.metal('chrome', { roughness: 0.12 })); rod.rotation.z = Math.PI / 2; root.add(rod);
+      const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.25, 40).rotateZ(Math.PI / 2), ctx.mats.rubber(0xc8363c)); root.add(handle);
       const gauge = new THREE.Group(); root.add(gauge);
-      const gb = new THREE.Mesh(new THREE.BoxGeometry(0.5, 3, 0.3), M(0x334155)); gb.position.y = 1.5; gauge.add(gb);
+      const gb = new THREE.Mesh(new THREE.BoxGeometry(0.5, 3, 0.3), ctx.mats.plastic(0x2a3342)); gb.position.y = 1.5; gauge.add(gb);
       const gf = new THREE.Mesh(new THREE.BoxGeometry(0.34, 1, 0.34), M(0xff6b6b, { emissive: 0x7f1d1d })); gauge.add(gf); gauge.position.set(-3.2, -LY / 2, 1.5);
       const lP = label('압력 P', gb, { color: '#e2464b', size: 13 }), lPis = label('피스톤(부피)', pis, { color: '#475569', size: 12 }); lP.off = [0, 1.9, 0]; lPis.off = [0, LY / 2 + 0.4, 0];
       const colS = new THREE.Color(0x60a5fa), colF = new THREE.Color(0xff7b54), tc = new THREE.Color(), m4 = new THREE.Matrix4();
@@ -74,21 +74,21 @@
       const hideApp = (A) => !!(!(A.game && A.game.free) && A.S.flags.app);
       const Q0 = new THREE.Quaternion(), vq = new V3(), vs3 = new V3();
       // --- 타이어
-      const road = new THREE.Mesh(new THREE.BoxGeometry(12, 0.3, 4), M(0x9aa5b5, { roughness: 0.9 })); road.position.set(0, -0.15, 0); gT.add(road);
+      const road = new THREE.Mesh(new THREE.BoxGeometry(12, 0.3, 4), ctx.mats.stone(0x8c95a3, { repeat: 4 })); road.position.set(0, -0.15, 0); gT.add(road);
       const wheel = new THREE.Group(); wheel.position.y = 2.1; gT.add(wheel);
-      const tireM = new THREE.Mesh(new THREE.TorusGeometry(1.7, 0.5, 20, 56), M(0x2b3445, { roughness: 0.8 })); wheel.add(tireM);
-      const rimM = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.5, 40), M(0xc8d0dc, { metalness: 0.6, roughness: 0.3 })); rimM.rotation.x = Math.PI / 2; wheel.add(rimM);
-      for (let i = 0; i < 5; i++) { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.1, 0.12), M(0x8a95a8)); const a = i * TAU / 5 + 0.3; sp.position.set(Math.cos(a) * 0.6, Math.sin(a) * 0.6, 0.3); sp.rotation.z = a - Math.PI / 2; wheel.add(sp); }
+      const tireM = new THREE.Mesh(new THREE.TorusGeometry(1.7, 0.5, 20, 56), ctx.mats.rubber(0x1c1f26)); wheel.add(tireM);
+      const rimM = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.5, 40), ctx.mats.metal('aluminium', { brushed: true })); rimM.rotation.x = Math.PI / 2; wheel.add(rimM);
+      for (let i = 0; i < 5; i++) { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.1, 0.12), ctx.mats.metal('steel')); const a = i * TAU / 5 + 0.3; sp.position.set(Math.cos(a) * 0.6, Math.sin(a) * 0.6, 0.3); sp.rotation.z = a - Math.PI / 2; wheel.add(sp); }
       const NTI = 90, tireAir = new THREE.InstancedMesh(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }), NTI); tireAir.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(NTI * 3), 3); tireAir.frustumCulled = false; wheel.add(tireAir);
       const tm = []; for (let i = 0; i < NTI; i++) tm.push({ th: Math.random() * TAU, ph: Math.random() * TAU, v: (Math.random() - 0.5) * 2, wp: 1 + Math.random() * 2, r: 0.15 + Math.random() * 0.25 });
       tireM.material.transparent = true; tireM.material.opacity = 0.55; tireM.material.depthWrite = false;
       const dialT = new THREE.Group(); dialT.position.set(4.2, 2.4, 0); gT.add(dialT);
-      const dFace = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.2, 40), M(0xf8fafc)); dFace.rotation.x = Math.PI / 2; dialT.add(dFace);
-      const dRing = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.08, 10, 40), M(0x334155)); dialT.add(dRing);
+      const dFace = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.2, 48), ctx.mats.ceramic(0xf8fafc)); dFace.rotation.x = Math.PI / 2; dialT.add(dFace);
+      const dRing = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.08, 14, 64), ctx.mats.metal('chrome', { roughness: 0.15 })); dialT.add(dRing);
       const needle = new THREE.Mesh(new THREE.BoxGeometry(0.07, 1.0, 0.06), M(0xe2464b)); needle.geometry.translate(0, 0.5, 0); needle.position.z = 0.15; dialT.add(needle);
       for (let i = 0; i <= 8; i++) { const a = -Math.PI * 0.75 + i * Math.PI * 1.5 / 8, tk = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.16, 0.04), M(0x334155)); tk.position.set(Math.sin(a) * 1.0, Math.cos(a) * 1.0, 0.12); tk.rotation.z = -a; dialT.add(tk); }
       const thT = new THREE.Group(); thT.position.set(-4.2, 0, 0); gT.add(thT);
-      const thTube = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 3.6, 16), new THREE.MeshStandardMaterial({ color: 0xe5e7eb, transparent: true, opacity: 0.5 })); thTube.position.y = 1.9; thT.add(thTube);
+      const thTube = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 3.6, 16), ctx.mats.glass({ tint: 0xf1f5f9, opacity: 0.32 })); thTube.position.y = 1.9; thT.add(thTube);
       const thHg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1, 12), M(0xe2464b, { emissive: 0x7f1d1d })); thT.add(thHg);
       const thBulb = new THREE.Mesh(new THREE.SphereGeometry(0.28, 14, 10), M(0xe2464b, { emissive: 0x7f1d1d })); thBulb.position.y = 0.15; thT.add(thBulb);
       const NSN = 60, snow = new THREE.InstancedMesh(new THREE.SphereGeometry(0.05, 6, 4), new THREE.MeshBasicMaterial({ color: 0xffffff }), NSN); snow.frustumCulled = false; gT.add(snow);
@@ -108,13 +108,13 @@
       }
       // --- 잠수 + 풍선
       const WXL = -3.6, WH = 4.6;
-      const sea = new THREE.Mesh(new THREE.BoxGeometry(5.2, WH, 3), new THREE.MeshStandardMaterial({ color: 0x3b9bea, transparent: true, opacity: 0.35, depthWrite: false })); sea.position.set(WXL, WH / 2, 0); gD.add(sea);
+      const sea = new THREE.Mesh(new THREE.BoxGeometry(5.2, WH, 3), ctx.mats.liquid(0x2f8fe0, { opacity: 0.4 })); sea.position.set(WXL, WH / 2, 0); gD.add(sea);
       const seaEdge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(5.2, WH, 3)), new THREE.LineBasicMaterial({ color: 0xdbeafe, transparent: true, opacity: 0.6 })); seaEdge.position.copy(sea.position); gD.add(seaEdge);
       [0, 5, 10].forEach((m) => { const y = WH - 0.5 - m / 10 * 3.6, t = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.02, 0.02), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 })); t.position.set(WXL, y, 1.5); gD.add(t); reg('dive', label(m + ' m', [WXL - 2.8, y, 1.5], { color: '#0369a1', size: 11 })); });
       const diver = new THREE.Group(); { const hd = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 12), M(0xf2c9a0)); hd.position.y = 0.0; const mk = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.14, 0.4), M(0x1e293b)); mk.position.set(0, 0.05, 0.12); const bd = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.2, 0.7, 14), M(0x334155)); bd.position.y = -0.55; diver.add(hd, mk, bd); } diver.scale.setScalar(1.7); gD.add(diver);
-      const lung = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 20), M(0xff8a9a, { roughness: 0.3, emissive: 0x4a0d19 })); gD.add(lung);
+      const lung = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 20), ctx.mats.organic(0xff8a9a, { extra: { emissive: 0x3a0a14 } })); gD.add(lung);
       const BXL = 3.6, ground = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.3, 3), M(0x6b8f5c)); ground.position.set(BXL, -0.15, 0); gD.add(ground);
-      const ball = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), M(0xef4444, { roughness: 0.2 })); gD.add(ball); const str = new THREE.Mesh(new THREE.BoxGeometry(0.03, 1, 0.03), M(0x475569)); gD.add(str);
+      const ball = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), ctx.mats.plastic(0xef4444, { roughness: 0.15 })); gD.add(ball); const str = new THREE.Mesh(new THREE.BoxGeometry(0.03, 1, 0.03), M(0x475569)); gD.add(str);
       const lDs = reg('dive', label('', diver, { color: '#075985', size: 12, offset: [0, 0.9, 0] })), lDl = reg('dive', label('', lung, { color: '#e11d48', size: 13 })), lDb = reg('dive', label('', ball, { color: '#dc2626', size: 13 })), lDh = reg('dive', label('', [BXL, WH + 0.2, 0], { color: '#475569', size: 12 })), lDw = reg('dive', label('🤿 잠수', [WXL, WH + 0.3, 0], { color: '#0369a1', size: 12 }));
       function diveScene(A, S) {
         const a = S.ap, hide = hideApp(A), lv = A.lungV(a.dd), b = A.balAt(a.dh / 100);
@@ -126,9 +126,9 @@
       }
       // --- 열기구
       const grdH = new THREE.Mesh(new THREE.BoxGeometry(12, 0.3, 5), M(0x7dbb6c, { roughness: 1 })); grdH.position.y = -0.15; gH.add(grdH);
-      const envH = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), M(0xf59e0b, { roughness: 0.5 })); gH.add(envH);
+      const envH = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), ctx.mats.fabric(0xf59e0b, { repeat: 4 })); gH.add(envH);
       const stripe = new THREE.Mesh(new THREE.SphereGeometry(1.003, 40, 28, 0, TAU, 0, Math.PI), new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.18 })); envH.add(stripe);
-      const basketH = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.6, 0.9), M(0xa3763f)); gH.add(basketH);
+      const basketH = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.6, 0.9), ctx.mats.wood(0xa3763f)); gH.add(basketH);
       const burnH = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.8, 12), new THREE.MeshBasicMaterial({ color: 0xffa94d })); gH.add(burnH);
       const ropeH = [0, 1, 2, 3].map(() => { const r = new THREE.Mesh(new THREE.BoxGeometry(0.03, 1, 0.03), M(0x475569)); gH.add(r); return r; });
       const paxH = []; for (let i = 0; i < 6; i++) { const p = new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 8), M([0xf2c9a0, 0xe8b98c, 0xf6d7b8][i % 3])); gH.add(p); paxH.push(p); }

@@ -27,10 +27,11 @@
       const V3 = THREE.Vector3;
       let alt = 0, names = !PHN, lastKey = '';
       const bandObjs = [], tubes = [], ptsM = [], bandFeat = [];
-      const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o || {}));
+      const MT = ctx.mats, lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 색이 바래지 않게 (권역 색이 또렷하게)
+      const sm = (c, o) => { const q = Object.assign({ color: lc(c), roughness: 0.5, metalness: 0.05 }, o || {}); if (typeof q.emissive === 'number') q.emissive = lc(q.emissive); return new THREE.MeshStandardMaterial(q); };
       /* 땅 */
-      const ground = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 0.5, 64), sm(0x4f9a5a, { roughness: 0.9 })); ground.position.y = -0.27; root.add(ground);
-      const sea = new THREE.Mesh(new THREE.CylinderGeometry(3.9, 3.9, 0.4, 64), sm(0x2a6fb0, { roughness: 0.3 })); sea.position.y = -0.55; root.add(sea); sea.userData.v3bg = true;
+      const ground = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 0.5, 64), MT.stone(lc(0x4f9a5a), { repeat: 4, bump: 0.04 })); ground.position.y = -0.27; root.add(ground);
+      const sea = new THREE.Mesh(new THREE.CylinderGeometry(3.9, 3.9, 0.4, 64), MT.liquid(lc(0x2a6fb0), { opacity: 0.9 })); sea.position.y = -0.55; root.add(sea); sea.userData.v3bg = true;
       // 자동 맞춤용 보이지 않는 상자: 대기 기둥(0~80 km)과 기온 그래프 전체 + 위쪽 여유(설명 상자에 가리지 않게)
       { const fb = new THREE.Mesh(new THREE.BoxGeometry(8.3, 10.3, 1.4), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); fb.position.set(2.25, 4.55, 0); root.add(fb); }
       /* 네 층 */
@@ -56,10 +57,10 @@
       for (let i = 0; i < 16; i++) { const d = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 10), sm(0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.5 })); d.visible = false; root.add(d); ptsM.push(d); }
       /* 기구 */
       const balloon = new THREE.Group();
-      const bl = new THREE.Mesh(new THREE.SphereGeometry(0.34, 28, 20), sm(0xf43f5e, { roughness: 0.3 })); bl.position.y = 0.34; balloon.add(bl);
+      const bl = new THREE.Mesh(new THREE.SphereGeometry(0.34, 28, 20), MT.plastic(lc(0xf43f5e), { roughness: 0.22 })); bl.position.y = 0.34; balloon.add(bl);
       const bs = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.16), sm(0x92400e)); bs.position.y = -0.18; balloon.add(bs);
       balloon.position.set(0, 0, W / 2 + 0.55); root.add(balloon);
-      const dot = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 14), sm(0xfde047, { emissive: 0xfde047, emissiveIntensity: 0.6 })); root.add(dot);
+      const dot = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 14), sm(0xfde047, { emissive: 0xfde047, emissiveIntensity: 0.7 })); root.add(dot); ctx.halo(dot, 0xfde047, 1.2, 0.55);
       const ringM = new THREE.Mesh(new THREE.BoxGeometry(W + 0.6, 0.03, W + 0.6), new THREE.MeshBasicMaterial({ color: 0xfde047, transparent: true, opacity: 0.35, depthWrite: false })); root.add(ringM);
       const balLab = label('', balloon, { color: 'rgba(15,23,42,.9)', size: 13, offset: [0.2, 1.0, 0] });
       /* 특징: 구름 · 비행기 · 오존층 · 유성 · 오로라 · 인공위성 */
@@ -71,13 +72,13 @@
         c.position.set(q[0], q[1], q[2]); clouds.add(c);
       });
       fl('구름 · 비', [0, 1.15, 1.4]);
-      const plane = new THREE.Group(); const pb = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.5, 4, 10), sm(0xe2e8f0, { metalness: 0.3 })); pb.rotation.z = Math.PI / 2; const pw = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.02, 0.6), sm(0xcbd5e1)); plane.add(pb, pw); plane.position.y = yOf(10.5); root.add(plane); fl('여객기', plane);
+      const plane = new THREE.Group(); const pb = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.5, 4, 10), MT.metal('aluminium', { roughness: 0.25 })); pb.rotation.z = Math.PI / 2; const pw = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.02, 0.6), MT.metal('aluminium', { roughness: 0.3 })); plane.add(pb, pw); plane.position.y = yOf(10.5); root.add(plane); fl('여객기', plane);
       const ozone = new THREE.Mesh(new THREE.BoxGeometry(W + 0.05, yOf(30) - yOf(20), W + 0.05), sm(0x86efac, { transparent: true, opacity: 0.35, emissive: 0x22c55e, emissiveIntensity: 0.4, depthWrite: false })); ozone.position.y = (yOf(30) + yOf(20)) / 2; root.add(ozone); bandFeat.push(ozone, fl('오존층', [-W / 2, yOf(25), -W / 2], 'rgba(21,128,61,.92)'));
-      const met = []; for (let i = 0; i < 3; i++) { const m = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.9, 8), new THREE.MeshBasicMaterial({ color: 0xfff1b0, transparent: true, opacity: 0.9 })); root.add(m); met.push(m); }
+      const met = []; for (let i = 0; i < 3; i++) { const m = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.9, 8), new THREE.MeshBasicMaterial({ color: 0xfff1b0, transparent: true, opacity: 0.9 })); ctx.halo(m, 0xffe9a0, 0.6, 0.7).position.y = -0.4; root.add(m); met.push(m); }
       bandFeat.push(...met, fl('유성', [0, yOf(65), W / 2], 'rgba(76,29,149,.9)'));
       const auroras = []; for (let i = 0; i < 3; i++) { const g = new THREE.PlaneGeometry(2.2, 1.0, 20, 1); const a = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: i === 1 ? 0x86efac : 0x4ade80, transparent: true, opacity: 0.4, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending })); a.position.set(-0.9 + i * 0.9, yOf(90), -0.8 + i * 0.7); a.rotation.y = 0.5 * (i - 1); root.add(a); auroras.push(a); }
       bandFeat.push(...auroras, fl('오로라', [0, yOf(94), 0], 'rgba(22,101,52,.92)'));
-      const sat = new THREE.Group(); sat.add(new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.22), sm(0xfbbf24, { metalness: 0.7, roughness: 0.3 }))); [-1, 1].forEach((s) => { const pn = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.02, 0.24), sm(0x2563eb, { metalness: 0.6, roughness: 0.2 })); pn.position.x = 0.38 * s; sat.add(pn); }); root.add(sat); bandFeat.push(sat, fl('인공위성', sat));
+      const sat = new THREE.Group(); sat.add(new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.22), MT.metal('gold', { roughness: 0.3 }))); [-1, 1].forEach((s) => { const pn = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.02, 0.24), MT.plastic(lc(0x1f47b8), { roughness: 0.18, extra: { envMapIntensity: 1.6 } })); pn.position.x = 0.38 * s; sat.add(pn); }); root.add(sat); bandFeat.push(sat, fl('인공위성', sat));
       /* 설명 · 2D 차시와 같은 단계에서 같은 것만 보여 줘요 */
       const POP_H = 30;
       function vis() {
@@ -88,7 +89,7 @@
         tubes.forEach((q) => {
           const f = on ? 1 : Math.max(0, Math.min(1, ((S.maxAlt || 0) - q.L.a) / (q.L.b - q.L.a)));
           q.tube.visible = f > 0.001; q.tube.geometry.setDrawRange(0, Math.max(6, Math.floor(f * q.n / 6) * 6));
-          const c = on ? q.L.c : 0xe2e8f0; q.tm.color.setHex(c); q.tm.emissive.setHex(c);
+          const c = on ? q.L.c : 0xe2e8f0; q.tm.color.copy(lc(c)); q.tm.emissive.copy(lc(c));
         });
         const pts = S.pts || []; ptsM.forEach((d, i) => { const p = pts[i]; d.visible = !!p; if (p) d.position.set(xT(p.T), yOf(p.h), -W / 2 + 0.1); });
       }
@@ -120,7 +121,7 @@
           const key = S ? [alt.toFixed(2), S.bandsOn, S.maxAlt.toFixed(1), S.pts.length, S.lv].join('|') : '';
           if (key !== lastKey) { lastKey = key; readout(); vis(); }
           plane.position.x = Math.sin(t * 0.5) * 1.3; plane.rotation.y = Math.cos(t * 0.5) > 0 ? 0 : Math.PI;
-          met.forEach((m, i) => { const u = ((t * 0.5 + i * 0.37) % 1.2); const x = -1.2 + u * 1.8 + i * 0.4, y = yOf(75) - u * 0.9 + i * 0.1; m.position.set(x, y, 0.4 - i * 0.7); m.rotation.z = Math.PI / 2 - 0.5; m.material.opacity = Math.max(0, 1 - u * 1.2); });
+          met.forEach((m, i) => { const u = ((t * 0.5 + i * 0.37) % 1.2); const x = -1.2 + u * 1.8 + i * 0.4, y = yOf(75) - u * 0.9 + i * 0.1; m.position.set(x, y, 0.4 - i * 0.7); m.rotation.z = Math.PI / 2 - 0.5; m.material.opacity = Math.max(0, 1 - u * 1.2); if (m.children[0]) m.children[0].material.opacity = 0.7 * m.material.opacity; });
           auroras.forEach((a, i) => { const p = a.geometry.attributes.position; for (let j = 0; j < p.count; j++) { const x = p.getX(j); p.setZ(j, Math.sin(x * 2.4 + t * 1.4 + i) * 0.25); } p.needsUpdate = true; a.material.opacity = 0.3 + 0.15 * Math.sin(t * 1.3 + i * 2); });
           sat.position.set(Math.cos(t * 0.6) * 2.3, yOf(92) + Math.sin(t * 0.6) * 0.25, Math.sin(t * 0.6) * 2.3); sat.rotation.y = -t * 0.6;
           clouds.children.forEach((c, i) => { c.position.x += Math.sin(t * 0.3 + i) * dt * 0.05; });

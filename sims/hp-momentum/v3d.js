@@ -57,26 +57,26 @@
       const BA = 0x3867f4, BB = 0xf2873a;
       /* 트랙 */
       const track = new THREE.Group(); root.add(track);
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(10.8, 0.16, 1.6), M(0x94a3b8, { metalness: 0.5, roughness: 0.3 })); rail.position.set(5, -0.08, 0); rail.receiveShadow = true; track.add(rail);
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(10.8, 0.16, 1.6), ctx.mats.metal('aluminium', { brushed: true, repeat: 6 })); rail.position.set(5, -0.08, 0); rail.receiveShadow = true; track.add(rail);
       for (let m = 0; m <= 10; m++) { const t = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.02, 0.2), M(0x475569)); t.position.set(m, 0.01, 0.7); track.add(t); }
       const tickL = [0, 2, 4, 6, 8, 10].map((m) => label(String(m), [m, 0, 1.0], { color: '#475569', size: 11 }));
       const lUnit = label('미터(m)', [10.2, 0, 1.3], { color: '#475569', size: 11 });
-      [0, 10].forEach((x) => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 1.6), M(0x64748b)); b.position.set(x === 0 ? -0.45 : 10.45, 0.17, 0); track.add(b); });
+      [0, 10].forEach((x) => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 1.6), ctx.mats.rubber(0x2a2f38)); b.position.set(x === 0 ? -0.45 : 10.45, 0.17, 0); track.add(b); });
       /* 물체 만들기: 수레 · 사람 · 총 · 공구 */
       function mkBody(kind, col) {
         const g = new THREE.Group(); let body;
         if (kind === 'cart') {
-          body = new THREE.Mesh(new THREE.BoxGeometry(1, 0.3, 0.85), M(col, { roughness: 0.3, metalness: 0.2 })); body.position.y = 0.3; g.add(body);
-          [-0.3, 0.3].forEach((x) => [-0.46, 0.46].forEach((z) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.1, 20), M(0x1f2937)); w.rotation.x = Math.PI / 2; w.position.set(x, 0.12, z); g.add(w); }));
-          const load = new THREE.Mesh(new THREE.BoxGeometry(0.72, 1, 0.6), M(col, { roughness: 0.5 })); load.material.color.offsetHSL(0, 0, -0.12); g.add(load); g.userData.load = load;
+          body = new THREE.Mesh(new THREE.BoxGeometry(1, 0.3, 0.85), ctx.mats.plastic(col, { roughness: 0.22 })); body.position.y = 0.3; g.add(body);
+          [-0.3, 0.3].forEach((x) => [-0.46, 0.46].forEach((z) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.1, 28), ctx.mats.rubber(0x15181e)); w.rotation.x = Math.PI / 2; w.position.set(x, 0.12, z); g.add(w); }));
+          const load = new THREE.Mesh(new THREE.BoxGeometry(0.72, 1, 0.6), ctx.mats.plastic(col, { roughness: 0.4 })); load.material.color.offsetHSL(0, 0, -0.12); g.add(load); g.userData.load = load;
         } else if (kind === 'person') {
           body = new THREE.Mesh(new THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(0.28, 0.9, 6, 14) : new THREE.CylinderGeometry(0.28, 0.28, 1.2, 14), M(col, { roughness: 0.5 })); body.position.y = 0.95; g.add(body);
           const hd = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 12), M(0xf3cfa8)); hd.position.y = 1.85; g.add(hd);
-          const sk = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.06, 0.3), M(0x9aa5b8, { metalness: 0.6 })); sk.position.y = 0.03; g.add(sk);
+          const sk = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.06, 0.3), ctx.mats.metal('steel')); sk.position.y = 0.03; g.add(sk);
         } else if (kind === 'gun') {
-          body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.5, 0.5), M(0x4d5a78, { metalness: 0.5, roughness: 0.4 })); body.position.y = 0.55; g.add(body);
-          const br = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.14, 0.14), M(0x2b3345, { metalness: 0.7 })); br.position.set(1.0, 0.6, 0); g.add(br);
-          [-0.5, 0.5].forEach((x) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.1, 18), M(0x1f2937)); w.rotation.x = Math.PI / 2; w.position.set(x, 0.16, 0.3); g.add(w); const w2 = w.clone(); w2.position.z = -0.3; g.add(w2); });
+          body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.5, 0.5), ctx.mats.metal(0x4d5a78, { roughness: 0.35 })); body.position.y = 0.55; g.add(body);
+          const br = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.14, 0.14), ctx.mats.metal('iron')); br.position.set(1.0, 0.6, 0); g.add(br);
+          [-0.5, 0.5].forEach((x) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.1, 28), ctx.mats.rubber(0x15181e)); w.rotation.x = Math.PI / 2; w.position.set(x, 0.16, 0.3); g.add(w); const w2 = w.clone(); w2.position.z = -0.3; g.add(w2); });
         } else if (kind === 'astro') {
           body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.5), M(0xe8edf6, { roughness: 0.5 })); body.position.y = 1.0; g.add(body);
           const hd = new THREE.Mesh(new THREE.SphereGeometry(0.3, 18, 14), M(0xf4f6fb)); hd.position.y = 1.7; g.add(hd);
@@ -84,7 +84,7 @@
         } else if (kind === 'tool') {
           body = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.22, 0.3), M(0xffd447, { metalness: 0.3 })); body.position.y = 1.2; g.add(body);
         } else if (kind === 'bullet') {
-          body = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 10), M(0xc9a227, { metalness: 0.6 })); body.position.y = 0.6; g.add(body);
+          body = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 10), ctx.mats.metal('brass')); body.position.y = 0.6; g.add(body);
         }
         body.castShadow = true; g.userData.body = body; root.add(g); return g;
       }
@@ -92,7 +92,7 @@
       const gB = (kind, who) => { const k = kind + who; return bodies[k] || (bodies[k] = mkBody(kind, who === 'A' ? BA : BB)); };
       const cA = gB('cart', 'A'), cB = gB('cart', 'B'), pL = gB('person', 'A'), pR = gB('person', 'B'), gun = gB('gun', 'A'), bul = gB('bullet', 'B'), ast = gB('astro', 'A'), tool = gB('tool', 'B');
       /* 줄 + 센서 */
-      const rope = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1, 8), M(0x6b4a2b)); rope.rotation.z = Math.PI / 2; root.add(rope);
+      const rope = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1, 10), ctx.mats.fabric(0x8a6a44, { repeat: 2 })); rope.rotation.z = Math.PI / 2; root.add(rope);
       const sens = [0, 1].map(() => { const s = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), M(0x1f2937)); root.add(s); return s; });
       /* 운동량 화살표 */
       const aA = mkArrow(0x3867f4, 0.06), aB = mkArrow(0xf2873a, 0.06), aT = mkArrow(0x14a058, 0.07), fA = mkArrow(0x3867f4, 0.07), fB = mkArrow(0xf2873a, 0.07); root.add(aA, aB, aT, fA, fB);
@@ -170,9 +170,9 @@
       }
       /* ===== 🚀 반동과 발사 ===== */
       const rocket = new THREE.Group(); root.add(rocket); rocket.visible = false;
-      { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, 2.4, 24), M(0xdfe6f2, { roughness: 0.4 })); rocket.add(b);
+      { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, 2.4, 24), ctx.mats.ceramic(0xe4e9f1)); rocket.add(b);
         const nose = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.0, 24), M(0xe2464b)); nose.position.y = 1.7; rocket.add(nose);
-        const win = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10), M(0x6cb4ff)); win.position.set(0, 0.5, 0.5); rocket.add(win);
+        const win = new THREE.Mesh(new THREE.SphereGeometry(0.2, 24, 16), ctx.mats.glass({ tint: 0x6cb4ff, opacity: 0.85, extra: { depthWrite: true } })); win.position.set(0, 0.5, 0.5); rocket.add(win);
         [0, 2.1, 4.2].forEach((a) => { const fin = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.8, 0.6), M(0xe2464b)); fin.position.set(Math.cos(a) * 0.65, -1.0, Math.sin(a) * 0.65); fin.rotation.y = -a; rocket.add(fin); }); }
       const flame = new THREE.Mesh(new THREE.ConeGeometry(0.45, 1, 16), new THREE.MeshBasicMaterial({ color: 0xffa040, transparent: true, opacity: 0.85 })); flame.rotation.x = Math.PI; rocket.add(flame);
       const rA1 = mkArrow(0x14a058, 0.07), rA2 = mkArrow(0xc2410c, 0.07); root.add(rA1, rA2);
@@ -236,7 +236,7 @@
         apG.roadC = roadC; gAp.add(roadC);
         const table = new THREE.Group(); const tb = bx(10.8, 0.2, 3.2, 0x0b3d24, { roughness: 0.95, metalness: 0 }); tb.position.set(5, -0.1, 0); tb.receiveShadow = true; table.add(tb);
         [[5, 1.65, 10.8, 0.2], [5, -1.65, 10.8, 0.2], [-0.4, 0, 0.2, 3.5], [10.4, 0, 0.2, 3.5]].forEach(([x, z, w, d]) => { const r = bx(w, 0.3, d, 0x8a5a2b); r.position.set(x, 0.05, z); table.add(r); });
-        const water = new THREE.Group(); const wt = new THREE.Mesh(new THREE.BoxGeometry(10.8, 0.9, 3.2), new THREE.MeshStandardMaterial({ color: 0x4aa8e8, roughness: 0.15, transparent: true, opacity: 0.55 })); wt.position.set(5, -0.45, 0); water.add(wt);
+        const water = new THREE.Group(); const wt = new THREE.Mesh(new THREE.BoxGeometry(10.8, 0.9, 3.2), ctx.mats.liquid(0x3a98e0, { opacity: 0.58 })); wt.position.set(5, -0.45, 0); water.add(wt);
         const cr = new THREE.Group();
         apG.road = road; apG.table = table; apG.water = water; apG.cradle = cr; gAp.add(road, table, water, cr);
       }
@@ -244,24 +244,24 @@
         const g = new THREE.Group(), body = bx(len, h * 0.42, 0.62, col, { roughness: 0.3, metalness: 0.4 }); body.position.y = 0.16 + h * 0.21; body.castShadow = true; g.add(body);
         const cab = bx(len * (suv ? 0.72 : 0.5), h * 0.4, 0.56, col, { roughness: 0.3, metalness: 0.3 }); cab.material.color.offsetHSL(0, 0, -0.08); cab.position.set(-len * (suv ? 0.08 : 0.1), 0.16 + h * 0.42 + h * 0.2, 0); cab.castShadow = true; g.add(cab);
         const win = bx(len * (suv ? 0.74 : 0.52), h * 0.2, 0.575, 0x9ccbee, { roughness: 0.1 }); win.position.set(cab.position.x, cab.position.y + 0.02, 0); g.add(win);
-        [-0.3, 0.3].forEach((fx) => [-0.32, 0.32].forEach((z) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.1, 18), M(0x1f2937)); w.rotation.x = Math.PI / 2; w.position.set(fx * len, 0.15, z); g.add(w); }));
+        [-0.3, 0.3].forEach((fx) => [-0.32, 0.32].forEach((z) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.1, 28), ctx.mats.rubber(0x15181e)); w.rotation.x = Math.PI / 2; w.position.set(fx * len, 0.15, z); g.add(w); }));
         [-0.2, 0.2].forEach((z) => { const hl = bx(0.04, 0.07, 0.1, 0xfff3b0, { emissive: 0xaaa060 }); hl.position.set(len / 2, 0.16 + h * 0.2, z); g.add(hl); });
         return g;
       }
       const carA = mkCar(4 * KC, 0.55, 0x3867f4, false), carB = mkCar(5 * KC, 0.75, 0xe2464b, true); gAp.add(carA, carB);
-      const ballA = new THREE.Mesh(new THREE.SphereGeometry(0.5, 28, 20), M(0x3867f4, { roughness: 0.15, metalness: 0.1 })), ballB = new THREE.Mesh(new THREE.SphereGeometry(0.5, 28, 20), M(0xe2464b, { roughness: 0.15, metalness: 0.1 }));
+      const ballA = new THREE.Mesh(new THREE.SphereGeometry(0.5, 28, 20), ctx.mats.plastic(0x3867f4, { roughness: 0.15 })), ballB = new THREE.Mesh(new THREE.SphereGeometry(0.5, 28, 20), ctx.mats.plastic(0xe2464b, { roughness: 0.15 }));
       [ballA, ballB].forEach((b) => { b.castShadow = true; const st = bx(0.1, 0.1, 1.02, 0xffffff, { roughness: 0.3 }); b.add(st); gAp.add(b); });
       const swimG = new THREE.Group(), platM = bx(1.8, 0.3, 1.2, 0x7a8aa6, { roughness: 0.5 }); platM.position.y = 0.05; platM.castShadow = true; swimG.add(platM); gAp.add(swimG);
       const swimmer = new THREE.Group(); { const sb = bx(1.1, 0.28, 0.46, 0xf2873a, { roughness: 0.5 }); sb.castShadow = true; swimmer.add(sb); const hd = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), M(0xf3cfa8)); hd.position.x = 0.62; swimmer.add(hd); const cap = bx(0.18, 0.06, 0.2, 0x2b3345); cap.position.x = 0.64; cap.position.y = 0.17; swimmer.add(cap); } gAp.add(swimmer);
       const cannonG = new THREE.Group(); { const cb = bx(1.3, 0.3, 0.9, 0x4d5a78, { metalness: 0.5, roughness: 0.4 }); cb.position.y = 0.4; cb.castShadow = true; cannonG.add(cb); const br = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 1.5, 20), M(0x2b3345, { metalness: 0.7, roughness: 0.35 })); br.rotation.z = -Math.PI / 2; br.position.set(0.55, 0.7, 0); br.castShadow = true; cannonG.add(br); [-0.5, 0.5].forEach((z) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.12, 22), M(0x1f2937)); w.rotation.x = Math.PI / 2; w.position.set(-0.1, 0.3, z); cannonG.add(w); }); } gAp.add(cannonG);
-      const shell = new THREE.Mesh(new THREE.SphereGeometry(0.14, 14, 10), M(0xc9a227, { metalness: 0.6 })); gAp.add(shell);
+      const shell = new THREE.Mesh(new THREE.SphereGeometry(0.14, 14, 10), ctx.mats.metal('brass')); gAp.add(shell);
       // 뉴턴의 요람
       const CRL = 3.2, CRY = 4.2, CRR = 0.45, CR_T = 0.5, CR_A0 = 0.62, crBalls = [], crStr = [];
-      { const g = apG.cradle, fm = M(0x7a8aa6, { metalness: 0.5, roughness: 0.4 });
+      { const g = apG.cradle, fm = ctx.mats.metal('steel', { brushed: true });
         [-0.62, 0.62].forEach((z) => { const t = new THREE.Mesh(new THREE.BoxGeometry(5.6 * 1.2, 0.12, 0.12), fm); t.position.set(0, CRY, z); g.add(t); [-3.4, 3.4].forEach((x) => { const pst = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, CRY + 0.1, 12), fm); pst.position.set(x, CRY / 2, z); g.add(pst); }); });
         const bs = bx(8.4, 0.2, 2.0, 0x5b6a80, { roughness: 0.6 }); bs.position.set(0, -0.1, 0); bs.receiveShadow = true; g.add(bs);
         for (let i = 0; i < 5; i++) {
-          const b = new THREE.Mesh(new THREE.SphereGeometry(CRR, 28, 20), M(0xd7dde8, { metalness: 0.9, roughness: 0.2 })); b.castShadow = true; g.add(b); crBalls.push(b);
+          const b = new THREE.Mesh(new THREE.SphereGeometry(CRR, 28, 20), ctx.mats.metal('chrome', { roughness: 0.06 })); b.castShadow = true; g.add(b); crBalls.push(b);
           crStr.push([0, 1].map(() => rodC(0.012, 0x4d5a78, g)));
         } }
       function rodC(r, col, par) {   // a→b 가는 막대

@@ -20,12 +20,12 @@
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
-      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.05 }, o || {}));
+      const std = (c, o) => new THREE.MeshPhysicalMaterial(Object.assign({ color: c, roughness: 0.32, metalness: 0, clearcoat: 0.7, clearcoatRoughness: 0.15 }, o || {}));   // 매끈하고 윤기 나는 분자 모형
       let T = 0, play = true, names = true;
       const sm = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
       // 리보솜
-      const big = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), std(0xc9a0ff, { transparent: true, opacity: 0.32, depthWrite: false, roughness: 0.3 })); big.scale.set(2.9, 1.35, 1.5); big.position.set(0, 1.55, 0);
-      const small = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), std(0xff9fc0, { transparent: true, opacity: 0.38, depthWrite: false, roughness: 0.3 })); small.scale.set(2.5, 0.72, 1.35); small.position.set(0, -0.55, 0);
+      const big = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), ctx.mats.organic(0x9a6ae0, { opacity: 0.34, extra: { depthWrite: false } })); big.scale.set(2.9, 1.35, 1.5); big.position.set(0, 1.55, 0);
+      const small = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), ctx.mats.organic(0xe87098, { opacity: 0.4, extra: { depthWrite: false } })); small.scale.set(2.5, 0.72, 1.35); small.position.set(0, -0.55, 0);
       root.add(big, small);
       label('리보솜 큰 단위체', big, { offset: [-1.6, 1.15, 0.8], size: 12 }); label('작은 단위체', small, { offset: [1.9, -0.7, 0.7], size: 12 });
       // mRNA

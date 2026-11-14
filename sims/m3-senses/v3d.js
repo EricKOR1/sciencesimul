@@ -16,7 +16,7 @@
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3;
       let mode = 'eye', bright = 50, dist = 50, loud = 60, names = true;
-      const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0, side: THREE.DoubleSide }, o || {}));
+      const sm = (c, o) => new THREE.MeshPhysicalMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0, side: THREE.DoubleSide, sheen: 0.35, sheenRoughness: 0.5, sheenColor: 0xffe4dc, clearcoat: 0.22, clearcoatRoughness: 0.45, envMapIntensity: 0.8 }, o || {}));   // 눈 · 귀 · 신경 조직: 부드럽고 촉촉한 겉면
       const eye = new THREE.Group(), ear = new THREE.Group(); root.add(eye, ear);
       const labs = { eye: [], ear: [] };
       const L = (grp, text, pos, col) => { const l = label(text, pos, { size: 12, color: col || 'rgba(15,23,42,.9)' }); labs[grp].push(l); return l; };

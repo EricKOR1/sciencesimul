@@ -38,7 +38,7 @@
       Object.keys(LAND).forEach((k) => { for (let s = -1; s <= 1; s++) { g.beginPath(); LAND[k].forEach((p, i) => { const x = X(p[0]) + s * W, y = Y(p[1]); if (i) g.lineTo(x, y); else g.moveTo(x, y); }); g.closePath(); g.fillStyle = k === 'an' || k === 'gl' ? '#e8eef5' : '#6a9f58'; g.fill(); g.stroke(); } });
       g.fillStyle = 'rgba(20,30,60,.18)'; g.fillRect(0, Y(0), W, H - Y(0));
       const tex = new THREE.CanvasTexture(cv); if ('encoding' in tex) tex.encoding = THREE.sRGBEncoding;
-      root.add(new THREE.Mesh(new THREE.SphereGeometry(1, 64, 40), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9, metalness: 0 })));
+      { const gl = new THREE.Mesh(new THREE.SphereGeometry(1, 96, 64), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.7, metalness: 0, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.004, envMapIntensity: 0.6 })); root.add(gl); ctx.halo(gl, 0x6fb4ff, 2.75, 0.4); }   // 대기의 푸른 빛
       const kor = new THREE.Mesh(new THREE.SphereGeometry(0.018, 12, 10), new THREE.MeshBasicMaterial({ color: 0xef4444 })); kor.position.copy(P(37, 127.5, 1.01)); root.add(kor);
       // 위도 원
       const ring = (lat, col) => { const pts = []; for (let i = 0; i <= 120; i++) pts.push(P(lat, (i / 120) * 360, 1.004)); const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.6 })); root.add(l); };
@@ -130,9 +130,9 @@
       const earthG = new THREE.Group(); root.children.slice().forEach((c) => earthG.add(c)); root.add(earthG);
       const cylG = new THREE.Group(); cylG.visible = false; root.add(cylG);
       const R0 = 1.15, R1 = 0.38, HC = 0.42, YW = HC / 2 - 0.06;
-      cylG.add(new THREE.Mesh(new THREE.CylinderGeometry(R0, R0, HC, 72, 1, true), new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.6, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false })));
-      const bot = new THREE.Mesh(new THREE.CircleGeometry(R0, 72), new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.8 })); bot.rotation.x = -Math.PI / 2; bot.position.y = -HC / 2; cylG.add(bot);
-      const inner = new THREE.Mesh(new THREE.CylinderGeometry(R1, R1, HC + 0.04, 48), new THREE.MeshStandardMaterial({ color: 0x60a5fa, roughness: 0.5 })); cylG.add(inner);
+      cylG.add(new THREE.Mesh(new THREE.CylinderGeometry(R0, R0, HC, 72, 1, true), ctx.mats.glass({ tint: 0xdc2626, opacity: 0.5, extra: { side: THREE.DoubleSide } })));
+      const bot = new THREE.Mesh(new THREE.CircleGeometry(R0, 72), ctx.mats.metal('aluminium', { brushed: true })); bot.rotation.x = -Math.PI / 2; bot.position.y = -HC / 2; cylG.add(bot);
+      const inner = new THREE.Mesh(new THREE.CylinderGeometry(R1, R1, HC + 0.04, 48), ctx.mats.metal(0x4f8fe0, { roughness: 0.3 })); cylG.add(inner);
       { const wg = new THREE.RingGeometry(R1, R0, 72, 8); wg.rotateX(-Math.PI / 2);
         const pa = wg.attributes.position, col = new Float32Array(pa.count * 3), cA = new THREE.Color(0xbfdbfe), cB = new THREE.Color(0xfecaca), cc = new THREE.Color();
         for (let i = 0; i < pa.count; i++) { const r = Math.hypot(pa.getX(i), pa.getZ(i)); cc.copy(cA).lerp(cB, (r - R1) / (R0 - R1)); col[i * 3] = cc.r; col[i * 3 + 1] = cc.g; col[i * 3 + 2] = cc.b; }

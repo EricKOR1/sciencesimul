@@ -18,6 +18,10 @@
       const rnd = (() => { let s = 12345; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; })();
       const gauss = () => Math.sqrt(-2 * Math.log(rnd() + 1e-9)) * Math.cos(6.2832 * rnd());
       const _m = new THREE.Matrix4(), _c = new THREE.Color();
+      const rbox = (w, h, d, r) => { const s = new THREE.Shape(), b = Math.min(r, h / 2) * 0.6, x = w / 2 - r - b, z = d / 2 - r - b; s.absarc(x, z, r, 0, Math.PI / 2); s.absarc(-x, z, r, Math.PI / 2, Math.PI); s.absarc(-x, -z, r, Math.PI, Math.PI * 1.5); s.absarc(x, -z, r, Math.PI * 1.5, Math.PI * 2); const g = new THREE.ExtrudeGeometry(s, { depth: h - 2 * b, bevelEnabled: true, bevelThickness: b, bevelSize: b, bevelSegments: 3, curveSegments: 6 }); g.rotateX(-Math.PI / 2); g.translate(0, -h / 2 + b, 0); return g; };   // 모서리가 둥근 상자
+      /* 실험대(나무 상판): 장면마다 상자 아래로 옮겨요 · 배경 물체 */
+      const bench = new THREE.Mesh(rbox(1, 0.22, 1, 0.08), ctx.mats.wood(0xc9a27a, { repeat: 2 })); bench.receiveShadow = true; bench.userData.v3bg = true; root.add(bench);
+      const setBench = (w, d, yTop, z) => { bench.scale.set(w, 1, d); bench.position.set(0, yTop - 0.11, z || 0); };
       const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
       const L2 = () => (ctx.lesson && ctx.lesson()) || null;
       function spheres(N, r, color, seg) {
@@ -35,9 +39,9 @@
       function makeBox(color) {
         const g = new THREE.Group();
         const geo = new THREE.BoxGeometry(2, 2, 2);
-        g.add(new THREE.Mesh(geo, glass(0xbfe0ff, 0.1)));
-        g.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0x9cc3ff })));
-        const w = new THREE.Mesh(new THREE.BoxGeometry(1.98, 1.8, 1.98), glass(color || 0x4aa8ff, 0.22, { side: THREE.FrontSide })); w.position.y = -0.1; g.add(w);
+        g.add(new THREE.Mesh(geo, ctx.mats.glass({ opacity: 0.14 })));   // 유리 수조
+        g.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0xd6ebff, transparent: true, opacity: 0.75 })));
+        const w = new THREE.Mesh(new THREE.BoxGeometry(1.98, 1.8, 1.98), ctx.mats.liquid(color || 0x4aa8ff, { opacity: 0.26, extra: { side: THREE.FrontSide } })); w.position.y = -0.1; g.add(w);   // 물: 반짝이는 수면
         g.userData.water = w; root.add(g); return g;
       }
       const boxes = [makeBox(), makeBox(0xff9a7a)];
@@ -45,10 +49,15 @@
       const GP = [];
       for (let i = 0; i < 2 * NI; i++) GP.push({ g: [gauss(), gauss(), gauss()], ph: [rnd() * 6.28, rnd() * 6.28, rnd() * 6.28], o: [(rnd() - 0.5) * 0.5, (rnd() - 0.5) * 0.4, (rnd() - 0.5) * 0.5] });
       const NB = 14, bars = [];
-      for (let i = 0; i < NB; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 0.5), mat(0x8b5cf6, { roughness: 0.45 })); root.add(b); bars.push(b); }
-      const base = new THREE.Mesh(new THREE.BoxGeometry(1, 0.06, 0.7), mat(0x64748b)); root.add(base);
-      const drop = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 16), mat(0x7c3aed)); drop.rotation.x = Math.PI; root.add(drop);
-      const dropLab = label('', drop, { size: 12, offset: [0, 0.6, 0] });
+      for (let i = 0; i < NB; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 0.5), ctx.mats.plastic(0x8b5cf6, { roughness: 0.3 })); b.castShadow = true; root.add(b); bars.push(b); }
+      const base = new THREE.Mesh(new THREE.BoxGeometry(1, 0.06, 0.7), ctx.mats.metal('aluminium', { brushed: true })); root.add(base);
+      const drop = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 14), ctx.mats.liquid(0x7c3aed, { opacity: 0.92 })); drop.scale.set(0.8, 1.15, 0.8); root.add(drop);   // 떨어지는 잉크 방울
+      /* 스포이트: 유리관 + 고무 꼭지 (방울 위) */
+      const pip = new THREE.Group(); drop.add(pip);
+      { const tube = new THREE.Mesh(new THREE.LatheGeometry([[0.02, 0], [0.06, 0.12], [0.075, 0.3], [0.075, 0.95], [0.001, 0.95]].map((p) => new THREE.Vector2(p[0], p[1])), 20), ctx.mats.glass({ opacity: 0.35 })); tube.position.y = 0.22; pip.add(tube);
+        const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.14, 20, 14), ctx.mats.rubber(0x2a2d33)); bulb.scale.set(1, 1.45, 1); bulb.position.y = 1.3; pip.add(bulb);
+        const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.1, 0.12, 20), ctx.mats.rubber(0x2a2d33)); neck.position.y = 1.15; pip.add(neck); }
+      const dropLab = label('', drop, { size: 12, offset: [0, 1.8, 0] });
       /* 스포이트 · 향수병 이름표를 누르면 2D에서 스포이트 · 향수병을 누른 것과 같아요 */
       dropLab.tap(() => { const L = L2(); const b = document.getElementById(L && L.scene === 'perfume' ? 'sprayBtn' : 'dropBtn'); if (b && !b.disabled) b.click(); });
       const friendLab = label('', [0, 0, 0], { size: 12.5, color: 'rgba(190,24,93,.92)' }); friendLab.show(false);   // 향수: 교실 반대편 친구 (2D와 같은 자리)
@@ -60,9 +69,10 @@
       const evBox = new THREE.Group();
       { const geo = new THREE.BoxGeometry(2 * EW, 2 * EH, 2 * EW);
         evBox.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0x9cc3ff })));
-        const liq = new THREE.Mesh(new THREE.BoxGeometry(2 * EW - 0.04, 1.7, 2 * EW - 0.04), glass(0x4aa8ff, 0.2, { side: THREE.FrontSide })); liq.position.y = -EH + 0.85; evBox.add(liq); evBox.userData.liq = liq;  }
+        evBox.add(new THREE.Mesh(geo, ctx.mats.glass({ opacity: 0.1 })));   // 유리 그릇
+        const liq = new THREE.Mesh(new THREE.BoxGeometry(2 * EW - 0.04, 1.7, 2 * EW - 0.04), ctx.mats.liquid(0x4aa8ff, { opacity: 0.24, extra: { side: THREE.FrontSide } })); liq.position.y = -EH + 0.85; evBox.add(liq); evBox.userData.liq = liq;  }
       root.add(evBox);
-      const evL = spheres(NL, 0.12, 0x4aa8ff, 12), evG = spheres(NE, 0.1, 0xbfe6ff, 10);
+      const evL = spheres(NL, 0.12, 0x3b8fe0, 12), evG = spheres(NE, 0.1, 0xbfe6ff, 10);
       const evLab = label('', [0, EH + 0.45, 0], { size: 13, color: 'rgba(30,64,175,.92)' });
       const evLab2 = label('액체 표면 → 기체', [EW + 0.2, 0.2, 0], { size: 11.5, offset: [0.3, 0, 0] });
       const LAT = []; { let n = 0; for (let a = 0; a < 5; a++) for (let b = 0; b < 4; b++) for (let c = 0; c < 5; c++) { if (n++ < NL) LAT.push([(a - 2) * 0.55, -EH + 0.3 + b * 0.38 + (c % 2) * 0.05, (c - 2) * 0.55]); } }
@@ -116,7 +126,8 @@
         bars.forEach((b, i) => { b.visible = showBars; const bw = 2 * LX / NB, hh = Math.max(0.02, counts[i] / NI * 3.2); b.scale.set(bw * 0.78, hh, 1); b.position.set(-LX + bw * (i + 0.5), -LY - 0.4 + hh / 2 + 0.03, LZ + 0.9); b.material.color.setHex(S.color); });
         base.visible = showBars; base.scale.x = 2 * LX + 0.3; base.position.set(0, -LY - 0.43, LZ + 0.9);
         barLab.show(showBars); barLab.obj = [0, -LY - 0.4, LZ + 0.9]; barLab.off = [0, -0.55, 0];
-        drop.visible = sc !== 'temp'; drop.position.set(-LX + 0.45, LY + 0.5, 0); drop.material.color.setHex(S.color);
+        drop.visible = sc !== 'temp'; drop.position.set(-LX + 0.45, LY + 0.5, 0); drop.material.color.setHex(S.color); pip.visible = sc === 'ink';
+        setBench(2 * LX + 1.2, 2 * LZ + 2.4, (n === 1 ? 0 : -1.55) - LY - 0.47, 0.7);
         dropLab.show(sc !== 'temp'); dropLab.set(sc === 'ink' ? '잉크 한 방울' : '향수병');
         friendLab.show(sc === 'perfume'); friendLab.obj = [LX - 0.2, -LY + 0.35, 0]; friendLab.set(st && st.arrived >= 3 ? '🙂 반대편 친구: 향기가 나요!' : '🙂 반대편 친구');
         boxLab.forEach((l, k) => { l.show(sc === 'temp'); l.obj = [LX - 0.1, (k === 0 ? 1.55 : -1.55) + LY + 0.15, 0]; l.off = [-0.2, 0, 0]; });
@@ -148,6 +159,7 @@
         evL.visible = evG.visible = !diff; pool.visible = diff; evLab.show(!diff); evLab2.show(!diff);
         if (!diff) { boxes.forEach((b) => { b.visible = false; }); bars.forEach((b) => { b.visible = false; }); base.visible = false; drop.visible = false; dropLab.show(false); barLab.show(false); boxLab.forEach((l) => l.show(false)); }
         evBox.visible = !diff;
+        if (!diff) setBench(2 * EW + 1.4, 2 * EW + 1.4, -EH - 0.005, 0);
       }
 
       let tick = 0;

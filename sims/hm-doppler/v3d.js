@@ -55,11 +55,11 @@
       const sim = () => ctx.lesson();
       const gA = new THREE.Group(), gW = new THREE.Group(); root.add(gA, gW);
       const mkRings = (g, n) => { const a = []; for (let i = 0; i < n; i++) { const m = new THREE.Mesh(new THREE.TorusGeometry(1, 0.02, 6, 72), new THREE.MeshBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.7, depthWrite: false })); m.rotation.x = Math.PI / 2; m.visible = false; g.add(m); a.push(m); } return a; };
-      const carMk = (g) => { const c = new THREE.Group(); const bd = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.55, 0.8), M(0xf8fafc, { roughness: 0.35 })); bd.position.y = 0.3; c.add(bd); const cab = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.42, 0.78), M(0xf8fafc)); cab.position.set(0.55, 0.75, 0); c.add(cab); const st = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.08, 0.2), M(0xe2464b)); st.position.y = 0.62; c.add(st); const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 8), M(0xff3b30, { emissive: 0xff3b30 })); lamp.position.set(0, 0.72, 0); c.add(lamp); g.add(c); return c; };
+      const carMk = (g) => { const c = new THREE.Group(); const paint = ctx.mats.plastic(0xf4f6fa, { roughness: 0.2, extra: { clearcoat: 1, clearcoatRoughness: 0.06 } }); const bd = new THREE.Mesh(new THREE.CapsuleGeometry(0.27, 0.95, 8, 24).rotateZ(Math.PI / 2).scale(1, 1, 1.48), paint); bd.position.y = 0.33; c.add(bd); const cab = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 0.18, 8, 20).rotateZ(Math.PI / 2).scale(1, 1, 1.9), paint); cab.position.set(0.5, 0.66, 0); c.add(cab); const win = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.2, 0.8), ctx.mats.glass({ tint: 0x5a7fa8, opacity: 0.7, extra: { depthWrite: true } })); win.position.set(0.52, 0.7, 0); c.add(win); const st = new THREE.Mesh(new THREE.BoxGeometry(1.52, 0.08, 0.81), ctx.mats.plastic(0xe2464b)); st.position.y = 0.42; c.add(st); const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.13, 20, 14), ctx.mats.emissive(0xff3b30, 1.6)); lamp.position.set(0, 0.68, 0); c.add(lamp); ctx.halo(lamp, 0xff4d40, 0.9, 0.6); const tyre = ctx.mats.rubber(0x15171c), hubM = ctx.mats.metal('aluminium'); [[-0.48, 0.38], [0.48, 0.38], [-0.48, -0.38], [0.48, -0.38]].forEach((q) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.12, 24).rotateX(Math.PI / 2), tyre); w.position.set(q[0], 0.17, q[1]); c.add(w); const hb = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.13, 16).rotateX(Math.PI / 2), hubM); hb.position.copy(w.position); c.add(hb); }); g.add(c); return c; };
       /* ================= 🚑 구급차 (도로 ±50 m, 관측자는 길가 3 m, 파면은 보기 좋게 성기게 그렸어요) ================= */
       const U = 0.16;
       gA.add(grid(20, 8, 1, 0x7a8fb3, -0.02, 0.2));
-      const road = new THREE.Mesh(new THREE.BoxGeometry(17, 0.06, 1.0), M(0x374151, { roughness: 0.9 })); road.position.y = -0.04; gA.add(road);
+      const road = new THREE.Mesh(new THREE.BoxGeometry(17, 0.06, 1.0), ctx.mats.stone(0x30343c, { repeat: 8 })); road.position.y = -0.04; gA.add(road);
       const amb = carMk(gA); amb.scale.setScalar(0.9);
       const listener = new THREE.Group(); { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.7, 12), M(0x3b82f6)); b.position.y = 0.4; listener.add(b); const h = new THREE.Mesh(new THREE.SphereGeometry(0.17, 12, 10), M(0xffd9b5)); h.position.y = 0.9; listener.add(h); } listener.position.set(0, 0, 3.0 * U * 4 + 0.2); gA.add(listener);
       const ringsA = mkRings(gA, 24);
@@ -126,12 +126,12 @@
       /* ================= 📱 스마트폰: 원판 끝의 스피커 ================= */
       const gP = new THREE.Group(); root.add(gP); const PR = 2.4;
       gP.add(grid(14, 8, 1, 0x7a8fb3, -0.12, 0.2));
-      const disc = new THREE.Mesh(new THREE.CylinderGeometry(PR + 0.2, PR + 0.2, 0.2, 60), M(0x94a3b8, { metalness: 0.3 })); disc.position.y = -0.02; gP.add(disc);
-      const armP = new THREE.Mesh(new THREE.BoxGeometry(PR, 0.06, 0.08), M(0x475569)); gP.add(armP);
-      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.3, 16), M(0x475569)); hub.position.y = 0.1; gP.add(hub);
+      const disc = new THREE.Mesh(new THREE.CylinderGeometry(PR + 0.2, PR + 0.2, 0.2, 72), ctx.mats.metal('aluminium', { brushed: true })); disc.position.y = -0.02; gP.add(disc);
+      const armP = new THREE.Mesh(new THREE.BoxGeometry(PR, 0.06, 0.08), ctx.mats.metal('steel')); gP.add(armP);
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.3, 24), ctx.mats.metal('steel')); hub.position.y = 0.1; gP.add(hub);
       const spkP = new THREE.Mesh(new THREE.SphereGeometry(0.3, 18, 12), M(0xf59e0b, { emissive: 0x7c4a03 })); gP.add(spkP);
       const arrP = mkArrow(0x16a34a, 0.05); gP.add(arrP);
-      const phone = new THREE.Group(); { const b = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.7, 1.0), M(0x0f172a)); phone.add(b); const sc = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.45, 0.82), new THREE.MeshBasicMaterial({ color: 0x38bdf8 })); sc.position.x = -0.11; phone.add(sc); } phone.position.set(5.6, 0.85, 0); gP.add(phone);
+      const phone = new THREE.Group(); { const b = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.7, 1.0), ctx.mats.plastic(0x10141c, { roughness: 0.2 })); phone.add(b); const sc = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.45, 0.82), new THREE.MeshBasicMaterial({ color: 0x38bdf8 })); sc.position.x = -0.11; phone.add(sc); } phone.position.set(5.6, 0.85, 0); gP.add(phone);
       const lineP = new THREE.Mesh(new THREE.BoxGeometry(1, 0.03, 0.03), new THREE.MeshBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.5 })); lineP.position.set(PR + 0.2 + (5.6 - 0.2 - PR - 0.2) / 2, 0.15, 0); lineP.scale.x = 5.6 - 0.2 - PR - 0.2; gP.add(lineP);
       const lPs = label('스피커 1000 Hz', spkP, { color: '#b45309', size: 12 }), lPd = label('원판 (반지름 0.20 m)', [0, -0.1, PR + 0.9], { color: '#475569', size: 12 }), lPp = label('📱 소리 분석 앱', phone, { color: '#0f172a', size: 12 }), lPf = label('', phone, { color: '#0369a1', size: 14 });
       function phoneScene(A, S) {
@@ -148,9 +148,9 @@
       function train(m, x0, x1, y, z, lam, amp, ph) { const n = m.count; for (let i = 0; i < n; i++) { const x = x0 + (x1 - x0) * i / (n - 1); const s = x1 - x0 > 0.3 ? 1 : 0; vP.set(x, y + Math.sin((x - x0) / lam * TAU + ph) * amp, z); vS.setScalar(s); m4.compose(vP, q0, vS); m.setMatrixAt(i, m4); } m.instanceMatrix.needsUpdate = true; }
       const gG = new THREE.Group(); root.add(gG);
       gG.add(grid(18, 6, 1, 0x7a8fb3, -0.02, 0.2));
-      const roadG = new THREE.Mesh(new THREE.BoxGeometry(15, 0.06, 1.8), M(0x374151, { roughness: 0.9 })); roadG.position.set(0, -0.04, 0); gG.add(roadG);
+      const roadG = new THREE.Mesh(new THREE.BoxGeometry(15, 0.06, 1.8), ctx.mats.stone(0x30343c, { repeat: 8 })); roadG.position.set(0, -0.04, 0); gG.add(roadG);
       const dashG = new THREE.Mesh(new THREE.BoxGeometry(15, 0.01, 0.05), new THREE.MeshBasicMaterial({ color: 0xf8fafc })); dashG.position.y = 0.0; gG.add(dashG);
-      const gunM = new THREE.Group(); { const b = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.6, 0.8), M(0x1f2937)); b.position.y = 0.3; gunM.add(b); const h = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.4, 0.8, 20), M(0x64748b)); h.rotation.z = -Math.PI / 2; h.position.set(0.7, 0.9, 0); gunM.add(h); const lg = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.6, 0.1), M(0x475569)); lg.position.y = 0.3; gunM.add(lg); } gunM.position.set(-6.4, 0, 0); gG.add(gunM);
+      const gunM = new THREE.Group(); { const b = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.6, 0.8), ctx.mats.plastic(0x1f2733)); b.position.y = 0.3; gunM.add(b); const h = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.4, 0.8, 32), ctx.mats.metal('aluminium', { brushed: true })); h.rotation.z = -Math.PI / 2; h.position.set(0.7, 0.9, 0); gunM.add(h); const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.6, 12), ctx.mats.metal('steel')); lg.position.y = 0.3; gunM.add(lg); } gunM.position.set(-6.4, 0, 0); gG.add(gunM);
       const car = carMk(gG); car.scale.setScalar(1.1); car.rotation.y = Math.PI; car.children.forEach((c) => { if (c.material && c.material.emissive && c.material.emissive.getHex() === 0xff3b30) c.visible = false; });
       const beadS = mkBeads(gG, 130, 0x3b82f6), beadR = mkBeads(gG, 130, 0xf59e0b);
       const arrG = mkArrow(0x16a34a, 0.06); gG.add(arrG);
@@ -164,10 +164,10 @@
         info('<b>📡 스피드건</b> · 24 GHz 전파를 쏘고 달려오는 자동차에서 반사된 전파를 비교해요 (u = ' + u + ' m/s)<br>자동차가 받을 때 한 번, 반사할 때 한 번 도플러 효과를 줘서 Δf ≈ 2fu/c 예요.<br>※ 실제 파장 변화는 약 10⁻⁷ 배로 아주 작아서 그림에서는 크게 과장했어요.');
       }
       const gB = new THREE.Group(); root.add(gB);
-      const tissue = new THREE.Mesh(new THREE.BoxGeometry(13, 2.4, 4), new THREE.MeshStandardMaterial({ color: 0xf0b8a0, roughness: 0.9, transparent: true, opacity: 0.35, depthWrite: false })); tissue.position.set(0.5, 0, 0); gB.add(tissue);
-      const vessel = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 11.5, 36, 1, true), new THREE.MeshStandardMaterial({ color: 0xb53a3a, roughness: 0.4, transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false })); vessel.rotation.z = Math.PI / 2; vessel.position.set(1.4, 0, 0); gB.add(vessel);
+      const tissue = new THREE.Mesh(new THREE.BoxGeometry(13, 2.4, 4), ctx.mats.organic(0xf0b8a0, { opacity: 0.35 })); tissue.position.set(0.5, 0, 0); gB.add(tissue);
+      const vessel = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 11.5, 36, 1, true), ctx.mats.organic(0xb53a3a, { opacity: 0.45, extra: { side: THREE.DoubleSide } })); vessel.rotation.z = Math.PI / 2; vessel.position.set(1.4, 0, 0); gB.add(vessel);
       const NRB = 30, rbc = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 12, 8), M(0xdc2626, { roughness: 0.4 }), NRB); rbc.frustumCulled = false; gB.add(rbc);
-      const probe = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.3, 1.6), M(0x334155)); probe.position.set(-5.2, 0, 0); gB.add(probe);
+      const probe = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.3, 1.6), ctx.mats.plastic(0x2c3646)); probe.position.set(-5.2, 0, 0); gB.add(probe);
       const beadSB = mkBeads(gB, 110, 0x3b82f6), beadRB = mkBeads(gB, 110, 0xf59e0b);
       const arrB = mkArrow(0x16a34a, 0.06); gB.add(arrB);
       const lBp = label('탐촉자 (5.0 MHz)', probe, { color: '#334155', size: 12 }), lBu = label('', arrB, { color: '#15803d', size: 12 }), lBs = label('보낸 초음파', [-2, 0.9, 0], { color: '#1d4ed8', size: 12 }), lBr2 = label('반사된 초음파', [-2, -0.1, 0], { color: '#b45309', size: 12 }), lBd = label('', [-5.2, 1.8, 0], { color: '#1e293b', size: 14 });
@@ -185,7 +185,7 @@
       const gR = new THREE.Group(); root.add(gR);
       const RC = PHN ? 9 : 15, RR = 5, RGX = PHN ? 0.95 : 0.62, RGZ = 0.9;
       const cellsR = new THREE.InstancedMesh(new THREE.SphereGeometry(0.26, 14, 10), M(0xffffff, { roughness: 0.6, transparent: true, opacity: 0.9 }), RC * RR); cellsR.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(RC * RR * 3), 3); cellsR.frustumCulled = false; gR.add(cellsR);
-      const radarB = new THREE.Group(); { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.5, 0.5, 20), M(0x475569)); b.position.y = 0.25; radarB.add(b); const d = new THREE.Mesh(new THREE.SphereGeometry(0.55, 20, 10, 0, TAU, 0, Math.PI / 2), M(0xe2e8f0, { side: THREE.DoubleSide })); d.position.y = 0.9; d.rotation.x = -Math.PI / 2.4; radarB.add(d); } radarB.position.set(0, 0, (RR - 1) / 2 * RGZ + 1.7); gR.add(radarB);
+      const radarB = new THREE.Group(); { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.5, 0.5, 20), ctx.mats.metal('steel')); b.position.y = 0.25; radarB.add(b); const d = new THREE.Mesh(new THREE.SphereGeometry(0.55, 32, 16, 0, TAU, 0, Math.PI / 2), ctx.mats.ceramic(0xe2e8f0, { extra: { side: THREE.DoubleSide } })); d.position.y = 0.9; d.rotation.x = -Math.PI / 2.4; radarB.add(d); } radarB.position.set(0, 0, (RR - 1) / 2 * RGZ + 1.7); gR.add(radarB);
       gR.add(grid(RC * RGX + 1, RR * RGZ + 3.4, 1, 0x7a8fb3, -0.1, 0.18));
       const obsR = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.04, 8, 32), new THREE.MeshBasicMaterial({ color: 0xf8fafc })); obsR.rotation.x = Math.PI / 2; obsR.position.y = 0.05; gR.add(obsR);
       const beamR = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 1), new THREE.MeshBasicMaterial({ color: 0xf8fafc, transparent: true, opacity: 0.6 })); gR.add(beamR);

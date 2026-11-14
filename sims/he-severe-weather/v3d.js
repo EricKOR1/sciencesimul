@@ -18,22 +18,22 @@
     autoRotate: 0.08,
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
-      const { THREE, root, label, info, controls } = ctx;
+      const { THREE, root, label, info, controls, mats } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.9, metalness: 0 }, o || {}));
       let sd = 5; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
 
       /* 땅 · 마을 */
-      const ground = new THREE.Mesh(new THREE.CylinderGeometry(6.4, 6.4, 0.3, 72), std(0x3b6a3a)); ground.position.y = -0.15; root.add(ground); ground.userData.v3bg = true;   // 바닥은 화면 맞춤에서 빼요
-      { const hm = [std(0xe8d9b9), std(0xd9826a), std(0xb9c6d8)];
-        [[-3.6, 1.2], [-4.2, -0.3], [-3.2, -1.7], [4.0, 1.6], [4.4, -0.6], [3.4, -2.2]].forEach((p, i) => { const h = new THREE.Group(), b = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.36, 0.42), hm[i % 3]), r = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.28, 4), std(0x6b4e3d)); r.rotation.y = Math.PI / 4; b.position.y = 0.18; r.position.y = 0.5; h.add(b, r); h.position.set(p[0], 0, p[1]); root.add(h); });
-        const tw = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.06, 0.95, 8), std(0x9aa5b4, { metalness: 0.6, roughness: 0.4 })); tw.position.set(3.0, 0.48, 0.4); root.add(tw); }
+      const ground = new THREE.Mesh(new THREE.CylinderGeometry(6.4, 6.4, 0.3, 72), std(0x3b6a3a, { bumpMap: mats.tex('noise'), bumpScale: 0.02 })); ground.receiveShadow = true;   // 풀밭 (잔무늬) ground.position.y = -0.15; root.add(ground); ground.userData.v3bg = true;   // 바닥은 화면 맞춤에서 빼요
+      { const hm = [mats.ceramic(0xe2d2b0, { extra: { roughness: 0.6, clearcoat: 0.1 } }), mats.ceramic(0xc9725a, { extra: { roughness: 0.6, clearcoat: 0.1 } }), mats.ceramic(0xb1bfd2, { extra: { roughness: 0.6, clearcoat: 0.1 } })];   // 회벽 집
+        [[-3.6, 1.2], [-4.2, -0.3], [-3.2, -1.7], [4.0, 1.6], [4.4, -0.6], [3.4, -2.2]].forEach((p, i) => { const h = new THREE.Group(), b = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.36, 0.42), hm[i % 3]), r = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.28, 4), mats.wood(0x6b4e3d)); b.castShadow = r.castShadow = true; r.rotation.y = Math.PI / 4; b.position.y = 0.18; r.position.y = 0.5; h.add(b, r); h.position.set(p[0], 0, p[1]); root.add(h); });
+        const tw = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.06, 0.95, 8), mats.metal('steel', { brushed: true })); tw.position.set(3.0, 0.48, 0.4); root.add(tw); }
       root.traverse((o) => { if (o.isMesh) o.userData.v3bg = true; });   // 땅 · 마을은 화면 맞춤에서 빼요
       const fitB = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.2, colorWrite: false, depthWrite: false })); root.add(fitB);   // 화면 맞춤용 보이지 않는 상자: 지금 단계의 구름(기둥 + 모루)을 감싸요 (구름 알갱이는 화면 맞춤이 재지 못해요)
       let fitSt = 0;
 
       /* 구름 기둥 + 모루 */
       const BASE = 1.35, H = 4.3;
-      const col = [], NB = 84, cloud = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 20, 14), std(0xffffff, { roughness: 1, transparent: true, opacity: 1, emissive: 0x000000 }), NB + 40);
+      const col = [], NB = 84, cloud = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 20, 14), new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.95, metalness: 0, transparent: true, opacity: 1, emissive: 0x000000, sheen: 0.6, sheenColor: 0xffffff, sheenRoughness: 0.6 }), NB + 40);   // 솜털 같은 구름
       for (let i = 0; i < NB; i++) { const f = (i % 12) / 11, a = rnd() * 6.283, rr = Math.sqrt(rnd()) * lerp(1.05, 0.85, f) * (1 + (f > 0.8 ? 0.35 : 0)); col.push({ f, x: Math.cos(a) * rr, z: Math.sin(a) * rr, s: lerp(0.85, 0.7, f) * (0.7 + rnd() * 0.5) }); }
       const anv = []; for (let i = 0; i < 40; i++) { const u = rnd(); anv.push({ x: -0.8 + u * 5.2, z: (rnd() - 0.5) * lerp(2.6, 1.4, u), s: lerp(0.9, 0.55, u) * (0.7 + rnd() * 0.5), u }); }
       root.add(cloud);
@@ -44,6 +44,7 @@
       const plusT = sym('+', '#e53e3e'), minT = sym('−', '#2b6cd9');
       const ch = []; for (let i = 0; i < 10; i++) { const pl = i < 5, s = new THREE.Sprite(new THREE.SpriteMaterial({ map: pl ? plusT : minT, depthTest: false, transparent: true })); s.scale.setScalar(0.34); s.renderOrder = 5; s.userData = { pl, i: pl ? i : i - 5, a: rnd() * 6.283, r: rnd() * 0.7 }; root.add(s); ch.push(s); }
       const boltM = new THREE.MeshBasicMaterial({ color: 0xfff6b0 }), bolt = new THREE.Mesh(new THREE.BufferGeometry(), boltM); bolt.visible = false; root.add(bolt);
+      const boltH = ctx.halo(bolt, 0xcfe0ff, 4, 0.6);   // 번개 빛무리 (번개 가운데에 맞춰요)
       let flash = 0, strikeT = -1, wait = -1, pendingInfo = '';
 
       /* 기류 · 비 입자 */
@@ -86,7 +87,7 @@
         const x0 = -0.6 + rnd() * 1.6, z0 = (rnd() - 0.5) * 1.2, pts = []; let n = 14;
         for (let i = 0; i <= n; i++) { const f = i / n; pts.push(new THREE.Vector3(x0 + (i % 2 ? 1 : -1) * (i > 0 && i < n ? 0.18 + rnd() * 0.2 : 0) + f * 0.6, lerp(BASE + 0.1, 0.05, f), z0 + (rnd() - 0.5) * 0.15)); }
         bolt.geometry.dispose(); bolt.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.3), 40, 0.05, 6, false);
-        bolt.visible = true; flash = 1; strikeT = 0;
+        bolt.visible = true; flash = 1; strikeT = 0; boltH.position.set(x0 + 0.3, BASE / 2, z0);
         if (!fromSim) try { const l = L2(); if (l && l.strike && l.S && (!l.S.thunder || l.S.thunder.arrived)) l.strike(); } catch (e) {}
         try { seenTh = L2().S.thunder; } catch (e) {}
         pendingInfo = '번쩍! 천둥이 들릴 때까지 걸린 시간(초) × 340 m/s = 번개까지의 거리예요. (예: 3초 → 1020 m = 1.02 km)<br>아래 ⏱ 시계로 시간을 재 보세요.';

@@ -51,7 +51,7 @@
         };
       })();
       const bgWall = new THREE.Mesh(new THREE.PlaneGeometry(26, 13), new THREE.MeshBasicMaterial({ map: patTex.cell, color: 0xa8a8a8 })); bgWall.position.set(0, 0, -2.3); root.add(bgWall);
-      const deck = new THREE.Mesh(new THREE.BoxGeometry(14, 0.3, 4.6), std(0x2a3550, { roughness: 0.35, metalness: 0.5 })); deck.position.set(0, -3.5, -0.2); root.add(deck);
+      const deck = new THREE.Mesh(new THREE.BoxGeometry(14, 0.3, 4.6), ctx.mats.metal(0x2a3550, { brushed: true, roughness: 0.4 })); deck.position.set(0, -3.5, -0.2); root.add(deck);
       const deckGlow = new THREE.Mesh(new THREE.BoxGeometry(14.05, 0.04, 4.65), new THREE.MeshBasicMaterial({ color: 0x6fa8ff, transparent: true, opacity: 0.5 })); deckGlow.position.set(0, -3.34, -0.2); root.add(deckGlow);
       let bgKind = '';
       function setBg(kind, deckY) { if (kind !== bgKind) { bgKind = kind; bgWall.material.map = patTex[kind]; bgWall.material.needsUpdate = true; } deck.position.y = deckY - 0.15; deckGlow.position.y = deckY + 0.01; }
@@ -67,7 +67,7 @@
       const rx = new THREE.Group(); root.add(rx);
       const cellBox = new THREE.Mesh(new THREE.BoxGeometry(10.4, 4.6, 2.6), ghost(0x4caf50, 0.12)); rx.add(cellBox);
       const frame = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(10.4, 4.6, 2.6)), new THREE.LineBasicMaterial({ color: 0x2e7d32 })); rx.add(frame);
-      { const rm = std(0x8aa0b8, { metalness: 0.8, roughness: 0.3 }); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach((q) => { const e = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 4.6, 8), rm); e.position.set(q[0] * 5.2, 0, q[1] * 1.3); rx.add(e); }); [-1, 1].forEach((y) => [-1, 1].forEach((z) => { const e = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 10.4, 8), rm); e.rotation.z = Math.PI / 2; e.position.set(0, y * 2.3, z * 1.3); rx.add(e); })); }
+      { const rm = ctx.mats.metal('steel', { brushed: true }); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach((q) => { const e = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 4.6, 8), rm); e.position.set(q[0] * 5.2, 0, q[1] * 1.3); rx.add(e); }); [-1, 1].forEach((y) => [-1, 1].forEach((z) => { const e = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 10.4, 8), rm); e.rotation.z = Math.PI / 2; e.position.set(0, y * 2.3, z * 1.3); rx.add(e); })); }
       const sunG = new THREE.Group(); sunG.position.set(-4.4, 2.0, 0); sunG.add(sph(0.45, basic(0xfbbf24)));
       for (let i = 0; i < 3; i++) { const r = cyl(0.04, 0.04, 2.2, std(0xf59e0b, { emissive: 0xf59e0b, emissiveIntensity: 0.5 })); r.position.set(0.6 + i * 0.35, -0.9 - i * 0.1, 0); r.rotation.z = 0.7; sunG.add(r); }
       rx.add(sunG);
@@ -116,7 +116,7 @@
       /* ---------- ② 에너지 전환 ---------- */
       const en = new THREE.Group(); root.add(en);
       const body = new THREE.Mesh(new THREE.CapsuleGeometry(1.3, 2.2, 8, 24), ghost(0xfca5a5, 0.4)); body.rotation.z = Math.PI / 2; en.add(body);
-      const mitos = []; [[-1.0, -0.2], [0.3, 0.4], [1.1, -0.35]].forEach((q, i) => { const m = sph(0.55, std(0xf87171, { roughness: 0.35 }), q[0], q[1], 0, 1.6, 0.8, 0.8); m.rotation.z = i * 0.5 - 0.3; en.add(m); mitos.push(m); });
+      const mitos = []; [[-1.0, -0.2], [0.3, 0.4], [1.1, -0.35]].forEach((q, i) => { const m = sph(0.55, ctx.mats.organic(0xe85a5a), q[0], q[1], 0, 1.6, 0.8, 0.8); m.rotation.z = i * 0.5 - 0.3; en.add(m); mitos.push(m); });
       const arrow = (col) => { const g = new THREE.Group(); const sh = cyl(0.06, 0.06, 1, std(col, { emissive: col, emissiveIntensity: 0.25 })); sh.position.y = 0.5; const hd = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.34, 14), sh.material); hd.position.y = 1.0; g.add(sh, hd); return g; };
       const arrows = {
         glu: arrow(0xf59e0b), o2: arrow(0xef4444), atp: arrow(0x16a34a), co2: arrow(0x64748b),
@@ -125,8 +125,8 @@
       const setArrow = (a, from, dir, len, w) => { a.position.copy(from); a.rotation.set(0, 0, dir); a.scale.set(w, len, w); };
       Object.values(arrows).forEach((a) => en.add(a));
       const thermo = new THREE.Group(); thermo.position.set(-5.2, -0.2, 0); en.add(thermo);
-      thermo.add(cyl(0.18, 0.18, 3.2, ghost(0xffffff, 0.5)), sph(0.38, std(0xe2464b), 0, -1.7, 0));
-      const mercury = cyl(0.1, 0.1, 1, std(0xe2464b, { emissive: 0x801010, emissiveIntensity: 0.3 })); thermo.add(mercury);
+      thermo.add(cyl(0.18, 0.18, 3.2, ctx.mats.glass({ opacity: 0.4 })), sph(0.38, ctx.mats.glass({ tint: 0xe2464b, opacity: 0.85 }), 0, -1.7, 0));   // 유리 온도계
+      const mercury = cyl(0.1, 0.1, 1, ctx.mats.liquid(0xd0222e, { opacity: 0.95, extra: { emissive: 0x801010, emissiveIntensity: 0.3 } })); thermo.add(mercury);
       const ebar = new THREE.Group(); ebar.position.set(0, -3.1, 0); en.add(ebar);
       const eA = new THREE.Mesh(new THREE.BoxGeometry(4 * 0.9, 0.5, 0.5), std(0x22c55e)), eB = new THREE.Mesh(new THREE.BoxGeometry(6 * 0.9, 0.5, 0.5), std(0xef4444));
       eA.position.x = -5 * 0.9 + 2 * 0.9 - 0.0 + 0.0; eA.position.x = -4.5 + 1.8; eB.position.x = -4.5 + 3.6 + 2.7 + 0.05;
@@ -166,11 +166,11 @@
       const at = new THREE.Group(); root.add(at);
       const cellMesh = new THREE.Mesh(new THREE.BoxGeometry(11.2, 5.0, 2.4), ghost(0xf9a8a8, 0.18)); at.add(cellMesh);
       const mitoG = new THREE.Group(); at.add(mitoG);
-      const mito = sph(1, std(0xfdba74, { roughness: 0.4 }), 0, 0, 0, 1.55, 0.85, 0.85); mitoG.add(mito);
+      const mito = sph(1, ctx.mats.organic(0xfdba74), 0, 0, 0, 1.55, 0.85, 0.85); mitoG.add(mito);
       const crista = new THREE.Mesh(new THREE.TorusKnotGeometry(0.5, 0.05, 80, 6, 2, 3), std(0xc9732f)); crista.scale.set(1.3, 0.6, 0.6); mitoG.add(crista);
       const flag = new THREE.Group(); at.add(flag);
       const workG = new THREE.Group(); at.add(workG);
-      const muscle = new THREE.Mesh(new THREE.CapsuleGeometry(0.55, 2.2, 8, 20), std(0xf08a97)); muscle.rotation.z = Math.PI / 2; workG.add(muscle);
+      const muscle = new THREE.Mesh(new THREE.CapsuleGeometry(0.55, 2.2, 8, 24), ctx.mats.organic(0xd86070, { extra: { bumpMap: ctx.mats.tex('fabric'), bumpScale: 0.02 } })); muscle.rotation.z = Math.PI / 2; workG.add(muscle);   // 근섬유 결
       const beads = []; for (let i = 0; i < 8; i++) { const b = sph(0.3, std(0xf59e0b), -1.7 + i * 0.5, 0, 0); workG.add(b); beads.push(b); }
       const wave = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(-1.6, 0, 0), new THREE.Vector3(1.6, 0, 0)]), 30, 0.08, 8), std(0xb45309)); workG.add(wave);
       const tip = sph(0.4, std(0xfbbf24), 1.8, 0, 0); workG.add(tip);

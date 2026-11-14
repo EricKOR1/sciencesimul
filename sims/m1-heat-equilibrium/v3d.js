@@ -17,8 +17,8 @@
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3, Yax = new V3(0, 1, 0);
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o || {}));
-      const glass = (c, op, o) => mat(c || 0xbfe3ff, Object.assign({ transparent: true, opacity: op || 0.16, roughness: 0.12, metalness: 0, depthWrite: false, side: THREE.DoubleSide }, o || {}));
+      const mat = (c, o) => { o = o || {}; if (o.metalness >= 0.5 && !o.transparent) { const q = Object.assign({}, o), r = q.roughness; delete q.metalness; delete q.roughness; return ctx.mats.metal(c, { roughness: r == null ? 0.3 : r, extra: q }); } return new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o)); };   // 금속 부품은 실제 금속 재질(환경 반사)
+      const glass = (c, op, o) => ctx.mats.glass({ tint: c || 0xeaf6ff, opacity: op || 0.16, extra: o || {} });   // 유리: 맑고 또렷한 반사
       const rnd = (() => { let s = 12345; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; })();
       const _m = new THREE.Matrix4(), _c = new THREE.Color();
       const L2 = () => (ctx.lesson && ctx.lesson()) || null;
@@ -39,15 +39,16 @@
       const CR = 1.0, CH = 2.3, CWT = 1.9;              // 금속 컵: 반지름, 높이, 컵 속 물 높이(바닥에서)
       const REST = 0.65, LIFT = 2.8;                    // 컵 가운데 y(담근 상태), 들어 올린 높이
       const groupB = new THREE.Group(), groupC = new THREE.Group(); root.add(groupB, groupC);
-      const stand = new THREE.Mesh(new THREE.BoxGeometry(2 * TX + 1.2, 0.2, 2 * TZ + 1), mat(0x64748b, { roughness: 0.7 })); stand.position.y = TYB - 0.12; root.add(stand);
+      const rbox = (w, h, d, r) => { const s = new THREE.Shape(), b = Math.min(r, h / 2) * 0.6, x = w / 2 - r - b, z = d / 2 - r - b; s.absarc(x, z, r, 0, Math.PI / 2); s.absarc(-x, z, r, Math.PI / 2, Math.PI); s.absarc(-x, -z, r, Math.PI, Math.PI * 1.5); s.absarc(x, -z, r, Math.PI * 1.5, Math.PI * 2); const g = new THREE.ExtrudeGeometry(s, { depth: h - 2 * b, bevelEnabled: true, bevelThickness: b, bevelSize: b, bevelSegments: 3, curveSegments: 6 }); g.rotateX(-Math.PI / 2); g.translate(0, -h / 2 + b, 0); return g; };   // 모서리가 둥근 상자
+      const stand = new THREE.Mesh(rbox(2 * TX + 1.2, 0.2, 2 * TZ + 1, 0.08), ctx.mats.wood(0xc9a27a, { repeat: 2 })); stand.receiveShadow = true; stand.position.y = TYB - 0.12; root.add(stand);   // 나무 실험대
 
       // 비커 두 개
       const bw = [-1, 1].map((s) => {
         const x = s * BX, g = new THREE.Group(); g.position.x = x; groupB.add(g);
         const glassM = new THREE.Mesh(new THREE.CylinderGeometry(BR, BR, 2.9, 40, 1, true), glass(0xdbeafe, 0.14)); glassM.position.y = (BYB + 1.4) / 2; g.add(glassM);
-        const rim = new THREE.Mesh(new THREE.TorusGeometry(BR, 0.03, 8, 40), mat(0xb6c6da)); rim.rotation.x = Math.PI / 2; rim.position.y = 1.4; g.add(rim);
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(BR, 0.03, 8, 40), ctx.mats.glass({ opacity: 0.5 })); rim.rotation.x = Math.PI / 2; rim.position.y = 1.4; g.add(rim);
         const bot = new THREE.Mesh(new THREE.CylinderGeometry(BR, BR, 0.06, 40), glass(0xdbeafe, 0.3)); bot.position.y = BYB - 0.03; g.add(bot);
-        const wm = glass(0x7ab8ff, 0.3); const w = new THREE.Mesh(new THREE.CylinderGeometry(BR - 0.02, BR - 0.02, BYT - BYB, 40), wm); w.position.y = (BYT + BYB) / 2; g.add(w);
+        const wm = ctx.mats.liquid(0x4a94e6, { opacity: 0.42 }); const w = new THREE.Mesh(new THREE.CylinderGeometry(BR - 0.02, BR - 0.02, BYT - BYB, 40), wm); w.position.y = (BYT + BYB) / 2; g.add(w);
         return { w, wm, x };
       });
       const labA = label('왼쪽 비커 물', [-BX, 1.75, 0], { size: 12.5, color: 'rgba(40,90,220,.95)' });
@@ -56,13 +57,13 @@
       // 수조 + 금속 컵
       const tank = new THREE.Mesh(new THREE.BoxGeometry(2 * TX, 3.0, 2 * TZ), glass(0xdbeafe, 0.1)); tank.position.y = TYB + 1.5; groupC.add(tank);
       const tankE = new THREE.LineSegments(new THREE.EdgesGeometry(tank.geometry), new THREE.LineBasicMaterial({ color: 0x9cc3ff })); tankE.position.copy(tank.position); groupC.add(tankE);
-      const bathM = glass(0x7ab8ff, 0.3); const bath = new THREE.Mesh(new THREE.BoxGeometry(2 * TX - 0.04, TYT - TYB, 2 * TZ - 0.04), bathM); bath.position.y = (TYT + TYB) / 2; groupC.add(bath);
+      const bathM = ctx.mats.liquid(0x4a94e6, { opacity: 0.4 }); const bath = new THREE.Mesh(new THREE.BoxGeometry(2 * TX - 0.04, TYT - TYB, 2 * TZ - 0.04), bathM); bath.position.y = (TYT + TYB) / 2; groupC.add(bath);
       const cup = new THREE.Group(); groupC.add(cup);
       const metal = mat(0xb8c2cf, { metalness: 0.7, roughness: 0.28, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false });
       const cupBody = new THREE.Mesh(new THREE.CylinderGeometry(CR, CR, CH, 40, 1, true), metal); cup.add(cupBody);
       const cupBot = new THREE.Mesh(new THREE.CylinderGeometry(CR, CR, 0.07, 40), mat(0x94a3b8, { metalness: 0.7, roughness: 0.3 })); cupBot.position.y = -CH / 2; cup.add(cupBot);
       const cupRim = new THREE.Mesh(new THREE.TorusGeometry(CR, 0.035, 8, 40), mat(0x8b97a8, { metalness: 0.7 })); cupRim.rotation.x = Math.PI / 2; cupRim.position.y = CH / 2; cup.add(cupRim);
-      const cupWM = glass(0xff7a5a, 0.34); const cupW = new THREE.Mesh(new THREE.CylinderGeometry(CR - 0.04, CR - 0.04, CWT, 40), cupWM); cupW.position.y = -CH / 2 + 0.04 + CWT / 2; cup.add(cupW);
+      const cupWM = ctx.mats.liquid(0xf06a4a, { opacity: 0.4 }); const cupW = new THREE.Mesh(new THREE.CylinderGeometry(CR - 0.04, CR - 0.04, CWT, 40), cupWM); cupW.position.y = -CH / 2 + 0.04 + CWT / 2; cup.add(cupW);
       const labC = label('', [0, 0, 0], { size: 12.5, color: 'rgba(200,50,30,.95)' });
       const labT = label('', [TX - 0.2, TYT + 0.5, 0], { size: 12.5, color: 'rgba(40,90,220,.95)' });
       const labCup = label('금속 컵(80 °C 물)', cup, { size: 11.5, offset: [0, CH / 2 + 0.55, 0] });

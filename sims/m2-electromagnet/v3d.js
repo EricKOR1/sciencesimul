@@ -29,7 +29,9 @@
       if (st.scene === 'force' && st.I === 0) st.I = 2;
 
       /* ---------- 재료 · 도구 ---------- */
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.55, metalness: 0.1 }, o || {}));
+      const MT = ctx.mats, lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 색이 바래지 않게 (N극 빨강 · S극 파랑이 또렷하게)
+      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: lc(c), roughness: 0.5, metalness: 0.1 }, o || {}));
+      const mag = (c, o) => MT.plastic(lc(c), { roughness: 0.3, extra: o });   // 색칠한 자석: 매끈한 광택
       function mkArrow(col, rad) {
         const g = new THREE.Group(); const m = mat(col, { roughness: 0.4 });
         const sh = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, 1, 10), m);
@@ -44,7 +46,7 @@
         hd.scale.y = hl / (rad * 6); hd.position.y = len - hl / 2;
         g.position.copy(a); g.quaternion.setFromUnitVectors(Yax, d.normalize());
       }
-      function box(w, h, d, c, o) { return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c, o)); }
+      function box(w, h, d, c, o, mk) { return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), (mk || mat)(c, o)); }
 
       /* ---------- 코일의 자기장 (원형 전류 여러 개의 합: 비오-사바르 수치합) ---------- */
       const SRC = []; // [x,y,z, dlx,dly,dlz]
@@ -125,14 +127,14 @@
         const t = (d - lens[i - 1]) / Math.max(1e-6, lens[i] - lens[i - 1]);
         outP.lerpVectors(pathPts[i - 1], pathPts[i], t); outT.subVectors(pathPts[i], pathPts[i - 1]).normalize();
       }
-      gCoil.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(helixPts), 520, 0.055, 8, false), mat(COPPER, { metalness: 0.35, roughness: 0.4 })));
+      gCoil.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(helixPts), 520, 0.055, 12, false), MT.metal('copper', { roughness: 0.28 })));
       const leadPts = [pathPts[0], pathPts[1], pathPts[2], pathPts[3]];
       const leadR = [pathPts[pathPts.length - 4], pathPts[pathPts.length - 3], pathPts[pathPts.length - 2], pathPts[pathPts.length - 1]];
-      [leadPts, leadR].forEach((pp) => { const g = new THREE.BufferGeometry().setFromPoints(pp); gCoil.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0xb7791f }))); gCoil.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pp, false, 'catmullrom', 0), 20, 0.035, 6, false), mat(COPPER))); });
-      const core = new THREE.Mesh(new THREE.CylinderGeometry(R * 0.62, R * 0.62, L + 0.3, 24), mat(0x9aa3b2, { transparent: true, opacity: 0.5, metalness: 0.5 }));
+      [leadPts, leadR].forEach((pp) => { const g = new THREE.BufferGeometry().setFromPoints(pp); gCoil.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0xb7791f }))); gCoil.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pp, false, 'catmullrom', 0), 20, 0.035, 10, false), MT.metal('copper', { roughness: 0.28 }))); });
+      const core = new THREE.Mesh(new THREE.CylinderGeometry(R * 0.62, R * 0.62, L + 0.3, 40), MT.metal('iron', { roughness: 0.4, extra: { transparent: true, opacity: 0.6 } }));
       core.rotation.z = Math.PI / 2; gCoil.add(core);
       const batt = new THREE.Group();
-      batt.add(box(1.8, 0.55, 0.55, 0x374151), (() => { const m = box(0.5, 0.55, 0.58, 0xe2464b); m.position.x = -0.65; return m; })(), (() => { const m = box(0.5, 0.55, 0.58, 0x2f6df6); m.position.x = 0.65; return m; })());
+      batt.add(box(1.8, 0.55, 0.55, 0x2a303b, null, mag), (() => { const m = box(0.5, 0.55, 0.58, 0xe2464b, null, mag); m.position.x = -0.65; return m; })(), (() => { const m = box(0.5, 0.55, 0.58, 0x2f6df6, null, mag); m.position.x = 0.65; return m; })());
       batt.position.set(0, BY, 0); gCoil.add(batt);
       const capN = new THREE.Mesh(new THREE.CircleGeometry(R * 1.12, 32), new THREE.MeshBasicMaterial({ color: NC, transparent: true, opacity: 0.4, side: THREE.DoubleSide }));
       const capS = new THREE.Mesh(new THREE.CircleGeometry(R * 1.12, 32), new THREE.MeshBasicMaterial({ color: SCOL, transparent: true, opacity: 0.4, side: THREE.DoubleSide }));
@@ -159,25 +161,25 @@
       }
 
       /* ---------- ② 막대자석 ---------- */
-      const barN = box(2, 1.3, 1.3, NC, { transparent: true, opacity: 0.45 }), barS = box(2, 1.3, 1.3, SCOL, { transparent: true, opacity: 0.5 });
+      const barN = box(2, 1.3, 1.3, NC, { transparent: true, opacity: 0.5 }, mag), barS = box(2, 1.3, 1.3, SCOL, { transparent: true, opacity: 0.55 }, mag);
       gMag.add(barN, barS);
       const mN = label('N', barN, { color: '#e2464b', size: 15 }), mS = label('S', barS, { color: '#2f6df6', size: 15 });
       function placeBar() { barN.position.x = 1 * st.flip; barS.position.x = -1 * st.flip; }
 
       /* ---------- ③ 도선 그네 ---------- */
       const MY = 1.55;
-      const magT = box(5, 1.0, 2.1, NC), magB = box(5, 1.0, 2.1, SCOL);
+      const magT = box(5, 1.0, 2.1, NC, null, mag), magB = box(5, 1.0, 2.1, SCOL, null, mag);
       magT.position.y = MY + 0.5; magB.position.y = -MY - 0.5; gSwing.add(magT, magB);
       const swN = label('N극', magT, { color: '#e2464b', offset: [-1.9, 0.0, 1.2] }), swS = label('S극', magB, { color: '#2f6df6', offset: [-1.9, 0, 1.2] });
       const fieldArrows = [];
       for (let ix = -1; ix <= 1; ix++) for (let iz = -1; iz <= 1; iz += 2) { const a = mkArrow(0xb79bff, 0.035); gSwing.add(a); fieldArrows.push([a, ix * 1.0, iz * 0.55]); }
       const PIV = 3.9, STR = PIV;                                      // 줄 길이 = 도선이 놓인 높이(0)까지
-      const rail = box(0.12, 0.12, 3.0, 0x7b8798); rail.position.y = PIV; gSwing.add(rail);
+      const rail = box(0.12, 0.12, 3.0, 0x7b8798, { metalness: 0.85, roughness: 0.3 }); rail.position.y = PIV; gSwing.add(rail);
       const supportL = box(0.12, PIV + 1, 0.12, 0x7b8798), supportR = supportL.clone(); supportL.position.set(0, PIV / 2 - 0.5, -1.55); supportR.position.set(0, PIV / 2 - 0.5, 1.55);
       supportL.visible = supportR.visible = false;
       const swing = new THREE.Group(); swing.position.y = PIV; gSwing.add(swing);
       const strL = box(0.03, STR, 0.03, 0x4b5563), strR = strL.clone(); strL.position.set(0, -STR / 2, -1.25); strR.position.set(0, -STR / 2, 1.25); swing.add(strL, strR);
-      const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.6, 16), mat(COPPER, { metalness: 0.4 })); wire.rotation.x = Math.PI / 2; wire.position.y = -STR; swing.add(wire);
+      const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.6, 16), MT.metal('copper', { roughness: 0.28 })); wire.rotation.x = Math.PI / 2; wire.position.y = -STR; swing.add(wire);
             const fArrow = mkArrow(0xf26b3a, 0.075); swing.add(fArrow); const iArrow = mkArrow(0xffe14d, 0.05); swing.add(iArrow);
       const tipF = new THREE.Object3D(), tipI = new THREE.Object3D(); swing.add(tipF, tipI);
       const labF = label('힘 F', tipF, { color: '#f26b3a', size: 14, offset: [0, 0.4, 0] });
@@ -190,7 +192,7 @@
         st.thV += ((target - st.th) * 34 - st.thV * 3.2) * dt; st.th += st.thV * dt; swing.rotation.z = st.th; // 양수면 아래쪽 도선이 +x(오른쪽)로 흔들려요
         const down = st.pole > 0;                              // N극이 위면 B는 아래로(위→아래)
         fieldArrows.forEach((fa) => { const [a, x, z] = fa; const y0 = down ? MY - 0.15 : -MY + 0.15, y1 = down ? -MY + 0.3 : MY - 0.3; setArrow(a, new V3(x, y0, z), new V3(x, y1, z)); });
-        magT.material.color.setHex(st.pole > 0 ? NC : SCOL); magB.material.color.setHex(st.pole > 0 ? SCOL : NC);
+        magT.material.color.copy(lc(st.pole > 0 ? NC : SCOL)); magB.material.color.copy(lc(st.pole > 0 ? SCOL : NC));
         swN.set(st.pole > 0 ? 'N극' : 'S극'); swS.set(st.pole > 0 ? 'S극' : 'N극');
         swN.el.style.background = st.pole > 0 ? '#e2464b' : '#2f6df6'; swS.el.style.background = st.pole > 0 ? '#2f6df6' : '#e2464b';
         // 전류(⊙ 앞쪽 = +z)와 힘(오른쪽 = +x) 화살표 – 도선(로컬 좌표) 기준
@@ -207,13 +209,13 @@
       function fixFArrow() { fArrow.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(new V3(0, 0, 1), -st.th)); iArrow.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(new V3(0, 0, 1), -st.th)); }
 
       /* ---------- ④ 전동기 (자기장 속에서 전류가 흐르는 코일이 회전) ---------- */
-      const mgN = box(1.6, 3.4, 2.6, NC, { transparent: true, opacity: 0.92 }), mgS = box(1.6, 3.4, 2.6, SCOL, { transparent: true, opacity: 0.92 });
+      const mgN = box(1.6, 3.4, 2.6, NC, { transparent: true, opacity: 0.92 }, mag), mgS = box(1.6, 3.4, 2.6, SCOL, { transparent: true, opacity: 0.92 }, mag);
       mgN.position.x = -3.3; mgS.position.x = 3.3; gMotor.add(mgN, mgS);
       const rotor = new THREE.Group(); gMotor.add(rotor);
-      const RR = 1.1, ZL = 1.15, cmat = mat(COPPER, { metalness: 0.4, roughness: 0.4 });
+      const RR = 1.1, ZL = 1.15, cmat = MT.metal('copper', { roughness: 0.28 });
       [[RR, 0], [-RR, 0]].forEach(([x, y]) => { const t = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, ZL * 2, 12), cmat); t.rotation.x = Math.PI / 2; t.position.set(x, y, 0); rotor.add(t); });
       [ZL, -ZL].forEach((z) => { const t = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, RR * 2, 12), cmat); t.rotation.z = Math.PI / 2; t.position.set(0, 0, z); rotor.add(t); });
-      const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.4, 12), mat(0x9aa3b2, { metalness: 0.7 })); axle.rotation.x = Math.PI / 2; gMotor.add(axle);
+      const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.4, 16), MT.metal('steel', { roughness: 0.25 })); axle.rotation.x = Math.PI / 2; gMotor.add(axle);
       const mF = [mkArrow(0xf26b3a, 0.07), mkArrow(0xf26b3a, 0.07)]; mF.forEach((a) => gMotor.add(a));
       const bArr = mkArrow(0xb79bff, 0.035); gMotor.add(bArr); setArrow(bArr, new V3(-2.3, -1.9, 1.2), new V3(2.3, -1.9, 1.2));
       const lmN = label('N극', mgN, { color: '#e2464b', offset: [0, 1.95, 0] }), lmS = label('S극', mgS, { color: '#2f6df6', offset: [0, 1.95, 0] });
@@ -239,9 +241,9 @@
       const wallT = cTex(8, 256, (c, w, h) => { const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#27375a'); g.addColorStop(1, '#0e1830'); c.fillStyle = g; c.fillRect(0, 0, w, h); });
       const wallM = new THREE.Mesh(new THREE.PlaneGeometry(90, 40), new THREE.MeshBasicMaterial({ map: wallT })); wallM.position.set(0, 8, -16); root.add(wallM);
       const bench = new THREE.Mesh(new THREE.CylinderGeometry(7, 7, 0.3, 64), mat(0xffffff, { map: woodT, roughness: 0.55 })); bench.position.y = TY - 0.15; bench.receiveShadow = true; root.add(bench);
-      const mRing = new THREE.Mesh(new THREE.TorusGeometry(7, 0.05, 8, 96), mat(0xd9b45a, { metalness: 0.9, roughness: 0.3 })); mRing.rotation.x = Math.PI / 2; mRing.position.y = TY; root.add(mRing);
+      const mRing = new THREE.Mesh(new THREE.TorusGeometry(7, 0.05, 8, 96), MT.metal('brass', { roughness: 0.3 })); mRing.rotation.x = Math.PI / 2; mRing.position.y = TY; root.add(mRing);
       [bench, mRing, wallM].forEach((m) => { m.userData.v3bg = true; });   // 실험대 · 테두리 · 벽은 배경: 자동 맞춤이 실험 장치에 맞춰요
-      const metalM = mat(0xffffff, { map: metalT, metalness: 0.7, roughness: 0.35 });
+      const metalM = MT.metal(0xaab2c0, { brushed: true, roughness: 0.22 });
       const envCoil = new THREE.Group(), envMag = new THREE.Group(), envSwing = new THREE.Group(), envMotor = new THREE.Group(); root.add(envCoil, envMag, envSwing, envMotor);
       const post = (g, x, z, y0, y1, r) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(r || 0.09, r || 0.09, y1 - y0, 14), metalM); p.position.set(x, (y0 + y1) / 2, z); g.add(p); const b = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.45, 0.14, 24), metalM); b.position.set(x, y0 + 0.07, z); g.add(b); };
       // 코일: 도선을 받치는 기둥 + 단자
@@ -254,7 +256,7 @@
         for (const sz of [-1, 1]) post(envSwing, 0, sz * 1.55, TY, PIV + 0.05, 0.06); }
       // 전동기: 받침대 + 정류자(갈라진 고리) + 솔
       { [-1, 1].forEach((sx) => { const pd = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.05, 2.8), metalM); pd.position.set(sx * 3.3, TY + 0.52, 0); envMotor.add(pd); });
-        const cm = mat(COPPER, { metalness: 0.7, roughness: 0.3 });
+        const cm = MT.metal('copper', { roughness: 0.28 });
         for (const k of [0, 1]) { const h = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.4, 20, 1, false, k * Math.PI + 0.1, Math.PI - 0.2), cm); h.rotation.x = Math.PI / 2; h.position.z = 1.9; rotor.add(h); }
         for (const sy of [-1, 1]) { const br = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.5, 0.3), mat(0x222831, { roughness: 0.8 })); br.position.set(0, sy * 0.55, 1.9); gMotor.add(br); } }
       /* ---------- 나침반 ---------- */
@@ -262,7 +264,7 @@
       const CPOS = [[3.3, 0, 0.3], [-3.3, 0, 0.3], [0, 1.9, 0.3], [2.1, 1.6, 0.3], [-2.1, 1.6, 0.3], [0, -1.0, 1.5]];
       CPOS.forEach((p) => {
         const g = new THREE.Group(); g.position.set(p[0], p[1], p[2]);
-        const shell = new THREE.Mesh(new THREE.SphereGeometry(0.34, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.16 }));
+        const shell = new THREE.Mesh(new THREE.SphereGeometry(0.34, 28, 20), MT.glass({ opacity: 0.2, extra: { side: THREE.FrontSide } }));
         const nd = new THREE.Group();
         const n = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.34, 12), mat(NC)); n.position.y = 0.17;
         const s = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.34, 12), mat(0xdfe6f5)); s.position.y = -0.17; s.rotation.x = Math.PI;
@@ -296,7 +298,7 @@
         labN.show(sc === 'coil' && coilOn); labS.show(sc === 'coil' && coilOn);
         const nx = st.dir > 0 ? 1 : -1;
         capN.position.x = nx * (L / 2 + 0.2); capS.position.x = -nx * (L / 2 + 0.2);
-        batt.children[1].material.color.setHex(st.dir > 0 ? 0xe2464b : 0x2f6df6); batt.children[2].material.color.setHex(st.dir > 0 ? 0x2f6df6 : 0xe2464b);
+        batt.children[1].material.color.copy(lc(st.dir > 0 ? 0xe2464b : 0x2f6df6)); batt.children[2].material.color.copy(lc(st.dir > 0 ? 0x2f6df6 : 0xe2464b));
         labPlus.obj = batt; labPlus.off = [st.dir > 0 ? -0.65 : 0.65, 0.55, 0]; labMinus.off = [st.dir > 0 ? 0.65 : -0.65, 0.55, 0];
         labPlus.el.style.background = '#e2464b'; labMinus.el.style.background = '#2f6df6';
         const lineOn = (sc === 'coil' && coilOn) || (sc === 'magnet' && st.lines);

@@ -142,18 +142,18 @@
       /* ================= 🔋 평행판 전위차 (1 cm = 1칸) ================= */
       const VMAX = 12, DCM = 6;
       const potCol = (t) => { const c = new THREE.Color(); c.setRGB(0.25 + 0.7 * t, 0.45 - 0.12 * t, 1.0 - 0.75 * t); return c; };
-      const plMinus = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3.2, 3.2), M(0x6f8fdc, { metalness: 0.75, roughness: 0.28 })), plPlus = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3.2, 3.2), M(0xe0665c, { metalness: 0.75, roughness: 0.28 })); plMinus.castShadow = plPlus.castShadow = true; plMinus.position.set(-0.35, 1.6, 0); plPlus.position.set(DCM + 0.35, 1.6, 0); gP.add(plMinus, plPlus);
+      const plMinus = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3.2, 3.2), ctx.mats.plastic(0x6f8fdc, { roughness: 0.22, extra: { metalness: 0.25 } })), plPlus = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3.2, 3.2), ctx.mats.plastic(0xe0665c, { roughness: 0.22, extra: { metalness: 0.25 } })); plMinus.castShadow = plPlus.castShadow = true; plMinus.position.set(-0.35, 1.6, 0); plPlus.position.set(DCM + 0.35, 1.6, 0); gP.add(plMinus, plPlus);
       const slabs = []; for (let i = 0; i < 12; i++) { const s = new THREE.Mesh(new THREE.BoxGeometry(DCM / 12, 3.2, 3.2), new THREE.MeshBasicMaterial({ color: 0x4488ff, transparent: true, opacity: 0.28, depthWrite: false })); s.position.set((i + 0.5) * DCM / 12, 1.6, 0); gP.add(s); slabs.push(s); }
       const eAr = [0.7, 1.4, 2.1, 2.7].map((y) => { const a = mkArrow(0x1f2a44, 0.05); a.userData.y = y; gP.add(a); return a; });
       const lE = label('전기장 방향 (+1이 받는 힘)', [3, 3.4, 0], { color: '#1f2a44', size: 12 });
       const lMi = label('(−)판 0 V', plMinus, { color: '#3b63c4', size: 13 }), lPl = label('', plPlus, { color: '#c0392b', size: 13 });
       lMi.off = [0, 1.9, 0]; lPl.off = [0, 1.9, 0];
-      for (let i = 0; i <= DCM; i++) { const t = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.3), M(0x9fb0d4)); t.position.set(i, 0.02, 1.8); gP.add(t); }
+      for (let i = 0; i <= DCM; i++) { const t = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.3), ctx.mats.metal('aluminium')); t.position.set(i, 0.02, 1.8); gP.add(t); }
       const floorP = new THREE.Mesh(new THREE.BoxGeometry(10.4, 0.4, 6.6), woodM(3, 1)); floorP.position.set(3, -0.2, -0.3); floorP.receiveShadow = true; gP.add(floorP);
       { const e = new THREE.Mesh(new THREE.BoxGeometry(10.5, 0.06, 6.7), M(0x4a2f15, { roughness: 0.7 })); e.position.set(3, -0.02, -0.3); gP.add(e);
-        const bm = M(0x1f2937, { roughness: 0.5, metalness: 0.3 }); [-0.35, DCM + 0.35].forEach((x) => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.14, 3.6), bm); b.position.set(x, 0.07, 0); b.castShadow = true; gP.add(b); });
-        const bat = new THREE.Group(); const bb = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.9, 1.0), M(0x2b3447, { roughness: 0.45, metalness: 0.4 })); bb.position.y = 0.45; bb.castShadow = true; bat.add(bb); const st = new THREE.Mesh(new THREE.BoxGeometry(2.42, 0.18, 1.02), M(0xfacc15, { roughness: 0.5 })); st.position.y = 0.5; bat.add(st);
-        const tpM = M(0xe0665c, { metalness: 0.8, roughness: 0.3 }), tnM = M(0x6f8fdc, { metalness: 0.8, roughness: 0.3 }); const tp = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.2, 16), tpM), tn = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.2, 16), tnM); tp.position.set(0.8, 1.0, 0); tn.position.set(-0.8, 1.0, 0); bat.add(tp, tn);
+        const bm = ctx.mats.rubber(0x1f2733); [-0.35, DCM + 0.35].forEach((x) => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.14, 3.6), bm); b.position.set(x, 0.07, 0); b.castShadow = true; gP.add(b); });
+        const bat = new THREE.Group(); const bb = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.9, 1.0), ctx.mats.plastic(0x2b3447, { roughness: 0.3 })); bb.position.y = 0.45; bb.castShadow = true; bat.add(bb); const st = new THREE.Mesh(new THREE.BoxGeometry(2.42, 0.18, 1.02), M(0xfacc15, { roughness: 0.5 })); st.position.y = 0.5; bat.add(st);
+        const tpM = ctx.mats.plastic(0xe0665c, { roughness: 0.2 }), tnM = ctx.mats.plastic(0x6f8fdc, { roughness: 0.2 }); const tp = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.2, 16), tpM), tn = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.2, 16), tnM); tp.position.set(0.8, 1.0, 0); tn.position.set(-0.8, 1.0, 0); bat.add(tp, tn);
         bat.position.set(DCM / 2, 0, -2.5); gP.add(bat);
         const wire = (pts, c) => { const w = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((q) => new V3(q[0], q[1], q[2]))), 40, 0.045, 8, false), M(c, { roughness: 0.4 })); w.castShadow = true; gP.add(w); };
         wire([[DCM / 2 + 0.8, 1.05, -2.5], [DCM / 2 + 1.0, 1.6, -2.5], [DCM + 0.35, 1.9, -2.3], [DCM + 0.35, 2.6, -1.6]], 0xd9453a);

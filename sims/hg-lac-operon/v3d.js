@@ -26,7 +26,14 @@
       const V = THREE.Vector3, M4 = new THREE.Matrix4(), cc = new THREE.Color();
       if (narrow) root.rotation.z = Math.PI / 2;      // 휴대폰(세로 화면)에서는 눕혀 둔 모형을 세워서 보여 줘요
       let lac = false;
-      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.04 }, o || {}));
+      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.3, metalness: 0.04, envMapIntensity: 1.1 }, o || {}));
+      /* 단백질(중합 효소·억제자·효소)은 촉촉한 생체 조직 느낌 + 울퉁불퉁한 표면 */
+      const bio = (c, op, o) => ctx.mats.organic(c, { opacity: op, extra: o });
+      const lumpy = (geo, amp, f) => {
+        const p = geo.attributes.position, v = new V(), n = new V();
+        for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); n.copy(v).normalize(); v.multiplyScalar(1 + amp * (Math.sin(n.x * f + 1.3) * Math.cos(n.y * f * 1.3 + 0.4) + 0.6 * Math.sin(n.z * f * 1.7 + n.x * 2.1))); p.setXYZ(i, v.x, v.y, v.z); }
+        geo.computeVertexNormals(); return geo;
+      };
       const An = (x, y, z) => { const o = new THREE.Object3D(); o.position.set(x, y, z); root.add(o); return o; };
 
       /* ---------- DNA ---------- */
@@ -52,12 +59,12 @@
 
       /* ---------- RNA 중합 효소 · 억제자 ---------- */
       const pol = new THREE.Group(); root.add(pol);
-      { const b = new THREE.Mesh(new THREE.SphereGeometry(1, 36, 24), std(0x14b8a6, { transparent: true, opacity: 0.45, depthWrite: false, roughness: 0.3 })); b.scale.set(0.7, 0.72, 0.72); pol.add(b);
-        const c1 = new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 14), std(0x0d9488)); c1.scale.setScalar(0.75); c1.position.set(0.15, 0.25, -0.2); pol.add(c1); }
+      { const b = new THREE.Mesh(lumpy(new THREE.SphereGeometry(1, 48, 32), 0.06, 3.3), bio(0x14b8a6, 0.5)); b.scale.set(0.7, 0.72, 0.72); pol.add(b);
+        const c1 = new THREE.Mesh(lumpy(new THREE.SphereGeometry(0.42, 28, 20), 0.08, 3.6), bio(0x0d9488)); c1.scale.setScalar(0.75); c1.position.set(0.15, 0.25, -0.2); pol.add(c1); }
       pol.position.set(PSTART, 0, 0);
       const rep = new THREE.Group(); root.add(rep);
-      const repMat = std(0x7c3aed, { roughness: 0.35 });   // 2D처럼 보라색 억제자 단백질
-      { [-0.34, 0.34].forEach((z) => { const s = new THREE.Mesh(new THREE.SphereGeometry(0.33, 24, 18), repMat); s.position.set(0, 0.7, z); rep.add(s); const f = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.5, 12), repMat); f.position.set(0, 0.3, z * 0.55); rep.add(f); });
+      const repMat = bio(0x7c3aed);   // 2D처럼 보라색 억제자 단백질
+      { [-0.34, 0.34].forEach((z) => { const s = new THREE.Mesh(lumpy(new THREE.SphereGeometry(0.33, 32, 22), 0.07, 3.8), repMat); s.position.set(0, 0.7, z); rep.add(s); const f = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.5, 12), repMat); f.position.set(0, 0.3, z * 0.55); rep.add(f); });
         const top = new THREE.Mesh(new THREE.SphereGeometry(0.3, 20, 14), repMat); top.position.set(0, 1.0, 0); rep.add(top); }
       const OP = new V(-2.3, 0.1, 0); rep.position.copy(OP);
       // 젖당 (포도당 + 갈락토스)
@@ -73,7 +80,7 @@
       function addEnz(kind, x) {
         const col = kind === 'Z' ? 0x3b82f6 : kind === 'Y' ? 0xa855f7 : 0x10b981;
         const g = new THREE.Group(); const r = kind === 'Z' ? 0.34 : 0.26;
-        for (let i = 0; i < 4; i++) { const s = new THREE.Mesh(new THREE.SphereGeometry(r, 18, 14), std(col, { roughness: 0.35 })); s.position.set((i % 2 - 0.5) * r * 1.1, (i >> 1 ? 0.5 : -0.5) * r * 1.0, 0); g.add(s); }
+        for (let i = 0; i < 4; i++) { const s = new THREE.Mesh(lumpy(new THREE.SphereGeometry(r, 26, 18), 0.07, 3.5), bio(col)); s.position.set((i % 2 - 0.5) * r * 1.1, (i >> 1 ? 0.5 : -0.5) * r * 1.0, 0); g.add(s); }
         g.position.set(x, 1.2, 0.4); root.add(g); enzs.push({ g, kind, v: new V(Math.random() - .5, Math.random() - .5, Math.random() - .5).setLength(0.6), t: 0 });
       }
       const ease = (k) => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };

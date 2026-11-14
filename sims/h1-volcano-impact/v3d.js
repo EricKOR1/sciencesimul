@@ -22,18 +22,22 @@
       const body = new THREE.Group(); root.add(body);
       /* ---------- 지형 ---------- */
       const prof = []; for (let i = 0; i <= 60; i++) { const r = i / 60 * RB; prof.push(new THREE.Vector2(Math.max(r, 0.001), hAt(r))); }
-      const terrCut = new THREE.Mesh(new THREE.LatheGeometry(prof, 72, 0, wedge), std(0x7a6a58, { side: THREE.DoubleSide }));
-      const terrFull = new THREE.Mesh(new THREE.LatheGeometry(prof, 72), std(0x7a6a58, { side: THREE.DoubleSide }));
-      const wallCut = new THREE.Mesh(new THREE.CylinderGeometry(RB, RB, 3.2, 72, 1, true, 0, wedge), std(0x5b4a3a, { side: THREE.DoubleSide })); wallCut.position.y = -1.6;
-      const wallFull = new THREE.Mesh(new THREE.CylinderGeometry(RB, RB, 3.2, 72, 1, true), std(0x5b4a3a, { side: THREE.DoubleSide })); wallFull.position.y = -1.6;
+      const hMax = hAt(0.35), tint = (geo) => { const P = geo.attributes.position, C = [], lo = new THREE.Color(0.86, 1.0, 0.78), mid = new THREE.Color(1.0, 0.93, 0.85), hi = new THREE.Color(0.62, 0.6, 0.62);   // 산기슭은 풀빛, 꼭대기는 검은 화산재
+        for (let i = 0; i < P.count; i++) { const k = Math.max(0, Math.min(1, P.getY(i) / Math.max(0.01, hMax))); const c = k < 0.35 ? lo.clone().lerp(mid, k / 0.35) : mid.clone().lerp(hi, (k - 0.35) / 0.65); C.push(c.r, c.g, c.b); }
+        geo.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); return geo; };
+      const terrM = ctx.mats.stone(0x7a6a58, { cracks: true, repeat: 5, bump: 0.05, extra: { side: THREE.DoubleSide, vertexColors: true } });
+      const terrCut = new THREE.Mesh(tint(new THREE.LatheGeometry(prof, 72, 0, wedge)), terrM);
+      const terrFull = new THREE.Mesh(tint(new THREE.LatheGeometry(prof, 72)), terrM);
+      const wallCut = new THREE.Mesh(new THREE.CylinderGeometry(RB, RB, 3.2, 72, 1, true, 0, wedge), ctx.mats.stone(0x4e3f31, { repeat: 4, bump: 0.04, extra: { side: THREE.DoubleSide } })); wallCut.position.y = -1.6;
+      const wallFull = new THREE.Mesh(new THREE.CylinderGeometry(RB, RB, 3.2, 72, 1, true), ctx.mats.stone(0x4e3f31, { repeat: 4, bump: 0.04, extra: { side: THREE.DoubleSide } })); wallFull.position.y = -1.6;
       const cutG = new THREE.Group(), fullG = new THREE.Group(); cutG.add(terrCut, wallCut); fullG.add(terrFull, wallFull); body.add(cutG, fullG);
       // 바다/평지 기반
-      const sea = new THREE.Mesh(new THREE.RingGeometry(RB - 0.01, RB + 3.2, 72), std(0x1f5a3a, { roughness: 0.95 })); sea.rotation.x = -Math.PI / 2; sea.position.y = 0.005; body.add(sea);
+      const sea = new THREE.Mesh(new THREE.RingGeometry(RB - 0.01, RB + 3.2, 72), ctx.mats.stone(0x10331c, { cracks: true, repeat: 10, bump: 0.03, extra: { roughness: 0.95 } })); sea.rotation.x = -Math.PI / 2; sea.position.y = 0.005; body.add(sea);
       /* ---------- 단면(층·화도·마그마 방) ---------- */
       const LAYC = [0x8a7e72, 0xc2a37a, 0x6f6459];
       function caps(rotY) {
         const g = new THREE.Group();
-        const mk = (pts, col, em, z) => { const sh = new THREE.Shape(pts.map((p) => new THREE.Vector2(p[0], p[1]))); const m = new THREE.Mesh(new THREE.ShapeGeometry(sh), std(col, { side: THREE.DoubleSide, emissive: em ? col : 0, emissiveIntensity: em || 0, roughness: 0.7 })); m.position.z = z; return m; };
+        const mk = (pts, col, em, z) => { const sh = new THREE.Shape(pts.map((p) => new THREE.Vector2(p[0], p[1]))); const m = new THREE.Mesh(new THREE.ShapeGeometry(sh), std(col, { side: THREE.DoubleSide, emissive: em ? col : 0, emissiveIntensity: em || 0, roughness: 0.75, bumpMap: em ? null : ctx.mats.tex('stone'), bumpScale: 0.04 })); m.position.z = z; return m; };
         // 원뿔 표면과 나란한 화산 쇄설층·용암층 (층상 화산)
         const N = 40, off = [0, 0.32, 0.64, 0.98];
         for (let k = 0; k < 3; k++) {

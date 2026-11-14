@@ -17,8 +17,8 @@
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V3 = THREE.Vector3, Yax = new V3(0, 1, 0);
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o || {}));
-      const glass = (c, op, o) => mat(c || 0xbfe3ff, Object.assign({ transparent: true, opacity: op || 0.16, roughness: 0.12, metalness: 0, depthWrite: false, side: THREE.DoubleSide }, o || {}));
+      const mat = (c, o) => { o = o || {}; if (o.metalness >= 0.5 && !o.transparent) { const q = Object.assign({}, o), r = q.roughness; delete q.metalness; delete q.roughness; return ctx.mats.metal(c, { roughness: r == null ? 0.3 : r, extra: q }); } return new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o)); };   // 금속 부품은 실제 금속 재질(환경 반사)
+      const glass = (c, op, o) => ctx.mats.glass({ tint: c || 0xeaf6ff, opacity: op || 0.16, extra: o || {} });   // 유리: 맑고 또렷한 반사
       const rnd = (() => { let s = 12345; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; })();
       const _m = new THREE.Matrix4(), _c = new THREE.Color();
       const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -97,8 +97,8 @@
       const beaker = G.beaker;
       const BR = 2.1, BH = 2.2, NP = 120;
       const cup = new THREE.Mesh(new THREE.CylinderGeometry(BR, BR * 0.96, 2 * BH, 56, 1, true), glass(0xcfe6ff, 0.2)); beaker.add(cup);
-      const wat = new THREE.Mesh(new THREE.CylinderGeometry(BR - 0.03, BR * 0.96 - 0.03, 2 * BH - 0.3, 56), glass(0x4aa8ff, 0.14, { side: THREE.FrontSide })); wat.position.y = -0.15; beaker.add(wat);
-      const bot = new THREE.Mesh(new THREE.CylinderGeometry(BR * 0.96, BR * 0.96, 0.12, 56), mat(0xb7c2d4, { metalness: 0.3 })); bot.position.y = -BH - 0.06; beaker.add(bot);
+      const wat = new THREE.Mesh(new THREE.CylinderGeometry(BR - 0.03, BR * 0.96 - 0.03, 2 * BH - 0.3, 56), ctx.mats.liquid(0x2f7fd6, { opacity: 0.34, extra: { side: THREE.FrontSide } })); wat.position.y = -0.15; beaker.add(wat);
+      const bot = new THREE.Mesh(new THREE.CylinderGeometry(BR * 0.96, BR * 0.96, 0.12, 56), ctx.mats.glass({ tint: 0xcfe6ff, opacity: 0.22 })); bot.position.y = -BH - 0.06; beaker.add(bot);
       const flame2 = mkFlame(1.3); flame2.position.set(0, -BH - 0.35, 0); beaker.add(flame2);
       const burner2 = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.7, 0.5, 20), mat(0x475569, { metalness: 0.6, roughness: 0.4 })); burner2.position.set(0, -BH - 0.65, 0); beaker.add(burner2);
       const cp = spheres(NP, 0.11, 0xffffff, 10, beaker), CP = [];
@@ -113,7 +113,7 @@
       const RNX = 30, RNY = 20;
       { const b = new THREE.Mesh(new THREE.BoxGeometry(2 * RW, 2 * RHH, 2 * RD2), glass(0xdbeafe, 0.08)); room.add(b);
         room.add(new THREE.LineSegments(new THREE.EdgesGeometry(b.geometry), new THREE.LineBasicMaterial({ color: 0x9cc3ff })));
-        const fl = new THREE.Mesh(new THREE.BoxGeometry(2 * RW + 0.4, 0.14, 2 * RD2 + 0.4), mat(0x94a3b8, { roughness: 0.8 })); fl.position.y = -RHH - 0.08; room.add(fl); }
+        const fl = new THREE.Mesh(new THREE.BoxGeometry(2 * RW + 0.4, 0.14, 2 * RD2 + 0.4), ctx.mats.wood(0xb08a66, { repeat: 3 })); fl.position.y = -RHH - 0.08; room.add(fl); }
       const wallM = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2 * RHH - 0.1, 2 * RD2 - 0.1), mat(0x7ab8ff, { transparent: true, opacity: 0.55, emissive: 0x000000 })); wallM.position.x = RW - 0.06; room.add(wallM);
       const heaterM = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.62, 1.6), mat(0x6b7280, { metalness: 0.4, emissive: 0x000000 })); room.add(heaterM);
       const acM = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.4, 0.9), mat(0xe5e7eb, { metalness: 0.2 })); acM.position.set(-RW + (11 + 18) / 2 / RNX * 2 * RW, RHH - 0.35, 0); room.add(acM);
@@ -133,7 +133,7 @@
       const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); glow.scale.set(5, 5, 1); glow.position.set(-3.5, 0, 0); rad.add(glow);
       const cups = [{ z: -0.8, base: 0x2b2f38, name: '검은 컵' }, { z: 0.8, base: 0xf1f3f6, name: '흰 컵' }].map((o) => {
         const body = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.55, 1.3, 32), mat(o.base, { roughness: 0.5, emissive: 0x000000 })); body.position.set(3.4, -0.4, o.z); rad.add(body);
-        const water = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.05, 32), mat(0x4aa8ff, { roughness: 0.2 })); water.position.set(3.4, 0.27, o.z); rad.add(water);
+        const water = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.05, 32), ctx.mats.liquid(0x3b8fe0, { opacity: 0.9 })); water.position.set(3.4, 0.27, o.z); rad.add(water);
         const lab = label('', body, { size: 12, offset: [0, 1.15, 0] }); LG.rad.push(lab);
         return { body, water, lab, name: o.name };
       });
@@ -162,8 +162,8 @@
         const gl = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 3.1, 48, 1, true), glass(0xcfe6ff, 0.3)); gl.position.y = 0.05; th.add(gl);
         const gb = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.06, 48), glass(0xcfe6ff, 0.4)); gb.position.y = -1.5; th.add(gb); }
       const silverM = new THREE.Mesh(new THREE.CylinderGeometry(0.84, 0.84, 3.1, 48, 1, true, 0.75, Math.PI * 2 - 1.5), mat(0xf4f7fb, { metalness: 1, roughness: 0.08, side: THREE.DoubleSide })); silverM.position.y = 0.05; th.add(silverM);
-      const waterM = new THREE.Mesh(new THREE.CylinderGeometry(0.74, 0.74, 1, 40), mat(0x9fd0f7, { transparent: true, opacity: 0.85, roughness: 0.2 })); th.add(waterM);
-      const lidM = new THREE.Group(); { const c1 = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.52, 0.5, 28), mat(0xd99a52, { roughness: 0.85 })); c1.position.y = 0; lidM.add(c1); const c2 = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.22, 24), mat(0xe9b36a, { roughness: 0.8 })); c2.position.y = 0.36; lidM.add(c2); } th.add(lidM);
+      const waterM = new THREE.Mesh(new THREE.CylinderGeometry(0.74, 0.74, 1, 40), ctx.mats.liquid(0x7fbdf0, { opacity: 0.8 })); th.add(waterM);
+      const lidM = new THREE.Group(); { const c1 = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.52, 0.5, 28), ctx.mats.wood(0xd99a52)); c1.position.y = 0; lidM.add(c1); const c2 = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.22, 24), mat(0xe9b36a, { roughness: 0.8 })); c2.position.y = 0.36; lidM.add(c2); } th.add(lidM);
       const NGAS = 30, gasP = spheres(NGAS, 0.045, 0xb8c9e6, 8, th), GQ = []; for (let i = 0; i < NGAS; i++) GQ.push({ a: rnd() * 6.283, r: 0.88 + rnd() * 0.12, ph: rnd() * 6.283, sp: 0.4 + rnd() * 0.4 });
       const stm = []; for (let i = 0; i < 4; i++) { const s = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 10), new THREE.MeshBasicMaterial({ color: 0xe6edf7, transparent: true, opacity: 0.0, depthWrite: false })); th.add(s); stm.push(s); }
       const hA = { cond: [-0.5, 0, 0.5].map((x) => { const a = mkArrow(0xdc2626, 0.05); th.add(a); a.userData.x = x; return a; }), top: [-0.35, 0, 0.35].map((x) => { const a = mkArrow(0xd97706, 0.05); th.add(a); a.userData.x = x; return a; }),

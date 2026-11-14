@@ -63,8 +63,8 @@
       const brickT = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'); g.fillStyle = '#5a5048'; g.fillRect(0, 0, 256, 256); let sd = 5; const r = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
         for (let y = 0; y < 8; y++) for (let x = -1; x < 4; x++) { const v = 0.8 + r() * 0.35; g.fillStyle = 'rgb(' + Math.round(150 * v) + ',' + Math.round(74 * v) + ',' + Math.round(52 * v) + ')'; g.fillRect(x * 64 + (y % 2 ? 32 : 0) + 2, y * 32 + 2, 60, 28); }
         const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; return t; })();   // 벽돌 무늬
-      const furn = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.5, 1.7), new THREE.MeshStandardMaterial({ map: brickT, bumpMap: brickT, bumpScale: 0.03, roughness: 0.9, metalness: 0, envMapIntensity: 0.4 }));
-      { const door = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.96, 0.06), mats.metal('iron', { roughness: 0.6 })); door.position.set(-4.4, -0.45, 0.84); gCoal.add(door); }   // 무쇠 아궁이 테 furn.position.set(-4.4, -0.45, 0); furn.castShadow = true; gCoal.add(furn);
+      const furn = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.5, 1.7), new THREE.MeshStandardMaterial({ map: brickT, bumpMap: brickT, bumpScale: 0.03, roughness: 0.9, metalness: 0, envMapIntensity: 0.4 })); furn.position.set(-4.4, -0.45, 0); furn.castShadow = true; gCoal.add(furn);
+      { const door = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.96, 0.06), mats.metal('iron', { roughness: 0.6 })); door.position.set(-4.4, -0.45, 0.84); gCoal.add(door); }   // 무쇠 아궁이 테
       const boil = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 2.2, 30), mats.metal('steel', { brushed: true })); boil.rotation.z = Math.PI / 2; boil.position.set(-4.4, 0.9, 0); boil.castShadow = true; gCoal.add(boil);
       [-1.1, -0.4, 0.4, 1.1].forEach((x) => { const band = new THREE.Mesh(new THREE.TorusGeometry(0.63, 0.03, 8, 40), mats.metal(0x5a6474, { roughness: 0.4 })); band.rotation.y = Math.PI / 2; band.position.set(-4.4 + x, 0.9, 0); gCoal.add(band); });   // 보일러 띠쇠
       [-1.12, 1.12].forEach((x) => { const end = new THREE.Mesh(new THREE.SphereGeometry(0.62, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2), mats.metal('steel', { brushed: true })); end.scale.y = 0.35; end.rotation.z = -Math.sign(x) * Math.PI / 2; end.position.set(-4.4 + x * 0.98, 0.9, 0); gCoal.add(end); });
@@ -114,7 +114,7 @@
         const h = new THREE.Group(), w = 0.9 + (i % 2) * 0.25, hh = 0.7 + (i % 3) * 0.28;
         const body = new THREE.Mesh(new THREE.BoxGeometry(w, hh, 0.8), mat([0xe8e0d0, 0xd9d2e6, 0xe6d6d0, 0xd2e2e6, 0xe6e2c8][i])); body.position.y = hh / 2; body.castShadow = true; h.add(body);
         const rsh = new THREE.Shape([new THREE.Vector2(-w * 0.58, 0), new THREE.Vector2(w * 0.58, 0), new THREE.Vector2(0, 0.42)]), rg = new THREE.ExtrudeGeometry(rsh, { depth: 0.92, bevelEnabled: false }); rg.translate(0, 0, -0.46);
-        const roof = new THREE.Mesh(rg, mats.stone(0x9c4630, { repeat: 3, bump: 0.05 })); roof.position.y = hh;   // 박공지붕 roof.castShadow = true; h.add(roof);
+        const roof = new THREE.Mesh(rg, mats.stone(0x9c4630, { repeat: 3, bump: 0.05 })); roof.position.y = hh; roof.castShadow = true; h.add(roof);   // 박공지붕
         for (let k = 0; k < 2; k++) { const wm = new THREE.MeshStandardMaterial({ color: 0x2a3550, emissive: 0xffd466, emissiveIntensity: 0, roughness: 0.15, metalness: 0.2 }); const wd = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.26), wm); wd.position.set(-w * 0.22 + k * w * 0.44, hh * 0.55, 0.405); h.add(wd); wins.push(wm); }
         h.position.set(q[0], -1.15, q[1]); h.rotation.y = -0.2 + i * 0.3; root.add(h); houses.push(h);
       });

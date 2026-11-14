@@ -30,10 +30,11 @@
       blk.position.set(0, Y0 - (NY - 1) * SP / 2 - 0.0, 0); root.add(blk);
       const edge = new THREE.LineSegments(new THREE.EdgesGeometry(blk.geometry), new THREE.LineBasicMaterial({ color: 0xcaa57a, transparent: true, opacity: 0.55 }));
       edge.position.copy(blk.position); root.add(edge);
+      { const g = new THREE.Mesh(new THREE.BoxGeometry(NX * SP + 1.2, 0.22, NZ * SP + 1.2), ctx.mats.stone(0x5a4a3a, { cracks: true, repeat: 2, bump: 0.05 })); g.position.set(0, blk.position.y - NY * SP / 2 - 0.13, 0); g.userData.v3bg = true; root.add(g); }   // 받침 암반
 
       /* 입자 격자 */
       const geo = new THREE.SphereGeometry(0.1, 14, 10);
-      const mat = new THREE.MeshStandardMaterial({ roughness: 0.4, metalness: 0.05 });
+      const mat = new THREE.MeshStandardMaterial({ roughness: 0.28, metalness: 0.05, envMapIntensity: 1.1 });
       const im = new THREE.InstancedMesh(geo, mat, N); im.frustumCulled = false; root.add(im);
       const base = new Float32Array(N * 3), col = new THREE.Color();
       let k = 0;
@@ -48,7 +49,7 @@
       for (let n = 0; n < N; n++) { arr[n * 16] = arr[n * 16 + 5] = arr[n * 16 + 10] = arr[n * 16 + 15] = 1; }
 
       /* 진원: 덩어리 왼쪽 면에서 흔드는 판 */
-      const src = new THREE.Mesh(new THREE.BoxGeometry(0.28, NY * SP * 0.98, NZ * SP * 0.98), new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.4, emissive: 0x7f1d1d, emissiveIntensity: 0.5 }));
+      const src = new THREE.Mesh(new THREE.BoxGeometry(0.28, NY * SP * 0.98, NZ * SP * 0.98), ctx.mats.plastic(0xd63a3a, { roughness: 0.3, extra: { emissive: 0x7f1d1d, emissiveIntensity: 0.45 } }));
       src.position.set(X0 - SP * 0.9, blk.position.y, 0); root.add(src);
       label('진원', [X0 - SP * 0.9, Y0 + 0.35, 0], { color: 'rgba(185,28,28,.92)' });
 

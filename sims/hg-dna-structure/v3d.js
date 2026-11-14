@@ -16,7 +16,7 @@
     const seq = o.seq, sec = seq.split('').map((c) => COMP[c]).join('');
     const Yv = new THREE.Vector3(0, 1, 0), v3 = new THREE.Vector3();
     const g = new THREE.Group(); root.add(g);
-    const M = (c, ex) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.05, transparent: true }, ex || {}));
+    const M = (c, ex) => new THREE.MeshPhysicalMaterial(Object.assign({ color: c, roughness: 0.34, metalness: 0, clearcoat: 0.5, clearcoatRoughness: 0.22, envMapIntensity: 1.05, transparent: true }, ex || {}));   // 분자 모형: 매끈한 광택 플라스틱
     const matP = M(0xfb923c), matS = M(0x38bdf8), matSt = o.strandCols.map((c) => M(c, { roughness: 0.6 }));
     const backMats = [matP, matS, matSt[0], matSt[1]];
     let tw = 1, focus = 'all', sel = -1;
@@ -168,7 +168,7 @@
       const sLab2 = label('← 가닥 2', c1[(19 - 4) * 2 + 1].mesh, { color: 'rgba(124,58,237,.92)', offset: [0, -0.38, 0] });
 
       /* 홈 (주홈 · 부홈): 나선을 따라 도는 띠 */
-      const grooveMats = [new THREE.MeshStandardMaterial({ color: 0xfb7185, transparent: true, opacity: 0.55, roughness: 0.5 }), new THREE.MeshStandardMaterial({ color: 0x2dd4bf, transparent: true, opacity: 0.6, roughness: 0.5 })];
+      const grooveMats = [new THREE.MeshPhysicalMaterial({ color: 0xfb7185, transparent: true, opacity: 0.55, roughness: 0.3, clearcoat: 0.6, clearcoatRoughness: 0.2, depthWrite: false }), new THREE.MeshPhysicalMaterial({ color: 0x2dd4bf, transparent: true, opacity: 0.6, roughness: 0.3, clearcoat: 0.6, clearcoatRoughness: 0.2, depthWrite: false })];
       const grooveMesh = [null, null], grooveG = new THREE.Group(); root.add(grooveG);
       function buildGroove() {
         [0, 1].forEach((w) => {

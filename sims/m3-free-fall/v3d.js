@@ -16,14 +16,15 @@
     levels: [0, 3],            // 1단계(낙하 관찰)·4단계(높은 탑에서 예측 확인)는 3D. 속력 기록·그래프와 기록표 읽기는 2D
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
-      const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.1 }, o || {}));
+      const MT = ctx.mats, lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 색이 바래지 않게 (진한 색)
+      const sm = (c, o) => { const q = Object.assign({ color: lc(c), roughness: 0.45, metalness: 0.1 }, o || {}); if (typeof q.emissive === 'number') q.emissive = lc(q.emissive); return new THREE.MeshStandardMaterial(q); };
       const mkTex = (w, h, draw, rx, ry) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; draw(cv.getContext('2d'), w, h); const tx = new THREE.CanvasTexture(cv); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; if (rx) tx.repeat.set(rx, ry || rx); tx.anisotropy = 4; return tx; };
       let rs = 5; const rnd = () => { rs = (rs * 16807) % 2147483647; return rs / 2147483647; };
       const grassTex = mkTex(256, 256, (x, w, h) => { x.fillStyle = '#4f8a3f'; x.fillRect(0, 0, w, h); for (let i = 0; i < 3500; i++) { const g = 100 + rnd() * 80 | 0; x.fillStyle = 'rgba(' + (g * 0.45 | 0) + ',' + g + ',' + (g * 0.35 | 0) + ',.55)'; x.fillRect(rnd() * w, rnd() * h, 1.5, 3); } }, 5, 3);
       const concTex = mkTex(128, 128, (x, w, h) => { x.fillStyle = '#9aa3ad'; x.fillRect(0, 0, w, h); for (let i = 0; i < 900; i++) { const v = 120 + rnd() * 70 | 0; x.fillStyle = 'rgba(' + v + ',' + v + ',' + (v + 6) + ',.5)'; x.fillRect(rnd() * w, rnd() * h, 2, 2); } x.strokeStyle = 'rgba(40,50,60,.4)'; x.strokeRect(0, 0, w, h); }, 2, 1.2);
       const gnd = new THREE.Mesh(new THREE.BoxGeometry(11, 0.3, 6), sm(0x9bb890, { roughness: 0.95, metalness: 0, map: grassTex })); gnd.position.y = -0.15; gnd.receiveShadow = true; root.add(gnd);
       const pad = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.06, 3.2), sm(0x6f7782, { roughness: 0.9, metalness: 0, map: concTex })); pad.position.set(-1.0, 0.02, 0); root.add(pad);
-      const mat = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.16, 2.6), sm(0xc2570c, { roughness: 0.85, metalness: 0 })); mat.position.set(-0.45, 0.1, 0); root.add(mat);
+      const mat = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.16, 2.6), MT.rubber(lc(0xc2570c))); mat.position.set(-0.45, 0.1, 0); root.add(mat);
       const skyC = document.createElement('canvas'); skyC.width = 4; skyC.height = 256; { const x = skyC.getContext('2d'), g = x.createLinearGradient(0, 0, 0, 256); g.addColorStop(0, '#3b82d6'); g.addColorStop(0.5, '#9fd0f4'); g.addColorStop(0.58, '#eaf5fc'); g.addColorStop(1, '#eaf5fc'); x.fillStyle = g; x.fillRect(0, 0, 4, 256); }
       const sky = new THREE.Mesh(new THREE.SphereGeometry(45, 24, 16), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(skyC), side: THREE.BackSide, depthWrite: false })); sky.renderOrder = -10; root.add(sky);
       const far = new THREE.Mesh(new THREE.CircleGeometry(40, 48), sm(0x2d4d2a, { roughness: 1, metalness: 0 })); far.rotation.x = -Math.PI / 2; far.position.y = -0.32; root.add(far);
@@ -38,13 +39,13 @@
       function buildTower(H) {
         Hm = H; topY = H * SC + 0.35;
         while (tower.children.length) tower.remove(tower.children[0]);
-        [[-0.7, -0.6], [0.7, -0.6], [-0.7, 0.6], [0.7, 0.6]].forEach((q) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, topY, 10), sm(0x94a3b8, { metalness: 0.6, roughness: 0.4 })); m.position.set(q[0] - 1.6, topY / 2, q[1]); tower.add(m); });
-        const plat = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.12, 1.7), sm(0x64748b)); plat.position.set(-1.6, topY, 0); tower.add(plat);
-        const bm = sm(0xcbd5e1, { metalness: 0.6, roughness: 0.35 }), nseg = Math.max(2, Math.round(topY / 1.1)), sh = topY / nseg, YU = new THREE.Vector3(0, 1, 0);
+        [[-0.7, -0.6], [0.7, -0.6], [-0.7, 0.6], [0.7, 0.6]].forEach((q) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, topY, 10), MT.metal('steel', { roughness: 0.3 })); m.position.set(q[0] - 1.6, topY / 2, q[1]); tower.add(m); });
+        const plat = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.12, 1.7), MT.metal('steel', { brushed: true })); plat.position.set(-1.6, topY, 0); tower.add(plat);
+        const bm = MT.metal('steel', { roughness: 0.3 }), nseg = Math.max(2, Math.round(topY / 1.1)), sh = topY / nseg, YU = new THREE.Vector3(0, 1, 0);
         for (let i = 0; i <= nseg; i++) [[-0.7, 0.7, -0.6, -0.6], [-0.7, 0.7, 0.6, 0.6], [-0.7, -0.7, -0.6, 0.6], [0.7, 0.7, -0.6, 0.6]].forEach((q) => { const a = new THREE.Vector3(q[0] - 1.6, i * sh, q[2]), b = new THREE.Vector3(q[1] - 1.6, i * sh, q[3]), d = b.clone().sub(a); const m = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, d.length(), 6), bm); m.position.copy(a).add(b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(YU, d.normalize()); tower.add(m); });
         for (let i = 0; i < nseg; i++) [[-0.7, -0.6, 0.7, -0.6], [-0.7, 0.6, 0.7, 0.6], [-0.7, -0.6, -0.7, 0.6], [0.7, -0.6, 0.7, 0.6]].forEach((q, j) => { const a = new THREE.Vector3(q[0] - 1.6, i * sh, q[1]), b = new THREE.Vector3(q[2] - 1.6, (i + 1) * sh, q[3]), d = b.clone().sub(a); const m = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, d.length(), 6), bm); m.position.copy(a).add(b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(YU, d.normalize()); tower.add(m); });
-        for (let i = 0; i < 4; i++) { const rl = new THREE.Mesh(new THREE.BoxGeometry(i < 2 ? 2.1 : 0.04, 0.04, i < 2 ? 0.04 : 1.7), sm(0xef4444, { metalness: 0.3 })); rl.position.set(-1.6 + (i === 2 ? -1.04 : i === 3 ? 1.04 : 0), topY + 0.45, i === 0 ? -0.84 : i === 1 ? 0.84 : 0); tower.add(rl); }
-        [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach((q) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.45, 6), sm(0xef4444, { metalness: 0.3 })); p.position.set(-1.6 + q[0] * 1.04, topY + 0.22, q[1] * 0.84); tower.add(p); });
+        for (let i = 0; i < 4; i++) { const rl = new THREE.Mesh(new THREE.BoxGeometry(i < 2 ? 2.1 : 0.04, 0.04, i < 2 ? 0.04 : 1.7), MT.plastic(lc(0xef4444), { roughness: 0.3 })); rl.position.set(-1.6 + (i === 2 ? -1.04 : i === 3 ? 1.04 : 0), topY + 0.45, i === 0 ? -0.84 : i === 1 ? 0.84 : 0); tower.add(rl); }
+        [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach((q) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.45, 6), MT.plastic(lc(0xef4444), { roughness: 0.3 })); p.position.set(-1.6 + q[0] * 1.04, topY + 0.22, q[1] * 0.84); tower.add(p); });
         const gx = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.9, 0.1), bm); gx.position.set(-0.45, topY + 0.5, -1.2); tower.add(gx);
         const gb = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 2.6), bm); gb.position.set(-0.45, topY + 0.96, 0); tower.add(gb);
         const mg = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.22, 2.4), magM); mg.position.set(-0.45, topY + 0.82, 0); tower.add(mg);
@@ -67,10 +68,10 @@
         const S = L.S, keys = S.mode === 'compare' ? ['steel', 'bowl', 'feather'] : ['steel'];
         balls = keys.map((k, i) => {
           const o = L.OBJ[k], lk = LOOK[k], z = keys.length > 1 ? (i - 1) * 0.8 : 0;
-          const m = new THREE.Mesh(new THREE.SphereGeometry(lk.r, 32, 22), k === 'feather' ? sm(lk.c, { roughness: 0.95, metalness: 0 }) : sm(lk.c, { metalness: 0.7, roughness: 0.3 }));
+          const m = new THREE.Mesh(new THREE.SphereGeometry(lk.r, 32, 22), k === 'feather' ? sm(lk.c, { roughness: 0.95, metalness: 0 }) : (k === 'steel' ? MT.metal('steel', { roughness: 0.14 }) : MT.plastic(lc(lk.c), { roughness: 0.22 })));
           if (k === 'feather') m.scale.set(1.4, 0.35, 0.8);
           root.add(m);
-          const gh = new THREE.InstancedMesh(ghostG, new THREE.MeshStandardMaterial({ color: lk.c, transparent: true, opacity: 0.4, depthWrite: false }), 80); gh.count = 0; root.add(gh);
+          const gh = new THREE.InstancedMesh(ghostG, new THREE.MeshStandardMaterial({ color: k === 'steel' ? 0xaab2bf : lc(lk.c), transparent: true, opacity: 0.4, depthWrite: false }), 80); gh.count = 0; root.add(gh);
           return { k, o, m, gh, r: lk.r, z, lk };
         });
         bl.forEach((l, i) => { const b = balls[i]; l.show(!!b); if (b) l.set(b.o.name + ' ' + b.o.mass); });
