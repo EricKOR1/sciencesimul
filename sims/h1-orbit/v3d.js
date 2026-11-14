@@ -29,7 +29,8 @@
       const lon = (i / W) * Math.PI * 2, lat = (0.5 - (j + 0.5) / H) * Math.PI, la = Math.abs(lat) * 180 / Math.PI;
       const v = fbm(Math.cos(lat) * Math.cos(lon) * 1.7 + 5, Math.sin(lat) * 1.7 + 5, Math.cos(lat) * Math.sin(lon) * 1.7 + 5), o = (j * W + i) * 4;
       let c;
-      if (v > 0.5) { const h = Math.min(1, (v - 0.5) * 4); c = [76 + 74 * h, 166 - 38 * h, 84 + 0 * h]; } else { const h = Math.min(1, (0.5 - v) * 4); c = [30 + 24 * h, 92 + 40 * h, 170 + 42 * h]; }
+      if (la > 74 + (v - 0.5) * 40) c = [232, 240, 247];   // 극지방 얼음
+      else if (v > 0.5) { const h = Math.min(1, (v - 0.5) * 4), dry = la < 32 && la > 12 ? 0.55 : 0; c = [44 + 80 * h + 70 * dry, 124 - 34 * h + 6 * dry, 52 + 8 * h + 24 * dry]; if (v < 0.512) c = [186, 170, 122]; } else { const h = Math.min(1, (0.5 - v) * 4); c = [20 + 10 * (1 - h), 96 - 46 * h, 176 - 58 * h]; }   // 땅(숲·사막·바닷가 모래) / 바다(얕은 곳은 밝고 깊은 곳은 짙게)
       im.data[o] = c[0]; im.data[o + 1] = c[1]; im.data[o + 2] = c[2]; im.data[o + 3] = 255;
     }
     g.putImageData(im, 0, 0); return cv;
@@ -96,7 +97,7 @@
       const P3 = (x, y) => new THREE.Vector3(x * K, y * K, 0);
       /* 지구 */
       const tex = new THREE.CanvasTexture(earthCanvas()); if ('encoding' in tex) tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 4;
-      const earth = new THREE.Mesh(new THREE.SphereGeometry(ER, 80, 56), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9 }));
+      const earth = new THREE.Mesh(new THREE.SphereGeometry(ER, 80, 56), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85, metalness: 0, bumpMap: tex, bumpScale: 0.06, envMapIntensity: 0.5 }));
       root.add(earth);
       const air = new THREE.Mesh(new THREE.SphereGeometry(ER * 1.025, 48, 32), new THREE.MeshBasicMaterial({ color: 0x6bb6ff, transparent: true, opacity: 0.16, depthWrite: false }));
       root.add(air);
@@ -108,10 +109,10 @@
         root.add(new THREE.Points(sgm, new THREE.PointsMaterial({ size: 1.3, vertexColors: true, sizeAttenuation: true, transparent: true, opacity: 0.9, depthWrite: false }))); }
       /* 대포와 산 (높이 20 km는 눈에 띄지 않을 만큼 낮아서 대포는 크게 그려요) */
       const cannon = new THREE.Group(); root.add(cannon);
-      const mount = new THREE.Mesh(new THREE.ConeGeometry(70 * K, H0 * K, 24), new THREE.MeshStandardMaterial({ color: 0x8a6a45, roughness: 1 })); mount.position.set(0, R0 * K - H0 * K / 2, 0); root.add(mount);
-      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.065, 0.34, 16), new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.5, metalness: 0.4 }));
+      const mount = new THREE.Mesh(new THREE.ConeGeometry(70 * K, H0 * K, 24), ctx.mats.stone(0x7a5c3c, { cracks: true, repeat: 3, bump: 0.05 })); mount.position.set(0, R0 * K - H0 * K / 2, 0); root.add(mount);
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.065, 0.34, 24), ctx.mats.metal(0x3a3f48, { roughness: 0.38 }));   // 무쇠 포신
       barrel.rotation.z = Math.PI / 2; barrel.position.set(-0.12, R0 * K + 0.03, 0); cannon.add(barrel);
-      { const metal = new THREE.MeshStandardMaterial({ color: 0x374151, roughness: 0.4, metalness: 0.6 }), wood = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.8 });
+      { const metal = ctx.mats.metal(0x4a505c, { roughness: 0.35 }), wood = ctx.mats.wood(0x8b5a2b, { repeat: 1 });
         const muz = new THREE.Mesh(new THREE.TorusGeometry(0.062, 0.012, 8, 20), metal); muz.rotation.y = Math.PI / 2; muz.position.set(-0.29, R0 * K + 0.03, 0); cannon.add(muz);
         const car = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.035, 0.1), wood); car.position.set(-0.1, R0 * K + 0.0, 0); cannon.add(car);
         [-0.065, 0.065].forEach((z) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.016, 20), wood); w.rotation.x = Math.PI / 2; w.position.set(-0.08, R0 * K + 0.0, z); cannon.add(w); const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.02, 10), metal); hub.rotation.x = Math.PI / 2; hub.position.copy(w.position); cannon.add(hub); });
@@ -125,13 +126,13 @@
       const iss = new THREE.Group(); root.add(iss);
       const issRing = circ(R + 400, 0x7dd3fc, 0.8); issRing.computeLineDistances(); iss.add(issRing);
       const issBody = new THREE.Group(); iss.add(issBody);
-      issBody.add(new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.05, 0.05), new THREE.MeshStandardMaterial({ color: 0xe2e8f0 })));
-      const pan = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.01, 0.34), new THREE.MeshStandardMaterial({ color: 0x3b82f6 })); issBody.add(pan);
+      issBody.add(new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.05, 0.05), ctx.mats.metal('aluminium', { roughness: 0.3 })));
+      const pan = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.01, 0.34), new THREE.MeshStandardMaterial({ color: 0x1e3fa8, roughness: 0.2, metalness: 0.6, emissive: 0x0a1f66, emissiveIntensity: 0.3 })); issBody.add(pan);
       const issLab = label('국제 우주 정거장', issBody, { offset: [0, -0.32, 0], color: 'rgba(14,116,144,.9)' });
       iss.visible = false; issLab.show(false);
       /* 경로 · 공 · 화살표 */
       const trail = new THREE.Group(); root.add(trail);
-      const ball = new THREE.Mesh(new THREE.SphereGeometry(0.09, 20, 14), new THREE.MeshStandardMaterial({ color: 0xff7a1a, emissive: 0xff5a00, emissiveIntensity: 0.5 }));
+      const ball = new THREE.Mesh(new THREE.SphereGeometry(0.09, 20, 14), new THREE.MeshStandardMaterial({ color: 0xff7a1a, emissive: 0xff5a00, emissiveIntensity: 0.6, roughness: 0.35 })); ctx.halo(ball, 0xff8a3a, 0.5, 0.55);
       root.add(ball);
       const velA = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 1, 0x22c55e, 0.3, 0.2);
       const grvA = new THREE.ArrowHelper(new THREE.Vector3(0, -1, 0), new THREE.Vector3(), 1, 0xef4444, 0.3, 0.2);

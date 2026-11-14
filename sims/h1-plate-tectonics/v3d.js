@@ -13,7 +13,13 @@
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
-      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.7, metalness: 0 }, o || {}));
+      const NZ = ctx.mats.tex('noise');
+      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.82, metalness: 0, bumpMap: NZ, bumpScale: 0.035, envMapIntensity: 0.45 }, o || {}));   // 암석: 거친 결
+      /* 맨틀 단면: 아래로 갈수록 뜨겁게 빛나고, 느리게 흐르는 결이 보여요 */
+      const mantleTex = (() => { const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#8a2f18'); gr.addColorStop(0.55, '#c24a22'); gr.addColorStop(1, '#f08a34'); g.fillStyle = gr; g.fillRect(0, 0, 512, 256);
+        let sd = 41; const r = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+        for (let i = 0; i < 520; i++) { const y = r() * 256; g.globalAlpha = 0.06 + r() * 0.1; g.fillStyle = r() < 0.5 ? '#ffb060' : '#5a1608'; g.beginPath(); g.ellipse(r() * 512, y, 14 + r() * 50, 1.5 + r() * 5, (r() - 0.5) * 0.5, 0, 7); g.fill(); }
+        const t = new THREE.CanvasTexture(c); if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; return t; })();
       let mode = 'div', s = 0, play = false, conv = true;
       const dyn = new THREE.Group(), stat = new THREE.Group(); root.add(stat, dyn);
       const fixedLabs = [];
@@ -25,8 +31,8 @@
         const m = new THREE.Mesh(g, std(color, o)); return m;
       }
       // 맨틀(고정)
-      const mantle = new THREE.Mesh(new THREE.BoxGeometry(8, 2.3, DEP), std(0xc4552f, { roughness: 0.6, emissive: 0x6a1d08, emissiveIntensity: 0.28 })); mantle.position.set(0, -0.55 - 1.15, 0); stat.add(mantle);
-      const core = new THREE.Mesh(new THREE.BoxGeometry(8, 0.5, DEP), std(0xf0803a, { emissive: 0xa03a10, emissiveIntensity: 0.4, roughness: 0.5 })); core.position.set(0, -0.55 - 2.3 - 0.25, 0); stat.add(core);
+      const mantle = new THREE.Mesh(new THREE.BoxGeometry(8, 2.3, DEP), std(0xffffff, { map: mantleTex, roughness: 0.6, emissive: 0xffffff, emissiveMap: mantleTex, emissiveIntensity: 0.3 })); mantle.position.set(0, -0.55 - 1.15, 0); stat.add(mantle);
+      const core = new THREE.Mesh(new THREE.BoxGeometry(8, 0.5, DEP), std(0xf58a2e, { emissive: 0xd0520f, emissiveIntensity: 0.65, roughness: 0.45 })); core.position.set(0, -0.55 - 2.3 - 0.25, 0); stat.add(core);
       label('맨틀', mantle, { offset: [-3.1, -0.3, 2.05], size: 12 });
 
       /* 해양 지각 줄무늬 (발산형): 새 지각이 해령에서 생겨 양쪽으로 밀려가요 */
@@ -42,8 +48,8 @@
       };
       const hL = mkHalf(texL, -2.0), hR = mkHalf(texR, 2.0);
       const gDiv = new THREE.Group(); gDiv.add(hL, hR); stat.add(gDiv);
-      const rift = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.5, DEP), std(0xff5a2a, { emissive: 0xff3a10, emissiveIntensity: 0.9 })); rift.position.set(0, -0.25, 0); gDiv.add(rift);
-      const magma = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.1, 24, 1), std(0xff7a30, { emissive: 0xff4a10, emissiveIntensity: 0.9 })); magma.position.set(0, -1.0, 0); magma.rotation.x = Math.PI; magma.scale.z = 3; gDiv.add(magma);
+      const rift = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.5, DEP), std(0xff5a2a, { emissive: 0xff3a10, emissiveIntensity: 0.9 })); rift.position.set(0, -0.25, 0); gDiv.add(rift); ctx.halo(rift, 0xff6a2a, 1.6, 0.5).position.set(0, 0.1, DEP / 2);
+      const magma = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.1, 24, 1), std(0xff7a30, { emissive: 0xff4a10, emissiveIntensity: 0.9 })); magma.position.set(0, -1.0, 0); magma.rotation.x = Math.PI; magma.scale.z = 3; gDiv.add(magma); ctx.halo(magma, 0xff7a30, 2.2, 0.45).position.set(0, 0, 0.17);
       const mr = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.12, DEP), std(0x6a7a96)); mr.position.set(0, 0.04, 0); gDiv.add(mr); // 해령 능선
 
       /* 맨틀 대류 화살표(점이 순환) */
@@ -87,7 +93,7 @@
           const top = new THREE.Mesh(new THREE.BoxGeometry(3.1, 0.06, DEP + 0.02), std(0x6fae5a)); top.position.set(2.45, 0.48, 0); dyn.add(top);
           const vh = 1.1 * Math.max(0, Math.min(1, (t - 0.35) / 0.45));
           if (vh > 0.02) { const v = new THREE.Mesh(new THREE.ConeGeometry(0.55 * (0.4 + vh * 0.6), vh, 32), std(0x7b6a5a)); v.position.set(1.7, 0.5 + vh / 2, 0); dyn.add(v);
-            const mg = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 16), std(0xff6a2a, { emissive: 0xff3a10, emissiveIntensity: 0.9 })); mg.position.set(1.7, -0.55, 0); mg.scale.z = 2.2; dyn.add(mg);
+            const mg = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 16), std(0xff6a2a, { emissive: 0xff3a10, emissiveIntensity: 0.9 })); mg.position.set(1.7, -0.55, 0); mg.scale.z = 2.2; dyn.add(mg); ctx.halo(mg, 0xff6a2a, 2.0, 0.45).position.set(0, 0, 0.5);
             const ch = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.0 + vh, 12), std(0xff6a2a, { emissive: 0xff3a10, emissiveIntensity: 0.9 })); ch.position.set(1.7, -0.05 + vh * 0.4, 0); dyn.add(ch); L(3, '화산 (마그마)', [1.7, 0.5 + vh + 0.3, 0], 'rgba(220,80,30,.92)'); }
           const trench = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, DEP + 0.02), std(0x0f2d54)); trench.position.set(-0.55, y1 + 0.02, 0); dyn.add(trench);
           L(0, '해구', [-0.5, 0.2, DEP / 2], 'rgba(20,60,120,.92)'); L(1, '해양판 (무거움)', [-3, 0.2, DEP / 2], 'rgba(30,90,170,.92)'); L(2, '대륙판', [3.1, 0.9, DEP / 2]);
@@ -100,7 +106,7 @@
           dyn.add(poly([[-4, -th], [-4, 0], [-w - 0.2, 0], [-w, -th]], 0xb59a6a, 0.0));
           dyn.add(poly([[w + 0.2, 0], [4, 0], [4, -th], [w, -th]], 0xc7ab78, 0.0));
           const mt = poly([[-w - 0.2, 0], [-0.9, h * 0.55], [-0.3, h * 0.9], [0.2, h], [0.8, h * 0.6], [w + 0.2, 0], [w, -th], [0.9, -th - r], [0, -th - r * 1.2], [-0.9, -th - r], [-w, -th]], 0xa88f66, 0.02); dyn.add(mt);
-          if (h > 0.5) { const cap = new THREE.Mesh(new THREE.ConeGeometry(0.62, h * 0.35, 5), std(0xffffff, { roughness: 0.4 })); cap.position.set(0.2, h - h * 0.17, 0); cap.scale.z = 3.2; dyn.add(cap); }
+          if (h > 0.5) { const cap = new THREE.Mesh(new THREE.ConeGeometry(0.62, h * 0.35, 5), std(0xf4f8ff, { roughness: 0.45, bumpScale: 0.02 })); cap.position.set(0.2, h - h * 0.17, 0); cap.scale.z = 3.2; dyn.add(cap); }
           // 휘어진 지층 줄무늬 (습곡)
           for (let k = 0; k < 3; k++) { const pts = []; for (let i = 0; i <= 24; i++) { const x = -3.9 + i * 7.8 / 24; const fx = Math.abs(x) < 1.4 ? Math.sin((x + 1.4) / 1.4 * Math.PI) * 0.28 * t * (k % 2 ? 1 : -1) : 0; pts.push(new THREE.Vector3(x, -0.18 - k * 0.22 + fx + (Math.abs(x) < 1.4 ? Math.max(0, h * 0.35 * (1 - Math.abs(x) / 1.4)) * (k === 0 ? 1 : 0.6 - 0.2 * k) : 0), DEP / 2 + 0.03)); } dyn.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 60, 0.03, 6), std(k % 2 ? 0xe8d5a3 : 0x7a5f3a))); }
           [[-1, '→'], [1, '←']].forEach((d) => { const a = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 16), dmat(0xffd34d, { emissive: 0x7a5a00, emissiveIntensity: 0.6 })); a.position.set(d[0] * 3.2, 0.5, 0); a.rotation.z = -d[0] * (-Math.PI / 2); dyn.add(a); });
@@ -110,7 +116,7 @@
         } else {
           const dz = t * 1.6;
           const mk = (x0, zs, col) => { const b = new THREE.Mesh(new THREE.BoxGeometry(3.95, 0.55, DEP), std(col, { roughness: 0.85 })); b.position.set(x0, -0.275, zs); dyn.add(b);
-            const riv = new THREE.Mesh(new THREE.BoxGeometry(3.95, 0.04, 0.34), std(0x3b9bff, { emissive: 0x174a90, emissiveIntensity: 0.5, roughness: 0.2 })); riv.position.set(x0, 0.01, zs - 0.0); dyn.add(riv);
+            const riv = new THREE.Mesh(new THREE.BoxGeometry(3.95, 0.04, 0.34), ctx.mats.liquid(0x2f8ef0, { opacity: 0.92, extra: { emissive: 0x174a90, emissiveIntensity: 0.35 } })); riv.position.set(x0, 0.01, zs - 0.0); dyn.add(riv);
             const rd = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.04, DEP - 0.2), std(0xe8e0c8)); rd.position.set(x0 + (x0 < 0 ? -1.4 : 1.4), 0.015, zs); dyn.add(rd); };
           mk(-2.02, dz, 0x8aa66a); mk(2.02, -dz, 0x9ab57a);
           const f = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.6, DEP + 3.5), std(0xff5a52, { emissive: 0xff2a20, emissiveIntensity: 0.7 })); f.position.set(0, -0.28, 0); dyn.add(f);

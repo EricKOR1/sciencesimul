@@ -30,7 +30,13 @@
       const V = (x, y, z) => new THREE.Vector3(x, y, z);
       /* 바다 물기둥 */
       const W = 6.6, H = ZS[ZS.length - 1] * YS + 0.4;
-      const top = new THREE.Mesh(new THREE.PlaneGeometry(W, W), new THREE.MeshBasicMaterial({ color: 0x3b9be0, transparent: true, opacity: 0.3, side: THREE.DoubleSide, depthWrite: false }));
+      const thick = (a, r) => { const g = new THREE.CylinderGeometry(r, r, 1, 12); g.translate(0, 0.5, 0); const mm = new THREE.MeshBasicMaterial({ transparent: a.line.material.transparent, opacity: a.line.material.opacity }); mm.color = a.line.material.color; a.line.add(new THREE.Mesh(g, mm)); return a; };   // 가는 선 화살표에 굵은 몸통을 덧붙여요
+      const top = new THREE.Mesh(new THREE.PlaneGeometry(W, W), ctx.mats.liquid(0x2f8fdc, { opacity: 0.5, extra: { side: THREE.DoubleSide, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.012, roughness: 0.12 } }));
+      /* 바닷물 기둥의 옆면: 깊을수록 어두워지는 물빛 */
+      { const cT = new THREE.Color(0x3fa3e6), cB = new THREE.Color(0x06203f);
+        for (let k = 0; k < 4; k++) { const g = new THREE.PlaneGeometry(W, H, 1, 10), p = g.attributes.position, cs = []; for (let i = 0; i < p.count; i++) { const c = cT.clone().lerp(cB, Math.pow(0.5 - p.getY(i) / H, 0.8)); cs.push(c.r, c.g, c.b); } g.setAttribute('color', new THREE.Float32BufferAttribute(cs, 3));
+          const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.2, side: THREE.DoubleSide, depthWrite: false })); m.rotation.y = k * Math.PI / 2; m.position.set(Math.sin(k * Math.PI / 2) * W / 2, -H / 2, Math.cos(k * Math.PI / 2) * W / 2); root.add(m); }
+        const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, W), new THREE.MeshBasicMaterial({ color: 0x041830, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false })); fl.rotation.x = -Math.PI / 2; fl.position.y = -H; root.add(fl); }
       top.rotation.x = -Math.PI / 2; root.add(top);
       const box = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(W, H, W)), new THREE.LineBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.7 })); box.position.y = -H / 2; root.add(box);
       { const fit = new THREE.Mesh(new THREE.BoxGeometry(W, H + 1.2, W), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); fit.position.y = -H / 2 + 0.6; root.add(fit); }   // 자동 맞춤용 보이지 않는 상자: 물기둥 전체(깊이 눈금 포함)가 잘리지 않게
@@ -38,23 +44,23 @@
       const axis = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(0, 1.2, 0), V(0, -H, 0)]), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 })); root.add(axis);
       /* 방위 */
       const cLab = [['북 N', 0, -1], ['동 E', 1, 0], ['남 S', 0, 1], ['서 W', -1, 0]].map(([t, x, z]) => label(t, [x * (W / 2 + 0.45), 0.05, z * (W / 2 + 0.45)], { color: t[0] === '북' ? 'rgba(220,38,38,.92)' : 'rgba(30,41,59,.88)' }));
-      const nA = new THREE.ArrowHelper(V(0, 0, -1), V(0, 0.02, W / 2 - 0.2), 1.0, 0xef4444, 0.3, 0.2); root.add(nA);
+      const nA = thick(new THREE.ArrowHelper(V(0, 0, -1), V(0, 0.02, W / 2 - 0.2), 1.0, 0xef4444, 0.3, 0.2), 0.03); root.add(nA);
       /* 깊이 눈금 */
       LAYS.forEach((z) => label(z === 0 ? '수면' : z + ' m', [-W / 2 - 0.15, -z * YS, W / 2 + 0.15], { color: 'rgba(8,47,73,.88)', size: 11.5 }));
       /* 바람 */
       const windG = new THREE.Group(); root.add(windG);
       const windA = [];
-      [-1.9, 0, 1.9].forEach((k) => { const a = new THREE.ArrowHelper(V(0, 0, -1), V(0, 0.8, 0), 1.9, 0xffffff, 0.4, 0.26); windG.add(a); windA.push([a, k]); });
+      [-1.9, 0, 1.9].forEach((k) => { const a = thick(new THREE.ArrowHelper(V(0, 0, -1), V(0, 0.8, 0), 1.9, 0xffffff, 0.4, 0.26), 0.035); windG.add(a); windA.push([a, k]); });
       const windT = new THREE.Object3D(); root.add(windT);
       const windLab = label('바람', windT, { color: 'rgba(29,78,216,.92)' });
       /* 층별 해류 화살표 */
-      const arr = ZS.map((z) => { const a = new THREE.ArrowHelper(V(1, 0, 0), V(0, -z * YS, 0), 1, layCol(z), 0.3, 0.2); root.add(a); const dot = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffffff })); root.add(dot); return { z, a, dot }; });
+      const arr = ZS.map((z) => { const a = thick(new THREE.ArrowHelper(V(1, 0, 0), V(0, -z * YS, 0), 1, layCol(z), 0.3, 0.2), 0.035); root.add(a); const dot = new THREE.Mesh(new THREE.SphereGeometry(0.07, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffffff })); root.add(dot); return { z, a, dot }; });
       const tipLabs = LAYS.map((z) => ({ z, lab: label('', [0, 0, 0], { color: 'rgba(8,47,73,.9)', size: 11.5 }) }));
       /* 나선(화살표 끝을 잇는 선)과 위에서 본 그림자 */
       const spiral = new THREE.Group(); root.add(spiral);
       const spiralShadow = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineDashedMaterial({ color: 0xfde047, dashSize: 0.14, gapSize: 0.1, transparent: true, opacity: 0.75 })); root.add(spiralShadow);
       /* 평균 수송 */
-      const netA = new THREE.ArrowHelper(V(1, 0, 0), V(0, 0.2, 0), 2, 0x8b5cf6, 0.5, 0.34); root.add(netA);
+      const netA = thick(new THREE.ArrowHelper(V(1, 0, 0), V(0, 0.2, 0), 2, 0x8b5cf6, 0.5, 0.34), 0.06); root.add(netA);
       const netT = new THREE.Object3D(); root.add(netT);
       const netLab = label('', netT, { color: 'rgba(91,33,182,.94)' });
 
@@ -84,7 +90,7 @@
         });
         for (let z = 0; z <= DZ; z += 2.5) { const d = dirAt(z, b), L = spV(z) * LS; pts.push(V(d[0] * L, -z * YS, d[2] * L)); sp.push(V(d[0] * L, -(DZ * YS + 0.38), d[2] * L)); }
         while (spiral.children.length) { const c = spiral.children[0]; spiral.remove(c); c.geometry.dispose(); }
-        spiral.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 80, 0.03, 6, false), new THREE.MeshBasicMaterial({ color: 0xfde047 })));
+        spiral.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 96, 0.04, 10, false), new THREE.MeshBasicMaterial({ color: 0xfde047 })));
         spiralShadow.geometry.dispose(); spiralShadow.geometry = new THREE.BufferGeometry().setFromPoints(sp); spiralShadow.computeLineDistances();
         tipLabs.forEach(({ z, lab }) => { const d = dirAt(z, b), L = spV(z) * LS; lab.obj = [d[0] * (L + 0.1), -z * YS + (z === 0 ? -0.32 : 0.2), d[2] * (L + 0.1)]; lab.set(z + ' m · ' + spTh(z) + '°'); });
         // 평균 수송

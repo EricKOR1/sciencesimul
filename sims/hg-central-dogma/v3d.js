@@ -106,7 +106,7 @@
       /* mRNA의 당–인산 뼈대: 염기 구슬을 꿰는 가는 줄 */
       const mrod = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, SP * NCOD - 0.1, 6, 12), std(0xc2410c, { roughness: 0.45 })); mrod.rotation.z = Math.PI / 2; mrod.position.y = MY - 0.07; tlG.add(mrod);
       // 리보솜
-      const big = new THREE.Mesh(lumpy(new THREE.SphereGeometry(1, 64, 44), 0.05, 4.2), bio(0x8b5cf6, 0.42)); big.scale.set(2.2, 1.2, 1.4); big.position.set(0.1, 0.6, 0); tlG.add(big); big.renderOrder = 2;
+      const big = new THREE.Mesh(lumpy(new THREE.SphereGeometry(1, 64, 44), 0.05, 4.2), bio(0x8b5cf6, 0.36)); big.scale.set(2.2, 1.2, 1.4); big.position.set(0.1, 0.6, 0); tlG.add(big); big.renderOrder = 2;
       const small = new THREE.Mesh(lumpy(new THREE.SphereGeometry(1, 64, 44), 0.05, 3.6), bio(0xec4899, 0.5)); small.scale.set(1.8, 0.62, 1.15); small.position.set(0.1, -1.17, 0); tlG.add(small); small.renderOrder = 2;
       // tRNA 풀
       function makeT() {

@@ -61,11 +61,11 @@
       const woodTex = (() => { const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d'); g.fillStyle = '#7a5230'; g.fillRect(0, 0, 512, 256);
         for (let i = 0; i < 90; i++) { g.strokeStyle = 'rgba(' + (40 + Math.random() * 50 | 0) + ',' + (20 + Math.random() * 30 | 0) + ',10,' + (0.1 + Math.random() * 0.25) + ')'; g.lineWidth = 1 + Math.random() * 3; g.beginPath(); const y = Math.random() * 256; g.moveTo(0, y); g.bezierCurveTo(150, y + Math.random() * 14 - 7, 350, y + Math.random() * 14 - 7, 512, y + Math.random() * 10 - 5); g.stroke(); }
         const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; })();
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(5.8, 6.0, 0.3, 64), new THREE.MeshStandardMaterial({ map: woodTex, color: 0xb8977a, roughness: 0.7, metalness: 0.05 })); floor.position.y = -2.75; floor.receiveShadow = true; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(5.8, 6.0, 0.3, 64), ctx.mats.wood(0x9a7450, { repeat: 3 })); floor.position.y = -2.75; floor.receiveShadow = true; root.add(floor);
       // 전해질 용액 (투명한 물 + 수면) · 떠다니는 물 분자 알갱이
-      const water = new THREE.Mesh(new THREE.CylinderGeometry(5.1, 5.1, 4.8, 64, 1, true), new THREE.MeshPhysicalMaterial({ color: 0x9fd6ff, transparent: true, opacity: 0.1, roughness: 0.05, side: THREE.DoubleSide, depthWrite: false })); water.position.y = -0.2; root.add(water);
-      const wsurf = new THREE.Mesh(new THREE.CircleGeometry(5.1, 64), new THREE.MeshPhysicalMaterial({ color: 0xbfe4ff, transparent: true, opacity: 0.2, roughness: 0.05, depthWrite: false, side: THREE.DoubleSide })); wsurf.rotation.x = -Math.PI / 2; wsurf.position.y = 2.2; root.add(wsurf);
-      const rim = new THREE.Mesh(new THREE.TorusGeometry(5.1, 0.05, 10, 72), new THREE.MeshStandardMaterial({ color: 0xdfeaf5, roughness: 0.1, transparent: true, opacity: 0.7 })); rim.rotation.x = Math.PI / 2; rim.position.y = 2.2; root.add(rim);
+      const water = new THREE.Mesh(new THREE.CylinderGeometry(5.1, 5.1, 4.8, 64, 1, true), ctx.mats.glass({ tint: 0xbfe2ff, opacity: 0.12 })); water.position.y = -0.2; root.add(water);
+      const wsurf = new THREE.Mesh(new THREE.CircleGeometry(5.1, 64), ctx.mats.liquid(0xa9d8ff, { opacity: 0.22, extra: { side: THREE.DoubleSide } })); wsurf.rotation.x = -Math.PI / 2; wsurf.position.y = 2.2; root.add(wsurf);
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(5.1, 0.06, 12, 96), ctx.mats.glass({ opacity: 0.55 })); rim.rotation.x = Math.PI / 2; rim.position.y = 2.2; root.add(rim);
       const NPW = 150, dustW = new THREE.InstancedMesh(new THREE.SphereGeometry(0.045, 8, 6), new THREE.MeshBasicMaterial({ color: 0xcfeaff, transparent: true, opacity: 0.5 }), NPW); root.add(dustW); dustW.userData.v3bg = true;
       const ddW = []; for (let i = 0; i < NPW; i++) { const a = Math.random() * 6.28, r = Math.sqrt(Math.random()) * 4.6; ddW.push({ x: Math.cos(a) * r, z: Math.sin(a) * r * 0.7, y: -2.5 + Math.random() * 4.8, s: 0.3 + Math.random(), p: Math.random() * 6.28 }); }
       const dmW = new THREE.Object3D();
@@ -82,14 +82,14 @@
         const P = { g, R, don: [], acc: [], es: [], labs: [], flash: [] };
         R.don.forEach((d, i) => {
           const a = new THREE.Group(); a.position.set(...d.pos); g.add(a);
-          const body = new THREE.Mesh(new THREE.SphereGeometry(d.rad, 40, 28), mat(d.col, { metalness: 0.55, roughness: 0.3 })); body.castShadow = true; a.add(body);
+          const body = new THREE.Mesh(new THREE.SphereGeometry(d.rad, 40, 28), ctx.mats.metal(d.col, { roughness: 0.26 })); body.castShadow = true; a.add(body);   // 금속 원자: 금속 광택
           const cloud = new THREE.Mesh(new THREE.SphereGeometry(d.rad + 0.5, 32, 22), new THREE.MeshBasicMaterial({ color: 0xffe48a, transparent: true, opacity: 0.1, depthWrite: false })); a.add(cloud);
           const lb = label(R.before[0], a, { size: 14, offset: [0, d.rad + 0.85, 0] });
           P.don.push({ a, body, cloud, lb, d, ox: 0 });
         });
         R.acc.forEach((c, i) => {
           const a = new THREE.Group(); a.position.set(...c.pos); g.add(a);
-          const body = new THREE.Mesh(new THREE.SphereGeometry(c.rad, 40, 28), mat(c.ionCol, { metalness: c.neutral ? 0.1 : 0.2, roughness: c.neutral ? 0.4 : 0.25, transparent: !c.neutral, opacity: c.neutral ? 1 : 0.88 })); body.castShadow = true; a.add(body);
+          const body = new THREE.Mesh(new THREE.SphereGeometry(c.rad, 40, 28), ctx.mats.plastic(c.ionCol, { roughness: c.neutral ? 0.3 : 0.18, extra: { clearcoat: 1, clearcoatRoughness: 0.08, metalness: c.neutral ? 0.1 : 0.2, transparent: !c.neutral, opacity: c.neutral ? 1 : 0.88 } })); body.castShadow = true; a.add(body);
           const slots = [];
           for (let k = 0; k < c.n; k++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: slotTex, transparent: true, opacity: 0.9, depthWrite: false })); s.scale.set(0.5, 0.5, 1); s.position.set(Math.cos(k / c.n * 6.28 + 0.5) * (c.rad + 0.55), Math.sin(k / c.n * 6.28 + 0.5) * (c.rad + 0.55), 0); a.add(s); slots.push(s); }
           const lb = label(R.before[1], a, { size: 14, offset: [0, c.rad + 0.85, 0] });

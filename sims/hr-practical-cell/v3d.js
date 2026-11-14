@@ -21,7 +21,11 @@
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;
-      const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.05 }, o || {}));
+      const MT = ctx.mats;
+      const rbox = (w, h, d, r) => { r = Math.min(r, w / 2 - 1e-3, h / 2 - 1e-3, d / 2 - 1e-3); const s = new THREE.Shape(), x = w / 2 - r, y = h / 2 - r; s.absarc(x, y, r, 0, Math.PI / 2); s.absarc(-x, y, r, Math.PI / 2, Math.PI); s.absarc(-x, -y, r, Math.PI, 1.5 * Math.PI); s.absarc(x, -y, r, 1.5 * Math.PI, 2 * Math.PI); const g = new THREE.ExtrudeGeometry(s, { depth: d - 2 * r, bevelEnabled: true, bevelThickness: r, bevelSize: r, bevelOffset: -r, bevelSegments: 3, curveSegments: 6 }); g.translate(0, 0, -(d - 2 * r) / 2); return g; };   // 모서리가 둥근 상자
+      const rslab = (w, d, t, r) => { const g = rbox(w, d, t, r); g.rotateX(Math.PI / 2); return g; };   // 눕힌 판 (윗면에 무늬가 고르게)
+      // 금속(metalness ≥ 0.7)은 반사가 또렷한 금속 재질로, 나머지는 그대로
+      const mat = (c, o) => { o = o || {}; if (o.metalness >= 0.7 && !o.transparent) { const m = MT.metal(c, { roughness: o.roughness }); if (o.side) m.side = o.side; return m; } return new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.05 }, o)); };
       const A = new THREE.Group(), B = new THREE.Group(), C = new THREE.Group(); root.add(A, B, C);
       let kind = 'mn', mode = 'dis', showLab = true;
       const M = new THREE.Matrix4(), hide = (m, i) => { M.makeScale(0.0001, 0.0001, 0.0001); m.setMatrixAt(i, M); };
@@ -45,8 +49,8 @@
       const wpts = [new V3(0, Y0 + H + 0.4, 0), new V3(0, WTop, 0), new V3(WX, WTop, 0), new V3(WX, WBot, 0), new V3(0, WBot, 0), new V3(0, Y0 - 0.16, 0)];
       const wcur = new THREE.CatmullRomCurve3(wpts, false, 'catmullrom', 0.02);
       const wire = new THREE.Mesh(new THREE.TubeGeometry(wcur, 80, 0.06, 10, false), mat(0xd18a3a, { metalness: 0.7, roughness: 0.35 })); A.add(wire);
-      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.55, 28, 22), mat(0xfff3c4, { transparent: true, opacity: 0.85, emissive: 0xffc83d, emissiveIntensity: 0.9, roughness: 0.2 })); bulb.position.set(WX, (WTop + WBot) / 2, 0); A.add(bulb);
-      const bl = new THREE.PointLight(0xffc83d, 0.8, 6); bl.position.copy(bulb.position); A.add(bl);
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.55, 40, 28), MT.glass({ tint: 0xfff3c4, opacity: 0.85, extra: { emissive: 0xffc83d, emissiveIntensity: 0.9, side: THREE.FrontSide } })); bulb.position.set(WX, (WTop + WBot) / 2, 0); A.add(bulb);
+      const bl = ctx.halo(bulb, 0xffcf5a, 4.2, 0.6);   // 전구 빛 번짐
       const NE = 10, em = new THREE.InstancedMesh(new THREE.SphereGeometry(0.13, 12, 10), mat(0x42e8ff, { emissive: 0x00a9c0, emissiveIntensity: 0.9 }), NE); em.frustumCulled = false; A.add(em);
       const labsA = [
         label('+극 (탄소 막대)', capT, { color: 'rgba(220,38,38,.92)', offset: [0, 0.7, 0] }), label('아연 통 (−극)', [-1.7, Y0 + 1.2, 0], { color: 'rgba(37,99,235,.92)' }),
@@ -67,7 +71,7 @@
       const ctop = SH / 2 + 1.3;
       const wB = new THREE.CatmullRomCurve3([new V3(-SX - 0.95, SH / 2, 0), new V3(-SX - 0.95, ctop, 0), new V3(-1.0, ctop, 0), new V3(1.0, ctop, 0), new V3(SX + 0.95, ctop, 0), new V3(SX + 0.95, SH / 2, 0)], false, 'catmullrom', 0.02);
       B.add(new THREE.Mesh(new THREE.TubeGeometry(wB, 80, 0.06, 10, false), mat(0xd18a3a, { metalness: 0.7, roughness: 0.35 })));
-      const dev = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.7, 0.8), mat(0x64748b, { metalness: 0.3 })); dev.position.set(0, ctop, 0); B.add(dev);
+      const dev = new THREE.Mesh(rbox(1.5, 0.7, 0.8, 0.08), MT.plastic(0x3a4558)); dev.position.set(0, ctop, 0); B.add(dev);
       const devL = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), mat(0xffc83d, { emissive: 0xffc83d, emissiveIntensity: 0.9 })); devL.position.set(0, ctop + 0.45, 0); B.add(devL);
       const NL = 16, lm = new THREE.InstancedMesh(new THREE.SphereGeometry(0.17, 18, 14), mat(0xc084fc, { emissive: 0x7c3aed, emissiveIntensity: 0.45, roughness: 0.3 }), NL); lm.frustumCulled = false; B.add(lm);
       const eB = new THREE.InstancedMesh(new THREE.SphereGeometry(0.13, 12, 10), mat(0x42e8ff, { emissive: 0x00a9c0, emissiveIntensity: 0.9 }), NE); eB.frustumCulled = false; B.add(eB);
@@ -82,7 +86,7 @@
       C.add(mkPlates(-SX, 0x8b95a7), mkPlates(SX, 0x6b4a3a));
       const sepC = new THREE.Mesh(new THREE.BoxGeometry(0.1, SH - 0.4, SZ - 0.3), mat(0xf1f5f9, { transparent: true, opacity: 0.55, depthWrite: false })); C.add(sepC);
       C.add(new THREE.Mesh(new THREE.TubeGeometry(wB, 80, 0.06, 10, false), mat(0xd18a3a, { metalness: 0.7, roughness: 0.35 })));
-      const devC = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.7, 0.8), mat(0x64748b, { metalness: 0.3 })); devC.position.set(0, ctop, 0); C.add(devC);
+      const devC = new THREE.Mesh(rbox(1.5, 0.7, 0.8, 0.08), MT.plastic(0x3a4558)); devC.position.set(0, ctop, 0); C.add(devC);
       const devLC = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), mat(0xffc83d, { emissive: 0xffc83d, emissiveIntensity: 0.9 })); devLC.position.set(0, ctop + 0.45, 0); C.add(devLC);
       const eC = new THREE.InstancedMesh(new THREE.SphereGeometry(0.13, 12, 10), mat(0x42e8ff, { emissive: 0x00a9c0, emissiveIntensity: 0.9 }), NE); eC.frustumCulled = false; C.add(eC);
       const NI = 14, hI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.13, 14, 10), mat(0xf8fafc, { emissive: 0x94a3b8, emissiveIntensity: 0.4 }), NI), sI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 16, 12), mat(0xfbbf24, { emissive: 0xb45309, emissiveIntensity: 0.35 }), NI);
@@ -103,8 +107,8 @@
       const grab = (fn) => { const n0 = ctlEl.children.length; const r = fn(); const els = Array.prototype.slice.call(ctlEl.children, n0); els.forEach((e) => myEls.push(e)); return { r, els }; };
       const D = new THREE.Group(), E = new THREE.Group(), X = new THREE.Group(); root.add(D, E, X); D.visible = E.visible = X.visible = false;
       const stdw = (c, o) => mat(c, o);
-      const wireM = () => mat(0xd18a3a, { metalness: 0.7, roughness: 0.35 });
-      const bulbOf = (grp, x, y) => { const b = new THREE.Mesh(new THREE.SphereGeometry(0.5, 24, 18), mat(0xfff3c4, { transparent: true, opacity: 0.85, emissive: 0xffc83d, emissiveIntensity: 0.9, roughness: 0.2 })); b.position.set(x, y, 0); grp.add(b); return b; };
+      const wireM = () => MT.metal('copper');
+      const bulbOf = (grp, x, y) => { const b = new THREE.Mesh(new THREE.SphereGeometry(0.5, 40, 28), MT.glass({ tint: 0xfff3c4, opacity: 0.85, extra: { emissive: 0xffc83d, emissiveIntensity: 0.9, side: THREE.FrontSide } })); b.position.set(x, y, 0); grp.add(b); b.userData.h = ctx.halo(b, 0xffcf5a, 3.8, 0.5); const ft = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.3, 0.34, 28), MT.metal('brass')); ft.position.y = -0.6; b.add(ft); return b; };
       const eInst = (grp, n) => { const m = new THREE.InstancedMesh(new THREE.SphereGeometry(0.12, 12, 8), mat(0x42e8ff, { emissive: 0x00a9c0, emissiveIntensity: 0.9 }), n); m.frustumCulled = false; grp.add(m); return m; };
       /* 볼타 전지: Zn · 소금물 천 · Cu 를 쌓은 더미 */
       const VR = 1.5, VY0 = -2.4, LAY = [[0.2, 0xaab4c2, 'Zn'], [0.38, 0xe6d6a8, '소금물 천'], [0.2, 0xd9824c, 'Cu']];
@@ -118,13 +122,13 @@
       /* 다니엘 전지 */
       const DX = 2.5, DR = 1.25, DH = 3.0, DY = -2.2;
       [[-DX, 0xd9dfe8, 0.25, 0xaab4c2], [DX, 0x4aa8ff, 0.5, 0xd9824c]].forEach(([x, c, o, pc]) => {
-        const gl = new THREE.Mesh(new THREE.CylinderGeometry(DR, DR, DH, 36, 1, true), new THREE.MeshStandardMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.16, roughness: 0.08, side: THREE.DoubleSide, depthWrite: false })); gl.position.set(x, DY + DH / 2, 0); E.add(gl);
-        const li = new THREE.Mesh(new THREE.CylinderGeometry(DR - 0.04, DR - 0.04, DH * 0.78, 36), mat(c, { transparent: true, opacity: o, roughness: 0.15, depthWrite: false })); li.position.set(x, DY + DH * 0.39, 0); E.add(li);
+        const gl = new THREE.Mesh(new THREE.CylinderGeometry(DR, DR, DH, 56, 1, true), MT.glass({ tint: 0xcfe8ff, opacity: 0.2 })); gl.position.set(x, DY + DH / 2, 0); E.add(gl);
+        const li = new THREE.Mesh(new THREE.CylinderGeometry(DR - 0.04, DR - 0.04, DH * 0.78, 56), MT.liquid(c, { opacity: o })); li.position.set(x, DY + DH * 0.39, 0); E.add(li);
         const pl2 = new THREE.Mesh(new THREE.BoxGeometry(0.26, 3.6, 1.2), mat(pc, { metalness: 0.85, roughness: 0.32 })); pl2.position.set(x + (x < 0 ? -0.2 : 0.2), DY + 1.4, 0); E.add(pl2);
       });
       const dbp = [new V3(-DX + 0.5, DY + 1.0, 0), new V3(-DX + 0.7, DY + DH + 0.6, 0), new V3(-1.0, DY + DH + 1.0, 0), new V3(1.0, DY + DH + 1.0, 0), new V3(DX - 0.7, DY + DH + 0.6, 0), new V3(DX - 0.5, DY + 1.0, 0)];
       const dbc = new THREE.CatmullRomCurve3(dbp, false, 'catmullrom', 0.3);
-      E.add(new THREE.Mesh(new THREE.TubeGeometry(dbc, 60, 0.3, 14, false), new THREE.MeshStandardMaterial({ color: 0xfff1b8, transparent: true, opacity: 0.5, roughness: 0.3, depthWrite: false })));
+      E.add(new THREE.Mesh(new THREE.TubeGeometry(dbc, 72, 0.3, 24, false), MT.glass({ tint: 0xfff1b8, opacity: 0.42 })));
       const dwY = DY + DH + 2.4, dw = new THREE.CatmullRomCurve3([new V3(-DX - 0.2, DY + 3.2, 0), new V3(-DX - 0.2, dwY, 0), new V3(-0.8, dwY, 0), new V3(0.8, dwY, 0), new V3(DX + 0.2, dwY, 0), new V3(DX + 0.2, DY + 3.2, 0)], false, 'catmullrom', 0.02);
       E.add(new THREE.Mesh(new THREE.TubeGeometry(dw, 60, 0.05, 8, false), wireM()));
       const db = bulbOf(E, 0, dwY + 0.05); const dE = eInst(E, 10);
@@ -132,13 +136,14 @@
       [...labD, ...labE].forEach((l) => l.show(false));
       /* 효율 탐색: 한 용기에 금속판 두 개 + 전구 */
       const XW = 7.4, XD = 3.0, XH = 3.6, XY = -2.4, XLV = 0.7;
-      { const bx = new THREE.Mesh(new THREE.BoxGeometry(XW, XH, XD), new THREE.MeshStandardMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.14, roughness: 0.08, depthWrite: false, side: THREE.DoubleSide })); bx.position.set(0, XY + XH / 2, 0); X.add(bx);
+      { const bx = new THREE.Mesh(new THREE.BoxGeometry(XW, XH, XD), MT.glass({ tint: 0xcfe8ff, opacity: 0.16 })); bx.position.set(0, XY + XH / 2, 0); X.add(bx);
+        const bn = new THREE.Mesh(rslab(XW + 5, XD + 4, 0.36, 0.08), MT.wood(0xa88962, { repeat: 0.22 })); bn.position.set(0, XY - 0.2, 0); bn.userData.v3bg = true; X.add(bn);   // 실험대
         const ed = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(XW, XH, XD)), new THREE.LineBasicMaterial({ color: 0x8aa0c8 })); ed.position.copy(bx.position); X.add(ed); }
-      const xLiq = new THREE.Mesh(new THREE.BoxGeometry(XW - 0.1, XH * XLV, XD - 0.1), mat(0xbfdbfe, { transparent: true, opacity: 0.45, roughness: 0.15, depthWrite: false })); xLiq.position.set(0, XY + XH * XLV / 2, 0); X.add(xLiq);
+      const xLiq = new THREE.Mesh(new THREE.BoxGeometry(XW - 0.1, XH * XLV, XD - 0.1), MT.liquid(0xbfdbfe, { opacity: 0.45 })); xLiq.position.set(0, XY + XH * XLV / 2, 0); X.add(xLiq);
       const PC3 = { Zn: 0xaab4c2, Mg: 0xd6dde6, Cu: 0xc8743a, Fe: 0x7f8a99 };
-      const xP = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.28, 1, 1.5), mat(0xaab4c2, { metalness: 0.85, roughness: 0.32 })); X.add(m); return m; });
-      const xWire = new THREE.Mesh(new THREE.BoxGeometry(1, 0.06, 0.06), mat(0xd18a3a, { metalness: 0.7 })); X.add(xWire);
-      const xW1 = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1, 8), mat(0xd18a3a, { metalness: 0.7 })), xW2 = xW1.clone(); X.add(xW1, xW2);
+      const xP = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.28, 1, 1.5), MT.metal(0xaab4c2, { brushed: true })); X.add(m); return m; });
+      const xWire = new THREE.Mesh(new THREE.BoxGeometry(1, 0.06, 0.06), MT.metal('copper')); X.add(xWire);
+      const xW1 = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1, 12), MT.metal('copper')), xW2 = xW1.clone(); X.add(xW1, xW2);
       const xb = bulbOf(X, 0, XY + XH + 1.9); const xE = eInst(X, 14);
       const NIX = 36, xI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.12, 12, 8), mat(0xffffff), NIX); xI.frustumCulled = false; xI.instanceMatrix.setUsage(THREE.DynamicDrawUsage); X.add(xI);
       const XIP = Array.from({ length: NIX }, () => ({ x: Math.random(), y: Math.random(), z: Math.random(), ph: Math.random() * 6.28, sp: 0.4 + Math.random() * 0.8 }));
@@ -156,7 +161,7 @@
         xWire.scale.set(sep + 0.1, 1, 1); xWire.position.set(0, top + 1.0, 0);
         xLiq.material.color.setHex(e.el === 'lemon' ? 0xfde68a : e.el === 'dist' ? 0xe0f2fe : 0xbfdbfe); xLiq.material.opacity = e.el === 'dist' ? 0.25 : 0.45;
         xb.position.set(0, top + 1.0, 0); const lit = Math.max(0, Math.min(1, Math.sqrt(e.I * e.I * 10 / 0.1)));
-        xb.material.emissiveIntensity = 0.1 + 0.9 * lit; xb.material.opacity = 0.5 + 0.35 * lit;
+        xb.material.emissiveIntensity = 0.1 + 0.9 * lit; xb.material.opacity = 0.5 + 0.35 * lit; xb.userData.h.material.opacity = 0.7 * lit;
         const path = [new V3(px[0], top + 0.5, 0), new V3(px[0], top + 1.0, 0), new V3(-0.55, top + 1.0, 0), new V3(0.55, top + 1.0, 0), new V3(px[1], top + 1.0, 0), new V3(px[1], top + 0.5, 0)];
         const seg = []; let tot = 0; for (let i = 1; i < path.length; i++) { const d = path[i].distanceTo(path[i - 1]); seg.push(d); tot += d; }
         const nE = Math.round(6 + 8 * Math.min(1, e.flow));
@@ -271,7 +276,7 @@
           if (kind === 'mn') {
             for (let i = 0; i < NE; i++) { if (!active) { hide(em, i); continue; } const u = ((((i / NE) - t * 0.12) % 1) + 1) % 1; const p = wcur.getPointAt(Math.min(1, 1 - u)); M.makeTranslation(p.x, p.y, p.z); em.setMatrixAt(i, M); }
             em.instanceMatrix.needsUpdate = true;
-            bulb.material.emissiveIntensity = active ? 0.8 + 0.2 * Math.sin(t * 6) : 0.08;
+            bulb.material.emissiveIntensity = active ? 0.8 + 0.2 * Math.sin(t * 6) : 0.08; bl.material.opacity = active ? 0.65 : 0.04;
           } else if (kind === 'li') {
             for (let i = 0; i < NE; i++) { if (!active) { hide(eB, i); continue; } const u = ((((i / NE) + dir * t * 0.14) % 1) + 1) % 1; const p = wB.getPointAt(u); M.makeTranslation(p.x, p.y, p.z); eB.setMatrixAt(i, M); }
             eB.instanceMatrix.needsUpdate = true;

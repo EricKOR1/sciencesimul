@@ -27,7 +27,7 @@
       const g = new THREE.Group(); g.scale.setScalar(GS); root.add(g);
       let type = 'pe', units = [], links = [], labs = [];
       const cpos = (i) => new V3((i - (NU * 2 - 1) / 2) * 1.26 * K, (i % 2 ? -0.445 : 0.445) * K * 1.54 / 1.54, 0);
-      function stick(r, col) { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 1, 14), mat(col, { transparent: true })); return m; }
+      function stick(r, col) { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 1, 20), mat(col === 0xb4bfd2 ? 0xa3adbf : col, { transparent: true, roughness: 0.28, metalness: col === 0xffd34d ? 0 : 0.2, emissive: col === 0xffd34d ? 0xffb400 : 0x000000, emissiveIntensity: col === 0xffd34d ? 0.35 : 0 })); return m; }
       function setStick(m, a, b, o) { const d = b.clone().sub(a), L = d.length(); m.visible = o > 0.03; m.material.opacity = o; m.scale.set(1, Math.max(0.01, L), 1); m.position.copy(a).add(b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(UP, d.normalize()); }
       function build() {
         while (g.children.length) g.remove(g.children[0]);
@@ -36,7 +36,7 @@
         for (let u = 0; u < NU; u++) {
           const grp = new THREE.Group(); g.add(grp);
           const cA = cpos(2 * u), cB = cpos(2 * u + 1);
-          const mk = (el, p, r, col) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 24), mat(col)); m.position.copy(p); grp.add(m); return m; };
+          const mk = (el, p, r, col) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 40, 28), ctx.mats.plastic(new THREE.Color(col).multiplyScalar(el === 'H' ? 0.93 : el === 'C' ? 0.62 : 0.8).getHex(), { roughness: 0.26, extra: { clearcoat: 0.7, clearcoatRoughness: 0.15 } })); m.position.copy(p); grp.add(m); return m; };   // 반짝이는 분자 모형 공 (CPK 색 그대로, 조금 진하게)
           const a = mk('C', cA, 0.44, 0x5f6b7d), b = mk('C', cB, 0.44, 0x5f6b7d);
           const bonds = [];                                                     // [메쉬, 시작, 끝, 종류]
           const sb = (p, q, r, col, kind) => { const m = stick(r, col); grp.add(m); bonds.push({ m, p, q, kind }); return m; };
@@ -50,7 +50,7 @@
               if (!isX) { const h = mk('H', c.clone().addScaledVector(dir, 1.09 * K), 0.27, 0xf1f5f9); sb(c, h.position, 0.07, 0xb4bfd2, 'sub'); }
               else if (T.X === 'Cl') { const cl = mk('Cl', c.clone().addScaledVector(dir, 1.77 * K), 0.55, 0x22b14c); sb(c, cl.position, 0.08, 0xb4bfd2, 'sub'); }
               else { // 벤젠 고리
-                const ctr = c.clone().addScaledVector(dir, (1.51 + 1.4) * K * 0.82); const ring = new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.15, 14, 48), mat(0x7a8aa6)); ring.position.copy(ctr);
+                const ctr = c.clone().addScaledVector(dir, (1.51 + 1.4) * K * 0.82); const ring = new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.15, 18, 72), ctx.mats.plastic(0x5d6b85, { roughness: 0.26 })); ring.position.copy(ctr);
                 ring.quaternion.setFromUnitVectors(new V3(0, 0, 1), dir); grp.add(ring);
                 const fill = new THREE.Mesh(new THREE.CircleGeometry(1.1, 36), mat(0x9fb0d0, { transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false })); fill.position.copy(ctr); fill.quaternion.copy(ring.quaternion); grp.add(fill);
                 sb(c, ctr.clone().addScaledVector(dir, -1.15), 0.1, 0xb4bfd2, 'sub');

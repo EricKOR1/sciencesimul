@@ -22,7 +22,15 @@
       const { THREE, root, label, info, controls, orbit } = ctx;
       const V = THREE.Vector3;
       let scene = 'mei', kind = 'del', meiKind = 'normal', t = 0;
-      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.4, metalness: 0.04 }, o || {}));
+      /* 재질: 2D와 같은 색이 화면에 그대로 나오게 맞추고(lin), 염색체는 촉촉한 생체 조직 느낌 + 옅은 띠무늬(염색했을 때 보이는 띠) */
+      const lin = (h) => new THREE.Color(h).convertSRGBToLinear();
+      const std = (c, o) => ctx.mats.organic(lin(c), { extra: Object.assign({ roughness: 0.42 }, o || {}) });
+      const bandTex = (() => {
+        const cv = document.createElement('canvas'); cv.width = 8; cv.height = 128; const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, 8, 128);
+        let sd = 11; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+        for (let y = 6; y < 122;) { const h = 3 + rnd() * 7; g.fillStyle = 'rgba(20,24,60,' + (0.16 + rnd() * 0.2) + ')'; g.fillRect(0, y, 8, h); y += h + 4 + rnd() * 9; }
+        const t = new THREE.CanvasTexture(cv); if ('encoding' in t) t.encoding = THREE.sRGBEncoding; return t;
+      })();
       const ease = (k) => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
       const lerp = (a, b, k) => a + (b - a) * k;
       const stG = new THREE.Group(), meiG = new THREE.Group(); root.add(stG, meiG);
@@ -89,14 +97,14 @@
       const MC = [0x3b82f6, 0xef4444], PL = [0.9, 1.15, 1.4];     // 어머니(파랑) · 아버지(빨강) 염색체, 쌍마다 길이가 달라요
       const cells = [];
       for (let side = 0; side < 2; side++) for (let s = 0; s < 2; s++) {
-        const m = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), std(0xcbd5e1, { transparent: true, opacity: 0.07, side: THREE.DoubleSide, depthWrite: false, roughness: 0.3 }));
+        const m = new THREE.Mesh(new THREE.SphereGeometry(1, 56, 40), ctx.mats.glass({ tint: 0xc4dcff, opacity: 0.1, extra: { roughness: 0.16, envMapIntensity: 0.9, clearcoatRoughness: 0.2 } }));   // 세포막: 얇고 맑은 막
         meiG.add(m); cells.push({ m, side: side ? 1 : -1, s: s ? 1 : -1 });
       }
       const chroms = [];     // {p, h, g(중심체), sis:[메시, 메시], side}
       for (let p = 2; p < 3; p++) for (let h = 0; h < 2; h++) {     // 2D처럼 21번 염색체 한 쌍만
         const g = new THREE.Group(), sis = [];
-        for (let s = 0; s < 2; s++) { const m = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, PL[p], 8, 16), std(MC[h], { roughness: 0.4 })); meiG.add(m); sis.push(m); }
-        const cen = new THREE.Mesh(new THREE.SphereGeometry(0.27, 14, 10), std(0xfde68a, { roughness: 0.4 })); g.add(cen);
+        for (let s = 0; s < 2; s++) { const m = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, PL[p], 12, 28), std(MC[h], { roughness: 0.46, map: bandTex })); meiG.add(m); sis.push(m); }
+        const cen = new THREE.Mesh(new THREE.SphereGeometry(0.27, 24, 18), std(0xf5c542, { roughness: 0.35 })); cen.scale.set(1, 0.72, 1); g.add(cen);
         meiG.add(g); chroms.push({ p, h, g, sis, cen, side: 0, gi: [0, 0] });
       }
       const gLab = [0, 1, 2, 3].map(() => label('', null, { color: '#334155' }));

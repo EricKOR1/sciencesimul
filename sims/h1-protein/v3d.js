@@ -35,13 +35,13 @@
         const m = new THREE.Mesh(new THREE.SphereGeometry(0.34, 28, 20), new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.25, metalness: 0.05, clearcoat: 0.8, clearcoatRoughness: 0.15 })); m.userData.i = i; gF.add(m); beads.push(m);
         { const sh = new THREE.Mesh(new THREE.SphereGeometry(0.52, 20, 14), new THREE.MeshBasicMaterial({ color: 0xbfd7ff, transparent: true, opacity: 0.1, depthWrite: false })); m.add(sh); }
         bl.push(label('', m, { offset: [0, 0.62, 0], size: 12 }));
-        if (i) { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1, 10), std(0xcbd5e1, { roughness: 0.25, metalness: 0.6 })); gF.add(c); links.push(c); }
+        if (i) { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1, 10), ctx.mats.metal('steel', { roughness: 0.22 })); gF.add(c); links.push(c); }
       }
       const selRing = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.04, 8, 32), new THREE.MeshBasicMaterial({ color: 0x3b82f6 })); gF.add(selRing);
       const keyG = new THREE.Group(); gF.add(keyG);
-      const o2M = new THREE.Group(); [-0.16, 0.16].forEach((x) => { const s = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 14), std(0xef4444, { emissive: 0x7a1010, emissiveIntensity: 0.5 })); s.position.x = x; o2M.add(s); });
-      const pathM = new THREE.Group(); pathM.add(new THREE.Mesh(new THREE.SphereGeometry(0.3, 24, 16), std(0x16a34a)));
-      for (let k = 0; k < 10; k++) { const d = new THREE.Vector3(Math.sin(k * 2.4) , Math.cos(k * 1.7), Math.sin(k * 0.9 + 1)).normalize(); const sp = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.22, 8), std(0x16a34a)); sp.position.copy(d).multiplyScalar(0.38); sp.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d); pathM.add(sp); }
+      const o2M = new THREE.Group(); [-0.16, 0.16].forEach((x) => { const s = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 14), ctx.mats.plastic(0xe02a2a, { roughness: 0.2, extra: { emissive: 0x7a1010, emissiveIntensity: 0.45 } })); s.position.x = x; o2M.add(s); });
+      const pathM = new THREE.Group(); pathM.add(new THREE.Mesh(new THREE.SphereGeometry(0.3, 28, 20), ctx.mats.organic(0x128a3e)));
+      for (let k = 0; k < 10; k++) { const d = new THREE.Vector3(Math.sin(k * 2.4) , Math.cos(k * 1.7), Math.sin(k * 0.9 + 1)).normalize(); const sp = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.22, 8), ctx.mats.organic(0x1aa04a)); sp.position.copy(d).multiplyScalar(0.38); sp.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d); pathM.add(sp); }
       keyG.add(o2M, pathM);
       const keyLab = label('', keyG, { offset: [0, 0.65, 0], size: 12 });
       const cupAnchor = new THREE.Object3D(); gF.add(cupAnchor);
@@ -133,7 +133,7 @@
 
 
       // ---- 환경: 세포 속 바닥판 · 떠다니는 알갱이 (접힘 장면)
-      { const fl = new THREE.Mesh(new THREE.CylinderGeometry(4.6, 4.8, 0.22, 72), std(0x13213b, { roughness: 0.7, metalness: 0.1 })); fl.position.set(0, -3.3, 0); gF.add(fl);
+      { const fl = new THREE.Mesh(new THREE.CylinderGeometry(4.6, 4.8, 0.22, 72), ctx.mats.ceramic(0x101c34, { extra: { roughness: 0.36, clearcoat: 0.6 } })); fl.position.set(0, -3.3, 0); fl.receiveShadow = true; gF.add(fl);
         [4.5, 3.1, 1.7].forEach((r, k) => { const t = new THREE.Mesh(new THREE.TorusGeometry(r, 0.025, 8, 96), new THREE.MeshBasicMaterial({ color: k % 2 ? 0x3b6ea8 : 0x4fd1c5 })); t.rotation.x = Math.PI / 2; t.position.set(0, -3.17, 0); gF.add(t); }); }
       const NPD = 120, dustF = new THREE.InstancedMesh(new THREE.SphereGeometry(0.05, 8, 6), new THREE.MeshBasicMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.5 }), NPD); gF.add(dustF); dustF.userData.v3bg = true;
       const ddF = []; for (let i = 0; i < NPD; i++) ddF.push({ x: (Math.random() - 0.5) * 12, y: -2 + Math.random() * 6.5, z: (Math.random() - 0.5) * 6, s: 0.4 + Math.random() * 1.2, p: Math.random() * 6.28 });
@@ -147,9 +147,9 @@
       const vh = (x) => G0.h0 - (G0.h0 - 17) * Math.exp(-Math.pow((x - G0.nx) / 64, 2));
       const X3 = (x) => (x - VWv / 2) * SX;
       const vpts = []; for (let k = 0; k <= 80; k++) { const x = -40 + (VWv + 80) * k / 80; vpts.push(new THREE.Vector2(Math.max(0.05, vh(x) * SX * 1.0), X3(x))); }
-      const vessel = new THREE.Mesh(new THREE.LatheGeometry(vpts, 40), new THREE.MeshStandardMaterial({ color: 0xff8a80, transparent: true, opacity: 0.2, side: THREE.DoubleSide, depthWrite: false, roughness: 0.3 }));
+      const vessel = new THREE.Mesh(new THREE.LatheGeometry(vpts, 40), ctx.mats.organic(0xf06a62, { opacity: 0.24, extra: { side: THREE.DoubleSide, roughness: 0.25, clearcoat: 0.8, clearcoatRoughness: 0.2, envMapIntensity: 1.2 } }));   // 촉촉한 혈관벽
       vessel.rotation.z = -Math.PI / 2; gS.add(vessel);
-      const tissue = new THREE.Mesh(new THREE.BoxGeometry(1.1, 2.3, 2.3), std(0xc98672, { roughness: 0.85, emissive: 0x1f7a58, emissiveIntensity: 0.3 })); tissue.position.x = X3(G0.tissue.x + G0.tissue.w / 2); gS.add(tissue);
+      const tissue = new THREE.Mesh(new THREE.BoxGeometry(1.1, 2.3, 2.3), ctx.mats.organic(0xc0705c, { extra: { roughness: 0.6, emissive: 0x1f7a58, emissiveIntensity: 0.25, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.05 } })); tissue.position.x = X3(G0.tissue.x + G0.tissue.w / 2); gS.add(tissue);
       const tLab = label('조직', tissue, { offset: [0, 1.5, 0], size: 12 });
       function disc() {
         const pts = []; const z = (r) => 0.58 * Math.sqrt(Math.max(0, 1 - r * r)) * (0.0518 + 2.0026 * r * r - 4.491 * r * r * r * r) * 3.2;
@@ -162,7 +162,7 @@
         for (let i = 0; i < pos.count; i++) { const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i), th = 0.42 * (1 - 0.15 * x * x); pos.setXYZ(i, x * 1.75, y * th * 0.9 - 0.55 * x * x + 0.2, z * th * 1.1); }
         g.computeVertexNormals(); return g;
       }
-      const dGeo = disc(), sGeo = sickle(), cMat = std(0xe53935, { roughness: 0.4 }), cMatS = std(0xb71c1c, { roughness: 0.45 });
+      const dGeo = disc(), sGeo = sickle(), cMat = ctx.mats.organic(0xd41f1f, { extra: { roughness: 0.34, clearcoat: 0.5, clearcoatRoughness: 0.3, sheen: 0.2 } }), cMatS = ctx.mats.organic(0xa01414, { extra: { roughness: 0.4, clearcoat: 0.4, sheen: 0.2 } });   // 적혈구: 말랑하고 윤기 있는 겉면
       const cells = []; for (let i = 0; i < 10; i++) { const m = new THREE.Mesh(dGeo, cMat); m.visible = false; gS.add(m); cells.push(m); }
 
       // ---- 혈관 주변 환경: 조직 배경판 · 혈관 안쪽 벽 고리 · 혈장 알갱이 · (적혈구가 없을 때) 흐르는 모형 적혈구
@@ -174,9 +174,9 @@
       const NPS = 90, dustS = new THREE.InstancedMesh(new THREE.SphereGeometry(0.04, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffd9c9, transparent: true, opacity: 0.55 }), NPS); gS.add(dustS); dustS.userData.v3bg = true;
       const ddS = []; for (let i = 0; i < NPS; i++) ddS.push({ x: Math.random() * 14 - 7, y: (Math.random() - 0.5) * 0.7, z: (Math.random() - 0.5) * 0.7, s: 0.3 + Math.random() * 0.8 });
       const dmS = new THREE.Object3D();
-      const ghosts = []; for (let i = 0; i < 6; i++) { const m = new THREE.Mesh(dGeo, new THREE.MeshStandardMaterial({ color: 0xe53935, roughness: 0.4, transparent: true, opacity: 0.55 })); m.scale.setScalar(0.4); gS.add(m); ghosts.push(m); }
+      const ghosts = []; for (let i = 0; i < 6; i++) { const m = new THREE.Mesh(dGeo, ctx.mats.organic(0xd41f1f, { opacity: 0.55, extra: { roughness: 0.34, clearcoat: 0.5 } })); m.scale.setScalar(0.4); gS.add(m); ghosts.push(m); }
       // 헤모글로빈 사슬 앞부분 (6번째 아미노산이 달라져요)
-      const hb = HB.map((t, i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.22, 20, 14), std(AAC[t])); m.position.set(-3.5 + i * 0.6, 2.6, 0); gS.add(m); return m; });
+      const hb = HB.map((t, i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.22, 28, 20), ctx.mats.plastic(AAC[t], { roughness: 0.22 })); m.position.set(-3.5 + i * 0.6, 2.6, 0); gS.add(m); return m; });
       const hbLab = label('', hb[5], { offset: [0, -0.5, 0], size: 12 });
       const sickLab = label('', [0, 1.6, 0], { size: 12, color: 'rgba(8,12,24,.85)' });
       let lastMut = -1, lastStuck = -1;

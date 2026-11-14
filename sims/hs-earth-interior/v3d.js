@@ -65,7 +65,8 @@
       const clip = (m) => { m.clippingPlanes = planes; m.clipIntersection = true; return m; };
       const tex = new THREE.CanvasTexture(earthCanvas()); if ('encoding' in tex) tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 4;
       /* 지구 껍질 + 단면 */
-      root.add(new THREE.Mesh(new THREE.SphereGeometry(ER, 80, 56), clip(new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9, side: THREE.DoubleSide }))));
+      root.add(new THREE.Mesh(new THREE.SphereGeometry(ER, 96, 64), clip(new THREE.MeshStandardMaterial({ map: tex, roughness: 0.72, metalness: 0, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.006, envMapIntensity: 0.6, side: THREE.DoubleSide }))));
+      ctx.halo(root, 0x6fb4ff, ER * 3.05, 0.5);   // 대기의 푸른 빛
       const BOUND = [[0, 1 - 35 / RE, '#8b5e3c'], [1, 1 - 410 / RE, '#e8a96b'], [2, 1 - 660 / RE, '#e59a54'], [3, RCf, '#d9803a'], [4, RIf, '#fbbf24'], [5, 0, '#fff0a6']];
       const rings = [1, 1 - 35 / RE, 1 - 410 / RE, 1 - 660 / RE, RCf, RIf];     // 바깥 → 안쪽 경계
       const capCols = ['#8b5e3c', '#e8a96b', '#e59a54', '#d9803a', '#fbbf24', '#fff0a6'];
@@ -78,7 +79,8 @@
           rings.forEach((r0, i) => {
             const r1 = i + 1 < rings.length ? rings[i + 1] : 0;
             const geo = r1 === 0 ? new THREE.CircleGeometry(r0 * ER, 40, q * Math.PI / 2, Math.PI / 2) : new THREE.RingGeometry(r1 * ER, r0 * ER, 40, 1, q * Math.PI / 2, Math.PI / 2);
-            const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: capCols[i], side: THREE.DoubleSide })); m.applyMatrix4(basis); capG.add(m);
+            const hot = [0, 0.1, 0.14, 0.2, 0.7, 0.95][i];   // 안쪽일수록 뜨거워 스스로 빛나요 (층 색은 그대로)
+            const m = new THREE.Mesh(geo, i < 4 ? ctx.mats.stone(capCols[i], { repeat: 3, bump: 0.018, extra: { side: THREE.DoubleSide, emissive: capCols[i], emissiveIntensity: hot, roughness: 0.85 } }) : new THREE.MeshStandardMaterial({ color: capCols[i], emissive: capCols[i], emissiveIntensity: hot, roughness: 0.45, side: THREE.DoubleSide })); m.applyMatrix4(basis); capG.add(m);
           });
           [RCf, RIf, 1 - 410 / RE, 1 - 660 / RE].forEach((rr, k) => {
             const p = []; for (let i = 0; i <= 24; i++) { const th = q * Math.PI / 2 + (i / 24) * Math.PI / 2; p.push(new THREE.Vector3(Math.cos(th) * rr * ER, Math.sin(th) * rr * ER, 0.004)); }
@@ -116,7 +118,7 @@
         g.position.set(r.endX[0] * ER, r.endX[1] * ER, 0.08); rayG.add(g); return g;
       });
       /* 진원 · 관측점 · 각도 호 */
-      const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.2), new THREE.MeshBasicMaterial({ color: 0xef4444 })); star.position.set(0, ER * 1.01, 0); root.add(star);
+      const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.2), new THREE.MeshBasicMaterial({ color: 0xef4444 })); star.position.set(0, ER * 1.01, 0); root.add(star); ctx.halo(star, 0xff6a5a, 1.3, 0.7);
       const epiLab = label('진원(진앙)', star, { offset: [0.2, 0.42, 0], color: 'rgba(185,28,28,.92)' });
       const wave = []; for (let i = 0; i < 3; i++) { const m = new THREE.Mesh(new THREE.TorusGeometry(1, 0.012, 6, 90), clip(new THREE.MeshBasicMaterial({ color: 0xfca5a5, transparent: true }))); m.rotation.x = Math.PI / 2; root.add(m); wave.push(m); }
       const obs = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 12), new THREE.MeshBasicMaterial({ color: 0x0f172a })); root.add(obs);

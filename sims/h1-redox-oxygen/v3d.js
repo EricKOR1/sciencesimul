@@ -8,7 +8,7 @@
   'use strict';
   if (!window.SciSim3D) return;
   const PHN = !!(window.matchMedia && window.matchMedia('(max-width: 599px)').matches);
-  const EL = { C: [0x4d5566, 0.5], H: [0xf4f6fb, 0.3], O: [0xc91f2b, 0.46], Cu: [0xd9822b, 0.58], Mg: [0xc9d2de, 0.58] };
+  const EL = { C: [0x39404e, 0.5], H: [0xf4f6fb, 0.3], O: [0xc91f2b, 0.46], Cu: [0xd9822b, 0.58], Mg: [0xc9d2de, 0.58] };
 
   // atoms: [원소, 처음 위치, 나중 위치]  bonds: [i, j, 'b'(처음에만) | 'a'(나중에만) | 'p'(늘 있음)]
   const FP = (fx, fy) => [Math.round((fx - 0.5) * 92) / 10, Math.round((0.58 - fy) * 60) / 10]; // 2D 입자 모형의 위치(비율)를 3D 좌표로
@@ -91,10 +91,10 @@
       const woodTex = (() => { const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d'); g.fillStyle = '#7a5230'; g.fillRect(0, 0, 512, 256);
         for (let i = 0; i < 90; i++) { g.strokeStyle = 'rgba(' + (40 + Math.random() * 50 | 0) + ',' + (20 + Math.random() * 30 | 0) + ',10,' + (0.1 + Math.random() * 0.25) + ')'; g.lineWidth = 1 + Math.random() * 3; g.beginPath(); const y = Math.random() * 256; g.moveTo(0, y); g.bezierCurveTo(150, y + Math.random() * 14 - 7, 350, y + Math.random() * 14 - 7, 512, y + Math.random() * 10 - 5); g.stroke(); }
         const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; })();
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(6.6, 6.8, 0.3, 64), new THREE.MeshStandardMaterial({ map: woodTex, color: 0xb8977a, roughness: 0.7 })); floor.position.y = -2.55; floor.receiveShadow = true; root.add(floor);
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(6.6, 6.8, 0.3, 64), ctx.mats.wood(0x9a7450, { repeat: 3 })); floor.position.y = -2.55; floor.receiveShadow = true; root.add(floor);
       // 반응 용기: 유리 종 · 받침 고리 · 떠다니는 기체 알갱이
-      const dome = new THREE.Mesh(new THREE.SphereGeometry(6.2, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshPhysicalMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.1, roughness: 0.05, side: THREE.DoubleSide, depthWrite: false })); dome.scale.y = 0.7; dome.position.y = -2.4; root.add(dome);
-      const drim = new THREE.Mesh(new THREE.TorusGeometry(6.2, 0.07, 10, 72), new THREE.MeshStandardMaterial({ color: 0xe6f0fa, roughness: 0.1, metalness: 0.2 })); drim.rotation.x = Math.PI / 2; drim.position.y = -2.4; root.add(drim);
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(6.2, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2), ctx.mats.glass({ opacity: 0.11 })); dome.scale.y = 0.7; dome.position.y = -2.4; root.add(dome);
+      const drim = new THREE.Mesh(new THREE.TorusGeometry(6.2, 0.07, 10, 72), ctx.mats.metal('chrome', { roughness: 0.15 })); drim.rotation.x = Math.PI / 2; drim.position.y = -2.4; root.add(drim);
       [floor, dome, drim].forEach((o) => { o.userData.v3bg = true; });   // 받침·유리 종은 배경: 자동 맞춤이 분자에 맞춰요
       const NPG = 130, dustG = new THREE.InstancedMesh(new THREE.SphereGeometry(0.045, 8, 6), new THREE.MeshBasicMaterial({ color: 0xd8ecff, transparent: true, opacity: 0.45 }), NPG); root.add(dustG); dustG.userData.v3bg = true;
       const ddG = []; for (let i = 0; i < NPG; i++) { const a = Math.random() * 6.28, r = Math.sqrt(Math.random()) * 5.4; ddG.push({ x: Math.cos(a) * r, z: Math.sin(a) * r * 0.6, y: -2.2 + Math.random() * 4.4, s: 0.3 + Math.random(), p: Math.random() * 6.28 }); }
@@ -110,7 +110,8 @@
         const C = { R, g, atoms: [], bonds: [], labs: [], trails: [] };
         R.atoms.forEach((a, i) => {
           const [col, rad] = EL[a[0]];
-          const m = new THREE.Mesh(new THREE.SphereGeometry(rad, 32, 24), mat(col, { emissive: col, emissiveIntensity: a[0] === 'O' ? 0.22 : 0.06, metalness: a[0] === 'Cu' || a[0] === 'Mg' ? 0.55 : 0.05, roughness: a[0] === 'Cu' || a[0] === 'Mg' ? 0.3 : 0.4 })); m.castShadow = true; m.position.set(a[1][0], a[1][1], 0); g.add(m);
+          const isMet = a[0] === 'Cu' || a[0] === 'Mg' || a[0] === 'Fe';
+          const m = new THREE.Mesh(new THREE.SphereGeometry(rad, 40, 28), isMet ? ctx.mats.metal(col, { roughness: 0.28, extra: { emissive: col, emissiveIntensity: 0.05 } }) : ctx.mats.plastic(col, { roughness: 0.24, extra: { clearcoat: 0.9, clearcoatRoughness: 0.1, emissive: col, emissiveIntensity: a[0] === 'O' ? 0.2 : 0.05 } }));   // 금속 원자는 금속 광택, 나머지는 매끈한 모형 공 m.castShadow = true; m.position.set(a[1][0], a[1][1], 0); g.add(m);
           C.atoms.push({ m, a, p0: new V3(a[1][0], a[1][1], 0), p1: new V3(a[2][0], a[2][1], 0) });
           if (a[0] === 'O' && new V3(a[1][0], a[1][1], 0).distanceTo(new V3(a[2][0], a[2][1], 0)) > 2.2) {
             // 산소가 지나갈 길 (희미한 곡선)
@@ -119,7 +120,7 @@
           }
         });
         R.bonds.forEach(([i, j, k]) => {
-          const m = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1, 12), new THREE.MeshStandardMaterial({ color: 0xdfe5f0, roughness: 0.4, transparent: true })); g.add(m); C.bonds.push({ m, i, j, k });
+          const m = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1, 12), new THREE.MeshStandardMaterial({ color: 0xdfe5f0, roughness: 0.25, metalness: 0.7, envMapIntensity: 1.2, transparent: true })); g.add(m); C.bonds.push({ m, i, j, k });
         });
         C.names = R.names.map(([t, i]) => label(t, C.atoms[i].m, { size: 12.5, offset: [0, EL[R.atoms[i][0]][1] + 0.75, 0] }));
         C.tags = R.tags.map(([t, i, col]) => label(t, C.atoms[i].m, { size: 12.5, color: col, offset: [0, -(EL[R.atoms[i][0]][1] + 0.75), 0] }));
