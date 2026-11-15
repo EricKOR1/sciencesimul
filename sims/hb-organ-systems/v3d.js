@@ -40,19 +40,19 @@
       /* 몸 윤곽 */
       const bodyM = MT.glass({ tint: 0xa9c9ff, opacity: 0.1, extra: { envMapIntensity: 1.1, roughness: 0.12, clearcoatRoughness: 0.2 } });
       const torso = new THREE.Mesh(new THREE.CapsuleGeometry(1.5, 3.6, 10, 32), bodyM); torso.scale.z = 0.62; torso.position.y = 0.0; root.add(torso);
-      root.add(sph(0.88, bodyM, 0, 4.55, 0), new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 0.7, 20), bodyM));
-      root.children[root.children.length - 1].position.y = 3.65;
-      [-1, 1].forEach((s) => { const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.34, 3.0, 6, 16), bodyM); arm.position.set(s * 2.05, 0.9, 0); arm.rotation.z = s * 0.12; root.add(arm); });
+      const head = sph(0.88, bodyM, 0, 4.55, 0), neck = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 0.7, 20), bodyM); root.add(head, neck);
+      neck.position.y = 3.65;
+      const arms = []; [-1, 1].forEach((s) => { const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.34, 3.0, 6, 16), bodyM); arm.position.set(s * 2.05, 0.9, 0); arm.rotation.z = s * 0.12; root.add(arm); arms.push(arm); });
 
       /* 호흡계 */
       const lungM = std(0xf08aa3, { roughness: 0.55 }), lungs = [];
       [-1, 1].forEach((s) => { const l = reg('res', sph(1, lungM, s * 0.78, 1.55, 0.05, 0.62, 1.05, 0.5)); l.rotation.z = s * 0.1; root.add(l); lungs.push(l); });
       const airM = std(0xd9e6f2, { roughness: 0.4 });
-      reg('res', tubeM([V3(0, 3.7, 0.05), V3(0, 2.6, 0.05), V3(0, 2.2, 0.05)], 0.14, airM, 20));
+      const trach = reg('res', tubeM([V3(0, 3.7, 0.05), V3(0, 2.6, 0.05), V3(0, 2.2, 0.05)], 0.14, airM, 20));
       [-1, 1].forEach((s) => reg('res', tubeM([V3(0, 2.25, 0.05), V3(s * 0.3, 2.05, 0.05), V3(s * 0.62, 1.55, 0.05)], 0.08, airM, 20)));
-      SYS.res.slice(-3).forEach((m) => root.add(m));
+      SYS.res.slice(-3).forEach((m) => root.add(m)); const airX = SYS.res.slice(-2);
       // 기관의 연골 고리
-      for (let i = 0; i < 7; i++) { const r = reg('res', new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.03, 8, 24), airM)); r.rotation.x = Math.PI / 2; r.position.set(0, 2.42 + i * 0.19, 0.05); root.add(r); }
+      for (let i = 0; i < 7; i++) { const r = reg('res', new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.03, 8, 24), airM)); r.rotation.x = Math.PI / 2; r.position.set(0, 2.42 + i * 0.19, 0.05); root.add(r); airX.push(r); }
 
       /* 소화계 */
       const dg = new THREE.Group(); dg.position.set(0, -0.95, -0.12); dg.scale.setScalar(0.7); root.add(dg);
@@ -67,7 +67,7 @@
       const stomach = reg('dig', new THREE.Mesh(varTube([V3(-0.5, 2.1), V3(-0.7, 1.3), V3(-0.35, 0.2), V3(0.45, -0.85), V3(1.5, -1.2), V3(2.5, -0.8)], 60, (t) => 0.2 + 0.85 * Math.pow(Math.sin(Math.PI * Math.min(1, t * 1.1)), 0.7) * (t < 0.55 ? 1 : 1 - (t - 0.55) * 0.9)), stM));
       stomach.scale.setScalar(0.5); stomach.position.set(0.3, 1.9, 0); stomach.rotation.z = -0.2; dg.add(stomach);
       const liver = reg('dig', sph(1, std(0x9c4f36, { roughness: 0.4 }), -0.9, 1.6, 0, 1.55, 0.65, 0.75)); liver.rotation.z = 0.2; dg.add(liver);
-      dg.add(reg('dig', sph(0.2, std(0x4caf50), -0.15, 1.1, 0.5, 1, 1.4, 1)));
+      const gall = reg('dig', sph(0.2, std(0x4caf50), -0.15, 1.1, 0.5, 1, 1.4, 1)); dg.add(gall);
       const pts = [], N = 6;
       for (let r = 0; r < N; r++) { const y = 0.4 - r * 0.42, d = r % 2 ? -1 : 1; for (let k = 0; k <= 4; k++) { const x = d * (-1.0 + k * 0.5); pts.push(V3(x, y + Math.sin(k * 1.7 + r) * 0.07, Math.sin(k + r * 2) * 0.16)); } }
       const smInt = reg('dig', new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 220, 0.15, 12), std(0xf2b79a, { roughness: 0.45 }))); dg.add(smInt);
@@ -78,10 +78,10 @@
       const NN = 14, nut = new THREE.InstancedMesh(new THREE.SphereGeometry(0.06, 10, 8), nutM, NN); dg.add(nut);
 
       /* 배설계 */
-      const kM = std(0x8e2b3b, { roughness: 0.45 }), ureM = std(0xe6c35a, { roughness: 0.5 });
+      const kM = std(0x8e2b3b, { roughness: 0.45 }), ureM = std(0xe6c35a, { roughness: 0.5 }), kids = [], ures = [];
       [-1, 1].forEach((s) => {
-        const k = reg('exc', sph(1, kM, s * 0.82, -0.2, -0.38, 0.27, 0.5, 0.25)); k.rotation.z = -s * 0.25; root.add(k);
-        root.add(reg('exc', tubeM([V3(s * 0.7, -0.35, -0.35), V3(s * 0.62, -1.2, -0.3), V3(s * 0.28, -2.55, -0.1)], 0.045, ureM, 30)));
+        const k = reg('exc', sph(1, kM, s * 0.82, -0.2, -0.38, 0.27, 0.5, 0.25)); k.rotation.z = -s * 0.25; root.add(k); kids.push(k);
+        root.add(ures[ures.push(reg('exc', tubeM([V3(s * 0.7, -0.35, -0.35), V3(s * 0.62, -1.2, -0.3), V3(s * 0.28, -2.55, -0.1)], 0.045, ureM, 30))) - 1]);
       });
       const bladder = reg('exc', sph(0.36, std(0xf0dc8a, { roughness: 0.4 }), 0, -2.8, -0.05)); root.add(bladder);
 
@@ -89,8 +89,8 @@
       const heartM = std(0xd7263d, { roughness: 0.38 });
       const heart = reg('cir', sph(0.62, heartM, 0.22, 0.95, 0.38, 1, 1.15, 0.9)); heart.rotation.z = -0.35; root.add(heart);
       const artM = std(0xe5483f, { roughness: 0.4 }), venM = std(0x5b6fd1, { roughness: 0.4 });
-      const artery = new THREE.CatmullRomCurve3([V3(0.1, 1.25, 0.3), V3(0.0, 2.2, 0.2), V3(-0.4, 2.3, 0.1), V3(-0.6, 1.2, -0.05), V3(-0.62, -0.5, -0.1), V3(-0.55, -2.0, -0.05), V3(-0.3, -3.0, 0)]);
-      const vein = new THREE.CatmullRomCurve3([V3(0.3, -3.0, 0), V3(0.65, -2.0, -0.05), V3(0.7, -0.5, -0.1), V3(0.62, 0.8, 0.05), V3(0.45, 1.1, 0.3)]);
+      const artery = new THREE.CatmullRomCurve3([V3(0.1, 1.25, 0.3), V3(0.0, 2.2, 0.2), V3(0.4, 2.3, 0.1), V3(0.6, 1.2, -0.05), V3(0.62, -0.5, -0.1), V3(0.55, -2.0, -0.05), V3(0.3, -3.0, 0)]);   // 대동맥은 몸의 왼쪽(+x)으로 내려가요
+      const vein = new THREE.CatmullRomCurve3([V3(-0.3, -3.0, 0), V3(-0.65, -2.0, -0.05), V3(-0.7, -0.5, -0.1), V3(-0.55, 0.8, 0.05), V3(-0.2, 1.15, 0.25)]);   // 대정맥은 몸의 오른쪽(-x)에서 심장으로 들어가요
       const pulA = new THREE.CatmullRomCurve3([V3(0.3, 1.1, 0.4), V3(-0.3, 1.5, 0.45), V3(-0.78, 1.6, 0.35)]), pulB = new THREE.CatmullRomCurve3([V3(0.3, 1.1, 0.4), V3(0.5, 1.6, 0.45), V3(0.9, 1.7, 0.35)]);
       [[artery, artM, 0.075], [vein, venM, 0.085], [pulA, venM, 0.05], [pulB, venM, 0.05]].forEach((c) => root.add(reg('cir', new THREE.Mesh(new THREE.TubeGeometry(c[0], 60, c[2], 10), c[1]))));
       // 팔 쪽 순환 가지
@@ -108,6 +108,7 @@
       };
       const LSET = { all: ['res', 'cir', 'sm', 'kid'], dig: ['sto', 'liv', 'sm', 'lg'], cir: ['cir', 'art', 'ven'], res: ['res', 'tra'], exc: ['kid', 'bla', 'ure'] };
 
+      let hs = [1, 1.15, 0.9], kidP = [0.82, -0.2, -0.38], ureP = [-0.45, -1.4, -0.25], traP = [0, 3.0, 0.2];
       let mode = 'all', ex = 0, phH = 0, phB = 0, bpm = 70, bpr = 14, lastTxt = '';
       const INFO = {
         all: '소화·순환·호흡·배설계가 서로 연결되어 함께 일해요.<br>달리기 강도를 올려 보세요.',
@@ -118,7 +119,7 @@
       };
       function setMode(m) {
         mode = m;
-        Object.keys(SYS).forEach((k) => { const on = m === 'all' || m === k; SM[k].forEach((mt) => { mt.transparent = !on; mt.opacity = on ? 1 : 0.1; mt.depthWrite = on; mt.needsUpdate = true; }); });
+        Object.keys(SYS).forEach((k) => { const on = m === 'all' || m === k; SM[k].forEach((mt) => { const op = mt.userData.op || 1; mt.transparent = !on || op < 1; mt.opacity = on ? op : 0.1; mt.depthWrite = on; mt.needsUpdate = true; }); });
         Object.keys(LB).forEach((k) => LB[k].show(LSET[m].indexOf(k) >= 0));
         lastTxt = '';
       }
@@ -140,6 +141,37 @@
       const bUp = controls.button('▲ 늘어요', () => setDir('up')), bDn = controls.button('▼ 줄어요', () => setDir('down'));
       const rowTxt = controls.text('');
       setMode('all');
+      /* 실제 해부 모델로 바꿔 끼우기 (몸 좌표 그대로: 1 = 10 cm, +x = 몸의 왼쪽). 못 불러오면 위의 단순한 모양이 그대로 남아요 */
+      const fitG = (G, name) => G[name].clone();
+      const swap = (G, mesh, name) => {
+        const g = fitG(G, name); g.computeBoundingBox(); const c = g.boundingBox.getCenter(new V()); g.translate(-c.x, -c.y, -c.z);
+        mesh.rotation.set(0, 0, 0); mesh.scale.set(1, 1, 1); mesh.position.copy(c); mesh.geometry.dispose(); mesh.geometry = g;
+      };
+      const ctr = (meta, n) => meta.meshes.find((m) => m.name === n).center;
+      ctx.model('digestive', (G) => {
+        dg.position.set(0, 0, 0); dg.scale.setScalar(1);
+        swap(G, eso, 'esophagus'); swap(G, stomach, 'stomach'); swap(G, liver, 'liver'); swap(G, gall, 'gallbladder'); swap(G, smInt, 'small'); swap(G, lgInt, 'large');
+        dg.add(reg('dig', new THREE.Mesh(fitG(G, 'duodenum'), smInt.material)));
+        liver.material.userData.op = 0.8; liver.renderOrder = 3;
+        nut.position.set(0.1, -1.39, 0.45); nut.scale.setScalar(0.85);
+        LB.lg.off = [-1.05, 0.25, 0.5];
+        setMode(mode); if (ctx.refit) ctx.refit(0.2);
+      });
+      ctx.model('organs', (G, meta) => {
+        swap(G, heart, 'heart'); hs = [1, 1, 1];
+        root.add(reg('cir', new THREE.Mesh(fitG(G, 'vessels'), artM)));
+        swap(G, trach, 'trachea'); airX.forEach((m) => { m.visible = false; });
+        lungs.forEach((l, i) => l.position.set((i ? 1 : -1) * 0.76, 1.7, -0.2));
+        swap(G, kids[0], 'kidney_r'); swap(G, kids[1], 'kidney_l'); swap(G, ures[0], 'ureters'); ures[1].visible = false; swap(G, bladder, 'bladder');
+        lgInt.material.userData.op = 0.85; lgInt.renderOrder = 3;
+        const k = ctr(meta, 'kidney_l'); kidP = [k[0], k[1], k[2]]; ureP = [-0.5, -1.7, -0.35]; traP = [0.02, 2.95, -0.3];
+        setMode(mode); if (ctx.refit) ctx.refit(0.2);
+      });
+      ctx.model('body', (G) => {
+        const sk = new THREE.Mesh(G.skin_torso.clone(), MT.glass({ tint: 0xa9c0ee, opacity: 0.12, extra: { side: THREE.FrontSide } })); sk.userData.v3bg = true; sk.renderOrder = 1; root.add(sk);
+        torso.visible = false; head.visible = false; neck.visible = false;
+        if (ctx.refit) ctx.refit(0.2);
+      });
       /* 측정표: 📏 기록하면 안정 시 · 달리기 중 칸이 채워지고, ▲ / ▼ 고른 답도 표에 보여요 */
       const tabEl = mxBox('tr');
       function drawTab(R) {
@@ -160,7 +192,7 @@
           const slow = 0.45;
           phH += dt * slow * bpm / 60 * Math.PI * 2; phB += dt * slow * bpr / 60 * Math.PI * 2;
           const beat = Math.pow(Math.max(0, Math.sin(phH)), 6), br = 0.5 + 0.5 * Math.sin(phB);
-          heart.scale.set(1 + beat * 0.16, 1.15 + beat * 0.18, 0.9 + beat * 0.14);
+          heart.scale.set(hs[0] * (1 + beat * 0.16), hs[1] * (1 + beat * 0.16), hs[2] * (1 + beat * 0.16));
           heartM.emissive.set(0x7a0a18); heartM.emissiveIntensity = beat * 0.7;
           lungs.forEach((l, i) => l.scale.set(0.62 + br * 0.09, 1.05 + br * 0.1, 0.5 + br * 0.09));
           // 적혈구 흐름
@@ -177,7 +209,7 @@
           for (let i = 0; i < NN; i++) { const a = (i / NN + t * 0.08) % 1; D.position.set(-1.0 + a * 2.0, 0.4 - (i % 6) * 0.42 + 0.18, 0.2 + Math.sin(t * 3 + i) * 0.05); D.scale.setScalar(0.6 + 0.4 * Math.sin(t * 4 + i * 2)); D.updateMatrix(); nut.setMatrixAt(i, D.matrix); }
           nut.instanceMatrix.needsUpdate = true;
           // 이름표 위치 (동맥·정맥 등 점 위치)
-          LB.tra.obj = [0, 3.0, 0.2]; LB.art.obj = [-0.62, -1.3, 0.1]; LB.ven.obj = [0.7, -1.3, 0.1]; LB.kid.obj = [0.82, -0.2, -0.38]; LB.ure.obj = [-0.45, -1.4, -0.25];
+          LB.tra.obj = traP; LB.art.obj = [0.62, -1.3, 0.1]; LB.ven.obj = [-0.7, -1.3, 0.1]; LB.kid.obj = kidP; LB.ure.obj = ureP;
           LB.art.off = [0, 0, 0]; LB.ven.off = [0, 0, 0]; LB.tra.off = [0, 0, 0]; LB.kid.off = [0.6, 0, 0]; LB.ure.off = [0, 0, 0];
           const SW = (s) => (s < 0.1 ? '거의 없음' : s < 0.6 ? '조금 나요' : '많이 나요'), UR = (u) => (u > 0.9 ? '보통' : u > 0.6 ? '조금 줄어듦' : '적음');
           const tp = R ? R.temp.toFixed(1) : (37 + 1.5 * ex).toFixed(1), sw = R ? SW(R.sweat) : SW(ex), ur = R ? UR(R.urine) : UR(1 - 0.6 * ex);
