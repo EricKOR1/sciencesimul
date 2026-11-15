@@ -875,7 +875,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       pack();
       if (global.MutationObserver) new MutationObserver((ms) => { if (ms.some((m) => Array.from(m.addedNodes).some((n) => n !== row && n.parentNode === ctl && !(n.classList && n.classList.contains('v3-player'))))) pack(); }).observe(ctl, { childList: true });
       built = true;
-      wrap.__v3 = () => ({ THREE, scene, root, camera, labs, orbit, auto, mats: makeMats(THREE), halo: (c, z, o) => makeHalo(THREE, c, z, o), measure: () => { const u = auto.user; auto.user = false; const k = auto.kT; measureFit(false); auto.kT = k; auto.user = u; return { fill: auto.fill, k: auto.k, cx: auto.cx, cy: auto.cy }; } });   // 점검 도구용 (화면에는 영향 없음)
+      wrap.__v3 = () => ({ THREE, scene, root, camera, labs, orbit, auto, model: (n, f) => loadModel(THREE, n, f), mats: makeMats(THREE), halo: (c, z, o) => makeHalo(THREE, c, z, o), measure: () => { const u = auto.user; auto.user = false; const k = auto.kT; measureFit(false); auto.kT = k; auto.user = u; return { fill: auto.fill, k: auto.k, cx: auto.cx, cy: auto.cy }; } });   // 점검 도구용 (화면에는 영향 없음)
       if (global.ResizeObserver) new ResizeObserver(resize).observe(view);
       resize();
     }

@@ -3,7 +3,8 @@
 
 자료: BodyParts3D, © The Database Center for Life Science, CC Attribution 4.0 International
       https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html  (partof_BP3D_4.0_obj_99.zip, partof_element_parts.txt)
-쓰기: python3 tools/build_body_models.py <압축을 푼 폴더> <partof_element_parts.txt>   (pip install numpy fast-simplification)
+      (partof_BP3D_4.0_obj_99.zip, partof_element_parts.txt, isa_BP3D_4.0_obj_99.zip)
+쓰기: python3 tools/build_body_models.py <partof 압축을 푼 폴더> <partof_element_parts.txt> <isa 압축을 푼 폴더>   (pip install numpy fast-simplification)
 
 몸 좌표(파일 안의 좌표): 1 = 10 cm, +x = 몸의 왼쪽(앞에서 보면 오른쪽), +y = 위, +z = 앞. 원점은 위(胃) 높이의 몸 가운데.
 파일 형식: [uint32 JSON 길이][JSON][4바이트 맞춤][이진 데이터]
@@ -14,7 +15,7 @@ import sys, os, re, json, struct, collections
 import numpy as np
 import fast_simplification
 
-SRC, PARTS = sys.argv[1], sys.argv[2]
+SRC, PARTS, ISA = sys.argv[1], sys.argv[2], sys.argv[3]
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'models')
 CREDIT = 'BodyParts3D, © The Database Center for Life Science (CC BY 4.0)'
 
@@ -49,6 +50,37 @@ def organ(concept, keep=None, target=None):
             V = V.astype(np.float64); F = F.astype(np.int64)
         Vs.append(V); Fs.append(F + off); off += len(V)
     return body(np.vstack(Vs)), np.vstack(Fs)
+
+_names = None
+def pick(pattern, target=None, exclude=None):
+    """isa 폴더에서 조각 이름(영어)이 정규식에 맞는 것을 모아 하나로. target: 삼각형 수 목표"""
+    global _names
+    if _names is None:
+        _names = {}
+        for f in sorted(os.listdir(ISA)):
+            if f.endswith('.obj'):
+                m = re.search(r'English name : (.*)', open(os.path.join(ISA, f), encoding='utf-8', errors='ignore').read(2500))
+                if m: _names[f[:-4]] = m.group(1).strip()
+    parts, tot = [], 0
+    for e, nm in _names.items():
+        if re.search(pattern, nm) and not (exclude and re.search(exclude, nm)):
+            V, F = [], []
+            for l in open(os.path.join(ISA, e + '.obj'), encoding='utf-8', errors='ignore'):
+                if l.startswith('v '): V.append([float(x) for x in l.split()[1:4]])
+                elif l.startswith('f '): F.append([int(t.split('/')[0]) - 1 for t in l.split()[1:4]])
+            parts.append((np.array(V, dtype=np.float64), np.array(F, dtype=np.int64))); tot += len(F)
+    assert parts, pattern
+    Vs, Fs, off = [], [], 0
+    for V, F in parts:
+        if target and tot > target * 1.15 and len(F) > 300:
+            V, F = fast_simplification.simplify(V.astype(np.float32), F.astype(np.int32), target_count=max(200, int(len(F) * target / tot)))
+            V = V.astype(np.float64); F = F.astype(np.int64)
+        Vs.append(V); Fs.append(F + off); off += len(V)
+    return body(np.vstack(Vs)), np.vstack(Fs)
+
+def cut(mesh, keep):   # keep(꼭짓점 배열) → 참/거짓: 세 꼭짓점이 모두 참인 삼각형만 남겨요
+    V, F = mesh; ok = keep(V); F = F[ok[F].all(axis=1)]; used = np.unique(F); remap = -np.ones(len(V), dtype=np.int64); remap[used] = np.arange(len(used))
+    return V[used], remap[F]
 
 def slices(V, axis, n, rev=False):   # 한 축을 따라 n 조각으로 나눠 조각마다 가운데 점
     t = V[:, axis]; lo, hi = t.min(), t.max(); pts = []
@@ -103,5 +135,29 @@ def digestive():
     small = [pyl] + dpath + zig + [large[0]]
     write('digestive', M, {'esophagus': eso, 'stomach': stomach, 'small': small, 'large': large})   # 구간마다 앞 구간의 끝점에서 시작해요
 
+def organs():   # 가슴 · 배의 다른 기관 (허파 겉모양은 자료에 없어요: 기관과 기관지만 있어요)
+    M = collections.OrderedDict()
+    M['heart'] = pick(r'^Wall of (ventricle|left atrium|right atrium)$', 9000)
+    M['vessels'] = pick(r'^(Ascending aorta|Arch of aorta|Descending thoracic aorta|Abdominal aorta|Pulmonary trunk|Superior vena cava|Inferior vena cava)$', 5000)
+    M['kidney_l'] = pick(r'^Left kidney$'); M['kidney_r'] = pick(r'^Right kidney$')
+    M['ureters'] = pick(r'^(Left|Right) ureter$', 2000); M['bladder'] = pick(r'^Urinary bladder$'); M['spleen'] = pick(r'^Spleen$')
+    M['trachea'] = pick(r'^(Trachea|Left main bronchus|Right main bronchus proper)$', 5000)
+    write('organs', M, {})
+
+def brain():
+    M = collections.OrderedDict(); gy = r'(gyrus|lobule|lobe|[Ii]nsula|cuneus|[Pp]recuneus|operculum|pole|cortex)$'; no = r'artery|[Bb]ranch|vein|duct|liver|thymus|lung|thyroid|prostate'
+    M['cerebrum_l'] = pick(r'[Ll]eft .*' + gy, 9000, no); M['cerebrum_r'] = pick(r'[Rr]ight .*' + gy, 9000, no)
+    M['cerebellum'] = pick(r'^Cerebellum$', 6000)
+    M['thalamus'] = pick(r'^(Left thalamus|Right thalamus|Hypothalamus)$', 2500)     # 간뇌 (시상 · 시상 하부)
+    M['midbrain'] = pick(r'^Midbrain$', 2000); M['pons'] = pick(r'^Pons$', 2500); M['medulla'] = pick(r'^Medulla oblongata$', 2000)
+    M['spinal_canal'] = pick(r'^Central canal of spinal cord$')     # 척수 자체는 자료에 없어요: 척수 가운데를 지나는 가는 관(길잡이로 써요)
+    write('brain', M, {})
+
+def skin():   # 몸 윤곽: 온몸, 그리고 머리~골반(팔 · 다리를 잘라 낸 것)
+    M = collections.OrderedDict(); full = pick(r'^Skin$', 16000); M['skin'] = full
+    M['skin_torso'] = cut(full, lambda V: (V[:, 1] > -4.3) & ((np.abs(V[:, 0]) < 1.95) | (V[:, 1] > 2.9)))
+    write('body', M, {})
+
 if __name__ == '__main__':
-    digestive()
+    todo = sys.argv[4:] or ['digestive', 'organs', 'brain', 'skin']
+    for t in todo: globals()[t]()
