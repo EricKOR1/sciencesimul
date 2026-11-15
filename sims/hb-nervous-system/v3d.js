@@ -126,7 +126,7 @@
         swapG(stom, fitG(G0.stomach, ORG)); swapG(gut, fitG(G0.small, ORG)); realStom = true;
         gut.material.transparent = true; gut.material.opacity = 0.8; gut.renderOrder = 3;   // 소장 아래 · 뒤의 방광이 비쳐 보이게
         at2.geometry.dispose(); at2.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([V3(-0.3, -4.5), V3(-0.15, -5.0, 0.3), sc]), 20, 0.05, 10);   // 자율 신경 → 실제 위 위치
-        Lb.st.off = [0.75, -0.45, 0]; Lb.gu.off = [-0.85, 0, 0];   // 실제 위치에서 자율 신경 · 체성 신경 이름표와 겹치지 않게
+        Lb.st.off = [-0.75, 0.05, 0]; Lb.gu.off = [-0.85, 0, 0];   // 실제 위치에서 자율 신경 · 체성 신경 이름표와 겹치지 않게
         if (ctx.refit) ctx.refit(0.2);
       });
       ctx.model('brain', (G0) => {
