@@ -29,6 +29,7 @@
    ctx.mats                            // 실제 같은 재질: glass() liquid(c) metal('steel'|'brass'|'copper'|'gold'…, {brushed}) plastic(c) rubber(c)
                                        //   wood(c) stone(c, {cracks}) ceramic(c) organic(c, {opacity}) fabric(c) ice() emissive(c, 세기)
    ctx.halo(obj, color, size)          // 빛나는 물체(전구·불꽃·별·뜨거운 것)에 부드러운 빛 번짐 붙이기
+   ctx.model(name, fn)                 // 실제 3D 모델(assets/models/<name>.bin) 불러오기: fn({ 이름: geometry }, meta) — loadModel 설명 참고
    ctx.space                           // 실제 사진 질감의 천체: space.skin(mesh,'earth') earth() atmosphere() ring() sky() sun() lonLat() — makeSpace 설명 참고
    ctx.refit()                         // 장면이 크게 바뀌면 다시 화면에 맞추기 · 배경 물체는 userData.v3bg = true
    ※ 한 단계에는 한 가지 화면만 나와요: levels에 든 단계는 3D, 나머지 단계는 2D (2D↔3D 전환 버튼 없음).
@@ -139,7 +140,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
     linear-gradient(to top, rgba(96,128,210,.13) 0%, rgba(96,128,210,0) 34%),
     radial-gradient(120% 86% at 50% 36%, #2b3c66 0%, #18233f 46%, #0a0e1c 100%);
   font-feature-settings: "tnum" 1; }
-.v3-credit { position: absolute; left: 10px; bottom: 6px; font-size: 10px; color: rgba(255,255,255,.42); pointer-events: none; }
+.v3-credit { position: absolute; left: 10px; bottom: 6px; max-width: 58%; font-size: 10px; line-height: 1.25; color: rgba(255,255,255,.42); pointer-events: none; }
 .v3-vig { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 46%, rgba(4,6,14,0) 56%, rgba(4,6,14,.4) 100%); }
 .v3-head, .v3-ctl { background: linear-gradient(180deg, rgba(22,31,58,.9), rgba(13,19,38,.86)); -webkit-backdrop-filter: blur(12px) saturate(1.2); backdrop-filter: blur(12px) saturate(1.2); }
 .v3-head { border-bottom: 1px solid rgba(255,255,255,.08); box-shadow: 0 1px 0 rgba(0,0,0,.25); position: relative; z-index: 3; }
@@ -344,7 +345,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
        space.lonLat(경도, 위도, r)                  질감 위 경위도 → 공의 로컬 좌표 (지구 질감 위에 표시를 맞출 때)
        space.tex(name, fn)                          질감만 불러오기 */
   const spaceTex = {};
-  function makeSpace(THREE, renderer, view) {
+  function makeSpace(THREE, renderer, addCredit) {
     const WEB = /^https?:$/.test(global.location.protocol);
     const aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1);
     const uSunV = { value: new THREE.Vector3(0, 0, 1e4) }, uHasSun = { value: 0 }, sunW = new THREE.Vector3(), spin = [];
@@ -357,7 +358,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
         e = spaceTex[file] = { t: null, q: [] };
         new THREE.TextureLoader().load(BASE + 'tex/space/' + file, (t) => { if (!gray && THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; t.anisotropy = aniso; e.t = t; const q = e.q; e.q = null; q.forEach((f) => f(t)); }, undefined, () => { e.q = null; });
       }
-      const run = (t) => { if (!credited) { credited = true; view.appendChild(el('div', 'v3-credit', '천체 사진: Solar System Scope (CC BY 4.0)')); } try { done(t); } catch (err) { console.error(err); } };
+      const run = (t) => { if (!credited) { credited = true; addCredit('천체 사진: Solar System Scope (CC BY 4.0)'); } try { done(t); } catch (err) { console.error(err); } };
       if (e.t) run(e.t); else if (e.q) e.q.push(run);
     }
     function skin(mesh, name, o) { o = o || {}; tex(name, (t) => { const m = mesh.material; m.map = t; m.color.setScalar(o.gain == null ? 1 : o.gain); if (name === 'sun' && m.isMeshBasicMaterial && o.gain == null) m.color.setRGB(1.5, 1.42, 1.3); m.needsUpdate = true; if (o.done) o.done(m, t); }); return mesh; }
@@ -401,6 +402,31 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
         if (sunRef) { if (sunRef.isObject3D) sunRef.getWorldPosition(sunW); else sunW.copy(sunRef); camera.updateMatrixWorld(); uSunV.value.copy(sunW).applyMatrix4(camera.matrixWorldInverse); }
         for (let i = 0; i < spin.length; i++) spin[i].rotation.y += dt * 0.03;     // 구름층은 땅보다 아주 조금 빨리 돌아요
       } };
+  }
+
+  /* 실제 3D 모델 ctx.model(name, fn): assets/models/<name>.bin 을 불러와 fn({ 이름: BufferGeometry }, meta) 를 불러요.
+     파일은 tools/build_body_models.py 가 만든 형식(꼭짓점 Uint16 · 인덱스 Uint16/32 + JSON 설명)이에요. meta.paths 에 길(점 목록), meta.meshes[i].center 에 가운데 점이 있어요.
+     못 불러오면(오프라인 · file://) fn 을 부르지 않으니, 차시는 단순한 모양을 먼저 만들어 두고 불러온 뒤에 바꿔 끼워요. 출처(meta.credit)는 화면 왼쪽 아래에 적혀요. */
+  const modelCache = {};
+  function loadModel(THREE, name, done) {
+    if (!/^https?:$/.test(global.location.protocol) || !global.fetch) return;
+    let e = modelCache[name];
+    if (!e) {
+      e = modelCache[name] = { r: null, q: [] };
+      global.fetch(BASE + 'models/' + name + '.bin').then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.arrayBuffer(); }).then((buf) => {
+        const n = new DataView(buf).getUint32(0, true), meta = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 4, n))), base = 4 + n, geos = {};
+        meta.meshes.forEach((m) => {
+          const q = new Uint16Array(buf, base + m.vo, m.v * 3), pos = new Float32Array(m.v * 3);
+          for (let i = 0; i < m.v * 3; i++) { const a = i % 3; pos[i] = m.min[a] + (m.max[a] - m.min[a]) * q[i] / 65535; }
+          const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+          g.setIndex(new THREE.BufferAttribute(m.v > 65535 ? new Uint32Array(buf, base + m.io, m.i) : new Uint16Array(buf, base + m.io, m.i), 1));
+          g.computeVertexNormals(); geos[m.name] = g;
+        });
+        e.r = [geos, meta]; const q = e.q; e.q = null; q.forEach((f) => f());
+      }).catch(() => { e.q = null; });
+    }
+    const run = () => { try { done(e.r[0], e.r[1]); } catch (err) { console.error(err); } };
+    if (e.r) run(); else if (e.q) e.q.push(run);
   }
 
   /* 둥근 도형을 더 매끄럽게: 너무 적은 분할 수는 최소값으로 올려요 (모든 3D 화면 공통) */
@@ -770,6 +796,8 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
         toast('이 기기에서는 3D가 느려서 2D 화면으로 보여 줘요.');
       }
     }
+    const credits = [];   // 화면 왼쪽 아래 출처 표기 (사진 · 모델 자료)
+    function addCredit(t) { if (credits.indexOf(t) >= 0) return; credits.push(t); let c = view.querySelector('.v3-credit'); if (!c) { c = el('div', 'v3-credit'); view.appendChild(c); } c.textContent = credits.join(' · '); }
     function lowQuality() {
       if (!renderer) return;
       renderer.setPixelRatio(1); if (bloom) bloom.on = false;     // 느린 기기: 빛 번짐 후처리도 꺼요
@@ -824,8 +852,9 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
         onLevel(f) { lvHooks.push(f); },                                                      // 단계가 바뀔 때 (2D와 같은 장면으로 맞추기)
         lesson: () => global.__sim || null,                                                    // 2D 실험 상태 (sim.js의 window.__sim)
         refit: (delay) => refit(delay),                                                        // 장면이 크게 바뀌었을 때 다시 화면에 맞추기
+        model: (name, fn) => loadModel(THREE, name, (g, meta) => { if (meta.credit) addCredit('3D 모델: ' + meta.credit); fn(g, meta); }),   // 실제 3D 모델 (assets/models, 위 loadModel 설명)
         bloom: (v) => { if (bloom) bloom.want = v !== false; },                                  // 빛 번짐을 장면에 따라 켜고 끄기 (attach 옵션 bloom을 켠 차시에서만)
-        get space() { return space || (space = makeSpace(THREE, renderer, view)); },             // 실제 사진 질감의 태양 · 행성 · 달 · 밤하늘 (위 makeSpace 설명)
+        get space() { return space || (space = makeSpace(THREE, renderer, addCredit)); },             // 실제 사진 질감의 태양 · 행성 · 달 · 밤하늘 (위 makeSpace 설명)
         mats: makeMats(THREE),                                                                 // 실제 같은 재질 모음: mats.glass(), mats.metal('steel'), mats.wood() …
         halo: (obj, color, size, opacity) => { const h = makeHalo(THREE, color, size, opacity); if (obj) obj.add(h); return h; },   // 빛나는 물체의 빛 번짐
       }) || {} : {};

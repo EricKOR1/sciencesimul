@@ -56,6 +56,30 @@
         new V3(0, 4.9, 0.55), new V3(0, 4.3, 0.1), new V3(0, 3.0, 0), new V3(0.2, 2.1, 0), new V3(0.75, 1.45, 0), new V3(0.1, 1.05, 0.05), new V3(-0.7, 0.85, 0.1), ...sp.filter((_, i) => i % 2 === 0),
         new V3(-1.55, -1.5, 0), ...lp.slice(0), ]);
       const bolus = new THREE.Mesh(new THREE.SphereGeometry(0.26, 24, 16), mat(lc(0xffc93a), { emissive: lc(0xaa7a00), emissiveIntensity: 0.6, roughness: 0.35 })); tract.add(bolus); ctx.halo(bolus, 0xffd060, 1.5, 0.45);
+      /* 실제 해부학 모델 (BodyParts3D, CC BY 4.0 — assets/models/digestive.bin): 다 불러오면 위에서 만든 단순한 모양을 실제 장기 모양으로 바꿔 끼워요.
+         못 불러오면(오프라인 등) 단순한 모양 그대로 보여요. 몸 좌표 → 이 차시 좌표: 1.45배, 위로 1.2.
+         식도만 위아래로 조금 줄여서(0.785배) 입 높이에 맞췄어요 — 배 속 기관이 화면에서 작아지지 않게 */
+      let realBody = false, segs = null;
+      const foodAt = (u) => { if (!segs) return food.getPointAt(u); let k = ST.findIndex((q) => u >= q.u[0] && u < q.u[1]); if (k < 0) k = u <= 0 ? 0 : ST.length - 1; return segs[k].getPointAt(Math.max(0, Math.min(1, (u - ST[k].u[0]) / (ST[k].u[1] - ST[k].u[0])))); };
+      ctx.model('digestive', (G, meta) => {
+        const SC = 1.45, OY = 1.2, E0 = 0.16, KE = 0.785, toL = (q) => new V3(q[0] * SC, q[1] * SC + OY, q[2] * SC), toE = (q) => new V3(q[0] * SC, (q[1] - E0) * SC * KE + E0 * SC + OY, q[2] * SC);
+        const fit = (name) => { const g = G[name].clone(); if (name === 'esophagus') { g.translate(0, -E0, 0); g.scale(SC, SC * KE, SC); g.translate(0, E0 * SC + OY, 0); } else { g.scale(SC, SC, SC); g.translate(0, OY, 0); } return g; };
+        const swap = (mesh, name, center) => {     // center: 공 모양이던 기관은 가운데 점으로 옮겨 이름표가 제자리에 붙게, 관 모양(원점 기준)이던 기관은 그대로
+          const g = fit(name); mesh.rotation.set(0, 0, 0); mesh.scale.set(1, 1, 1);
+          if (center) { g.computeBoundingBox(); const c = g.boundingBox.getCenter(new V3()); g.translate(-c.x, -c.y, -c.z); mesh.position.copy(c); } else mesh.position.set(0, 0, 0);
+          mesh.geometry.dispose(); mesh.geometry = g; mesh.castShadow = true;
+        };
+        swap(eso, 'esophagus'); swap(stom, 'stomach', true); swap(liver, 'liver', true); swap(gall, 'gallbladder', true); swap(panc, 'pancreas', true); swap(small, 'small'); swap(large, 'large');
+        [liver, stom].forEach((m) => { m.material.transparent = true; m.material.opacity = 0.8; m.material.depthWrite = true; m.renderOrder = 3; });   // 실제 위치에서는 쓸개가 간 밑에, 이자가 위 뒤에 숨어요 → 간과 위를 살짝 비쳐 보이게
+        const duo = new THREE.Mesh(fit('duodenum'), small.material); duo.castShadow = true; tract.add(duo);   // 샘창자(소장의 첫 부분)
+        const P = meta.paths, cv = (pts) => new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+        const e0 = toE(P.esophagus[0]);
+        segs = [cv([new V3(0, 4.9, 0.55), new V3(0, 4.75, 0.3), new V3(e0.x, e0.y + 0.25, e0.z + 0.12), e0]), cv(P.esophagus.map(toE)), cv(P.stomach.map(toL)), cv(P.small.map(toL)), cv(P.large.map(toL))];
+        anus.position.copy(toL(P.large[P.large.length - 1]));
+        lTr[1].obj = [0.4, 3.3, 0.1]; lTr[6].obj = [0.1, -1.6, 1.0]; lTr[7].obj = [-2.1, -0.9, 0.1];   // 식도 · 소장 · 대장 이름표를 실제 위치로
+        [bolus.material].concat(bits.map((b) => b.material)).forEach((m) => { m.depthTest = false; m.transparent = true; }); bolus.renderOrder = 20; bits.forEach((b) => { b.renderOrder = 21; });   // 음식물은 기관 속에 있어도 보이게
+        realBody = true; if (ctx.refit) ctx.refit(0.2);
+      });
       const bits = []; for (let i = 0; i < 10; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffe08a })); bolus.add(b); bits.push(b); }
       const lTr = [label('입', mouth, { offset: [0.0, 0.0, 0.35] }), label('식도', [0, 3.4, 0.1]), label('위', stom, { offset: [0.9, 0.25, 0.3] }), label('간', liver, { offset: [-0.3, 0.55, 0.4] }), label('쓸개', gall, { offset: [-0.1, -0.35, 0.3] }), label('이자', panc, { offset: [0.2, 0.3, -0.1] }), label('소장', [0, -0.95, 0.3]), label('대장', [-1.75, -0.2, 0.1]), label('항문', anus, { offset: [0.5, -0.1, 0] })];
       const enz = [label('아밀레이스', mouth, { offset: [1.0, 0.05, 0], color: 'rgba(200,120,20,.95)' }), label('펩신', stom, { offset: [1.8, -0.35, 0], color: 'rgba(160,50,140,.95)' }), label('아밀레이스 · 트립신 · 라이페이스', small, { offset: [2.3, 0.2, 0.4], color: 'rgba(30,130,150,.95)' })];
@@ -273,14 +297,14 @@
                 if (Math.abs(u2 - u) > 0.002) { internal = true; pl.set(Math.max(0, Math.min(1, u2))); internal = false; }
               }
             }
-            bolus.position.copy(food.getPointAt(u));
+            bolus.position.copy(foodAt(u));
             let s = ST.findIndex((q) => u >= q.u[0] && u < q.u[1]); if (s < 0) s = 0;
             const cards = cardFrame();
             if (s !== lastS) { lastS = s; if (!cards) info(ST[s].t + '<br>소화: 큰 영양소가 작은 영양소로 잘게 쪼개지는 과정이에요.'); stSeg.set(s); }
             // 분해: 단계가 지날수록 덩어리가 작아지고 조각이 흩어져요
             const brk = Math.min(1, Math.max(0, (u - 0.05) / 0.45));
             bolus.scale.setScalar(1 - 0.45 * brk); bits.forEach((b, i) => { const a = i * 2.4 + t * 1.5; b.position.set(Math.cos(a), Math.sin(a * 1.3), Math.sin(a)).multiplyScalar(0.3 + 0.6 * brk); b.scale.setScalar(0.6 + 0.5 * brk); });
-            stom.scale.set(1.05 + 0.03 * Math.sin(t * 3), 0.75, 0.65);
+            if (realBody) stom.scale.set(1 + 0.03 * Math.sin(t * 3), 1, 1); else stom.scale.set(1.05 + 0.03 * Math.sin(t * 3), 0.75, 0.65);
           } else {
             const g = big.userData;
             for (let i = 0; i < NN; i++) {

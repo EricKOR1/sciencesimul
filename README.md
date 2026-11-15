@@ -39,6 +39,7 @@
   (3D를 연 채로 조작을 하나씩 눌러 3D 장면이 바뀌는지 확인해 고른 목록: assets/js/v3-2d-only.js)
   3D 모형의 재질은 `ctx.mats`(유리 `glass`, 액체 `liquid`, 금속 `metal`, 나무 `wood`, 돌 `stone`, 세포·기관 `organic`, 플라스틱 `plastic` 등)로 만들고, 빛나는 물체에는 `ctx.halo(obj, 색, 크기)`로 빛 번짐을 붙입니다. 기본 조명은 스튜디오 조명(부드러운 반사·그림자)이며, 영화 같은 색 보정이 필요한 차시만 `tone: true`를 켭니다.
   우주 천체는 `ctx.space`로 실제 관측 사진 질감을 입힙니다: `space.skin(mesh, 'earth')`, `space.earth()`(구름·밤 불빛), `space.atmosphere()`, `space.ring()`, `space.sky()`, `space.sun()`. 질감은 `assets/tex/space/` (출처: Solar System Scope, CC BY 4.0 — https://www.solarsystemscope.com/textures/, 3D 화면에 출처가 표시됨). 못 불러오면 차시가 그린 질감으로 보입니다. 빛 번짐 후처리는 `bloom: true` 또는 `{ strength, threshold }` (느린 기기에서는 자동으로 꺼짐).
+  인체 장기는 `ctx.model('digestive', fn)`처럼 실제 해부학 모델(`assets/models/*.bin`)을 불러와, 차시가 먼저 만들어 둔 단순한 모양과 바꿔 끼웁니다(못 불러오면 단순한 모양 그대로). 모델 출처: BodyParts3D, © The Database Center for Life Science, CC BY 4.0 (https://dbarchive.biosciencedbc.jp/en/bodyparts3d/) — 3D 화면에 출처가 표시됩니다. 모델 파일은 `tools/build_body_models.py`로 만듭니다.
   3D 화면은 **2D 실험과 같은 내용·같은 값**을 보여 주고, 2D에서 바꾼 조건이 3D에 그대로 반영됩니다(일부는 3D에서 바꿔도 2D가 따라 바뀜).
   학습 단계마다 그 단계의 미션에 맞는 장면을 보여 주며, 2D 화면을 직접 끌어야 하는 단계는 2D로 시작합니다.
   공전·달의 위상·세포 분열·파동·혈액 순환·분자 충돌처럼 **움직임이 중요한 차시**에는 **▶ 재생** 버튼이 있어 한 주기의 움직임을
