@@ -85,7 +85,8 @@
       bronch.add(tube([V3(0, 0.6), V3(0, 0.1)], 0.08, bronchM, 6), tube([V3(0, 0.1), V3(-0.3, -0.2, 0), V3(-0.7, -0.6)], 0.06, bronchM, 10), tube([V3(0, 0.1), V3(0.3, -0.2, 0), V3(0.7, -0.6)], 0.06, bronchM, 10));
       const gut = new THREE.Mesh(new THREE.TorusKnotGeometry(0.34, 0.1, 100, 12, 2, 3), ctx.mats.organic(0xeaa588)); gut.position.set(-0.3, -7.2, 0.35); body.add(gut);
       const bladder = new THREE.Mesh(new THREE.SphereGeometry(0.34, 24, 18), ctx.mats.organic(0xe8cc70)); bladder.position.set(-0.3, -8.5, 0.3); body.add(bladder);
-      body.add(tube([V3(-0.3, -3.7), V3(0.0, -3.9, 0.3), V3(0.35, -4.0, 0.42)], 0.05, autoM, 16), tube([V3(-0.3, -4.5), V3(0.1, -5.2, 0.3), V3(0.5, -5.8, 0.4)], 0.05, autoM, 20));
+      const at1 = tube([V3(-0.3, -3.7), V3(0.0, -3.9, 0.3), V3(0.35, -4.0, 0.42)], 0.05, autoM, 16), at2 = tube([V3(-0.3, -4.5), V3(0.1, -5.2, 0.3), V3(0.5, -5.8, 0.4)], 0.05, autoM, 20);
+      body.add(at1, at2);
       const NPT = 16, pulseI = new THREE.InstancedMesh(new THREE.SphereGeometry(0.11, 12, 9), new THREE.MeshBasicMaterial({ color: 0xffffff }), NPT * 2);
       body.add(pulseI);
       const pm = new THREE.Color();
@@ -100,6 +101,58 @@
       Lb.so.obj = null;
       const bodyAn = anch(3.9, -6.6, 0.3, body), autoAn = anch(1.3, -5.0, 0.5, body);
       Lb.so.obj = bodyAn; Lb.au.obj = autoAn;
+
+      /* 실제 해부 모형으로 바꿔 끼우기 (불러오지 못하면 위의 단순한 모양이 그대로 남아요)
+         몸통 기관: 한 변환(ORG)으로 이 차시의 몸통(심장 y −4.2 · 방광 y −8.5)에 맞춰요.
+         뇌: 이 차시의 머리는 크게 그린 머리라서, 뇌는 머리 크기에 맞춘 변환(BRN)을 따로 써요. 연수 아래 끝이 척수(x −0.3, z 0)에 이어지게 했어요. */
+      let realStom = false;
+      const ORG = { s: 1.04, x: -0.3, y: -5.53, z: 0.35 }, BRN = { s: 2.0, x: -0.3, y: -7.82, z: 1.06 };
+      const fitG = (g0, T) => { const g = g0.clone(); g.scale(T.s, T.s, T.s); g.translate(T.x, T.y, T.z); return g; };
+      const swapG = (mesh, g) => {     // 메시 객체는 그대로 두고 모양만 바꿔요 (이름표 · 애니메이션이 계속 이 메시를 가리켜요)
+        g.computeBoundingBox(); const c = g.boundingBox.getCenter(new V()); g.translate(-c.x, -c.y, -c.z);
+        mesh.rotation.set(0, 0, 0); mesh.scale.set(1, 1, 1); mesh.position.copy(c); mesh.geometry.dispose(); mesh.geometry = g; return c;
+      };
+      const ctrOf = (G0, meta, name) => { const q = meta.meshes.find((m) => m.name === name).center; return V3(q[0] * ORG.s + ORG.x, q[1] * ORG.s + ORG.y, q[2] * ORG.s + ORG.z); };
+      ctx.model('organs', (G0, meta) => {
+        const hc = ctrOf(G0, meta, 'heart');
+        swapG(heart, fitG(G0.heart, ORG)); swapG(bladder, fitG(G0.bladder, ORG));
+        const tr = fitG(G0.trachea, ORG); bronch.clear(); const tm = new THREE.Mesh(new THREE.BufferGeometry(), bronchM); bronch.add(tm); bronch.position.copy(swapG(tm, tr)); tm.position.set(0, 0, 0);   // 기관 + 기관지 (기관지 넓어짐·좁아짐은 묶음의 가로 크기로)
+        at1.geometry.dispose(); at1.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([V3(-0.3, -3.7), V3(-0.25, -3.95, 0.2), hc]), 16, 0.05, 10);   // 자율 신경 → 실제 심장 위치
+        Lb.bro.off = [-0.8, 0.1, 0];   // 실제 기관은 심장 바로 위라서 이름표를 왼쪽에 두어 심장 이름표와 겹치지 않게
+        if (ctx.refit) ctx.refit(0.2);
+      });
+      ctx.model('digestive', (G0, meta) => {
+        const sc = ctrOf(G0, meta, 'stomach');
+        swapG(stom, fitG(G0.stomach, ORG)); swapG(gut, fitG(G0.small, ORG)); realStom = true;
+        gut.material.transparent = true; gut.material.opacity = 0.8; gut.renderOrder = 3;   // 소장 아래 · 뒤의 방광이 비쳐 보이게
+        at2.geometry.dispose(); at2.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([V3(-0.3, -4.5), V3(-0.15, -5.0, 0.3), sc]), 20, 0.05, 10);   // 자율 신경 → 실제 위 위치
+        Lb.st.off = [0.75, -0.45, 0]; Lb.gu.off = [-0.85, 0, 0];   // 실제 위치에서 자율 신경 · 체성 신경 이름표와 겹치지 않게
+        if (ctx.refit) ctx.refit(0.2);
+      });
+      ctx.model('brain', (G0) => {
+        const cat = (a, b, k) => { const A = a.attributes[k].array, B = b.attributes[k].array, o = new Float32Array(A.length + B.length); o.set(A); o.set(B, A.length); return new THREE.BufferAttribute(o, 3); };
+        const gl = fitG(G0.cerebrum_l, BRN), gr = fitG(G0.cerebrum_r, BRN), g = new THREE.BufferGeometry(), n0 = gl.attributes.position.count;
+        g.setAttribute('position', cat(gl, gr, 'position')); g.setAttribute('normal', cat(gl, gr, 'normal'));
+        const ia = gl.index.array, ib = gr.index.array, ix = new Uint32Array(ia.length + ib.length); ix.set(ia); for (let i = 0; i < ib.length; i++) ix[ia.length + i] = ib[i] + n0; g.setIndex(new THREE.BufferAttribute(ix, 1));
+        // 대뇌의 엽 색: 처음 모양과 같은 규칙(앞: 전두엽 · 위 가운데: 두정엽 · 뒤: 후두엽 · 옆 아래: 측두엽), 앞쪽은 +z
+        g.computeBoundingBox(); const bb = g.boundingBox, cz = (bb.min.z + bb.max.z) / 2, hz = (bb.max.z - bb.min.z) / 2, cy = (bb.min.y + bb.max.y) / 2, hy = (bb.max.y - bb.min.y) / 2;
+        const P = g.attributes.position, col = new Float32Array(P.count * 3), cp = new THREE.Color(LOBE.p), cf = new THREE.Color(LOBE.f), co = new THREE.Color(LOBE.o), ct = new THREE.Color(LOBE.t);
+        for (let i = 0; i < P.count; i++) {
+          const ux = (P.getZ(i) - cz) / hz, uy = (P.getY(i) - cy) / hy, cs = ux + 0.18 * uy, lat = uy - (-0.02 - 0.22 * ux);
+          const wf = sm(0.2, 0.3, cs), wo = 1 - sm(-0.62, -0.5, ux), wt = (1 - sm(-0.02, 0.1, lat + 0.02)) * (1 - wf) * (1 - wo) * sm(-0.7, -0.5, ux + 0.25);
+          const cc = cp.clone().lerp(ct, wt).lerp(co, wo).lerp(cf, wf); col[i * 3] = cc.r; col[i * 3 + 1] = cc.g; col[i * 3 + 2] = cc.b;
+        }
+        g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+        swapG(cerebrum, g); swapG(cb, fitG(G0.cerebellum, BRN)); swapG(dien, fitG(G0.thalamus, BRN)); swapG(mid, fitG(G0.midbrain, BRN)); swapG(pons, fitG(G0.pons, BRN));
+        const mc = swapG(med, fitG(G0.medulla, BRN)), mb = mc.y + med.geometry.boundingBox.min.y + 0.12;
+        lobeM.transparent = true; lobeM.opacity = 0.82; lobeM.depthWrite = true;   // 대뇌 속의 간뇌 · 중간뇌가 비쳐 보이게
+        const cordPts = (y1) => [V3(mc.x, mb, mc.z), V3(-0.3, mb - 0.7, 0)].concat(y1 < -5 ? [V3(-0.3, -4.0), V3(-0.3, -6.2), V3(-0.3, y1)] : [V3(-0.3, y1)]);
+        cord.geometry.dispose(); cord.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(cordPts(-7.2)), 40, 0.2, 10);
+        cordS.geometry.dispose(); cordS.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(cordPts(mb - 1.6)), 16, 0.2, 10);
+        head.position.x = -0.3; eyes.forEach((pu) => { pu.parent.position.x -= 0.4; });   // 머리 · 눈을 몸의 가운데 선(x −0.3)에 맞춰요
+        [[Lb.f, 0.3, 1.9, 1.6], [Lb.p, 0.2, 2.75, -0.2], [Lb.o, 0.2, 1.6, -1.7], [Lb.t, 1.15, 1.0, 0.5], [Lb.ce, 0.3, 2.8, 0.2]].forEach(([l, x, y, z]) => { if (l.obj && l.obj.position) l.obj.position.set(x, y, z); });   // 엽 · 대뇌 이름표 자리를 실제 모양에 맞춰요
+        if (ctx.refit) ctx.refit(0.2);
+      });
       const SETS = { lobe: ['f', 'p', 'o', 't', 'cb'], stem: ['ce', 'di', 'mi', 'po', 'me', 'cb', 'co'], body: ['br', 'co', 'so', 'au', 'he', 'st', 'pu', 'bro', 'gu', 'bl'] };
       const INFO = {
         lobe: '대뇌 겉질은 <b>전두엽·두정엽·측두엽·후두엽</b>으로 나뉘고 엽마다 맡은 일이 달라요.',
@@ -185,7 +238,8 @@
             const nb = Math.max(1, Math.round(P.bpm / 60 * 6)), beat = Math.pow(Math.max(0, Math.sin(Math.PI * 2 * nb * ph)), 5);
             heart.scale.setScalar(1 + beat * 0.25);
             const w = Math.sin(Math.PI * 2 * 5 * ph) * 0.1 * P.gut;
-            stom.scale.set(1.3 + w, 0.8 - w * 0.8, 0.9); gut.scale.setScalar(1 + w * 0.8);
+            if (realStom) stom.scale.set(1 + w * 0.75, 1 - w, 1); else stom.scale.set(1.3 + w, 0.8 - w * 0.8, 0.9);   // 실제 위로 바꾸면 기본 크기가 1
+            gut.scale.setScalar(1 + w * 0.8);
             stom.material.emissive.set(P.gut > 1.2 ? 0xff8a4d : 0x000000); stom.material.emissiveIntensity = P.gut > 1.2 ? 0.35 : 0;
             heart.material.emissive.set(0xff2020); heart.material.emissiveIntensity = (P.mode === 'sym' ? 0.3 : 0) + beat * 0.5;
             eyes.forEach((pu) => pu.scale.setScalar(0.07 + (P.pupil - 6.5) / 12.5 * 0.15));
