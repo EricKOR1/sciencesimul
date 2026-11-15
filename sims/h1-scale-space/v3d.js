@@ -61,7 +61,7 @@
         for (let i = 0; i < 700; i++) { const v = new V(rr() - 0.5, rr() - 0.5, rr() - 0.5).normalize().multiplyScalar(30 + rr() * 6); sa.push(v.x, v.y, v.z); const c = 0.5 + rr() * 0.5; sc.push(c * 0.85, c * 0.9, c); }
         const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(sa, 3)); sg.setAttribute('color', new THREE.Float32BufferAttribute(sc, 3));
         const stars = new THREE.Points(sg, new THREE.PointsMaterial({ size: 0.16, vertexColors: true, sizeAttenuation: true, transparent: true, opacity: 0.85, depthWrite: false })); root.add(stars); stars.userData.v3bg = true;
-        const plat = new THREE.Mesh(new THREE.CylinderGeometry(4.3, 4.5, 0.2, 72), ctx.mats.metal(0x1a2848, { brushed: true, roughness: 0.32 })); plat.position.y = -3.4; root.add(plat); plat.userData.v3bg = true;   // 받침은 배경: 자동 맞춤이 물체에 맞춰요
+        const plat = new THREE.Mesh(new THREE.CylinderGeometry(4.3, 4.5, 0.2, 72), ctx.mats.metal(0x1a2848, { brushed: true, roughness: 0.66, extra: { envMapIntensity: 0.45 } })); plat.position.y = -3.4; root.add(plat); plat.userData.v3bg = true;   // 받침은 배경: 자동 맞춤이 물체에 맞춰요
         [4.2, 3.0, 1.8].forEach((r, k) => { const t = new THREE.Mesh(new THREE.TorusGeometry(r, 0.025, 8, 96), new THREE.MeshBasicMaterial({ color: k % 2 ? 0x3b6ea8 : 0x4fd1c5 })); t.rotation.x = Math.PI / 2; t.position.y = -3.28; t.userData.v3bg = true; root.add(t); }); }
       const BUILD = {
         proton() { const g = new THREE.Group(); g.add(new THREE.Mesh(new THREE.SphereGeometry(2.1, 48, 32), std(0xf0786a, { transparent: true, opacity: 0.35, depthWrite: false, roughness: 0.2 })));
@@ -139,6 +139,7 @@
         if (cur) { root.remove(cur); cur.traverse((x) => { if (x.geometry) x.geometry.dispose(); }); }
         labs.forEach((l) => l.show(false)); labs.length = 0; upd = null;
         cur = BUILD[o.id](); root.add(cur); pop = quiet ? 1 : 0;
+        if (ctx.bloom) ctx.bloom(o.id === 'sun' || o.id === 'esdist' || o.id === 'proxima');   // 빛 번짐은 태양 · 별 장면에서만 (다른 장면의 바닥 반사가 하얗게 번지지 않게)
         labs.forEach((l) => { if (Array.isArray(l.obj)) { l.off = l.off.map((x, k) => x + l.obj[k]); l.obj = cur; } });
         const prev = idx > 0 ? OB[idx - 1] : null; const ratio = prev ? Math.round(Math.log10(o.m / prev.m)) : 0;
         info('<b>' + o.n + '</b> · ' + o.t + '<br>' + NOTE[o.id] + (prev ? '<br>앞의 <b>' + prev.n + '</b>보다 약 <b>10<sup>' + ratio + '</sup>배</b> 커요.' : ''));

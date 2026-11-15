@@ -34,7 +34,7 @@
       const SP = ctx.space; root.add(SP.sky(36, 0.7));   // 은하수가 보이는 밤하늘
       const sunLight = new THREE.PointLight(0xfff1c8, 2.6, 0, 0); root.add(sunLight);
       const sun = new THREE.Mesh(new THREE.SphereGeometry(0.5, 40, 28), new THREE.MeshBasicMaterial({ color: 0xffd23f })); root.add(sun); SP.skin(sun, 'sun'); SP.sun(sun);   // 실제 태양 사진 질감
-      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: gl, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); glow.scale.set(3.4, 3.4, 1); glow.material.opacity = 0.45; root.add(glow);   // 빛 번짐이 있어 둘레 빛은 옅게
+      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: gl, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); glow.scale.set(3.4, 3.4, 1); glow.material.opacity = 0.18; root.add(glow);   // 빛 번짐이 있어 둘레 빛은 옅게
       label('태양', sun, { offset: [0, 0.8, 0], size: 12.5 });
 
       const earth = new THREE.Mesh(new THREE.SphereGeometry(0.2, 32, 20), mat(0x3b82f6, { roughness: 0.6 })); root.add(earth);

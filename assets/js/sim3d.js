@@ -315,7 +315,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
     const pass = (m, tgt) => { quad.material = m; renderer.setRenderTarget(tgt); renderer.render(qs, cam); };
     const sz = new THREE.Vector2();
     return {
-      on: true, hdr: hf,
+      on: true, want: true, hdr: hf,
       setSize() { renderer.getDrawingBufferSize(sz); const w = Math.max(8, sz.x), h = Math.max(8, sz.y); main.setSize(w, h); lv.forEach((p, i) => { const k = 2 << i; p.forEach((r) => r.setSize(Math.max(2, Math.round(w / k)), Math.max(2, Math.round(h / k)))); }); },
       render(scene, camera) {
         renderer.setRenderTarget(main); renderer.render(scene, camera);
@@ -795,7 +795,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       stepFit(dt, t / 1000);
       placeCamera();
       if (space) space.update(camera, dt);
-      if (bloom && bloom.on) bloom.render(scene, camera); else renderer.render(scene, camera);
+      if (bloom && bloom.on && bloom.want) bloom.render(scene, camera); else renderer.render(scene, camera);
       if (global.SciSimShare && global.SciSimShare.grab) global.SciSimShare.grab(renderer.domElement);
       drawLabels();
     }
@@ -824,6 +824,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
         onLevel(f) { lvHooks.push(f); },                                                      // 단계가 바뀔 때 (2D와 같은 장면으로 맞추기)
         lesson: () => global.__sim || null,                                                    // 2D 실험 상태 (sim.js의 window.__sim)
         refit: (delay) => refit(delay),                                                        // 장면이 크게 바뀌었을 때 다시 화면에 맞추기
+        bloom: (v) => { if (bloom) bloom.want = v !== false; },                                  // 빛 번짐을 장면에 따라 켜고 끄기 (attach 옵션 bloom을 켠 차시에서만)
         get space() { return space || (space = makeSpace(THREE, renderer, view)); },             // 실제 사진 질감의 태양 · 행성 · 달 · 밤하늘 (위 makeSpace 설명)
         mats: makeMats(THREE),                                                                 // 실제 같은 재질 모음: mats.glass(), mats.metal('steel'), mats.wood() …
         halo: (obj, color, size, opacity) => { const h = makeHalo(THREE, color, size, opacity); if (obj) obj.add(h); return h; },   // 빛나는 물체의 빛 번짐
