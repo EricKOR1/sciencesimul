@@ -94,6 +94,8 @@
         for (let i = 0; i < 26; i++) { const x = r() * w, y = 35 + r() * (h - 70); for (let j = 0; j < 9; j++) { c.beginPath(); c.ellipse(x + (r() - 0.5) * 60, y + (r() - 0.5) * 34, 10 + r() * 30, 6 + r() * 16, r() * 3, 0, 7); c.fill(); } }
         c.fillStyle = '#f2f6fa'; c.fillRect(0, 0, w, 14); c.fillRect(0, h - 14, w, 14); });
       const earth = new THREE.Mesh(new THREE.SphereGeometry(RE, 64, 48), mat(0xffffff, { map: tex, roughness: 0.75 })); A.add(earth);
+      { const SP = ctx.space; SP.skin(earth, 'earth'); SP.earth(earth, RE, { night: false }); SP.atmosphere(earth, RE, 0x6fb4ff, 0.6);   // 실제 지구 사진 · 구름 · 대기 (못 불러오면 그린 지구 그대로)
+        earth.rotation.y = -127 * Math.PI / 180; }   // 대한민국(동경 127°, 북위 37°)이 '대한민국' 사과 쪽(+x)을 향하게
       const core = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 10), mat(0xffd23f, { emissive: 0x886600 })); A.add(core);
       const SPOTS = [{ n: '북극', deg: 0 }, { n: '대한민국 (북위 약 37°)', deg: 53 }, { n: '남극', deg: 180 }, { n: '적도 반대편', deg: 270 }];
       const HO = 1.6, apples = [];

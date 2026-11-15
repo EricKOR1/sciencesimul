@@ -17,14 +17,18 @@
     levels: [1, 3],
     camera: { dist: PHONE ? 17 : 9.8, theta: 0.3, phi: 0.95, min: 5, max: 26, target: [0.4, 0, 0] },
     autoRotate: 0.12,
+    bloom: { strength: 0.85, threshold: 1.0 },   // 태양이 둘레로 번져 보여요
     build(ctx) {
       const { THREE, scene, root, label, info, controls } = ctx;
+      const SP = ctx.space;
       const st = { a: 2, e: 0.3, M: 0, sec: false, dots: true, arrow: true, f2: false, key: '', n: 8, view: 'ellipse' };
       const sr = () => { try { return window.__sim && window.__sim.S; } catch (e) { return null; } };
 
       /* 빛: 태양이 광원 */
       scene.add(new THREE.AmbientLight(0xa9b8ff, 0.45));
       const sunLight = new THREE.PointLight(0xfff2cc, 2.6, 0, 0); scene.add(sunLight);
+      scene.children.forEach((o) => { if (o.isHemisphereLight) o.intensity = 0.28; else if (o.isDirectionalLight && o.userData.v3engine) o.intensity = 0; });   // 태양빛이 주된 빛
+      root.add(SP.sky(140));   // 은하수가 보이는 밤하늘
 
       /* 배경 별 */
       { let seed = 11; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }; const pos = [];
@@ -33,9 +37,9 @@
         root.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xaec3ff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0.6 }))); }
 
       /* 태양 */
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.32, 40, 28), new THREE.MeshBasicMaterial({ color: 0xffc83d })); root.add(sun);
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.32, 40, 28), new THREE.MeshBasicMaterial({ color: 0xffc83d })); root.add(sun); SP.skin(sun, 'sun'); SP.sun(sun);   // 실제 태양 사진 질감
       const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,230,140,1)'); gr.addColorStop(0.3, 'rgba(255,180,50,.45)'); gr.addColorStop(1, 'rgba(255,160,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
-      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); glow.scale.set(2.4, 2.4, 1); root.add(glow);
+      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.16 })); glow.scale.set(2.4, 2.4, 1); root.add(glow);
       label('태양(초점)', [0, 0.1, 0], { offset: [0, 0.65, 0], color: 'rgba(146,84,0,.9)' });
 
       /* 행성 */

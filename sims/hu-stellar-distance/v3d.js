@@ -14,8 +14,10 @@
     levels: [0],
     camera: { dist: PHONE ? 19 : 13.5, theta: 0.9, phi: 1.12, min: 6, max: 36, target: [0, 1.2, -2.8] },
     autoRotate: 0,
+    bloom: { strength: 0.85, threshold: 1.0 },   // 태양이 둘레로 번져 보여요
     build(ctx) {
       const { THREE, scene, root, label, info, controls } = ctx;
+      const SP = ctx.space;
       const st = { m: 0, D: 7, track: true, shots: [], key: '', sel: 2 };
       const W = () => window.__sim || {};
       const PARS = [0.7681, 0.3792, 0.1947, 0.1302, 0.0968, 0.0888, 0.0760, 0.0489];
@@ -33,9 +35,9 @@
       label('아주 먼 배경별', [-RBG * 0.52, RBG * 0.1, -RBG * 0.8], { size: 11.5, color: 'rgba(60,70,120,.9)' });
 
       /* 태양 · 지구 궤도 · 지구 */
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.34, 32, 24), new THREE.MeshBasicMaterial({ color: 0xffc83d })); root.add(sun);
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.34, 32, 24), new THREE.MeshBasicMaterial({ color: 0xffc83d })); root.add(sun); SP.skin(sun, 'sun'); SP.sun(sun);   // 실제 태양 사진 질감
       const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,230,140,1)'); gr.addColorStop(0.3, 'rgba(255,190,60,.4)'); gr.addColorStop(1, 'rgba(255,160,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
-      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); glow.scale.set(2.2, 2.2, 1); root.add(glow);
+      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.3 })); glow.scale.set(2.2, 2.2, 1); root.add(glow);
       label('태양', [0, 0, 0], { offset: [0, 0.7, 0] });
       { const pts = []; for (let i = 0; i < 120; i++) { const a = i / 120 * TAU; pts.push(new THREE.Vector3(RO * Math.cos(a), 0, RO * Math.sin(a))); }
         root.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), 160, 0.02, 6, true), new THREE.MeshBasicMaterial({ color: 0x8fb4ff, transparent: true, opacity: 0.75 }))); }

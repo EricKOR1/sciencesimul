@@ -16,6 +16,7 @@
     hint: ' ',
     camera: { dist: wide ? 19 : 40, theta: 0.35, phi: 0.82, fov: 45, target: [0, 0, 0], min: 2.5, max: 50 },
     autoRotate: 0,
+    bloom: { strength: 0.85, threshold: 1.0 },   // 태양이 둘레로 빛나 보여요
     levels: [1],   // 2단계(공전하는 지구)만 3D — 남쪽 하늘 · 태양의 길 · 관측 카드(고리 누르기)는 2D
     build(ctx) {
       const { THREE, scene, root, label, info, controls, orbit } = ctx;
@@ -36,7 +37,8 @@
       /* 태양 */
       const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,230,140,1)'); gr.addColorStop(0.25, 'rgba(255,190,60,.55)'); gr.addColorStop(1, 'rgba(255,160,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
       const sun = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 20), new THREE.MeshBasicMaterial({ color: 0xffd23f })); root.add(sun);
-      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); glow.scale.set(4.4, 4.4, 1); root.add(glow);
+      const SP = ctx.space; SP.skin(sun, 'sun'); SP.sun(sun); root.add(SP.sky(120, 0.6));   // 실제 태양 사진 (못 불러오면 노란 공 그대로) · 지구의 밤 쪽을 알게 · 은하수 밤하늘
+      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); glow.scale.set(4.4, 4.4, 1); glow.material.opacity = 0.17; root.add(glow);
       label('☀ 태양', [0, 0.95, 0], { size: 13, color: 'rgba(120,70,0,.85)' });
 
       /* 공전 궤도 + 방향 화살표 + 달 표시 */
@@ -60,7 +62,8 @@
         for (let i = 0; i < 16; i++) { const x = rnd() * 256, y = 20 + rnd() * 88; for (let j = 0; j < 7; j++) { g.beginPath(); g.ellipse(x + (rnd() - 0.5) * 30, y + (rnd() - 0.5) * 18, 6 + rnd() * 16, 4 + rnd() * 9, rnd() * 3, 0, 7); g.fill(); } }
         g.fillStyle = '#f2f6fa'; g.fillRect(0, 0, 256, 7); g.fillRect(0, 121, 256, 7); return new THREE.CanvasTexture(c); })();
       const earth = new THREE.Group(); root.add(earth);
-      earth.add(new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 20), new THREE.MeshStandardMaterial({ map: earthTex, roughness: 0.75 })));
+      const earthM = new THREE.Mesh(new THREE.SphereGeometry(0.5, 48, 32), new THREE.MeshStandardMaterial({ map: earthTex, roughness: 0.75 })); earth.add(earthM);
+      SP.skin(earthM, 'earth'); SP.earth(earthM, 0.5); SP.atmosphere(earthM, 0.5, 0x6fb4ff, 0.6);   // 실제 지구 사진 · 구름 · 밤 쪽 도시 불빛 · 대기
       // 자전축 (공간에서 늘 같은 방향: 북극성 쪽)  → 링 각도 170° 쪽으로 23.4° 기울어요
       const aX = Math.sin(EPS) * Math.cos(170 * DEG), aZ = -Math.sin(EPS) * Math.sin(170 * DEG), aY = Math.cos(EPS);
       const axis = new THREE.Vector3(aX, aY, aZ).normalize();
@@ -102,6 +105,8 @@
         const sp = toSun.clone().sub(axis.clone().multiplyScalar(toSun.dot(axis))).normalize();
         const up = sp.clone().multiplyScalar(-Math.cos(LAT * DEG)).addScaledVector(axis, Math.sin(LAT * DEG));
         pin.position.copy(up).multiplyScalar(0.5);
+        { const qT = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), axis), v = up.clone().applyQuaternion(qT.clone().invert());   // 지구 사진도 자전축만큼 기울이고, 서울(동경 127°)이 빨간 점 아래에 오게 돌려요
+          earthM.quaternion.copy(qT).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(-v.z, v.x) - 127 * DEG)); }
         // 한밤중·태양 쪽 별자리
         let mid = null, md = 1e9, sunC = null, sd = 1e9;
         figs.forEach((f) => { if (f.c.orion) return; const d = angDiff(f.a, thE); if (d < md) { md = d; mid = f; } const d2 = angDiff(f.a, thE + 180); if (d2 < sd) { sd = d2; sunC = f; } });

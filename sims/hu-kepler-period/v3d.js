@@ -21,6 +21,7 @@
     autoRotate: 0,
     build(ctx) {
       const { THREE, scene, root, label, info, controls, orbit } = ctx;
+      const SP = ctx.space;
       const st = { sel: -1, P: 0, trails: true, key: '' };
       const DCYC = 50.07, NREV = [28, 14, 7, 3];                      // 한 반복 = 약 50일: 이오 28바퀴 · 에우로파 14 · 가니메데 7 · 칼리스토 3 (실제 주기와 1 % 안팎으로 같아요)
       const sr = () => { try { return window.__sim && window.__sim.S; } catch (e) { return null; } };
@@ -28,6 +29,7 @@
       /* 빛: 태양은 +x 쪽 */
       scene.add(new THREE.AmbientLight(0x6f7fb0, 0.35));
       const sunL = new THREE.DirectionalLight(0xfff4e0, 2.6); sunL.position.set(20, 6, 8); scene.add(sunL);
+      root.add(SP.sky(120));   // 은하수가 보이는 밤하늘
       { let seed = 13; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }; const pos = [];
         for (let i = 0; i < 380; i++) { const u = rnd() * 2 - 1, a = rnd() * TAU, r = Math.sqrt(1 - u * u); pos.push(Math.cos(a) * r * 60, u * 60, Math.sin(a) * r * 60); }
         const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
@@ -41,7 +43,7 @@
         for (let i = 0; i < 260; i++) { g.fillStyle = 'rgba(255,255,255,' + (0.04 + rnd() * 0.06) + ')'; g.beginPath(); g.ellipse(rnd() * 512, rnd() * 256, 10 + rnd() * 30, 1 + rnd() * 2.5, 0, 0, 7); g.fill(); }
         g.fillStyle = '#c4553a'; g.beginPath(); g.ellipse(330, 160, 26, 14, 0, 0, 7); g.fill(); g.fillStyle = 'rgba(255,200,160,.5)'; g.beginPath(); g.ellipse(330, 160, 14, 7, 0, 0, 7); g.fill();
         const t = new THREE.CanvasTexture(c); if ('encoding' in t) t.encoding = THREE.sRGBEncoding; return t; })();
-      const jup = new THREE.Mesh(new THREE.SphereGeometry(0.7, 64, 48), new THREE.MeshStandardMaterial({ map: jt, roughness: 0.7, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.004, envMapIntensity: 0.6 })); jup.rotation.z = 0.05; root.add(jup);
+      const jup = new THREE.Mesh(new THREE.SphereGeometry(0.7, 64, 48), new THREE.MeshStandardMaterial({ map: jt, roughness: 0.7, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.004, envMapIntensity: 0.6 })); jup.rotation.z = 0.05; root.add(jup); SP.skin(jup, 'jupiter', { gain: 0.75, done: (m) => { m.bumpMap = null; } });   // 실제 목성 사진 질감
       label('목성', jup, { offset: [0, 1.05, 0] });
 
       /* 위성 · 궤도 · 자취 */
@@ -49,7 +51,7 @@
         const r = m.a * K;
         const pts = []; for (let k = 0; k < 120; k++) { const a = k / 120 * TAU; pts.push(new THREE.Vector3(r * Math.cos(a), 0, r * Math.sin(a))); }
         const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), 160, 0.012, 6, true), new THREE.MeshBasicMaterial({ color: OC[i], transparent: true, opacity: 0.7 })); root.add(tube);
-        const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.15 + (i === 2 ? 0.03 : 0) + (i === 3 ? 0.02 : 0), 40, 28), ctx.mats.stone(new THREE.Color(m.c).multiplyScalar(0.78).getHex(), { cracks: true, repeat: 1, bump: 0.02, extra: { roughness: 0.85 } })); root.add(mesh);   // 위성 표면의 무늬
+        const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.15 + (i === 2 ? 0.03 : 0) + (i === 3 ? 0.02 : 0), 40, 28), ctx.mats.stone(new THREE.Color(m.c).multiplyScalar(0.78).getHex(), { cracks: true, repeat: 1, bump: 0.02, extra: { roughness: 0.85 } })); root.add(mesh); SP.skin(mesh, 'moon', { done: (q) => { q.bumpMap = null; q.color.set(m.c).multiplyScalar(0.9); } });   // 위성: 달 사진 무늬에 제 색 · 위성 표면의 무늬
         const lb = label(m.n, mesh, { offset: [0, 0.4, 0], size: 11.5, color: 'rgba(15,25,60,.9)' });
         /* 지나간 자취 (최근 위치 점) */
         const tr = []; const dg = new THREE.SphereGeometry(0.03, 6, 5), dmM = new THREE.MeshBasicMaterial({ color: OC[i], transparent: true, opacity: 0.8 });

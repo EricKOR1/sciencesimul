@@ -14,6 +14,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 13 * (PHN0 ? 1.05 : 1), theta: 0.4, phi: 1.3, fov: 45, target: [0, 0, 0], min: 6, max: 30 },
     autoRotate: 0,
+    bloom: { strength: 0.85, threshold: 1.0 },   // 태양이 둘레로 빛나 보여요
     levels: [1],
     build(ctx) {
       const { THREE, scene, root, label, info, controls } = ctx;
@@ -95,6 +96,7 @@
         for (let i = 0; i < 2600; i++) { const y = r() * h, sq = Math.max(0.35, Math.sin(Math.PI * y / h)); c.fillStyle = r() < 0.5 ? 'rgba(255,230,120,.45)' : 'rgba(210,120,0,.35)'; c.beginPath(); c.ellipse(r() * w, y, (7 + r() * 9) / sq * 0.9, 5 + r() * 6, 0, 0, 7); c.fill(); }
       });
       const photo = new THREE.Mesh(new THREE.SphereGeometry(RS, 64, 48), new THREE.MeshBasicMaterial({ map: gran })); sun.add(photo);
+      const SP = ctx.space; SP.skin(photo, 'sun', { gain: 1.1 }); root.add(SP.sky(120, 0.7));   // 실제 태양 사진 질감 (못 불러오면 그린 쌀알 무늬 그대로) · 은하수 밤하늘
       const limb = new THREE.Mesh(new THREE.SphereGeometry(RS * 1.002, 64, 48), new THREE.ShaderMaterial({
         transparent: true, depthWrite: false, uniforms: {}, vertexShader: 'varying vec3 vN; varying vec3 vV; void main(){ vN = normalize(normalMatrix * normal); vec4 mv = modelViewMatrix * vec4(position,1.0); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }',
         fragmentShader: 'varying vec3 vN; varying vec3 vV; void main(){ float f = clamp(dot(vN, vV), 0.0, 1.0); float a = pow(1.0 - f, 1.6) * 0.55; gl_FragColor = vec4(0.55, 0.18, 0.0, a); }' })); root.add(limb);

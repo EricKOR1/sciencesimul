@@ -87,6 +87,7 @@
       scene.add(new THREE.AmbientLight(0x8fa0d8, 0.55));
       const key = new THREE.DirectionalLight(0xfff3dc, 2.2); key.position.set(-12, 8, 14); scene.add(key);
       root.add(starField(300, 70));
+      const SP = ctx.space; root.add(SP.sky(120, 0.8));   // 은하수가 보이는 밤하늘 (실제 사진)
       const st = { mode: 'size', real: false, cut: false };
       const PL = [
         { id: 'mercury', n: '수성', R: 0.38, den: 5.43, moon: '0개', col: ['#9a9a9a', '#b9b3a8', '#8a8579'], g: 0 },
@@ -120,8 +121,12 @@
       PL.forEach((p, i) => {
         const g = new THREE.Group(); const body = new THREE.Mesh(new THREE.SphereGeometry(1, 56, 40), mat(0xffffff, { map: bandTex(p.col, 4 + i * 7), roughness: 0.8 }));
         g.add(body);
+        SP.skin(body, p.id, { gain: p.id === 'saturn' ? 0.52 : p.id === 'jupiter' ? 0.58 : p.id === 'venus' || p.id === 'uranus' ? 0.6 : 0.8 });   // 밝은 행성은 조금 눌러서 무늬가 하얗게 날아가지 않게 · 실제 관측 사진 질감 (못 불러오면 그린 무늬 그대로)
+        if (p.id === 'earth') SP.atmosphere(body, 1, 0x6fb4ff, 0.6);   // 지구의 얇은 대기층
         const cut = cutaway(1, p.g ? (i < 6 ? JOV : GAS) : TER); cut.visible = false; g.add(cut);
-        let rg = null; if (p.ring) { rg = new THREE.Mesh(new THREE.RingGeometry(1.35, p.ring === 1 ? 2.3 : 1.7, 80), new THREE.MeshStandardMaterial({ color: 0xe6d3a0, transparent: true, opacity: p.ring === 1 ? 0.75 : 0.25, side: THREE.DoubleSide, roughness: 0.7 })); rg.rotation.x = Math.PI / 2 - (i === 6 ? 1.4 : 0.4); g.add(rg); }
+        let rg = null; if (p.ring) { rg = new THREE.Mesh(new THREE.RingGeometry(1.35, p.ring === 1 ? 2.3 : 1.7, 80), new THREE.MeshStandardMaterial({ color: 0xe6d3a0, transparent: true, opacity: p.ring === 1 ? 0.75 : 0.25, side: THREE.DoubleSide, roughness: 0.7 })); rg.rotation.x = Math.PI / 2 - (i === 6 ? 1.4 : 0.4); g.add(rg);
+          if (p.ring === 1) { const pa = rg.geometry.attributes.position, uv = rg.geometry.attributes.uv; for (let k = 0; k < pa.count; k++) uv.setXY(k, (Math.hypot(pa.getX(k), pa.getY(k)) - 1.35) / (2.3 - 1.35), 0.5);
+            SP.tex('saturn_ring.png', (t) => { rg.material.map = t; rg.material.color.set(0xffffff); rg.material.opacity = 1; rg.material.depthWrite = false; rg.material.emissive.set(0x4a3f28); rg.material.emissiveIntensity = 0.6; rg.material.needsUpdate = true; }); } }   // 토성 고리는 실제 고리 사진 (안쪽 → 바깥쪽)
         /* 위성 (대표로 몇 개만 그려요) */
         const moons = []; const nm = p.moon === '0개' ? 0 : p.moon === '1개' ? 1 : p.moon === '2개' ? 2 : 5;
         for (let k = 0; k < nm; k++) { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), mat(0xcfc9bd, { roughness: 0.9 })); g.add(m); moons.push({ m, r: 1.6 + k * 0.38 + (p.g ? 0.5 : 0), s: 0.8 / (1 + k * 0.4), a: k * 2.1 + i, sz: p.g ? 0.12 : 0.28 }); }

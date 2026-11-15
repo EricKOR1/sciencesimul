@@ -23,6 +23,7 @@
       const NS = 500, sp = new Float32Array(NS * 3);
       for (let i = 0; i < NS; i++) { const a = Math.random() * 6.283, b = Math.acos(2 * Math.random() - 1), r = 60; sp[i * 3] = r * Math.sin(b) * Math.cos(a); sp[i * 3 + 1] = r * Math.cos(b); sp[i * 3 + 2] = r * Math.sin(b) * Math.sin(a); }
       const sgm = new THREE.BufferGeometry(); sgm.setAttribute('position', new THREE.BufferAttribute(sp, 3)); { const st = new THREE.Points(sgm, new THREE.PointsMaterial({ color: 0xdfe8ff, size: 0.18, sizeAttenuation: true, transparent: true, opacity: 0.8 })); st.userData.v3bg = true; root.add(st); }   // 별은 배경
+      const SP = ctx.space; root.add(SP.sky(120, 0.7));   // 은하수가 보이는 밤하늘 (실제 사진)
       const ring = (r, col, op) => { const m = new THREE.Mesh(new THREE.TorusGeometry(r, 0.012, 6, 160), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: op })); m.rotation.x = Math.PI / 2; return m; };
       function earthTex() {
         const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d');
@@ -35,9 +36,9 @@
       }
 
       /* ================= 지구 주변 ================= */
-      const earth = new THREE.Mesh(new THREE.SphereGeometry(1.6, 64, 40), mat(0xffffff, { map: earthTex(), roughness: 0.7 })); earth.castShadow = false; near.add(earth); ctx.halo(earth, 0x5aa8ff, 4.9, 0.4);   // 대기의 푸른 빛 번짐
+      const earth = new THREE.Mesh(new THREE.SphereGeometry(1.6, 64, 40), mat(0xffffff, { map: earthTex(), roughness: 0.7 })); earth.castShadow = false; near.add(earth); ctx.halo(earth, 0x5aa8ff, 4.9, 0.4); SP.skin(earth, 'earth'); SP.earth(earth, 1.6, { night: false });   // 실제 지구 사진 · 구름 (못 불러오면 그린 지구 그대로)   // 대기의 푸른 빛 번짐
       const atm = new THREE.Mesh(new THREE.SphereGeometry(1.74, 48, 32), new THREE.MeshBasicMaterial({ color: 0x6fb4ff, transparent: true, opacity: 0.14, side: THREE.BackSide, depthWrite: false })); near.add(atm);
-      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.45, 40, 28), MT.stone(0x9a9ea8, { repeat: 2, bump: 0.03 })); near.add(moon);
+      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.45, 40, 28), MT.stone(0x9a9ea8, { repeat: 2, bump: 0.03 })); near.add(moon); SP.skin(moon, 'moon', { done: (m) => { m.bumpMap = null; m.normalMap = null; m.roughnessMap = null; } });   // 실제 달 사진
       const moonO = ring(9, 0x8fa0c8, 0.35); near.add(moonO);
       const danuri = new THREE.Mesh(new THREE.OctahedronGeometry(0.1, 0), mat(0xffd34d, { metalness: 0.7, roughness: 0.3, emissive: 0x7a5a00, emissiveIntensity: 0.4 })); near.add(danuri);
       const danuriO = ring(0.85, 0xffd34d, 0.5); moon.add(danuriO);
@@ -60,13 +61,14 @@
       const lDeb = label('우주 쓰레기', [1.2, 1.5, 1.5], { color: 'rgba(200,90,40,.95)' });
 
       /* ================= 태양계 ================= */
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(1.1, 48, 32), new THREE.MeshBasicMaterial({ color: lc(0xffcf45) })); solar.add(sun); ctx.halo(sun, 0xffc040, 7, 0.75);
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(1.1, 48, 32), new THREE.MeshBasicMaterial({ color: lc(0xffcf45) })); solar.add(sun); ctx.halo(sun, 0xffc040, 7, 0.75); SP.skin(sun, 'sun');   // 실제 태양 사진
       solar.add(new THREE.Mesh(new THREE.SphereGeometry(1.7, 32, 20), new THREE.MeshBasicMaterial({ color: 0xffa500, transparent: true, opacity: 0.2, depthWrite: false })));
       const PL = [
         { n: '지구', r: 3.6, s: 0.24, c: 0x3f86e0, sp: 0.5, ph: 0.3 }, { n: '화성', r: 5.2, s: 0.2, c: 0xd9693a, sp: 0.33, ph: 2.6 },
         { n: '목성', r: 8.4, s: 0.7, c: 0xd9b48a, sp: 0.18, ph: 4.1 }, { n: '토성', r: 11.4, s: 0.6, c: 0xe6d08a, sp: 0.12, ph: 1.4 },
       ];
-      PL.forEach((p) => { p.m = new THREE.Mesh(new THREE.SphereGeometry(p.s, 36, 24), mat(p.c, { roughness: 0.7 })); solar.add(p.m); solar.add(ring(p.r, 0x8fa0c8, 0.35)); p.l = label(p.n, p.m, { offset: [0, p.s + 0.35, 0] }); });
+      PL.forEach((p) => { p.m = new THREE.Mesh(new THREE.SphereGeometry(p.s, 36, 24), mat(p.c, { roughness: 0.7 })); solar.add(p.m); solar.add(ring(p.r, 0x8fa0c8, 0.35)); p.l = label(p.n, p.m, { offset: [0, p.s + 0.35, 0] });
+        SP.skin(p.m, { 지구: 'earth', 화성: 'mars', 목성: 'jupiter', 토성: 'saturn' }[p.n], { gain: p.n === '토성' ? 0.8 : 1 }); });   // 행성도 실제 사진 질감
       const satRing = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.07, 3, 64), mat(0xd9c58a, { roughness: 0.6 })); satRing.rotation.x = Math.PI / 2 - 0.4; PL[3].m.add(satRing);
       // 탐사선 경로: 보이저 1 · 2호 (지구 → 목성 → 토성 → 바깥), 화성 탐사선 (전이 궤도)
       function tubeOf(pts, col, r) { const c = new THREE.CatmullRomCurve3(pts); const m = new THREE.Mesh(new THREE.TubeGeometry(c, 120, r || 0.03, 6, false), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.7 })); solar.add(m); return c; }

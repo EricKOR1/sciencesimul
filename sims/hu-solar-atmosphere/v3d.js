@@ -34,6 +34,7 @@
     levels: [0, 1],
     camera: { dist: PHONE ? 13.5 : 12.5, theta: 1.0, phi: 1.22, min: 6, max: 28, target: PHONE ? [0, 0, 0] : [-0.86, 0.7, 1.34] },   // PC: 태양을 조금 오른쪽 아래로 (왼쪽 위 설명 상자에 홍염·코로나 구멍이 가리지 않게)
     autoRotate: 0,
+    bloom: { strength: 0.85, threshold: 1.0 },   // 태양 표면이 둘레로 번져 보여요
     build(ctx) {
       const { THREE, root, label, info, controls, renderer } = ctx;
       const st = { mode: 'layers', flare: 0, cme: -1, t: 0, P: 0, h: 100, key: '', fN: 0, names: true };
@@ -46,7 +47,8 @@
       /* 광구(몸통) */
       const tex = new THREE.CanvasTexture(sunCanvas()); if ('encoding' in tex) tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 4;
       const bodyMat = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 1, roughness: 1 });
-      const bodyCut = cutSphere(RS, bodyMat), bodyFull = fullSphere(RS, bodyMat); root.add(bodyCut, bodyFull);
+      const bodyCut = cutSphere(RS, bodyMat), bodyFull = fullSphere(RS, bodyMat.clone()); root.add(bodyCut, bodyFull);
+      ctx.space.tex('sun', (t) => { const m = bodyFull.material; m.emissiveMap = t; m.emissive.setRGB(1.12, 1.04, 0.95); m.needsUpdate = true; });   // 단면이 아닌 온전한 태양에만 실제 사진 질감 (단면 그림은 그대로)
       /* 채층 · 천이층 껍질 (반투명) */
       const chM = new THREE.MeshBasicMaterial({ color: 0xff3b3b, transparent: true, opacity: 0.3, depthWrite: false, side: THREE.DoubleSide });
       const trM = new THREE.MeshBasicMaterial({ color: 0xb06bff, transparent: true, opacity: 0.25, depthWrite: false, side: THREE.DoubleSide });

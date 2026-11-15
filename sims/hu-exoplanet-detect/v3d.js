@@ -26,12 +26,15 @@
     autoRotate: 0,
     build(ctx) {
       const { THREE, scene, root, label, info, controls, orbit } = ctx;
+      const SP = ctx.space;
       const st = { mode: 'rv', inc: 90, rp: 0.0275, q: 0.22, th: 3.6, th0: 3.6, P: 0, key: '', pl: 3, view: 'rv', depth: 0 };
       const PLN = ['지구', '해왕성', '토성', '목성'], KOF = [29.8e3 * 3.0e-6, 5.4e3 * 5.15e-5, 9.7e3 * 2.86e-4, 13.1e3 / 1047], TRA = [0.05, 0.4, 1, 5.2];
       const sr = () => { try { return window.__sim && window.__sim.S; } catch (e) { return null; } };
 
       scene.add(new THREE.AmbientLight(0x8fa0d8, 0.5));
       const starLight = new THREE.PointLight(0xfff0cc, 2.0, 0, 0); scene.add(starLight);
+      scene.children.forEach((o) => { if (o.isHemisphereLight) o.intensity = 0.28; else if (o.isDirectionalLight && o.userData.v3engine) o.intensity = 0; });   // 별빛이 주된 빛
+      root.add(SP.sky(120));   // 은하수가 보이는 밤하늘
       { let seed = 9; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }; const pos = [];
         for (let i = 0; i < 380; i++) { const u = rnd() * 2 - 1, a = rnd() * TAU, r = Math.sqrt(1 - u * u); pos.push(Math.cos(a) * r * 60, u * 60, Math.sin(a) * r * 60); }
         const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
@@ -39,7 +42,7 @@
 
       /* 별 · 행성 */
       const starMat = new THREE.MeshBasicMaterial({ color: 0xffd98a });
-      const star = new THREE.Mesh(new THREE.SphereGeometry(RS, 48, 32), starMat); root.add(star);
+      const star = new THREE.Mesh(new THREE.SphereGeometry(RS, 48, 32), starMat); root.add(star); SP.sun(star);   // 별 색이 시선 속도(청색/적색 이동)를 나타내서 사진 질감은 입히지 않아요
       const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,240,200,.9)'); gr.addColorStop(0.35, 'rgba(255,200,100,.35)'); gr.addColorStop(1, 'rgba(255,170,60,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
       const glowMat = new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
       const glow = new THREE.Sprite(glowMat); glow.scale.set(RS * 4.2, RS * 4.2, 1); root.add(glow);
@@ -51,7 +54,7 @@
 
       /* 지구(관측자) 쪽: +z 방향 */
       const earthG = new THREE.Group(); earthG.position.set(0, 0, 6.2); root.add(earthG);
-      { const e = new THREE.Mesh(new THREE.SphereGeometry(0.3, 40, 28), ctx.mats.plastic(0x2f7fd8, { roughness: 0.3, extra: { emissive: 0x0a2a55, emissiveIntensity: 0.45, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.01 } })); earthG.add(e); ctx.halo(e, 0x6fb4ff, 0.95, 0.45); }   // 관측자 지구 + 대기 빛
+      { const e = new THREE.Mesh(new THREE.SphereGeometry(0.3, 40, 28), ctx.mats.plastic(0x2f7fd8, { roughness: 0.3, extra: { emissive: 0x0a2a55, emissiveIntensity: 0.45, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.01 } })); earthG.add(e); ctx.halo(e, 0x6fb4ff, 0.95, 0.45); SP.skin(e, 'earth', { done: (m) => { m.emissive.set(0x0a1830); m.bumpMap = null; } }); }   // 관측자 지구 + 대기 빛
       label('지구(관측)', [0, 0.55, 6.2], { size: 12, color: 'rgba(20,70,140,.92)' });
       const los = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 5.4, 6), new THREE.MeshBasicMaterial({ color: 0x9fb4e8, transparent: true, opacity: 0.4 })); los.rotation.x = Math.PI / 2; los.position.set(0, 0, 3.0); root.add(los);
 

@@ -25,9 +25,11 @@
     hint: ' ',
     camera: wide ? { dist: 19, theta: 0.2, phi: 0.95, fov: 45, target: [2.5, 0, 0], min: 4, max: 40 } : { dist: 25, theta: -Math.PI / 2 + 0.06, phi: 0.7, fov: 45, target: [2.8, 0, 0], min: 4, max: 45 },
     autoRotate: 0,
+    bloom: { strength: 0.85, threshold: 1.0 },   // 태양이 둘레로 빛나 보여요
     levels: [1, 2],   // 2단계(모형) · 3단계(원리)만 3D
     build(ctx) {
       const { THREE, scene, root, label, info, controls, renderer } = ctx;
+      const SP = ctx.space;   // 실제 사진 질감 (못 불러오면 그린 무늬 그대로)
       const st = { th: 0, target: null, play: false };
       const L2 = () => { const l = ctx.lesson(); return l && l.S && typeof l.S.theta === 'number' ? l : null; };
       /* 3D 조작 → 2D 실험(숨은 '🌙 달의 위치' 슬라이더 · '▶ 공전 재생' 단추)을 그대로 눌러 미션 진행을 함께 써요 */
@@ -47,7 +49,8 @@
       /* 태양 */
       const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,230,140,1)'); gr.addColorStop(0.25, 'rgba(255,190,60,.55)'); gr.addColorStop(1, 'rgba(255,160,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
       const sun = new THREE.Mesh(new THREE.SphereGeometry(1.1, 32, 20), new THREE.MeshBasicMaterial({ color: 0xffd23f })); sun.position.set(SUNX, 0, 0); root.add(sun);
-      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); glow.scale.set(6, 6, 1); glow.position.copy(sun.position); root.add(glow);
+      SP.skin(sun, 'sun'); SP.sun(sun); root.add(SP.sky(120, 0.8));   // 실제 태양 사진 · 지구의 밤 쪽을 알게 · 은하수 밤하늘
+      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); glow.scale.set(6, 6, 1); glow.material.opacity = 0.17; glow.position.copy(sun.position); root.add(glow);
       label('☀ 태양', [SUNX, 1.7, 0], { size: 13, color: 'rgba(120,70,0,.85)' });
       // 햇빛 화살표 (평행)
       [-2.2, -0.9, 0.9, 2.2].forEach((z) => {
@@ -64,6 +67,7 @@
         g.fillStyle = '#f2f6fa'; g.fillRect(0, 0, 256, 7); g.fillRect(0, 121, 256, 7); return new THREE.CanvasTexture(c); })();
       const earth = new THREE.Mesh(new THREE.SphereGeometry(0.7, 32, 20), new THREE.MeshStandardMaterial({ map: earthTex, roughness: 0.75 })); root.add(earth);
       earth.rotation.y = 2.2;
+      SP.skin(earth, 'earth'); SP.earth(earth, 0.7); SP.atmosphere(earth, 0.7, 0x6fb4ff, 0.6);   // 실제 지구 사진 · 구름 · 밤 쪽 도시 불빛 · 대기
       label('지구', [0, 1.15, 0], { size: 13 });
 
       /* 달 궤도, 8개 위치 */
@@ -90,6 +94,7 @@
         g.fillStyle = 'rgba(120,120,125,.45)'; let seed = 3; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
         for (let i = 0; i < 40; i++) { g.beginPath(); g.arc(rnd() * 256, 10 + rnd() * 108, 1.5 + rnd() * 3, 0, 7); g.fill(); } return new THREE.CanvasTexture(c); })();
       const moon = new THREE.Mesh(new THREE.SphereGeometry(0.4, 32, 20), new THREE.MeshStandardMaterial({ map: moonTex, roughness: 0.95 })); root.add(moon);
+      SP.skin(moon, 'moon');   // 실제 달 사진 (앞면이 늘 지구 쪽)
       const moonLab = label('달', moon, { size: 13, offset: [0, 0.78, 0] });
       /* 청록색 테두리 = 지구에서 보이는 쪽 (2D의 '👀 지구에서 보이는 쪽'과 같아요): 달에서 지구를 향한 반쪽에 청록색 반원 테두리 */
       const sightG = new THREE.Group(); root.add(sightG);

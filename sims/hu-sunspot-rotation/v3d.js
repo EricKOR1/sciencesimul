@@ -45,11 +45,12 @@
       /* 태양: 테두리가 어두워지는 쉐이더 */
       const tex = new THREE.CanvasTexture(sunCanvas()); if ('encoding' in tex) tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 4;
       const sunMat = new THREE.ShaderMaterial({
-        uniforms: { map: { value: tex } },
+        uniforms: { map: { value: tex }, gain: { value: 1 } },
         vertexShader: 'varying vec2 vUv; varying vec3 vN; varying vec3 vV; void main(){ vUv=uv; vN=normalize(normalMatrix*normal); vec4 mv=modelViewMatrix*vec4(position,1.0); vV=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }',
-        fragmentShader: 'uniform sampler2D map; varying vec2 vUv; varying vec3 vN; varying vec3 vV; void main(){ vec3 c=texture2D(map,vUv).rgb; float mu=clamp(dot(normalize(vN),normalize(vV)),0.0,1.0); float k=0.38+0.62*pow(mu,0.55); gl_FragColor=vec4(c*k*1.08,1.0); }',
+        fragmentShader: 'uniform sampler2D map; uniform float gain; varying vec2 vUv; varying vec3 vN; varying vec3 vV; void main(){ vec3 c=texture2D(map,vUv).rgb; float mu=clamp(dot(normalize(vN),normalize(vV)),0.0,1.0); float k=0.38+0.62*pow(mu,0.55); gl_FragColor=vec4(c*k*1.08*gain,1.0); }',
       });
       const sun = new THREE.Mesh(new THREE.SphereGeometry(RS, 96, 64), sunMat); sunG.add(sun);
+      ctx.space.tex('sun', (t) => { sunMat.uniforms.map.value = t; sunMat.uniforms.gain.value = 1.3; });   // 실제 태양 사진 질감 (흑점 4개는 따로 그려서 그대로 움직여요)
       const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 40, 64, 64, 64); gr.addColorStop(0, 'rgba(255,190,80,.55)'); gr.addColorStop(1, 'rgba(255,150,40,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
       const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); glow.scale.set(RS * 2 * 1.5, RS * 2 * 1.5, 1); root.add(glow);
 

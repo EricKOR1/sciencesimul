@@ -99,6 +99,7 @@
       const space = new THREE.Group(); root.add(space);
       const moon = new THREE.Mesh(new THREE.SphereGeometry(0.34, 32, 20), ctx.mats.stone(0x9da1ab, { repeat: 2, bump: 0.025 }));
       moon.position.set(5.6, 1.3, -2.6); space.add(moon);
+      ctx.space.skin(moon, 'moon', { done: (m) => { m.bumpMap = null; m.normalMap = null; m.roughnessMap = null; } });   // 실제 달 사진 (못 불러오면 돌 무늬 그대로)
       const pts = []; for (let i = 0; i < 450; i++) { const u = Math.random() * 2 - 1, a = Math.random() * 6.283, s = Math.sqrt(1 - u * u), r = 26 + Math.random() * 6; pts.push(r * s * Math.cos(a), r * u, r * s * Math.sin(a)); }
       const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
       { const st = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: 0.16, sizeAttenuation: true })); st.userData.v3bg = true; space.add(st); }   // 별은 배경
@@ -109,6 +110,7 @@
       const cutG = new THREE.Group(); root.add(cutG);
       const shellMat = new THREE.MeshStandardMaterial({ map: tex(surfCv), roughness: 0.9, side: THREE.DoubleSide });
       const shell = new THREE.Mesh(new THREE.SphereGeometry(R, 96, 64), shellMat); cutG.add(shell);
+      ctx.space.skin(shell, 'earth');   // 단면 지구의 겉면만 실제 지구 사진 (잘라 낸 속은 그대로)
       const capG = new THREE.Group(); cutG.add(capG);
       const AX = [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)];
       const LEVELS = { oct: [1, 1, 1], quarter: [1, 0, 1], half: [0, 0, 1] };
