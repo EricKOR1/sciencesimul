@@ -13,6 +13,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 14 : 11, theta: 0.5, phi: 1.1, min: 8, max: 55, target: [0, 5, 0] },
     autoRotate: 0,
+    bloom: { strength: 0.85, threshold: 1.0 },   // 태양 · 별이 둘레로 번져 보여요
     levels: [2],                     // 3단계(거리를 바꾸며 연주시차 기록). 1단계(눈 바꾸기) · 2단계(모형의 각 ①②③을 눌러 고르기) · 4단계(카드 놓기)는 2D
     build(ctx) {
       const { THREE, root, label, info, controls, orbit } = ctx;
@@ -22,15 +23,18 @@
       const mat = (c, o) => { const q = Object.assign({ color: lc(c), roughness: 0.5, metalness: 0.05 }, o || {}); if (typeof q.emissive === 'number') q.emissive = lc(q.emissive); return new THREE.MeshStandardMaterial(q); };
 
       // 태양
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.55, 40, 28), new THREE.MeshBasicMaterial({ color: lc(0xffcf45) })); root.add(sun); ctx.halo(sun, 0xffc040, 3.6, 0.75);
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.55, 40, 28), new THREE.MeshBasicMaterial({ color: lc(0xffcf45) })); root.add(sun); ctx.halo(sun, 0xffc040, 3.6, 0.45);
+      const SP = ctx.space; SP.skin(sun, 'sun'); SP.sun(sun);   // 실제 태양 사진 질감 · 지구의 낮/밤 쪽을 알게
       const sunHalo = new THREE.Mesh(new THREE.SphereGeometry(0.95, 24, 16), new THREE.MeshBasicMaterial({ color: 0xffb02e, transparent: true, opacity: 0.15, depthWrite: false })); root.add(sunHalo);
       const orbitRing = new THREE.Mesh(new THREE.TorusGeometry(R, 0.025, 8, 128), new THREE.MeshBasicMaterial({ color: 0x8fb0ff, transparent: true, opacity: 0.7 })); orbitRing.rotation.x = Math.PI / 2; root.add(orbitRing);
       // 지구 (현재 위치) · 1월 · 7월 위치 표시
       const earth = new THREE.Mesh(new THREE.SphereGeometry(0.3, 32, 24), MT.plastic(lc(0x2f7ae0), { roughness: 0.35, extra: { emissive: lc(0x0a2a60), emissiveIntensity: 0.35 } })); earth.castShadow = true; root.add(earth);
+      SP.skin(earth, 'earth', { done: (m) => { m.roughness = 0.62; m.emissiveIntensity = 1; } }); SP.earth(earth, 0.3, { clouds: false }); SP.atmosphere(earth, 0.3, 0x6fb4ff);   // 실제 지구 사진 · 밤 쪽 도시 불빛 · 얇은 대기
       const eJan = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 14), new THREE.MeshBasicMaterial({ color: 0x9fe8ff, transparent: true, opacity: 0.8 })), eJul = eJan.clone();
       eJan.position.set(-R, 0, 0); eJul.position.set(R, 0, 0); root.add(eJan, eJul);
       // 가까운 별
-      const star = new THREE.Mesh(new THREE.SphereGeometry(0.34, 32, 24), new THREE.MeshBasicMaterial({ color: 0xfff6c8 })); root.add(star); ctx.halo(star, 0xfff0b0, 2.6, 0.8);
+      const star = new THREE.Mesh(new THREE.SphereGeometry(0.34, 32, 24), new THREE.MeshBasicMaterial({ color: 0xfff6c8 })); root.add(star); ctx.halo(star, 0xfff0b0, 2.6, 0.5);
+      SP.skin(star, 'sun', { done: (m) => m.color.setRGB(1.45, 1.42, 1.32) });   // 가까운 별: 태양 사진 질감을 조금 더 하얗게
       const starG = new THREE.Mesh(new THREE.SphereGeometry(0.75, 24, 16), new THREE.MeshBasicMaterial({ color: 0xfff0a0, transparent: true, opacity: 0.15, depthWrite: false })); star.add(starG);
       // 먼 배경별 (하늘 돔)
       const NS = 260, sp = new Float32Array(NS * 3);

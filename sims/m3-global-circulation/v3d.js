@@ -49,14 +49,20 @@
       const X = (lon) => (lon / 360 + 0.25) * W, Y = (lat) => (90 - lat) / 180 * H;
       g.fillStyle = '#5f9a4e'; g.strokeStyle = '#3f7a3a'; g.lineWidth = 1;
       Object.keys(LAND).forEach((k) => { for (let s = -1; s <= 1; s++) { g.beginPath(); LAND[k].forEach((p, i) => { const x = X(p[0]) + s * W, y = Y(p[1]); if (i) g.lineTo(x, y); else g.moveTo(x, y); }); g.closePath(); g.fillStyle = k === 'an' || k === 'gl' ? '#e8eef5' : '#5f9a4e'; g.fill(); g.stroke(); } });
+      const deco = (g) => {   // 위도 띠 · 위도선 · 경도선 (실제 사진 위에도 다시 그려요)
       // 위도 띠 (2D 차시의 저·중·고위도 색)
       [[0, 30, '#38bdf8'], [30, 60, '#a78bfa'], [60, 90, '#fbbf24']].forEach(([a, b, c]) => { [1, -1].forEach((sg) => { g.fillStyle = c; g.globalAlpha = 0.2; const y0 = Y(sg > 0 ? b : -a), y1 = Y(sg > 0 ? a : -b); g.fillRect(0, y0, W, y1 - y0); }); });
       g.globalAlpha = 1; g.strokeStyle = 'rgba(255,255,255,.55)';
       [-60, -30, 0, 30, 60].forEach((la) => { g.lineWidth = la === 0 ? 2.4 : 1.2; g.beginPath(); g.moveTo(0, Y(la)); g.lineTo(W, Y(la)); g.stroke(); });
       g.lineWidth = 0.7; g.strokeStyle = 'rgba(255,255,255,.25)'; for (let lo = -180; lo < 180; lo += 30) { const x = X(lo); g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); g.beginPath(); g.moveTo(x + W, 0); g.lineTo(x + W, H); g.stroke(); }
+      }; deco(g);
       const tex = new THREE.CanvasTexture(cv); tex.anisotropy = 4;
       if ('encoding' in tex) tex.encoding = THREE.sRGBEncoding;
-      earth.add(new THREE.Mesh(new THREE.SphereGeometry(1, 64, 40), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.7, metalness: 0 })));
+      const ball = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 40), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.7, metalness: 0 })); earth.add(ball);
+      /* 실제 지구 사진: 이 차시의 경도(경도 0° = +z)에 맞게 돌리고, 위도 띠 · 선은 투명한 겹으로 다시 얹어요 (못 불러오면 원래 그린 지구) */
+      ctx.space.skin(ball, 'earth', { done: (m) => { m.roughness = 0.62; ball.rotation.y = -Math.PI / 2;
+        const c2 = document.createElement('canvas'); c2.width = W; c2.height = H; deco(c2.getContext('2d')); const t2 = new THREE.CanvasTexture(c2); t2.anisotropy = 4; if ('encoding' in t2) t2.encoding = THREE.sRGBEncoding;
+        const ov = new THREE.Mesh(new THREE.SphereGeometry(1.002, 64, 40), new THREE.MeshBasicMaterial({ map: t2, transparent: true, depthWrite: false })); ov.raycast = () => {}; earth.add(ov); } });
       const lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 2D 차시와 같은 진한 색으로 보이게
       ctx.halo(earth, 0x62aaff, 3.0, 0.42);   // 대기의 푸른 빛 번짐
       // 우리나라 (37°N 127.5°E)

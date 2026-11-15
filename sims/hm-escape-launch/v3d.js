@@ -62,7 +62,7 @@
       g.fillStyle = '#1f6fb5'; g.fillRect(0, 0, 512, 256); let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
       for (let i = 0; i < 70; i++) { const x = rnd() * 512, y = 30 + rnd() * 196, r = 8 + rnd() * 34; g.fillStyle = rnd() > 0.2 ? '#4a9d5c' : '#c9b873'; g.beginPath(); g.ellipse(x, y, r, r * 0.6, rnd() * 3, 0, 7); g.fill(); }
       g.fillStyle = '#f1f5f9'; g.fillRect(0, 0, 512, 14); g.fillRect(0, 242, 512, 14);
-      const earth = new THREE.Mesh(new THREE.SphereGeometry(RE3, 64, 48), M(0xffffff, { map: new THREE.CanvasTexture(c), roughness: 0.75 })); earth.position.y = -RE3; G.well.add(earth);
+      const earth = new THREE.Mesh(new THREE.SphereGeometry(RE3, 64, 48), M(0xffffff, { map: new THREE.CanvasTexture(c), roughness: 0.75 })); earth.position.y = -RE3; G.well.add(earth); const SP = ctx.space; SP.skin(earth, 'earth'); SP.earth(earth, RE3, { night: false }); SP.atmosphere(earth, RE3, 0x6fb4ff);   // 실제 지구 사진 질감 · 구름 · 얇은 대기 (못 불러오면 그린 무늬 그대로)
       const rock = new THREE.Group(); { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 0.7, 24), ctx.mats.ceramic(0xf1f5f9)); b.position.y = 0.35; rock.add(b); const n = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.3, 16), M(0xe2464b)); n.position.y = 0.85; rock.add(n); [0, 2.1, 4.2].forEach((a) => { const f = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.28, 0.16), M(0xe2464b)); f.position.set(Math.cos(a) * 0.2, 0.12, Math.sin(a) * 0.2); f.rotation.y = -a; rock.add(f); }); } G.well.add(rock);
       const flame = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.6, 12), new THREE.MeshBasicMaterial({ color: 0xffa94d })); flame.rotation.x = Math.PI; flame.position.y = -0.3; rock.add(flame);
       const axisW = new THREE.Mesh(new THREE.BoxGeometry(0.03, HH, 0.03), M(0x8a95a8)); axisW.position.y = HH / 2; G.well.add(axisW);
@@ -147,7 +147,7 @@
       }
       /* ================= 🛰️ 궤도 진입: 북극 위에서 본 지구 ================= */
       const gL = G.launch, KL = 0.025;
-      const earthL = new THREE.Mesh(new THREE.SphereGeometry(92 * KL, 48, 32), M(0xffffff, { map: earth.material.map, roughness: 0.75 })); gL.add(earthL);
+      const earthL = new THREE.Mesh(new THREE.SphereGeometry(92 * KL, 48, 32), M(0xffffff, { map: earth.material.map, roughness: 0.75 })); gL.add(earthL); SP.skin(earthL, 'earth'); SP.earth(earthL, 92 * KL, { night: false }); SP.atmosphere(earthL, 92 * KL, 0x6fb4ff);   // 북극 위에서 본 실제 지구
       const ringL = new THREE.Mesh(new THREE.TorusGeometry(142 * KL, 0.025, 6, 96), new THREE.MeshBasicMaterial({ color: 0xffe58a, transparent: true, opacity: 0.55 })); ringL.rotation.x = Math.PI / 2; gL.add(ringL);
       const padL = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffd447 })); padL.position.set(0, 0.1, -92 * KL); gL.add(padL);
       const rkL = new THREE.Group(); { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.5, 14), M(0xf1f5f9)); b.position.y = 0; rkL.add(b); const n = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.22, 14), M(0xe2464b)); n.position.y = 0.36; rkL.add(n); } rkL.scale.setScalar(1.8); gL.add(rkL);

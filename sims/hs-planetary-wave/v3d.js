@@ -38,7 +38,8 @@
       Object.keys(LAND).forEach((k) => { for (let s = -1; s <= 1; s++) { g.beginPath(); LAND[k].forEach((p, i) => { const x = X(p[0]) + s * W, y = Y(p[1]); if (i) g.lineTo(x, y); else g.moveTo(x, y); }); g.closePath(); g.fillStyle = k === 'an' || k === 'gl' ? '#e8eef5' : '#6a9f58'; g.fill(); g.stroke(); } });
       g.fillStyle = 'rgba(20,30,60,.18)'; g.fillRect(0, Y(0), W, H - Y(0));
       const tex = new THREE.CanvasTexture(cv); if ('encoding' in tex) tex.encoding = THREE.sRGBEncoding;
-      { const gl = new THREE.Mesh(new THREE.SphereGeometry(1, 96, 64), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.7, metalness: 0, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.004, envMapIntensity: 0.6 })); root.add(gl); ctx.halo(gl, 0x6fb4ff, 2.75, 0.4); }   // 대기의 푸른 빛
+      { const gl = new THREE.Mesh(new THREE.SphereGeometry(1, 96, 64), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.7, metalness: 0, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.004, envMapIntensity: 0.6 })); root.add(gl); ctx.halo(gl, 0x6fb4ff, 2.75, 0.4);   // 대기의 푸른 빛
+        ctx.space.skin(gl, 'earth', { done: (m) => { m.bumpMap = null; gl.rotation.y = -Math.PI / 2; } }); }   // 실제 지구 사진: 사진의 경도 0°(+x)를 이 차시의 경도 0°(+z)로 돌려 맞춰요 (한국 점 · 위도 원과 일치)
       const kor = new THREE.Mesh(new THREE.SphereGeometry(0.018, 12, 10), new THREE.MeshBasicMaterial({ color: 0xef4444 })); kor.position.copy(P(37, 127.5, 1.01)); root.add(kor);
       // 위도 원
       const ring = (lat, col) => { const pts = []; for (let i = 0; i <= 120; i++) pts.push(P(lat, (i / 120) * 360, 1.004)); const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.6 })); root.add(l); };

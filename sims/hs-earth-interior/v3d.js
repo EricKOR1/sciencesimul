@@ -65,7 +65,8 @@
       const clip = (m) => { m.clippingPlanes = planes; m.clipIntersection = true; return m; };
       const tex = new THREE.CanvasTexture(earthCanvas()); if ('encoding' in tex) tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 4;
       /* 지구 껍질 + 단면 */
-      root.add(new THREE.Mesh(new THREE.SphereGeometry(ER, 96, 64), clip(new THREE.MeshStandardMaterial({ map: tex, roughness: 0.72, metalness: 0, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.006, envMapIntensity: 0.6, side: THREE.DoubleSide }))));
+      const crust = new THREE.Mesh(new THREE.SphereGeometry(ER, 96, 64), clip(new THREE.MeshStandardMaterial({ map: tex, roughness: 0.72, metalness: 0, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.006, envMapIntensity: 0.6, side: THREE.DoubleSide }))); root.add(crust);
+      ctx.space.skin(crust, 'earth', { done: (m) => { m.bumpMap = null; } });   // 겉껍질만 실제 지구 사진 (단면 층은 그대로)
       ctx.halo(root, 0x6fb4ff, ER * 3.05, 0.5);   // 대기의 푸른 빛
       const BOUND = [[0, 1 - 35 / RE, '#8b5e3c'], [1, 1 - 410 / RE, '#e8a96b'], [2, 1 - 660 / RE, '#e59a54'], [3, RCf, '#d9803a'], [4, RIf, '#fbbf24'], [5, 0, '#fff0a6']];
       const rings = [1, 1 - 35 / RE, 1 - 410 / RE, 1 - 660 / RE, RCf, RIf];     // 바깥 → 안쪽 경계

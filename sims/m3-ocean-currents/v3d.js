@@ -40,7 +40,8 @@
       g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = 1; [-60, -30, 0, 30, 60].forEach((la) => { g.beginPath(); g.moveTo(0, Y(la)); g.lineTo(W, Y(la)); g.stroke(); });
       for (let lo = -180; lo < 180; lo += 30) { g.beginPath(); g.moveTo(X(lo), 0); g.lineTo(X(lo), H); g.stroke(); }
       const tex = new THREE.CanvasTexture(cv); tex.anisotropy = 4; if ('encoding' in tex) tex.encoding = THREE.sRGBEncoding;
-      earth.add(new THREE.Mesh(new THREE.SphereGeometry(R, 96, 64), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6, metalness: 0 })));
+      const ball = new THREE.Mesh(new THREE.SphereGeometry(R, 96, 64), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6, metalness: 0 })); earth.add(ball);
+      ctx.space.skin(ball, 'earth', { done: (m) => { m.roughness = 0.62; ball.rotation.y = -Math.PI / 2; } });   // 실제 지구 사진 질감: 이 차시의 경도(경도 0° = +z)에 맞게 돌려요 (못 불러오면 원래 그린 지구)
       const MT = ctx.mats, lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 색이 바래지 않게 (난류 빨강 · 한류 파랑이 또렷하게)
       ctx.halo(earth, 0x62aaff, R * 3.0, 0.4);   // 대기의 푸른 빛 번짐
       /* 해류 */

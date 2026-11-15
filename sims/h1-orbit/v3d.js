@@ -102,6 +102,8 @@
       const air = new THREE.Mesh(new THREE.SphereGeometry(ER * 1.025, 48, 32), new THREE.MeshBasicMaterial({ color: 0x6bb6ff, transparent: true, opacity: 0.16, depthWrite: false }));
       root.add(air);
       const clouds = new THREE.Mesh(new THREE.SphereGeometry(ER * 1.012, 64, 40), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(cloudCanvas()), transparent: true, roughness: 1, depthWrite: false })); root.add(clouds);
+      const SP = ctx.space; SP.skin(earth, 'earth', { done: (m) => { m.bumpMap = null; m.roughness = 0.62; m.needsUpdate = true; earth.quaternion.setFromUnitVectors(SP.lonLat(127, 37, 1), new THREE.Vector3(0, 1, 0)); } });   // 실제 지구 사진 질감 (못 불러오면 원래 그린 지구) · 대포가 선 꼭대기(+y)에 우리나라가 오게 돌려요
+      SP.tex('earth_clouds', (t) => { clouds.material.map = null; clouds.material.alphaMap = t; clouds.material.opacity = 0.85; clouds.material.needsUpdate = true; }, true);   // 실제 구름 사진 (기존 구름층에)
       const rimGlow = new THREE.Mesh(new THREE.SphereGeometry(ER * 1.09, 48, 32), new THREE.MeshBasicMaterial({ color: 0x5aa8ff, transparent: true, opacity: 0.1, side: THREE.BackSide, depthWrite: false, blending: THREE.AdditiveBlending })); root.add(rimGlow);
       { const sa = [], sc2 = []; let sd = 99; const rr = () => { sd = (sd * 1664525 + 1013904223) >>> 0; return sd / 4294967296; };
         for (let i = 0; i < 1400; i++) { const u = new THREE.Vector3(rr() - 0.5, rr() - 0.5, rr() - 0.5).normalize().multiplyScalar(300 + rr() * 80); sa.push(u.x, u.y, u.z); const c = 0.5 + rr() * 0.5; sc2.push(c, c, c * 0.95 + 0.05); }

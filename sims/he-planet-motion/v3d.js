@@ -16,6 +16,7 @@
     levels: [0, 3],          // 1단계(금성의 위상 짝짓기) · 2단계(배치 그림 카드)는 2D 화면의 그림을 보고 해요
     camera: { dist: PHONE ? 24 : 14, theta: 0.5, phi: 0.95, min: 5, max: 34 },
     autoRotate: 0,
+    bloom: { strength: 0.85, threshold: 1.0 },   // 태양이 둘레로 번져 보여요
     build(ctx) {
       if (ctx.THREE.ColorManagement) ctx.THREE.ColorManagement.legacyMode = false;     // 색을 보이는 그대로(sRGB) 쓰도록 맞춰요
       const { THREE, scene, root, label, info, controls } = ctx;
@@ -30,13 +31,17 @@
         root.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xaab8e8, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0.6 }))); }
 
       scene.traverse((o) => { if (o.isDirectionalLight) { o.position.set(0, 20, 0); o.intensity = 0.6; } if (o.isHemisphereLight) o.intensity = 0.55; });
+      const SP = ctx.space; root.add(SP.sky(36, 0.7));   // 은하수가 보이는 밤하늘
       const sunLight = new THREE.PointLight(0xfff1c8, 2.6, 0, 0); root.add(sunLight);
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.5, 40, 28), new THREE.MeshBasicMaterial({ color: 0xffd23f })); root.add(sun);
-      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: gl, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); glow.scale.set(3.4, 3.4, 1); root.add(glow);
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.5, 40, 28), new THREE.MeshBasicMaterial({ color: 0xffd23f })); root.add(sun); SP.skin(sun, 'sun'); SP.sun(sun);   // 실제 태양 사진 질감
+      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: gl, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); glow.scale.set(3.4, 3.4, 1); glow.material.opacity = 0.45; root.add(glow);   // 빛 번짐이 있어 둘레 빛은 옅게
       label('태양', sun, { offset: [0, 0.8, 0], size: 12.5 });
 
       const earth = new THREE.Mesh(new THREE.SphereGeometry(0.2, 32, 20), mat(0x3b82f6, { roughness: 0.6 })); root.add(earth);
       const pl = new THREE.Mesh(new THREE.SphereGeometry(0.2, 32, 20), mat(0xe0653a)); root.add(pl);
+      SP.skin(earth, 'earth', { done: (m) => { m.roughness = 0.62; } }); SP.atmosphere(earth, 0.2, 0x6fb4ff);   // 실제 지구 사진 · 얇은 대기
+      const GAIN = { venus: 0.82, saturn: 0.82, uranus: 0.82 };
+      const skinPl = (p) => SP.tex(p, (t) => { if (id !== p) return; pl.material.map = t; pl.material.color.setScalar(GAIN[p] || 1); pl.material.needsUpdate = true; });   // 고른 행성의 실제 사진 질감 (못 불러오면 원래 색)
       const eLab = label('지구', earth, { offset: [0, 0.4, 0], size: 12.5 });
       const pLab = label('', pl, { offset: [0, 0.4, 0], size: 12.5 });
 
@@ -74,7 +79,7 @@
         id = p; const s = SIM(), a = s.PL[p].a; k = 3.8 / Math.max(1, a);
         while (orbG.children.length) { const c = orbG.children.pop(); c.geometry.dispose(); }
         orbit(1, k, 0x6fa8ff); orbit(a, k, new THREE.Color(s.PL[p].col).getHex());
-        pl.material.color.set(s.PL[p].col); pl.scale.setScalar(p === 'jupiter' || p === 'saturn' ? 1.5 : p === 'mercury' ? 0.7 : 1);
+        pl.material.map = null; pl.material.needsUpdate = true; pl.material.color.set(s.PL[p].col); skinPl(p); pl.scale.setScalar(p === 'jupiter' || p === 'saturn' ? 1.5 : p === 'mercury' ? 0.7 : 1);
         pLab.set(NAMES[p]); mkLab.set(NAMES[p]); ctx.refit(0.3);
       }
       let lastSim = null, syncing = false, ready = false;

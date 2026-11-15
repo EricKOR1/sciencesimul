@@ -66,7 +66,7 @@
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.5, metalness: 0.05 }, o || {}));
       const tex = earthTex(THREE);
       root.add(new THREE.Mesh(new THREE.SphereGeometry(R * 0.82, 48, 32), std(0x0f2a52, { roughness: 0.9 })));
-      const shell = new THREE.Mesh(new THREE.SphereGeometry(R, 96, 64), new THREE.MeshPhysicalMaterial({ map: tex, transparent: true, roughness: 0.38, metalness: 0.0, clearcoat: 0.5, clearcoatRoughness: 0.25, depthWrite: false })); shell.renderOrder = 3; root.add(shell);
+      const shell = new THREE.Mesh(new THREE.SphereGeometry(R, 96, 64), new THREE.MeshPhysicalMaterial({ map: tex, transparent: true, roughness: 0.38, metalness: 0.0, clearcoat: 0.5, clearcoatRoughness: 0.25, depthWrite: false })); shell.renderOrder = 3; root.add(shell); ctx.space.skin(shell, 'earth', { done: (m) => { m.opacity = 0.62; } });   // 실제 지구 사진 (경위도 방향이 이 차시와 같아요) · 속의 심층 해류가 비쳐 보이게 반투명
       /* 우주 배경 · 대기 빛무리 · 지구본 받침(자오선 고리 · 축 · 나무 받침) */
       const spaceDome = FX.dome('#02040c', '#07102a', '#0d1a3a', 520), labDome = FX.dome('#1b2a48', '#2b3e63', '#40557c', 0); labDome.visible = false;
       { const halo = FX.glow('90,170,255', R * 3.1, 0.55); halo.renderOrder = -1; root.add(halo);

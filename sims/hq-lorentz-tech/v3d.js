@@ -256,7 +256,7 @@
       /* ================= ④ 밴앨런대 (지구 자기장에 갇힌 입자) ================= */
       const RE = 1.25;
       const earthTex = (() => { const c = document.createElement('canvas'); c.width = 256; c.height = 128; const g = c.getContext('2d'); g.fillStyle = '#1f6fb5'; g.fillRect(0, 0, 256, 128); g.fillStyle = '#3f9d5a'; [[40, 50, 26], [75, 70, 18], [120, 40, 22], [150, 78, 24], [190, 50, 28], [215, 85, 14], [20, 90, 12], [100, 100, 10]].forEach(([x, y, r]) => { g.beginPath(); g.ellipse(x, y, r, r * 0.7, 0.4, 0, 7); g.fill(); }); g.fillStyle = '#eef6ff'; g.fillRect(0, 0, 256, 9); g.fillRect(0, 119, 256, 9); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t; })();
-      const earth = new THREE.Mesh(new THREE.SphereGeometry(RE, 48, 32), ctx.mats.plastic(0xffffff, { roughness: 0.55, extra: { map: earthTex, clearcoat: 0.3 } })); gV.add(earth);
+      const earth = new THREE.Mesh(new THREE.SphereGeometry(RE, 48, 32), ctx.mats.plastic(0xffffff, { roughness: 0.55, extra: { map: earthTex, clearcoat: 0.3 } })); gV.add(earth); ctx.space.skin(earth, 'earth', { done: (m) => { m.roughness = 0.62; m.clearcoat = 0.1; } }); ctx.space.earth(earth, RE, { night: false });   // 실제 지구 사진 · 구름 (못 불러오면 그린 무늬 그대로)
       const bFieldLines = new THREE.Group(); gV.add(bFieldLines);
       function dipLine(L, phi, col, rad) {
         const l0 = Math.acos(Math.sqrt(1 / L)), pts = [];

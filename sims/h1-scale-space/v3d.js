@@ -27,6 +27,7 @@
     camera: { dist: PHN ? 14.5 : 11.5, theta: 0.5, phi: 1.2, min: 4, max: 22 },
     levels: [0],
     autoRotate: 0.3,
+    bloom: { strength: 0.85, threshold: 1.0 },   // 태양 · 별이 둘레로 번져 보여요
     build(ctx) {
       const { THREE, scene, root, label, info, controls, renderer } = ctx;
       /* 장면 도감: 2D 눈금 막대 위의 '만난 장면' 점들을 3D 화면에도 보여 줘요 (선명하게 만난 장면은 파랗게 채워져요) */
@@ -44,6 +45,7 @@
       }
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.05 }, o || {}));
       const V = THREE.Vector3;
+      const SP = ctx.space;   // 실제 천체 사진 질감 (못 불러오면 원래 그린 모습)
       let idx = 7, cur = null, pop = 0, upd = null;
       const labs = [];
       const hash = (x, y, z) => { const h = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453; return h - Math.floor(h); };
@@ -105,17 +107,22 @@
         earth() { const geo = new THREE.SphereGeometry(2.3, 96, 64), p = geo.attributes.position, col = []; for (let i = 0; i < p.count; i++) { const x = p.getX(i) / 2.3, y = p.getY(i) / 2.3, z = p.getZ(i) / 2.3;
             const h = hash(Math.floor(x * 5), Math.floor(y * 5), Math.floor(z * 5)) * 0.5 + (hash(x * 1.9 + 3, y * 1.9, z * 1.9) + hash(x * 4.1, y * 4.1 + 2, z * 4.1)) * 0.25; const land = Math.sin(x * 2.2 + 1) * Math.cos(y * 3 + z * 1.6) + Math.sin(z * 2.6 - x) * 0.7 + (h - 0.5) * 1.1 > 0.35; const ice = Math.abs(y) > 0.9;
             const c = ice ? new THREE.Color(0xf2f6fb) : land ? new THREE.Color(0x4f9f58).lerp(new THREE.Color(0xb0a070), hash(x * 7, y * 7, z * 7)) : new THREE.Color(0x1f6cc0); col.push(c.r, c.g, c.b); }
-          geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.03, envMapIntensity: 0.6 })); const g = new THREE.Group(); g.add(m); const cl = new THREE.Mesh(new THREE.SphereGeometry(2.36, 48, 32), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.12, roughness: 1, depthWrite: false })); g.add(cl); g.add(new THREE.Mesh(new THREE.SphereGeometry(2.55, 48, 32), new THREE.MeshBasicMaterial({ color: 0x7ab8ff, transparent: true, opacity: 0.08, side: THREE.BackSide, depthWrite: false }))); upd = (t) => { m.rotation.y = t * 0.3; cl.rotation.y = t * 0.38; }; return g; },
-        sun() { const g = new THREE.Group(); { const sm = new THREE.Mesh(new THREE.SphereGeometry(2.3, 64, 40), new THREE.MeshStandardMaterial({ color: 0xffb030, emissive: 0xffa020, emissiveIntensity: 1.6, emissiveMap: ctx.mats.tex('noise'), roughness: 1 })); g.add(sm); ctx.halo(sm, 0xffb040, 9, 0.55); }   // 쌀알 무늬가 보이는 빛나는 표면
+          geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.03, envMapIntensity: 0.6 })); const g = new THREE.Group(); g.add(m); const cl = new THREE.Mesh(new THREE.SphereGeometry(2.36, 48, 32), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.12, roughness: 1, depthWrite: false })); g.add(cl);
+          // 실제 지구 사진 · 구름 사진
+          SP.skin(m, 'earth', { done: (q) => { q.vertexColors = false; q.bumpMap = null; q.roughness = 0.62; q.needsUpdate = true; } }); SP.tex('earth_clouds', (t) => { cl.material.alphaMap = t; cl.material.opacity = 0.9; cl.material.needsUpdate = true; }, true);
+          g.add(new THREE.Mesh(new THREE.SphereGeometry(2.55, 48, 32), new THREE.MeshBasicMaterial({ color: 0x7ab8ff, transparent: true, opacity: 0.08, side: THREE.BackSide, depthWrite: false }))); upd = (t) => { m.rotation.y = t * 0.3; cl.rotation.y = t * 0.38; }; return g; },
+        sun() { const g = new THREE.Group(); { const sm = new THREE.Mesh(new THREE.SphereGeometry(2.3, 64, 40), new THREE.MeshStandardMaterial({ color: 0xffb030, emissive: 0xffa020, emissiveIntensity: 1.6, emissiveMap: ctx.mats.tex('noise'), roughness: 1 })); g.add(sm); ctx.halo(sm, 0xffb040, 9, 0.4);
+            SP.skin(sm, 'sun', { done: (q, t) => { q.color.set(0x000000); q.emissive.setRGB(1, 0.92, 0.8); q.emissiveMap = t; q.emissiveIntensity = 1.25; q.needsUpdate = true; } }); }   // 실제 태양 사진 질감 (스스로 빛나게)   // 쌀알 무늬가 보이는 빛나는 표면
           [2.55, 2.95, 3.5].forEach((r, i) => g.add(new THREE.Mesh(new THREE.SphereGeometry(r, 40, 28), new THREE.MeshBasicMaterial({ color: 0xff9a2a, transparent: true, opacity: 0.16 - i * 0.04, depthWrite: false })))); const e = new THREE.Mesh(new THREE.SphereGeometry(0.21, 24, 16), std(0x4f9fff)); g.add(e);
           labs.push(label('지구 (109개를 늘어놓으면 태양 지름)', e, { size: 12, offset: [0, 0.5, 0] })); upd = (t) => { e.position.set(Math.cos(t * 0.8) * 3.9, 0, Math.sin(t * 0.8) * 3.9); }; return g; },
-        esdist() { const g = new THREE.Group(); const s = new THREE.Mesh(new THREE.SphereGeometry(1.0, 48, 32), new THREE.MeshBasicMaterial({ color: 0xffc247 })); s.position.x = -3.2; g.add(s); ctx.halo(s, 0xffb040, 4.2, 0.6);
+        esdist() { const g = new THREE.Group(); const s = new THREE.Mesh(new THREE.SphereGeometry(1.0, 48, 32), new THREE.MeshBasicMaterial({ color: 0xffc247 })); s.position.x = -3.2; g.add(s); ctx.halo(s, 0xffb040, 4.2, 0.45); SP.skin(s, 'sun');   // 실제 태양 사진 질감
           const glow = new THREE.Mesh(new THREE.SphereGeometry(1.5, 32, 20), new THREE.MeshBasicMaterial({ color: 0xff9a2a, transparent: true, opacity: 0.18, depthWrite: false })); glow.position.copy(s.position); g.add(glow);
-          const e = new THREE.Mesh(new THREE.SphereGeometry(0.16, 24, 16), std(0x4f9fff)); e.position.x = 3.2; g.add(e);
+          const e = new THREE.Mesh(new THREE.SphereGeometry(0.16, 24, 16), std(0x4f9fff)); e.position.x = 3.2; g.add(e); SP.skin(e, 'earth');   // 실제 지구 사진 질감
           const pts = []; for (let i = 0; i <= 64; i++) { const a = i / 64 * Math.PI * 2; pts.push(new V(-3.2 + Math.cos(a) * 6.4, 0, Math.sin(a) * 6.4)); } g.add(tube(pts, 0.015, 0x8fb4ff, { transparent: true, opacity: 0.5 }));
           const line = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 5.2, 8), new THREE.MeshBasicMaterial({ color: 0xffe9a0 })); line.rotation.z = Math.PI / 2; line.position.x = -0.1; g.add(line);
           labs.push(label('빛으로 약 8분 20초', [-0.1, 0.5, 0], { size: 12, color: 'rgba(255,211,77,.92)' })); labs[labs.length - 1].el.style.color = '#1b2333'; labs.push(label('지구', e, { size: 12, offset: [0, 0.4, 0] }), label('태양', s, { size: 12, offset: [0, 1.4, 0] })); return g; },
-        proxima() { const g = new THREE.Group(); const a = new THREE.Mesh(new THREE.SphereGeometry(0.55, 32, 24), new THREE.MeshBasicMaterial({ color: 0xffc247 })), b = new THREE.Mesh(new THREE.SphereGeometry(0.35, 32, 24), new THREE.MeshBasicMaterial({ color: 0xff5a3c })); a.position.x = -3.4; b.position.x = 3.4; g.add(a, b); ctx.halo(a, 0xffc860, 2.6, 0.6); ctx.halo(b, 0xff6a40, 1.9, 0.6);
+        proxima() { const g = new THREE.Group(); const a = new THREE.Mesh(new THREE.SphereGeometry(0.55, 32, 24), new THREE.MeshBasicMaterial({ color: 0xffc247 })), b = new THREE.Mesh(new THREE.SphereGeometry(0.35, 32, 24), new THREE.MeshBasicMaterial({ color: 0xff5a3c })); a.position.x = -3.4; b.position.x = 3.4; g.add(a, b); ctx.halo(a, 0xffc860, 2.6, 0.45); ctx.halo(b, 0xff6a40, 1.9, 0.45);
+          SP.skin(a, 'sun'); SP.skin(b, 'sun', { done: (q) => q.color.setRGB(1.6, 0.62, 0.42) });   // 별 표면: 태양 사진 질감 (프록시마는 붉은 왜성 색으로)
           const arr = [], cols = []; for (let i = 0; i < 700; i++) { const v = new V(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).normalize().multiplyScalar(6 + rnd() * 4); arr.push(v.x, v.y, v.z); const c = 0.55 + rnd() * 0.45; cols.push(c, c, c); } g.add(pointsOf(arr, cols, 0.07));
           const line = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 6.8, 8), new THREE.MeshBasicMaterial({ color: 0xffe9a0 })); line.rotation.z = Math.PI / 2; g.add(line);
           labs.push(label('4.2광년 (빛으로 4.2년)', [0, 0.5, 0], { size: 12, color: 'rgba(255,211,77,.92)' })); labs[labs.length - 1].el.style.color = '#1b2333'; labs.push(label('태양', a, { size: 12, offset: [0, 0.9, 0] }), label('프록시마', b, { size: 12, offset: [0, 0.8, 0] })); return g; },

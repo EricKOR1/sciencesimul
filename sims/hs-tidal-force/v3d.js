@@ -42,19 +42,21 @@
     autoRotate: 0,
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
+      const SP = ctx.space;   // 실제 관측 사진 질감 (못 불러오면 그린 무늬 그대로)
       const Y = new THREE.Vector3(0, 1, 0);
       /* 지구: 땅(자전) + 바다(달·태양 방향에 고정) */
       const earth = new THREE.Group(); root.add(earth);
       const tex = new THREE.CanvasTexture(earthCanvas()); if ('encoding' in tex) tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 4;
-      earth.add(new THREE.Mesh(new THREE.SphereGeometry(RS, 64, 44), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.75, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.006, envMapIntensity: 0.6 })));
+      const eM = new THREE.Mesh(new THREE.SphereGeometry(RS, 64, 44), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.75, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.006, envMapIntensity: 0.6 })); earth.add(eM);
+      SP.skin(eM, 'earth', { done: (m) => { m.bumpMap = null; } });   // 실제 지구 사진 (빨간 관측점은 경도 0° 적도)
       ctx.halo(earth, 0x6fb4ff, RO * 2.9, 0.38);   // 대기의 푸른 빛
       const oceanGeo = new THREE.SphereGeometry(RO, 72, 48);
       const base = oceanGeo.attributes.position.array.slice();
       const ocean = new THREE.Mesh(oceanGeo, ctx.mats.liquid(0x1f7fd6, { opacity: 0.66, extra: { roughness: 0.1, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.006 } }));
       root.add(ocean);
       /* 달 · 태양 */
-      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 20), ctx.mats.stone(0xbfc3cb, { cracks: true, repeat: 1.5, bump: 0.025 })); root.add(moon);
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(1.0, 40, 28), new THREE.MeshBasicMaterial({ color: 0xffc933 })); sun.position.set(8.8, 0, 0); root.add(sun); ctx.halo(sun, 0xffc04a, 4.2, 0.6);
+      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 20), ctx.mats.stone(0xbfc3cb, { cracks: true, repeat: 1.5, bump: 0.025 })); root.add(moon); SP.skin(moon, 'moon', { done: (m) => { m.bumpMap = null; } });
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(1.0, 40, 28), new THREE.MeshBasicMaterial({ color: 0xffc933 })); sun.position.set(8.8, 0, 0); root.add(sun); ctx.halo(sun, 0xffc04a, 4.2, 0.6); SP.skin(sun, 'sun');   // 실제 태양 사진 (바다가 번져 보이지 않게 빛 번짐 효과는 안 써요)
       const sunGlow = new THREE.Mesh(new THREE.SphereGeometry(1.4, 24, 16), new THREE.MeshBasicMaterial({ color: 0xffa500, transparent: true, opacity: 0.25, depthWrite: false })); sunGlow.position.copy(sun.position); root.add(sunGlow);
       const MR = 4.8;
       const orbitLine = (() => { const p = []; for (let i = 0; i <= 120; i++) { const a = i / 120 * Math.PI * 2; p.push(new THREE.Vector3(Math.cos(a) * MR, 0, -Math.sin(a) * MR)); } const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(p), new THREE.LineDashedMaterial({ color: 0xcbd5e1, dashSize: 0.25, gapSize: 0.2, transparent: true, opacity: 0.6 })); l.computeLineDistances(); root.add(l); return l; })();

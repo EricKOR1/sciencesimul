@@ -22,6 +22,7 @@
     camera: { dist: PHN ? 15 : 14.5, theta: -2.35, phi: 1.2, min: 6, max: 30 },
     levels: [2],
     autoRotate: 0,
+    bloom: { strength: 0.85, threshold: 1.0 },   // 태양이 둘레로 번져 보여요
     build(ctx) {
       const { THREE, scene, root, label, info, controls, orbit } = ctx;
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.6, metalness: 0 }, o || {}));
@@ -104,14 +105,25 @@
       const tGeo = new THREE.ConeGeometry(0.06, 0.16, 8), sGeo = new THREE.IcosahedronGeometry(0.045, 1);
       const tMat = std(0x2fa84a, { roughness: 0.5 }), fMat = std(0xffb84a, { roughness: 0.4, emissive: 0x6a3a00, emissiveIntensity: 0.4 });
       const nT = 420, nF = 160, trees = new THREE.InstancedMesh(tGeo, tMat, nT), fish = new THREE.InstancedMesh(sGeo, fMat, nF); bio.add(trees, fish);
-      const dm = new THREE.Object3D(); let ti = 0, fi = 0, tries = 0;
+      const dm = new THREE.Object3D();
+      const plant = (landAt) => { let ti = 0, fi = 0, tries = 0;   // landAt(lat, lon, dir): 그 자리가 육지인지
       while ((ti < nT || fi < nF) && tries++ < 20000) {
         const lat = Math.asin(Math.random() * 2 - 1), lon = Math.random() * Math.PI * 2; if (Math.abs(lat) > 1.15) continue;
-        const x = Math.floor((lon / (Math.PI * 2)) * TW) % TW, y = Math.min(TH - 1, Math.floor((0.5 - lat / Math.PI) * TH)), isL = mask[y * TW + x];
-        const dir = new THREE.Vector3(Math.cos(lat) * Math.cos(lon), Math.sin(lat), Math.cos(lat) * Math.sin(lon));
+        const dir = new THREE.Vector3(Math.cos(lat) * Math.cos(lon), Math.sin(lat), Math.cos(lat) * Math.sin(lon)), isL = landAt(lat, lon, dir);
         if (isL && ti < nT) { dm.position.copy(dir).multiplyScalar(R + 0.06); dm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); dm.scale.setScalar(1); dm.updateMatrix(); trees.setMatrixAt(ti++, dm.matrix); }
         else if (!isL && fi < nF) { dm.position.copy(dir).multiplyScalar(R + 0.03); dm.quaternion.identity(); dm.scale.setScalar(1); dm.updateMatrix(); fish.setMatrixAt(fi++, dm.matrix); }
       }
+      trees.instanceMatrix.needsUpdate = true; fish.instanceMatrix.needsUpdate = true; };
+      plant((lat, lon) => mask[Math.min(TH - 1, Math.floor((0.5 - lat / Math.PI) * TH)) * TW + Math.floor((lon / (Math.PI * 2)) * TW) % TW]);
+      /* 실제 지구 사진: 겉면을 바꾸고, 식물 · 바다 생물도 사진의 육지 · 바다에 맞춰 다시 놓아요 (못 불러오면 원래 그린 지구) */
+      const SP = ctx.space;
+      SP.skin(ground, 'earth', { done: (m, t) => { m.bumpMap = null; m.roughness = 0.62; m.needsUpdate = true; ocean.material.visible = false;
+        try { const W = 512, H = 256, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); g.drawImage(t.image, 0, 0, W, H); const d = g.getImageData(0, 0, W, H).data;
+          plant((lat, lon, dir) => { const lo = Math.atan2(-dir.z, dir.x), x = Math.min(W - 1, Math.floor((lo / (Math.PI * 2) + 0.5) * W)), y = Math.min(H - 1, Math.floor((0.5 - lat / Math.PI) * H)), i = (y * W + x) * 4; return !(d[i + 2] > d[i] * 1.25 && d[i + 2] > d[i + 1] * 0.9); });
+        } catch (e) {} } });   // 사진에서 푸른 곳은 바다, 나머지는 육지
+      SP.earth(ground, R, { clouds: false });   // 밤 쪽 도시 불빛
+      SP.tex('earth_clouds', (t) => { cloud.material.map = null; cloud.material.alphaMap = t; cloud.material.opacity = 0.9; cloud.material.needsUpdate = true; }, true);   // 실제 구름 사진 (기존 구름층에)
+      scene.children.forEach((o) => { if (o.isHemisphereLight) o.intensity = 0.28; else if (o.isDirectionalLight && o.userData.v3engine) o.intensity = 0; });   // 우주에서는 태양빛만: 지구의 낮과 밤이 또렷해요
       bio.visible = false;
 
       /* ---------- 에너지원: 태양 · 지구 내부 · 달 ---------- */
@@ -122,10 +134,12 @@
         for (let i = 0; i < 2400; i++) { const q = 2 + r() * 6; g.globalAlpha = 0.18 + r() * 0.25; g.fillStyle = r() < 0.55 ? '#ffe27a' : (r() < 0.6 ? '#ff8a12' : '#fff3b8'); g.beginPath(); g.ellipse(r() * 512, r() * 256, q * 1.5, q, r() * 3, 0, 7); g.fill(); }
         for (let i = 0; i < 6; i++) { const x = r() * 512, y = 70 + r() * 116, q = 3 + r() * 5; g.globalAlpha = 0.5; g.fillStyle = '#c2560a'; g.beginPath(); g.ellipse(x, y, q * 2.2, q * 1.5, 0, 0, 7); g.fill(); g.globalAlpha = 0.85; g.fillStyle = '#5a2504'; g.beginPath(); g.ellipse(x, y, q * 1.1, q * 0.8, 0, 0, 7); g.fill(); }
         const t = new THREE.CanvasTexture(c); if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; return t; })();   // 태양 겉면: 쌀알 무늬 · 흑점
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(1.25, 48, 32), new THREE.MeshBasicMaterial({ color: 0xffffff, map: sunTex })); ctx.halo(sun, 0xffc866, 6.5, 0.6); sun.position.copy(sunPos).multiplyScalar(1.12); sunG.add(sun);
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(1.25, 48, 32), new THREE.MeshBasicMaterial({ color: 0xffffff, map: sunTex })); ctx.halo(sun, 0xffc866, 6.5, 0.4); sun.position.copy(sunPos).multiplyScalar(1.12); sunG.add(sun);
+      SP.skin(sun, 'sun'); SP.sun(sun);   // 실제 태양 사진 질감 · 지구의 낮/밤 쪽을 알게
       const sunGlow = new THREE.Mesh(new THREE.SphereGeometry(1.8, 32, 20), new THREE.MeshBasicMaterial({ color: 0xffc04a, transparent: true, opacity: 0.18, depthWrite: false })); sunGlow.position.copy(sun.position); sunG.add(sunGlow);
       const mcv = document.createElement('canvas'); mcv.width = 256; mcv.height = 128; { const mc = mcv.getContext('2d'); mc.fillStyle = '#b9bcc4'; mc.fillRect(0, 0, 256, 128); for (let i = 0; i < 70; i++) { const x = (i * 97) % 256, y = (i * 53 + i * i) % 128, r = 2 + (i * 7) % 9; mc.fillStyle = 'rgba(90,94,104,' + (0.18 + (i % 4) * 0.07) + ')'; mc.beginPath(); mc.arc(x, y, r, 0, 7); mc.fill(); mc.strokeStyle = 'rgba(235,238,245,.35)'; mc.beginPath(); mc.arc(x - 1, y - 1, r, 3.4, 5.2); mc.stroke(); } for (let i = 0; i < 5; i++) { mc.fillStyle = 'rgba(80,84,96,.35)'; mc.beginPath(); mc.ellipse(30 + i * 48, 40 + (i * 31) % 60, 22, 14, 0.4 * i, 0, 7); mc.fill(); } }
       const moon = new THREE.Mesh(new THREE.SphereGeometry(0.55, 40, 28), std(0xc9c9c9, { map: new THREE.CanvasTexture(mcv), roughness: 0.95, bumpMap: NZ, bumpScale: 0.02 })); moonG.add(moon);
+      SP.skin(moon, 'moon', { done: (m) => { m.bumpMap = null; } });   // 실제 달 사진 질감
       { const N = 260, pos = new Float32Array(N * 3); for (let i = 0; i < N; i++) { const u = Math.random() * 2 - 1, a = Math.random() * 6.283, r = 22 + Math.random() * 14, q = Math.sqrt(1 - u * u); pos[i * 3] = Math.cos(a) * q * r; pos[i * 3 + 1] = u * r; pos[i * 3 + 2] = Math.sin(a) * q * r; }
         const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); root.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: 0.14, transparent: true, opacity: 0.85, depthWrite: false }))); root.children[root.children.length - 1].userData.v3bg = true;   /* 별·먼지는 배경 */ }
       const orbitRing = new THREE.Mesh(new THREE.TorusGeometry(5.4, 0.012, 6, 120), new THREE.MeshBasicMaterial({ color: 0x8fa3c8, transparent: true, opacity: 0.4 })); orbitRing.rotation.x = Math.PI / 2; orbitRing.position.y = 0.9; moonG.add(orbitRing); orbitRing.userData.v3bg = true;   // 궤도선은 배경: 자동 맞춤이 지구에 맞춰요
