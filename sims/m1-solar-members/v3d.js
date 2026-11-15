@@ -14,6 +14,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 26 * (PHN0 ? 1.05 : 1), theta: 0.3, phi: 0.95, fov: 45, target: [0, 0, 0], min: 6, max: 60 },
     autoRotate: 0.05,
+    bloom: { strength: 0.85, threshold: 1.0 },   // 태양처럼 아주 밝은 곳이 둘레로 번져 보여요 (느린 기기에서는 자동으로 꺼짐)
     levels: [0],   // 1단계(태양계 둘러보기: 천체 카드 모으기 · 스스로 빛나는 천체)만 3D
     build(ctx) {
       const { THREE, scene, root, label, info, controls, camera, renderer, orbit } = ctx;
@@ -51,6 +52,21 @@
         g.position.copy(a); g.quaternion.setFromUnitVectors(Yax, d.normalize());
       }
       function canvasTex(w, h, draw) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; return t; }
+      /* 실제 관측 사진으로 만든 질감 (tex/ 폴더, 출처: Solar System Scope, CC BY 4.0).
+         다 불러오면 코드로 그린 질감을 바꿔 끼워요. 못 불러오면(오프라인 등) 그린 질감 그대로 보여요. */
+      const WEB = /^https?:$/.test(location.protocol), ANISO = Math.min(8, renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1);
+      function realTex(file, done, gray) { if (!WEB) return; new THREE.TextureLoader().load('tex/' + file, (t) => { if (!gray && THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; t.anisotropy = ANISO; try { done(t); } catch (e) { console.error(e); } }, undefined, () => {}); }
+      function skin(mesh, file, after) { realTex(file, (t) => { const m = mesh.material; m.map = t; m.color.set(0xffffff); m.needsUpdate = true; if (after) after(m, t); }); }
+      /* 대기: 가장자리에서 빛나는 얇은 층. 태양 쪽이 밝고 밤 쪽은 어두워요 (uSunV = 카메라에서 본 태양 위치) */
+      const uSunV = { value: new V3() };
+      const ATM_VS = 'varying vec3 vN; varying vec3 vP; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vP = mv.xyz; gl_Position = projectionMatrix * mv; }';
+      function atmMat(c, inner, k) {
+        return new THREE.ShaderMaterial({ uniforms: { c: { value: new THREE.Color(c).multiplyScalar(k == null ? 1 : k) }, uSunV },
+          vertexShader: ATM_VS, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: inner ? THREE.FrontSide : THREE.BackSide,
+          fragmentShader: 'uniform vec3 c; uniform vec3 uSunV; varying vec3 vN; varying vec3 vP; void main(){ vec3 n = normalize(vN); float d = abs(dot(n, normalize(-vP))); float lit = 0.18 + 0.82 * smoothstep(-0.3, 0.45, dot(n, normalize(uSunV - vP)));' +
+            (inner ? ' float f = pow(1.0 - d, 3.2) * 0.85;' : ' float f = pow(clamp(d * 2.05, 0.0, 1.0), 2.6) * 0.75;') + ' gl_FragColor = vec4(c * f * lit, f * lit); }' });
+      }
+      function atmosphere(m, r, c, str) { [[1.012, true], [1.16, false]].forEach(([k, inner]) => { const a = new THREE.Mesh(new THREE.SphereGeometry(r * k, 48, 32), atmMat(c, inner, str)); a.raycast = () => {}; a.userData.v3bg = true; m.add(a); }); }
       /* 눈금이 있는 둥근 계기판 (0 ~ max, 270도) */
       function makeDial(R, max, unit, tickStep, labStep) {
         const g = new THREE.Group();
@@ -108,44 +124,59 @@
         for (let i = 0; i < 2600; i++) { const q = 2 + r() * 6; c.globalAlpha = 0.18 + r() * 0.25; c.fillStyle = r() < 0.55 ? '#ffe27a' : (r() < 0.6 ? '#ff8a12' : '#fff3b8'); c.beginPath(); c.ellipse(r() * w, r() * h, q * 1.5, q, r() * 3, 0, 7); c.fill(); }
         for (let i = 0; i < 7; i++) { const x = r() * w, y = 70 + r() * 116, q = 3 + r() * 5; c.globalAlpha = 0.5; c.fillStyle = '#c2560a'; c.beginPath(); c.ellipse(x, y, q * 2.2, q * 1.5, 0, 0, 7); c.fill(); c.globalAlpha = 0.85; c.fillStyle = '#5a2504'; c.beginPath(); c.ellipse(x, y, q * 1.1, q * 0.8, 0, 0, 7); c.fill(); } c.globalAlpha = 1; });
 
-      scene.add(new THREE.AmbientLight(0x8fa0d8, 0.34));
-      const sunLight = new THREE.PointLight(0xfff0cc, 1.25, 0, 0); root.add(sunLight);
+      scene.add(new THREE.AmbientLight(0x8fa0d8, 0.2));
+      scene.children.forEach((o) => { if (o.isHemisphereLight) o.intensity = 0.28; else if (o.isDirectionalLight) o.intensity = 0; });   // 우주에서는 태양빛만: 행성의 낮과 밤이 또렷해요 (밤 쪽은 아주 희미하게만 보여요)
+      const sunLight = new THREE.PointLight(0xfff4e0, 1.25, 0, 0); root.add(sunLight);
       root.add(starField(420, 90));
+      realTex('stars.jpg', (t) => { const sky = new THREE.Mesh(new THREE.SphereGeometry(140, 48, 32), new THREE.MeshBasicMaterial({ map: t, color: 0x8e99b8, side: THREE.BackSide, depthWrite: false, fog: false })); sky.rotation.set(1.05, 0, 0.3); sky.raycast = () => {}; sky.userData.v3bg = true; sky.renderOrder = -5; root.add(sky); });   // 은하수가 보이는 밤하늘
       { const s2 = starField(90, 88); s2.material.size = 2.6; s2.material.color.set(0xe8efff); s2.material.opacity = 0.8; root.add(s2); const s3 = starField(60, 86); s3.material.size = 2.2; s3.material.color.set(0xffd9a8); s3.material.opacity = 0.6; root.add(s3); }
       const rOf = (a) => 0.8 + 2.3 * Math.log(1 + 2 * a);          // 거리(AU) → 화면 반지름 (로그 모양으로 줄임)
       const st = { play: true, names: true, focus: 'all', t: 0 };
 
       /* 태양 */
       const sun = new THREE.Mesh(new THREE.SphereGeometry(1.15, 48, 32), new THREE.MeshBasicMaterial({ color: 0xffffff, map: sunTex })); root.add(sun);
-      const glow = glowSprite(8); root.add(glow);
-      ctx.halo(sun, 0xffd27a, 4.6, 0.55);   // 코로나처럼 번지는 빛
+      const glow = glowSprite(5.2); glow.material.opacity = 0.2; root.add(glow);
+      skin(sun, 'sun.jpg', (m) => { m.color.setRGB(1.5, 1.42, 1.3); });   // 실제 태양 사진 질감 (조금 더 밝게: 빛 번짐이 생겨요)
+      const sunHalo = ctx.halo(sun, 0xffd27a, 4.2, 0.3);   // 코로나처럼 번지는 빛
       const sunLab = label('태양', sun, { size: 13, offset: [0, 1.7, 0], color: 'rgba(120,70,0,.9)' });
 
       /* 행성 */
       const PL = [
-        { n: '수성', a: 0.39, r: 0.27, col: ['#7d7870', '#96908a', '#6a665f', '#857f76'], P: 0.24, k: 'in', tx: 'crater' },
-        { n: '금성', a: 0.72, r: 0.37, col: ['#d9b877', '#c9a25c', '#e6cf9c', '#b98f4e'], P: 0.62, k: 'in', tx: 'venus', atm: 0xf2d79a },
-        { n: '지구', a: 1.0, r: 0.39, col: ['#2f7fd8', '#4caf6a', '#2f7fd8', '#f2f6fa'], P: 1, k: 'in', tx: 'earth', atm: 0x6fb4ff },
-        { n: '화성', a: 1.52, r: 0.3, col: ['#b5532f', '#a34726', '#c9744a', '#8f3d22'], P: 1.9, k: 'in', tx: 'mars' },
-        { n: '목성', a: 5.2, r: 0.85, col: ['#c9a074', '#b0764a', '#e6d6bb', '#9c6238', '#d9bd96'], P: 11.9, k: 'out', tx: 'jupiter' },
-        { n: '토성', a: 9.5, r: 0.72, col: ['#d9c38a', '#c4aa70', '#e6d6a8', '#b89c62'], P: 29, k: 'out', ring: true, tx: 'gas' },
-        { n: '천왕성', a: 19.2, r: 0.5, col: ['#7fcfd6', '#6cc0ca', '#92dbe0'], P: 84, k: 'out', tx: 'ice', atm: 0x9fe8ee },
-        { n: '해왕성', a: 30.1, r: 0.48, col: ['#2a4bc0', '#3a62dc', '#2340a8', '#4a74e6'], P: 165, k: 'out', tx: 'ice', atm: 0x5c86ff },
+        { n: '수성', file: 'mercury', a: 0.39, r: 0.27, col: ['#7d7870', '#96908a', '#6a665f', '#857f76'], P: 0.24, k: 'in', tx: 'crater' },
+        { n: '금성', file: 'venus', gain: 0.85, a: 0.72, r: 0.37, col: ['#d9b877', '#c9a25c', '#e6cf9c', '#b98f4e'], P: 0.62, k: 'in', tx: 'venus', atm: 0xf2d79a },
+        { n: '지구', file: 'earth', a: 1.0, r: 0.39, col: ['#2f7fd8', '#4caf6a', '#2f7fd8', '#f2f6fa'], P: 1, k: 'in', tx: 'earth', atm: 0x6fb4ff },
+        { n: '화성', file: 'mars', a: 1.52, r: 0.3, col: ['#b5532f', '#a34726', '#c9744a', '#8f3d22'], P: 1.9, k: 'in', tx: 'mars' },
+        { n: '목성', file: 'jupiter', a: 5.2, r: 0.85, col: ['#c9a074', '#b0764a', '#e6d6bb', '#9c6238', '#d9bd96'], P: 11.9, k: 'out', tx: 'jupiter' },
+        { n: '토성', file: 'saturn', gain: 0.84, a: 9.5, r: 0.72, col: ['#d9c38a', '#c4aa70', '#e6d6a8', '#b89c62'], P: 29, k: 'out', ring: true, tx: 'gas' },
+        { n: '천왕성', file: 'uranus', gain: 0.8, atmK: 0.45, a: 19.2, r: 0.5, col: ['#7fcfd6', '#6cc0ca', '#92dbe0'], P: 84, k: 'out', tx: 'ice', atm: 0x9fe8ee },
+        { n: '해왕성', file: 'neptune', atmK: 0.6, a: 30.1, r: 0.48, col: ['#2a4bc0', '#3a62dc', '#2340a8', '#4a74e6'], P: 165, k: 'out', tx: 'ice', atm: 0x5c86ff },
       ];
       const orbitMat = (c, o) => new THREE.LineBasicMaterial({ color: c, transparent: true, opacity: o });
       function orbitLine(rx, rz, c, o, tilt) { const pts = []; for (let i = 0; i <= 128; i++) { const a = i / 128 * 6.2832; pts.push(new V3(Math.cos(a) * rx, 0, Math.sin(a) * rz)); }
         const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), orbitMat(c, o)); if (tilt) l.rotation.x = tilt; return l; }
+      /* 지구: 구름층이 따로 천천히 돌고, 밤인 쪽에는 도시 불빛이 보여요 */
+      function earthExtras(m) {
+        m.roughness = 0.62;
+        realTex('earth_clouds.jpg', (t) => { const earth = PL[2].m, cl = new THREE.Mesh(new THREE.SphereGeometry(PL[2].r * 1.012, 48, 32), new THREE.MeshStandardMaterial({ color: 0xffffff, alphaMap: t, transparent: true, depthWrite: false, roughness: 1, metalness: 0 })); cl.raycast = () => {}; cl.userData.v3bg = true; earth.add(cl); PL[2].clouds = cl; }, true);
+        realTex('earth_night.jpg', (t) => {
+          m.emissive.set(0xffe2a6); m.emissiveMap = t; m.emissiveIntensity = 1.1;
+          m.onBeforeCompile = (sh) => { sh.uniforms.uSunV = uSunV; sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uSunV;').replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance *= smoothstep(0.1, -0.25, dot(normalize(vNormal), normalize(uSunV + vViewPosition)));'); };
+          m.customProgramCacheKey = () => 'earth-night'; m.needsUpdate = true;
+        });
+      }
       const planets = [];
       PL.forEach((p, i) => {
         const R = rOf(p.a); p.R = R;
         root.add(orbitLine(R, R, 0x6f86c9, 0.4));
         const m = new THREE.Mesh(new THREE.SphereGeometry(p.r, 48, 32), mat(0xffffff, { map: planetTex(p.tx, p.col, 3 + i * 5), roughness: p.tx === 'earth' ? 0.55 : 0.85, metalness: 0 }));
-        if (p.atm) { const at = new THREE.Mesh(new THREE.SphereGeometry(p.r * 1.07, 32, 24), new THREE.MeshBasicMaterial({ color: p.atm, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, side: THREE.BackSide, depthWrite: false })); at.raycast = () => {}; m.add(at); }   // 얇은 대기층
+        if (p.atm) atmosphere(m, p.r, p.atm, p.atmK);   // 얇은 대기층 (가장자리 빛)
+        skin(m, p.file + '.jpg', (q, t) => { if (p.gain) q.color.setScalar(p.gain); if (p.file === 'earth') earthExtras(q, t); });   // gain: 밝은 행성은 조금 눌러서 무늬가 하얗게 날아가지 않게
         if (p.ring) {   // 토성 고리: 여러 겹의 띠와 틈 (카시니 간극)
           const ri = p.r * 1.3, ro = p.r * 2.25, rgG = new THREE.RingGeometry(ri, ro, 128, 1), pa = rgG.attributes.position, uv = rgG.attributes.uv;
           for (let k = 0; k < pa.count; k++) uv.setXY(k, (Math.hypot(pa.getX(k), pa.getY(k)) - ri) / (ro - ri), 0.5);
           const rt = canvasTex(256, 4, (c) => { let s = 9; const r = () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; for (let x = 0; x < 256; x++) { const u = x / 256; let a = 0.55 + 0.4 * r(); if (u < 0.12) a *= 0.35; if (u > 0.62 && u < 0.7) a = 0.04; if (u > 0.95) a *= 0.4; const v = Math.round(190 + r() * 45); c.fillStyle = 'rgba(' + v + ',' + Math.round(v * 0.9) + ',' + Math.round(v * 0.68) + ',' + a.toFixed(2) + ')'; c.fillRect(x, 0, 1, 4); } });
-          const rg = new THREE.Mesh(rgG, new THREE.MeshStandardMaterial({ color: 0xffffff, map: rt, transparent: true, side: THREE.DoubleSide, roughness: 0.8, depthWrite: false, emissive: 0x4a3f28, emissiveIntensity: 0.5 })); rg.rotation.x = Math.PI / 2 - 0.45; m.add(rg); }
+          const rg = new THREE.Mesh(rgG, new THREE.MeshStandardMaterial({ color: 0xffffff, map: rt, transparent: true, side: THREE.DoubleSide, roughness: 0.8, depthWrite: false, emissive: 0x4a3f28, emissiveIntensity: 0.5 })); rg.rotation.x = Math.PI / 2 - 0.45; m.add(rg);
+          realTex('saturn_ring.png', (t) => { rg.material.map = t; rg.material.needsUpdate = true; }); }   // 실제 고리 사진 (안쪽 → 바깥쪽)
         root.add(m); p.m = m; p.ph = i * 1.3 + 0.5; p.lab = label(p.n, m, { size: 11.5, offset: [0, p.r + 0.55, 0] }); planets.push(p);
       });
 
@@ -158,11 +189,11 @@
         { n: '칼리스토', host: '목성', d: 2.3, r: 0.09, P: 2.3, c: 0x625a50, ph: 5.3 },
       ];
       const MOON_ID = { '달': 'moon', '이오': 'io', '유로파': 'europa', '가니메데': 'ganymede', '칼리스토': 'callisto' };
-      MOONS.forEach((m) => { m.id = MOON_ID[m.n]; m.hostP = PL.find((p) => p.n === m.host); m.m = new THREE.Mesh(new THREE.SphereGeometry(m.r, 24, 18), mat(m.c, { roughness: 0.95, metalness: 0, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.01 })); root.add(m.m); m.lab = label(m.n, m.m, { size: 10.5, offset: [0, m.r + 0.4, 0], color: 'rgba(70,70,70,.88)' }); });
+      MOONS.forEach((m) => { m.id = MOON_ID[m.n]; m.hostP = PL.find((p) => p.n === m.host); m.m = new THREE.Mesh(new THREE.SphereGeometry(m.r, 24, 18), mat(m.c, { roughness: 0.95, metalness: 0, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.01 })); root.add(m.m); m.lab = label(m.n, m.m, { size: 10.5, offset: [0, m.r + 0.4, 0], color: 'rgba(70,70,70,.88)' }); skin(m.m, 'moon.jpg', (q) => { q.bumpMap = null; if (m.id !== 'moon') q.color.set(m.c).multiplyScalar(0.9); }); });   // 달은 실제 사진, 목성의 위성은 같은 무늬에 제 색을 입혀요
 
       /* 소행성대 (화성과 목성 사이) */
       const NA = 520, belt = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.05, 0), mat(0xffffff, { roughness: 1, metalness: 0, flatShading: true }), NA); belt.frustumCulled = false; root.add(belt);
-      { const ROCK = [0x7a6f62, 0x8c8172, 0x655c52, 0x94897c, 0x6f6a66]; for (let i = 0; i < NA; i++) belt.setColorAt(i, _c.set(ROCK[i % ROCK.length])); belt.instanceColor.needsUpdate = true; }
+      { const ROCK = [0x4d453b, 0x5a5146, 0x403a33, 0x60574b, 0x47423f]; for (let i = 0; i < NA; i++) belt.setColorAt(i, _c.set(ROCK[i % ROCK.length])); belt.instanceColor.needsUpdate = true; }
       const BP = []; for (let i = 0; i < NA; i++) { const a = rnd() * 6.283, r = rOf(2.2 + rnd() * 1.1); BP.push([r, a, (rnd() - 0.5) * 0.35, 0.6 + 0.8 * rnd(), 0.6 + 0.8 * rnd(), rnd() * 6.3]); }
       const beltLab = label('소행성대', [rOf(2.7) * 0.7, 0.4, -rOf(2.7) * 0.7], { size: 12, color: 'rgba(80,70,50,.88)' });
       const _bm = new THREE.Matrix4(), _bq = new THREE.Quaternion(), _bp = new V3(), _bs = new V3(), BPOS = new Float32Array(NA * 3);
@@ -171,7 +202,7 @@
       const DW = [{ id: 'ceres', n: '세레스', a: 2.77, r: 0.1, e: 0.08, P: 4.6, c: 0xb8aea0, ph: 2, cols: ['#8f867a', '#a39a8c', '#7a7268'] }, { id: 'pluto', n: '명왕성', a: 39.5, r: 0.16, e: 0.25, P: 248, c: 0xd8b99a, ph: 4, tilt: 0.3, cols: ['#b89878', '#d0b698', '#8f7258', '#e0d0b8'] }, { id: 'eris', n: '에리스', a: 68, r: 0.17, e: 0.44, P: 558, c: 0xe9e4da, ph: 1, tilt: 0.7, cols: ['#c9c4ba', '#dedad0', '#b0aba2'] }];
       DW.forEach((d) => { const R = rOf(d.a); d.R = R;
         const sx = R, sz = R * (1 - d.e * 0.3); const l = orbitLine(sx, sz, 0xc9a7ff, 0.42, d.tilt); l.position.x = -R * d.e * 0.5; root.add(l); d.l = l;
-        d.m = new THREE.Mesh(new THREE.SphereGeometry(d.r, 24, 18), mat(0xffffff, { map: planetTex('crater', d.cols, 11 + d.ph), roughness: 0.95, metalness: 0 })); root.add(d.m); d.lab = label(d.n, d.m, { size: 11, offset: [0, 0.55, 0], color: 'rgba(90,50,150,.9)' }); });
+        d.m = new THREE.Mesh(new THREE.SphereGeometry(d.r, 24, 18), mat(0xffffff, { map: planetTex('crater', d.cols, 11 + d.ph), roughness: 0.95, metalness: 0 })); root.add(d.m); d.lab = label(d.n, d.m, { size: 11, offset: [0, 0.55, 0], color: 'rgba(90,50,150,.9)' }); if (d.id === 'ceres' || d.id === 'eris') skin(d.m, d.id + '.jpg'); });   // (세레스 · 에리스 질감은 상상도예요)
 
       /* 혜성: 길쭉한 궤도 + 태양 반대쪽 꼬리 */
       const CA = 9.5, CE = 0.86, CB = CA * Math.sqrt(1 - CE * CE), CC = CA * CE;
@@ -213,8 +244,10 @@
         '.sm-card{position:absolute;left:10px;bottom:10px;width:min(230px,58%);padding:10px 12px;border-radius:14px;background:#fffdf7;color:#1b2333;box-shadow:0 6px 22px rgba(0,0,0,.45);border-top:6px solid var(--kc,#999);pointer-events:none;transform-origin:left bottom;transition:transform .25s cubic-bezier(.3,1.6,.6,1),opacity .2s}' +
         '.sm-card.off{opacity:0;transform:scale(.85)}.sm-card .t{font-weight:900;font-size:16px}.sm-card .b{display:inline-block;margin:4px 0 6px;padding:1px 8px;border-radius:999px;color:#fff;font-weight:800;font-size:12px;background:var(--kc,#999)}.sm-card .l{font-size:12.5px;line-height:1.45}' +
         '.sm-tray{position:absolute;right:10px;top:10px;padding:6px 8px;border-radius:12px;background:rgba(8,12,24,.72);color:#fff;font-size:12px;font-weight:800;pointer-events:none;max-width:46%}.sm-tray .h{margin-bottom:4px}.sm-tray .c{display:inline-block;margin:2px;padding:2px 7px;border-radius:8px;background:rgba(255,255,255,.12);color:#9aa6bd}.sm-tray .c.on{background:var(--kc);color:#fff}' +
-        '@media (max-width:599px){.sm-card{width:48%;padding:6px 8px;bottom:8px}.sm-card .t{font-size:13px}.sm-card .b{font-size:11px;margin:2px 0 3px}.sm-card .l{font-size:11px}.sm-tray{top:auto;bottom:30px;right:8px;font-size:10.5px;max-width:46%;padding:4px 6px}.sm-tray .c{padding:1px 5px;margin:1px}}';
+        '.sm-credit{position:absolute;left:10px;bottom:6px;font-size:10px;color:rgba(255,255,255,.42);pointer-events:none}' +
+        '@media (max-width:599px){.sm-credit{font-size:9px;left:8px;bottom:4px}.sm-card{width:48%;padding:6px 8px;bottom:8px}.sm-card .t{font-size:13px}.sm-card .b{font-size:11px;margin:2px 0 3px}.sm-card .l{font-size:11px}.sm-tray{top:auto;bottom:30px;right:8px;font-size:10.5px;max-width:46%;padding:4px 6px}.sm-tray .c{padding:1px 5px;margin:1px}}';
         document.head.appendChild(st2); }
+      if (WEB) { const cr = document.createElement('div'); cr.className = 'sm-credit'; cr.textContent = '천체 사진: Solar System Scope (CC BY 4.0)'; vEl.appendChild(cr); }
       const cardEl = document.createElement('div'); cardEl.className = 'sm-card off'; vEl.appendChild(cardEl);
       const trayEl = document.createElement('div'); trayEl.className = 'sm-tray'; vEl.appendChild(trayEl);
       let traySig = '';
@@ -284,7 +317,9 @@
       return {
         update(dt, t) {
           const T = pl.p * D;
-          planets.forEach((p) => { const a = p.ph - T * p.w; p.m.position.set(Math.cos(a) * p.R, 0, Math.sin(a) * p.R); p.m.rotation.y += dt * 0.6; });
+          camera.updateMatrixWorld(); sun.getWorldPosition(uSunV.value).applyMatrix4(camera.matrixWorldInverse);
+          { const k = Math.max(0.1, Math.min(1, (uSunV.value.length() - 5) / 14)); glow.material.opacity = 0.2 * k; if (sunHalo && sunHalo.material) sunHalo.material.opacity = 0.3 * k; }   // 가까이 다가가면 빛무리를 줄여요 (화면을 주황색으로 덮지 않게)   // 대기 · 도시 불빛 셰이더에 태양 방향 알려 주기
+          planets.forEach((p) => { const a = p.ph - T * p.w; p.m.position.set(Math.cos(a) * p.R, 0, Math.sin(a) * p.R); p.m.rotation.y += dt * 0.6; if (p.clouds) p.clouds.rotation.y += dt * 0.12; });
           DW.forEach((d) => { const a = d.ph - T * d.w; const sx = d.R, sz = d.R * (1 - d.e * 0.3); const v = new V3(Math.cos(a) * sx - d.R * d.e * 0.5, 0, Math.sin(a) * sz); if (d.l.rotation.x) v.applyAxisAngle(new V3(1, 0, 0), d.l.rotation.x); d.m.position.copy(v); });
           MOONS.forEach((m) => { const a = m.ph - T * m.w, hp = m.hostP.m.position; m.m.position.set(hp.x + Math.cos(a) * m.d, hp.y + Math.sin(a * 0.5) * 0.04, hp.z + Math.sin(a) * m.d); });
           for (let i = 0; i < NA; i++) { const b = BP[i], a = b[1] - T * BW[i]; _bq.set(Math.sin(b[5] + a), 0.3, Math.cos(b[5]), 1).normalize(); _bm.compose(_bp.set(0, 0, 0), _bq, _bs.set(b[3], b[3] * b[4], b[3] * 0.8)); _bm.setPosition(Math.cos(a) * b[0], b[2], Math.sin(a) * b[0]); belt.setMatrixAt(i, _bm); BPOS[i * 3] = Math.cos(a) * b[0]; BPOS[i * 3 + 1] = b[2]; BPOS[i * 3 + 2] = Math.sin(a) * b[0]; }

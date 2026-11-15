@@ -14,6 +14,7 @@
      levels: [0, 1],                   // (선택) 3D로 보여 줄 단계(0부터). 나머지 단계는 2D. 없으면 모든 단계가 3D
      fit: true,                        // (선택) 세로로 긴 화면에서 자동으로 물러서서 보기 (false면 끔)
      studio: true, shadows: true,      // (선택) 스튜디오 환경광 · 그림자 (차시가 조명을 직접 두면 자동으로 꺼짐)
+     bloom: true | { strength: 0.9, threshold: 0.82 },   // (선택) 빛 번짐 후처리: 아주 밝은 곳이 둘레로 번져요 (느린 기기에서는 자동으로 꺼짐)
      build(ctx) {                      // 처음 열 때 한 번: ctx = { THREE, scene, camera, root, label(), info(), controls() }
        // root(THREE.Group)에 물체를 추가하고, 매 프레임 update(dt, t)를 돌려줘요
        return { update(dt, t) {}, sync() {} };
@@ -282,6 +283,52 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
     return sp;
   }
 
+  /* (선택) 빛 번짐 후처리 opts.bloom: 아주 밝은 곳(태양·불꽃·전구)이 둘레로 부드럽게 번져요.
+     장면을 먼저 버퍼에 그리고 → 밝은 부분만 뽑아 → 3단계로 흐리게 한 뒤 → 원래 그림에 더해요.
+     지원하지 않는 기기(WebGL1)나 느린 기기(저화질 단계)에서는 쓰지 않고 평소처럼 바로 그려요. */
+  function makeBloom(THREE, renderer, o) {
+    o = o === true ? {} : (o || {});
+    if (!renderer.capabilities.isWebGL2) return null;
+    const hf = renderer.extensions.has('EXT_color_buffer_float') || renderer.extensions.has('EXT_color_buffer_half_float');
+    const type = hf ? THREE.HalfFloatType : THREE.UnsignedByteType;
+    const mk = (depth) => new THREE.WebGLRenderTarget(4, 4, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, type, depthBuffer: depth, stencilBuffer: false, samples: depth ? 4 : 0 });
+    const main = mk(true), lv = [0, 1, 2].map(() => [mk(false), mk(false)]);
+    const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, 2, 0, 0, 2], 2));
+    const VS = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
+    const sm = (fs, u) => new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: fs, uniforms: u, depthTest: false, depthWrite: false, toneMapped: false, blending: THREE.NoBlending });
+    const bright = sm('uniform sampler2D t; uniform vec2 px; uniform float th; varying vec2 vUv; void main(){ vec4 c = 0.25*(texture2D(t, vUv+px*vec2(-.5,-.5))+texture2D(t, vUv+px*vec2(.5,-.5))+texture2D(t, vUv+px*vec2(-.5,.5))+texture2D(t, vUv+px*vec2(.5,.5))); float l = max(c.r, max(c.g, c.b)); gl_FragColor = vec4(min(c.rgb, vec3(4.0)) * smoothstep(th, th + 0.3, l), 1.0); }',
+      { t: { value: null }, px: { value: new THREE.Vector2() }, th: { value: o.threshold == null ? 0.82 : o.threshold } });
+    const blur = sm('uniform sampler2D t; uniform vec2 d; varying vec2 vUv; void main(){ vec3 c = texture2D(t, vUv).rgb*0.227027; c += (texture2D(t, vUv+d*1.384615).rgb + texture2D(t, vUv-d*1.384615).rgb)*0.316216; c += (texture2D(t, vUv+d*3.230769).rgb + texture2D(t, vUv-d*3.230769).rgb)*0.070270; gl_FragColor = vec4(c, 1.0); }',
+      { t: { value: null }, d: { value: new THREE.Vector2() } });
+    // 합치기: 0.8보다 어두운 색은 그대로 두고(평소 화면과 같은 색), 그보다 밝은 곳만 부드럽게 눌러서 하얗게 뭉개지지 않게 해요
+    const comp = sm('uniform sampler2D t, b0, b1, b2; uniform float s; varying vec2 vUv;' +
+      'vec3 knee(vec3 x){ vec3 k = vec3(0.8); return mix(x, k + 0.2*(1.0 - exp(-(x - k)/0.2)), step(k, x)); }' +
+      'vec3 srgb(vec3 c){ return mix(c*12.92, 1.055*pow(max(c, vec3(1e-5)), vec3(0.41666)) - 0.055, step(vec3(0.0031308), c)); }' +
+      'void main(){ vec4 c = texture2D(t, vUv); vec3 bl = (texture2D(b0, vUv).rgb + texture2D(b1, vUv).rgb*0.85 + texture2D(b2, vUv).rgb*0.7) * s;' +
+      ' vec3 col = c.rgb + bl; float a = clamp(max(c.a, max(bl.r, max(bl.g, bl.b))), 0.0, 1.0);' +
+      ' gl_FragColor = vec4(srgb(knee(a > 0.001 ? col / a : col)) * a, a); }',
+      { t: { value: null }, b0: { value: null }, b1: { value: null }, b2: { value: null }, s: { value: o.strength == null ? 0.9 : o.strength } });
+    const quad = new THREE.Mesh(geo, bright); quad.frustumCulled = false; const qs = new THREE.Scene(); qs.add(quad);
+    const pass = (m, tgt) => { quad.material = m; renderer.setRenderTarget(tgt); renderer.render(qs, cam); };
+    const sz = new THREE.Vector2();
+    return {
+      on: true, hdr: hf,
+      setSize() { renderer.getDrawingBufferSize(sz); const w = Math.max(8, sz.x), h = Math.max(8, sz.y); main.setSize(w, h); lv.forEach((p, i) => { const k = 2 << i; p.forEach((r) => r.setSize(Math.max(2, Math.round(w / k)), Math.max(2, Math.round(h / k)))); }); },
+      render(scene, camera) {
+        renderer.setRenderTarget(main); renderer.render(scene, camera);
+        bright.uniforms.t.value = main.texture; bright.uniforms.px.value.set(1 / main.width, 1 / main.height); pass(bright, lv[0][0]);
+        for (let i = 0; i < 3; i++) {
+          const a = lv[i][0], b = lv[i][1], src = i ? lv[i - 1][0] : a;
+          blur.uniforms.t.value = src.texture; blur.uniforms.d.value.set(1 / b.width, 0); pass(blur, b);
+          blur.uniforms.t.value = b.texture; blur.uniforms.d.value.set(0, 1 / a.height); pass(blur, a);
+        }
+        comp.uniforms.t.value = main.texture; comp.uniforms.b0.value = lv[0][0].texture; comp.uniforms.b1.value = lv[1][0].texture; comp.uniforms.b2.value = lv[2][0].texture;
+        pass(comp, null);
+      },
+    };
+  }
+
   /* 둥근 도형을 더 매끄럽게: 너무 적은 분할 수는 최소값으로 올려요 (모든 3D 화면 공통) */
   let geoPatched = false;
   function upgradeGeometry(THREE) {
@@ -361,7 +408,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
     });
 
     let THREE = null, renderer = null, scene = null, camera = null, root = null, user = null;
-    let failed = false, studioOn = false;   // three.js를 못 불러오면 이 차시는 2D로만 보여 줘요
+    let failed = false, studioOn = false, bloom = null;   // three.js를 못 불러오면 이 차시는 2D로만 보여 줘요
     let raf = 0, last = 0, isOpen = false, touched = false, built = false, frameN = 0;
     const cam0 = Object.assign({ dist: 8, theta: 0.6, phi: 1.15, fov: 45, target: [0, 0, 0], min: 2, max: 40 }, opts.camera || {});
     const orbit = { dist: cam0.dist, theta: cam0.theta, phi: cam0.phi, tx: cam0.target[0], ty: cam0.target[1], tz: cam0.target[2] };
@@ -376,7 +423,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
     function resize() {
       if (!renderer) return;
       const w = Math.max(1, view.clientWidth), h = Math.max(1, view.clientHeight);
-      renderer.setSize(w, h, false);
+      renderer.setSize(w, h, false); if (bloom) bloom.setSize();
       camera.aspect = w / h; camera.updateProjectionMatrix();
       fitK = opts.fit === false ? 1 : (w / h < 0.95 ? Math.min(1.6, Math.pow(0.95 / (w / h), 0.55)) : 1);
       refit(0.4);
@@ -651,7 +698,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
     }
     function lowQuality() {
       if (!renderer) return;
-      renderer.setPixelRatio(1);
+      renderer.setPixelRatio(1); if (bloom) bloom.on = false;     // 느린 기기: 빛 번짐 후처리도 꺼요
       if (shadowOn) { renderer.shadowMap.enabled = false; shadowOn = false; root.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } }); if (contact) contact.visible = true; }
       resize();
     }
@@ -673,7 +720,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       if (frameN++ % 20 === 0) { if (shadowOn) markShadows(); fitShadow(); }
       stepFit(dt, t / 1000);
       placeCamera();
-      renderer.render(scene, camera);
+      if (bloom && bloom.on) bloom.render(scene, camera); else renderer.render(scene, camera);
       if (global.SciSimShare && global.SciSimShare.grab) global.SciSimShare.grab(renderer.domElement);
       drawLabels();
     }
@@ -684,6 +731,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       if ('outputEncoding' in renderer) renderer.outputEncoding = THREE.sRGBEncoding;
       // (선택) 영화 같은 색감 tone: true — 밝은 곳이 부드럽게 이어지지만 색이 조금 옅어져서, 기본은 선명한 색 그대로예요
       if (opts.tone === true && THREE.ACESFilmicToneMapping != null) { renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = opts.exposure || 1.15; }
+      if (opts.bloom && !perf.stage) { try { bloom = makeBloom(THREE, renderer, opts.bloom); } catch (e) { bloom = null; } }
       view.insertBefore(renderer.domElement, vig);
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(cam0.fov, 1, 0.05, 2000);
