@@ -29,6 +29,7 @@
    ctx.mats                            // 실제 같은 재질: glass() liquid(c) metal('steel'|'brass'|'copper'|'gold'…, {brushed}) plastic(c) rubber(c)
                                        //   wood(c) stone(c, {cracks}) ceramic(c) organic(c, {opacity}) fabric(c) ice() emissive(c, 세기)
    ctx.halo(obj, color, size)          // 빛나는 물체(전구·불꽃·별·뜨거운 것)에 부드러운 빛 번짐 붙이기
+   ctx.space                           // 실제 사진 질감의 천체: space.skin(mesh,'earth') earth() atmosphere() ring() sky() sun() lonLat() — makeSpace 설명 참고
    ctx.refit()                         // 장면이 크게 바뀌면 다시 화면에 맞추기 · 배경 물체는 userData.v3bg = true
    ※ 한 단계에는 한 가지 화면만 나와요: levels에 든 단계는 3D, 나머지 단계는 2D (2D↔3D 전환 버튼 없음).
      기기 사양이 낮거나 3D가 너무 느리면 3D 단계도 2D로 보여 줘요. 첫 화면 '3D 끄기'(localStorage 'sciencesimul:view' = '2d')도 같아요.
@@ -138,6 +139,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
     linear-gradient(to top, rgba(96,128,210,.13) 0%, rgba(96,128,210,0) 34%),
     radial-gradient(120% 86% at 50% 36%, #2b3c66 0%, #18233f 46%, #0a0e1c 100%);
   font-feature-settings: "tnum" 1; }
+.v3-credit { position: absolute; left: 10px; bottom: 6px; font-size: 10px; color: rgba(255,255,255,.42); pointer-events: none; }
 .v3-vig { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 46%, rgba(4,6,14,0) 56%, rgba(4,6,14,.4) 100%); }
 .v3-head, .v3-ctl { background: linear-gradient(180deg, rgba(22,31,58,.9), rgba(13,19,38,.86)); -webkit-backdrop-filter: blur(12px) saturate(1.2); backdrop-filter: blur(12px) saturate(1.2); }
 .v3-head { border-bottom: 1px solid rgba(255,255,255,.08); box-shadow: 0 1px 0 rgba(0,0,0,.25); position: relative; z-index: 3; }
@@ -329,6 +331,78 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
     };
   }
 
+  /* 우주 천체 도구 ctx.space: 실제 관측 사진으로 만든 질감으로 태양 · 행성 · 달 · 밤하늘을 그려요.
+     질감은 assets/tex/space (출처: Solar System Scope, CC BY 4.0 — 처음 불러올 때 3D 화면 왼쪽 아래에 출처를 적어요).
+     사진을 다 불러오면 차시가 미리 넣어 둔 색/그린 질감을 바꿔 끼우고, 못 불러오면(오프라인 · file://) 원래 모습 그대로 보여요.
+       space.skin(mesh, 'earth', { gain })        이미 만든 공에 실제 질감 입히기 (gain: 밝은 천체는 0.8쯤으로 눌러요)
+         이름: sun mercury venus earth moon mars jupiter saturn uranus neptune ceres eris (명왕성은 자료가 없어요)
+       space.earth(mesh, r, { clouds, night })    지구에 구름층 · 밤 쪽 도시 불빛 더하기 (mesh는 MeshStandardMaterial)
+       space.atmosphere(mesh, r, color, 세기)      가장자리에서 빛나는 얇은 대기층
+       space.ring(mesh, r, { inner, outer, tilt }) 토성 고리 (실제 고리 사진)
+       space.sky(R, 밝기)                           은하수가 보이는 밤하늘 (root에 add)
+       space.sun(objOrVector3)                     태양의 위치(월드 좌표)나 물체 — 대기 · 도시 불빛이 낮/밤을 구분해요. 안 정하면 고르게 빛나요
+       space.lonLat(경도, 위도, r)                  질감 위 경위도 → 공의 로컬 좌표 (지구 질감 위에 표시를 맞출 때)
+       space.tex(name, fn)                          질감만 불러오기 */
+  const spaceTex = {};
+  function makeSpace(THREE, renderer, view) {
+    const WEB = /^https?:$/.test(global.location.protocol);
+    const aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1);
+    const uSunV = { value: new THREE.Vector3(0, 0, 1e4) }, uHasSun = { value: 0 }, sunW = new THREE.Vector3(), spin = [];
+    let sunRef = null, credited = false;
+    function tex(name, done, gray) {
+      if (!WEB) return;
+      const file = name.indexOf('.') < 0 ? name + '.jpg' : name;
+      let e = spaceTex[file];
+      if (!e) {
+        e = spaceTex[file] = { t: null, q: [] };
+        new THREE.TextureLoader().load(BASE + 'tex/space/' + file, (t) => { if (!gray && THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; t.anisotropy = aniso; e.t = t; const q = e.q; e.q = null; q.forEach((f) => f(t)); }, undefined, () => { e.q = null; });
+      }
+      const run = (t) => { if (!credited) { credited = true; view.appendChild(el('div', 'v3-credit', '천체 사진: Solar System Scope (CC BY 4.0)')); } try { done(t); } catch (err) { console.error(err); } };
+      if (e.t) run(e.t); else if (e.q) e.q.push(run);
+    }
+    function skin(mesh, name, o) { o = o || {}; tex(name, (t) => { const m = mesh.material; m.map = t; m.color.setScalar(o.gain == null ? 1 : o.gain); if (name === 'sun' && m.isMeshBasicMaterial && o.gain == null) m.color.setRGB(1.5, 1.42, 1.3); m.needsUpdate = true; if (o.done) o.done(m, t); }); return mesh; }
+    const ATM_VS = 'varying vec3 vN; varying vec3 vP; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vP = mv.xyz; gl_Position = projectionMatrix * mv; }';
+    function atmMat(c, inner, k) {
+      return new THREE.ShaderMaterial({ uniforms: { c: { value: new THREE.Color(c).multiplyScalar(k == null ? 1 : k) }, uSunV, uHasSun },
+        vertexShader: ATM_VS, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: inner ? THREE.FrontSide : THREE.BackSide,
+        fragmentShader: 'uniform vec3 c; uniform vec3 uSunV; uniform float uHasSun; varying vec3 vN; varying vec3 vP; void main(){ vec3 n = normalize(vN); float d = abs(dot(n, normalize(-vP))); float lit = mix(0.7, 0.18 + 0.82 * smoothstep(-0.3, 0.45, dot(n, normalize(uSunV - vP))), uHasSun);' +
+          (inner ? ' float f = pow(1.0 - d, 3.2) * 0.85;' : ' float f = pow(clamp(d * 2.05, 0.0, 1.0), 2.6) * 0.75;') + ' gl_FragColor = vec4(c * f * lit, f * lit); }' });
+    }
+    function atmosphere(mesh, r, c, k) { [[1.012, true], [1.16, false]].forEach(([q, inner]) => { const a = new THREE.Mesh(new THREE.SphereGeometry(r * q, 48, 32), atmMat(c == null ? 0x6fb4ff : c, inner, k)); a.raycast = () => {}; a.userData.v3bg = true; mesh.add(a); }); return mesh; }
+    function earth(mesh, r, o) {
+      o = o || {};
+      if (o.clouds !== false) tex('earth_clouds', (t) => { const cl = new THREE.Mesh(new THREE.SphereGeometry(r * 1.012, 48, 32), new THREE.MeshStandardMaterial({ color: 0xffffff, alphaMap: t, transparent: true, depthWrite: false, roughness: 1, metalness: 0 })); cl.raycast = () => {}; cl.userData.v3bg = true; mesh.add(cl); spin.push(cl); }, true);
+      if (o.night !== false && mesh.material && mesh.material.isMeshStandardMaterial) tex('earth_night', (t) => {
+        const m = mesh.material; m.emissive.set(0xffe2a6); m.emissiveMap = t; m.emissiveIntensity = 1.1;
+        m.onBeforeCompile = (sh) => { sh.uniforms.uSunV = uSunV; sh.uniforms.uHasSun = uHasSun; sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uSunV; uniform float uHasSun;').replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance *= uHasSun * smoothstep(0.1, -0.25, dot(normalize(vNormal), normalize(uSunV + vViewPosition)));'); };
+        m.customProgramCacheKey = () => 'space-earth-night'; m.needsUpdate = true;
+      });
+      return mesh;
+    }
+    function ring(mesh, r, o) {
+      o = o || {};
+      const ri = r * (o.inner || 1.3), ro = r * (o.outer || 2.25), g = new THREE.RingGeometry(ri, ro, 128, 1), pa = g.attributes.position, uv = g.attributes.uv;
+      for (let k = 0; k < pa.count; k++) uv.setXY(k, (Math.hypot(pa.getX(k), pa.getY(k)) - ri) / (ro - ri), 0.5);
+      const rg = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0xd9c9a0, transparent: true, opacity: 0.55, side: THREE.DoubleSide, roughness: 0.8, depthWrite: false, emissive: 0x4a3f28, emissiveIntensity: 0.5 }));
+      rg.rotation.x = Math.PI / 2 - (o.tilt == null ? 0.45 : o.tilt); rg.raycast = () => {}; mesh.add(rg);
+      tex('saturn_ring.png', (t) => { rg.material.map = t; rg.material.color.set(0xffffff); rg.material.opacity = 1; rg.material.needsUpdate = true; });
+      return rg;
+    }
+    function sky(R, dim) {
+      const g = new THREE.Group(); g.userData.v3bg = true;
+      tex('stars', (t) => { const m = new THREE.Mesh(new THREE.SphereGeometry(R || 140, 48, 32), new THREE.MeshBasicMaterial({ map: t, color: new THREE.Color(0x8e99b8).multiplyScalar(dim == null ? 1 : dim), side: THREE.BackSide, depthWrite: false, fog: false })); m.rotation.set(1.05, 0, 0.3); m.raycast = () => {}; m.userData.v3bg = true; m.renderOrder = -5; g.add(m); });
+      return g;
+    }
+    // 질감 위 경위도(도) → 공의 로컬 좌표: 경도 0°(본초 자오선)가 +x, 동경 90°가 −z, 북극이 +y
+    function lonLat(lon, lat, r) { const a = lon * Math.PI / 180, b = lat * Math.PI / 180; return new THREE.Vector3(Math.cos(b) * Math.cos(a), Math.sin(b), -Math.cos(b) * Math.sin(a)).multiplyScalar(r == null ? 1 : r); }
+    return { tex, skin, atmosphere, earth, ring, sky, lonLat,
+      sun(ref) { sunRef = ref || null; uHasSun.value = sunRef ? 1 : 0; },
+      update(camera, dt) {
+        if (sunRef) { if (sunRef.isObject3D) sunRef.getWorldPosition(sunW); else sunW.copy(sunRef); camera.updateMatrixWorld(); uSunV.value.copy(sunW).applyMatrix4(camera.matrixWorldInverse); }
+        for (let i = 0; i < spin.length; i++) spin[i].rotation.y += dt * 0.03;     // 구름층은 땅보다 아주 조금 빨리 돌아요
+      } };
+  }
+
   /* 둥근 도형을 더 매끄럽게: 너무 적은 분할 수는 최소값으로 올려요 (모든 3D 화면 공통) */
   let geoPatched = false;
   function upgradeGeometry(THREE) {
@@ -408,7 +482,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
     });
 
     let THREE = null, renderer = null, scene = null, camera = null, root = null, user = null;
-    let failed = false, studioOn = false, bloom = null;   // three.js를 못 불러오면 이 차시는 2D로만 보여 줘요
+    let failed = false, studioOn = false, bloom = null, space = null;   // three.js를 못 불러오면 이 차시는 2D로만 보여 줘요
     let raf = 0, last = 0, isOpen = false, touched = false, built = false, frameN = 0;
     const cam0 = Object.assign({ dist: 8, theta: 0.6, phi: 1.15, fov: 45, target: [0, 0, 0], min: 2, max: 40 }, opts.camera || {});
     const orbit = { dist: cam0.dist, theta: cam0.theta, phi: cam0.phi, tx: cam0.target[0], ty: cam0.target[1], tz: cam0.target[2] };
@@ -720,6 +794,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       if (frameN++ % 20 === 0) { if (shadowOn) markShadows(); fitShadow(); }
       stepFit(dt, t / 1000);
       placeCamera();
+      if (space) space.update(camera, dt);
       if (bloom && bloom.on) bloom.render(scene, camera); else renderer.render(scene, camera);
       if (global.SciSimShare && global.SciSimShare.grab) global.SciSimShare.grab(renderer.domElement);
       drawLabels();
@@ -749,6 +824,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
         onLevel(f) { lvHooks.push(f); },                                                      // 단계가 바뀔 때 (2D와 같은 장면으로 맞추기)
         lesson: () => global.__sim || null,                                                    // 2D 실험 상태 (sim.js의 window.__sim)
         refit: (delay) => refit(delay),                                                        // 장면이 크게 바뀌었을 때 다시 화면에 맞추기
+        get space() { return space || (space = makeSpace(THREE, renderer, view)); },             // 실제 사진 질감의 태양 · 행성 · 달 · 밤하늘 (위 makeSpace 설명)
         mats: makeMats(THREE),                                                                 // 실제 같은 재질 모음: mats.glass(), mats.metal('steel'), mats.wood() …
         halo: (obj, color, size, opacity) => { const h = makeHalo(THREE, color, size, opacity); if (obj) obj.add(h); return h; },   // 빛나는 물체의 빛 번짐
       }) || {} : {};
