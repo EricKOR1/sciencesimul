@@ -247,6 +247,25 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
     if (kind === 'wood' && 'encoding' in t) t.encoding = THREE.sRGBEncoding;
     texCache[kind] = t; return t;
   }
+  /* 실제 사진 재질 (assets/tex/mat — Poly Haven, CC0): 나무 · 돌 재질은 처음에는 코드로 그린 무늬로 보이고,
+     사진을 다 불러오면 나뭇결 사진 + 요철(노멀 맵)로 바꿔 끼워요. 못 불러오면(오프라인 · file://) 그린 무늬 그대로예요.
+     재질에 userData.v3tex = { k, r(반복 수) } 표시를 해 두고, 장면을 훑어 표시된 재질을 바꿔요 (복제한 재질도 표시가 따라가요). */
+  const matTex = {}; let matGen = 0;
+  function loadMatTex(THREE, k) {
+    if (matTex[k] || !/^https?:$/.test(global.location.protocol)) return;
+    const e = matTex[k] = { d: null, n: null }, L = new THREE.TextureLoader();
+    const get = (file, key, srgb) => L.load(BASE + 'tex/mat/' + file, (t) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; if (srgb && THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; e[key] = t; if (e.d && e.n) matGen++; }, undefined, () => {});
+    get(k + '.jpg', 'd', k === 'wood'); get(k + '_n.jpg', 'n', false);
+  }
+  function patchMat(m) {
+    const u = m && m.userData && m.userData.v3tex; if (!u || u.done) return;
+    const e = matTex[u.k]; if (!e || !e.d || !e.n) return;
+    u.done = true;
+    const rep = (t) => { const c = t.clone(); c.needsUpdate = true; c.repeat.set(u.r, u.r); return c; };
+    if (u.k === 'wood') { if (!m.map || !m.map.isCanvasTexture) return; m.map = rep(e.d); m.normalMap = rep(e.n); m.normalScale.set(0.4, 0.4); }
+    else { if (m.map) return; m.map = rep(e.d); m.normalMap = rep(e.n); m.normalScale.set(0.9, 0.9); m.bumpMap = null; }
+    m.needsUpdate = true;
+  }
   function makeMats(THREE) {
     const P = (o) => new THREE.MeshPhysicalMaterial(o), S = (o) => new THREE.MeshStandardMaterial(o);
     const rep = (t, n) => { const c = t.clone(); c.needsUpdate = true; c.repeat.set(n, n); return c; };
@@ -263,9 +282,9 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       /* 고무·무광 표면 */
       rubber: (color, o) => S(Object.assign({ color: color == null ? 0x0f1114 : color, roughness: 0.92, metalness: 0, envMapIntensity: 0.5 }, (o && o.extra) || {})),
       /* 나무: 나뭇결 무늬 (색을 주면 그 색으로 물들여요) */
-      wood: (color, o) => { o = o || {}; return S(Object.assign({ color: color == null ? 0xffffff : color, map: rep(procTex(THREE, 'wood'), o.repeat || 1), roughness: 0.62, metalness: 0, envMapIntensity: 0.7 }, o.extra || {})); },
+      wood: (color, o) => { o = o || {}; loadMatTex(THREE, 'wood'); const m = S(Object.assign({ color: color == null ? 0xffffff : color, map: rep(procTex(THREE, 'wood'), o.repeat || 1), roughness: 0.62, metalness: 0, envMapIntensity: 0.7 }, o.extra || {})); m.userData.v3tex = { k: 'wood', r: o.repeat || 1 }; patchMat(m); matGen++; return m; },
       /* 돌·암석·흙: 거친 잔무늬 */
-      stone: (color, o) => { o = o || {}; const t = rep(procTex(THREE, o.cracks ? 'stone' : 'noise'), o.repeat || 2); return S(Object.assign({ color: color == null ? 0x55585f : color, roughness: 0.94, metalness: 0, bumpMap: t, bumpScale: o.bump == null ? 0.03 : o.bump, roughnessMap: t, envMapIntensity: 0.45 }, o.extra || {})); },
+      stone: (color, o) => { o = o || {}; const t = rep(procTex(THREE, o.cracks ? 'stone' : 'noise'), o.repeat || 2), k = o.cracks ? 'rockface' : 'rock'; loadMatTex(THREE, k); const m = S(Object.assign({ color: color == null ? 0x55585f : color, roughness: 0.94, metalness: 0, bumpMap: t, bumpScale: o.bump == null ? 0.03 : o.bump, roughnessMap: t, envMapIntensity: 0.45 }, o.extra || {})); m.userData.v3tex = { k, r: Math.max(1, (o.repeat || 2) / 2) }; patchMat(m); matGen++; return m; },
       /* 도자기·에나멜: 매끈하고 반짝임 */
       ceramic: (color, o) => P(Object.assign({ color: color == null ? 0xf4f1ea : color, roughness: 0.22, metalness: 0, clearcoat: 0.9, clearcoatRoughness: 0.12, envMapIntensity: 1.1 }, (o && o.extra) || {})),
       /* 생체 조직(세포·기관): 부드럽고 촉촉한 느낌 (opacity를 주면 비쳐 보여요) */
@@ -508,7 +527,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
     });
 
     let THREE = null, renderer = null, scene = null, camera = null, root = null, user = null;
-    let failed = false, studioOn = false, bloom = null, space = null;   // three.js를 못 불러오면 이 차시는 2D로만 보여 줘요
+    let failed = false, studioOn = false, bloom = null, space = null, matSeen = -1;   // three.js를 못 불러오면 이 차시는 2D로만 보여 줘요
     let raf = 0, last = 0, isOpen = false, touched = false, built = false, frameN = 0;
     const cam0 = Object.assign({ dist: 8, theta: 0.6, phi: 1.15, fov: 45, target: [0, 0, 0], min: 2, max: 40 }, opts.camera || {});
     const orbit = { dist: cam0.dist, theta: cam0.theta, phi: cam0.phi, tx: cam0.target[0], ty: cam0.target[1], tz: cam0.target[2] };
@@ -819,7 +838,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       perfStep(Math.min(rawDt, 0.5));
       players.forEach((pl) => pl.tick(dt));
       if (user && user.update) { try { user.update(dt, t / 1000); } catch (e) { console.error(e); } }
-      if (frameN++ % 20 === 0) { if (shadowOn) markShadows(); fitShadow(); }
+      if (frameN++ % 20 === 0) { if (shadowOn) markShadows(); fitShadow(); if (matSeen !== matGen) { matSeen = matGen; root.traverse((o) => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(patchMat); }); } }
       stepFit(dt, t / 1000);
       placeCamera();
       if (space) space.update(camera, dt);
