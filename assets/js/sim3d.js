@@ -27,6 +27,7 @@
    ctx.lesson()                        // 2D 실험 상태(window.__sim) — 2D와 3D가 같은 값을 보여 주도록
    label(text, obj, { tap: fn }) / L.tap(fn)  // 이름표를 눌러도 물체를 누른 것과 같게 (작거나 움직이는 물체)
    ctx.mats                            // 실제 같은 재질: glass() liquid(c) metal('steel'|'brass'|'copper'|'gold'…, {brushed}) plastic(c) rubber(c)
+                                       //   ground('grass'|'soil'|'sand'|'snow', {repeat, color}) water(c, {opacity, repeat, speed, strength}) — 야외 장면의 땅과 수면
                                        //   wood(c) stone(c, {cracks}) ceramic(c) organic(c, {opacity}) fabric(c) ice() emissive(c, 세기)
    ctx.halo(obj, color, size)          // 빛나는 물체(전구·불꽃·별·뜨거운 것)에 부드러운 빛 번짐 붙이기
    ctx.model(name, fn)                 // 실제 3D 모델(assets/models/<name>.bin) 불러오기: fn({ 이름: geometry }, meta) — loadModel 설명 참고
@@ -258,12 +259,14 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
   /* 실제 사진 재질 (assets/tex/mat — Poly Haven, CC0): 나무 · 돌 재질은 처음에는 코드로 그린 무늬로 보이고,
      사진을 다 불러오면 나뭇결 사진 + 요철(노멀 맵)로 바꿔 끼워요. 못 불러오면(오프라인 · file://) 그린 무늬 그대로예요.
      재질에 userData.v3tex = { k, r(반복 수) } 표시를 해 두고, 장면을 훑어 표시된 재질을 바꿔요 (복제한 재질도 표시가 따라가요). */
-  const matTex = {}; let matGen = 0;
+  const matTex = {}, waterTex = []; let matGen = 0;
+  const GROUND = { grass: 0x537c3a, soil: 0x735a3d, sand: 0xbdaa7f, snow: 0xe1e6ed };   // 사진을 불러오기 전에 보일 색 (사진의 평균색)
   function loadMatTex(THREE, k) {
     if (matTex[k] || !/^https?:$/.test(global.location.protocol)) return;
     const e = matTex[k] = { d: null, n: null }, L = new THREE.TextureLoader();
     const get = (file, key, srgb) => L.load(BASE + 'tex/mat/' + file, (t) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; if (srgb && THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; e[key] = t; if (e.d && e.n) matGen++; }, undefined, () => {});
-    get(k + '.jpg', 'd', k === 'wood'); get(k + '_n.jpg', 'n', false);
+    if (k === 'water') e.d = true; else get(k + '.jpg', 'd', k !== 'rock' && k !== 'rockface');   // 물은 물결 요철만 써요
+    get(k + '_n.jpg', 'n', false);
   }
   function patchMat(m) {
     const u = m && m.userData && m.userData.v3tex; if (!u || u.done) return;
@@ -271,6 +274,8 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
     u.done = true;
     const rep = (t) => { const c = t.clone(); c.needsUpdate = true; c.repeat.set(u.r, u.r); return c; };
     if (u.k === 'wood') { if (!m.map || !m.map.isCanvasTexture) return; m.map = rep(e.d); m.normalMap = rep(e.n); m.normalScale.set(0.4, 0.4); }
+    else if (u.k === 'water') { if (m.normalMap) return; const t = rep(e.n); m.normalMap = t; m.normalScale.set(u.s, u.s); waterTex.push({ t, sp: u.sp }); }   // 물결이 천천히 흘러요 (frame에서 움직여요)
+    else if (GROUND[u.k] != null) { if (m.map) return; m.map = rep(e.d); m.normalMap = rep(e.n); m.normalScale.set(1, 1); m.color.set(u.tint); }
     else { if (m.map) return; m.map = rep(e.d); m.normalMap = rep(e.n); m.normalScale.set(0.9, 0.9); m.bumpMap = null; }
     m.needsUpdate = true;
   }
@@ -293,6 +298,10 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       wood: (color, o) => { o = o || {}; loadMatTex(THREE, 'wood'); const m = S(Object.assign({ color: color == null ? 0xffffff : color, map: rep(procTex(THREE, 'wood'), o.repeat || 1), roughness: 0.62, metalness: 0, envMapIntensity: 0.7 }, o.extra || {})); m.userData.v3tex = { k: 'wood', r: o.repeat || 1 }; patchMat(m); matGen++; return m; },
       /* 돌·암석·흙: 거친 잔무늬 */
       stone: (color, o) => { o = o || {}; const t = rep(procTex(THREE, o.cracks ? 'stone' : 'noise'), o.repeat || 2), k = o.cracks ? 'rockface' : 'rock'; loadMatTex(THREE, k); const m = S(Object.assign({ color: color == null ? 0x55585f : color, roughness: 0.94, metalness: 0, bumpMap: t, bumpScale: o.bump == null ? 0.03 : o.bump, roughnessMap: t, envMapIntensity: 0.45 }, o.extra || {})); m.userData.v3tex = { k, r: Math.max(1, (o.repeat || 2) / 2) }; patchMat(m); matGen++; return m; },
+      /* 땅: 'grass'(풀밭) | 'soil'(흙) | 'sand'(모래) | 'snow'(눈) — 실제 사진 질감 + 요철 (repeat: 반복 수, color: 물들일 색). 사진을 못 불러오면 평균색으로 보여요 */
+      ground: (kind, o) => { o = o || {}; const k = GROUND[kind] != null ? kind : 'grass'; loadMatTex(THREE, k); const c = new THREE.Color(GROUND[k]).convertSRGBToLinear(); if (o.color != null) c.multiply(new THREE.Color(o.color)); const m = S(Object.assign({ color: c, roughness: k === 'snow' ? 0.8 : 0.96, metalness: 0, envMapIntensity: 0.35 }, o.extra || {})); m.userData.v3tex = { k, r: o.repeat || 4, tint: o.color == null ? 0xffffff : o.color }; patchMat(m); matGen++; return m; },
+      /* 물(바다 · 호수 · 강의 수면): 반짝이는 수면에 물결 요철이 천천히 흘러요. color: 물 색, opacity: 비쳐 보이게, repeat: 물결 크기(클수록 잔물결), speed: 흐르는 빠르기, strength: 물결 세기 */
+      water: (color, o) => { o = o || {}; loadMatTex(THREE, 'water'); const q = { color: color == null ? 0x1f5fa8 : color, roughness: 0.12, metalness: 0, clearcoat: 0.6, clearcoatRoughness: 0.1, envMapIntensity: 0.75 }; if (o.opacity != null && o.opacity < 1) { q.transparent = true; q.opacity = o.opacity; q.depthWrite = false; } const m = P(Object.assign(q, o.extra || {})); m.userData.v3tex = { k: 'water', r: o.repeat || 3, s: o.strength == null ? 0.4 : o.strength, sp: o.speed == null ? 1 : o.speed }; patchMat(m); matGen++; return m; },
       /* 도자기·에나멜: 매끈하고 반짝임 */
       ceramic: (color, o) => P(Object.assign({ color: color == null ? 0xf4f1ea : color, roughness: 0.22, metalness: 0, clearcoat: 0.9, clearcoatRoughness: 0.12, envMapIntensity: 1.1 }, (o && o.extra) || {})),
       /* 생체 조직(세포·기관): 부드럽고 촉촉한 느낌 (opacity를 주면 비쳐 보여요) */
@@ -846,6 +855,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       perfStep(Math.min(rawDt, 0.5));
       players.forEach((pl) => pl.tick(dt));
       if (user && user.update) { try { user.update(dt, t / 1000); } catch (e) { console.error(e); } }
+      for (let i = 0; i < waterTex.length; i++) { const w = waterTex[i]; w.t.offset.x += dt * 0.018 * w.sp; w.t.offset.y += dt * 0.011 * w.sp; }   // 물결 흐르기
       if (frameN++ % 20 === 0) { if (rowHint) rowHint(); if (shadowOn) markShadows(); fitShadow(); if (matSeen !== matGen) { matSeen = matGen; root.traverse((o) => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(patchMat); }); } }
       stepFit(dt, t / 1000);
       placeCamera();

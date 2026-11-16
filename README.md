@@ -41,6 +41,7 @@
   우주 천체는 `ctx.space`로 실제 관측 사진 질감을 입힙니다: `space.skin(mesh, 'earth')`, `space.earth()`(구름·밤 불빛), `space.atmosphere()`, `space.ring()`, `space.sky()`, `space.sun()`. 질감은 `assets/tex/space/` (출처: Solar System Scope, CC BY 4.0 — https://www.solarsystemscope.com/textures/, 3D 화면에 출처가 표시됨). 못 불러오면 차시가 그린 질감으로 보입니다. 빛 번짐 후처리는 `bloom: true` 또는 `{ strength, threshold }` (느린 기기에서는 자동으로 꺼짐).
   인체 장기는 `ctx.model('digestive', fn)`처럼 실제 해부학 모델(`assets/models/*.bin`)을 불러와, 차시가 먼저 만들어 둔 단순한 모양과 바꿔 끼웁니다(못 불러오면 단순한 모양 그대로). 모델 출처: BodyParts3D, © The Database Center for Life Science, CC BY 4.0 (https://dbarchive.biosciencedbc.jp/en/bodyparts3d/) — 3D 화면에 출처가 표시됩니다. 모델 파일은 `tools/build_body_models.py`로 만듭니다.
   나무(`mats.wood`)·돌(`mats.stone`) 재질은 실제 사진 질감(`assets/tex/mat/`, Poly Haven — CC0, https://polyhaven.com)을 불러온 뒤 자동으로 바꿔 끼웁니다(나뭇결 사진 + 요철). 못 불러오면 코드로 그린 무늬로 보입니다.
+  야외 장면의 땅은 `mats.ground('grass'|'soil'|'sand'|'snow', { repeat, color })`, 바다·호수 수면은 `mats.water(색, { opacity, repeat, speed, strength })`(물결이 천천히 흐름)을 씁니다. 땅 사진도 Poly Haven(CC0)이고 물결 무늬는 직접 만든 것입니다.
   3D 화면은 **2D 실험과 같은 내용·같은 값**을 보여 주고, 2D에서 바꾼 조건이 3D에 그대로 반영됩니다(일부는 3D에서 바꿔도 2D가 따라 바뀜).
   학습 단계마다 그 단계의 미션에 맞는 장면을 보여 주며, 2D 화면을 직접 끌어야 하는 단계는 2D로 시작합니다.
   공전·달의 위상·세포 분열·파동·혈액 순환·분자 충돌처럼 **움직임이 중요한 차시**에는 **▶ 재생** 버튼이 있어 한 주기의 움직임을
