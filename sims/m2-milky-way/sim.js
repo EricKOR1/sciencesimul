@@ -1354,8 +1354,8 @@
         missions: [
           {
             title: '☀ 태양계를 제자리에',
-            goal: '<span class="only2d">위에서 본 모형에서 ☀를 끌어다</span><span class="only3d">아래 <b>☀ 태양계 위치</b> 막대로 ☀를 옮겨</span>, <b>은하 중심에서 약 3만 광년</b> 떨어진 곳에 놓아요.',
-            hint: '<span class="only2d">원 눈금은 1만 광년마다 하나씩이에요. 중심에서 3번째 원 둘레에 놓아 보세요. 놓은 뒤에도 다시 끌어 옮길 수 있어요.</span><span class="only3d">은하의 반지름은 약 5만 광년이에요. 막대 옆 숫자가 약 3만 광년이 되게 맞춰 보세요.</span>',
+            goal: '<span class="only2d">위에서 본 모형에서 ☀를 끌어다</span><span class="only3d">모형 옆의 <b>☀ 태양계</b>를 끌어다</span>, <b>은하 중심에서 약 3만 광년</b> 떨어진 곳에 놓아요.',
+            hint: '<span class="only2d">원 눈금은 1만 광년마다 하나씩이에요. 중심에서 3번째 원 둘레에 놓아 보세요. 놓은 뒤에도 다시 끌어 옮길 수 있어요.</span><span class="only3d">은하의 반지름은 약 5만 광년이에요. ☀를 놓으면 중심에서의 거리가 나와요. 약 3만 광년이 되게 다시 끌어 옮겨 보세요. 아래 <b>☀ 태양계 위치</b> 막대로도 옮길 수 있어요.</span>',
             setup() { setScene('disc'); S.tiltT = 0; S.pause = 3; S.sun.mode = 'park'; S.sun.sx = 702; S.sun.sy = 548; S.sunHint = ''; syncControls(); },
             _sunTask: true,
             check: () => S.sun.mode === 'placed' && sunDist() >= 22 && sunDist() <= 34,
@@ -1507,6 +1507,17 @@
       sun.mode = 'placed'; sun.gx = r * Math.cos(ang); sun.gy = r * Math.sin(ang);
       S.sunHint = r < 22 ? '중심에 너무 가까워요' : r > 34 ? '중심에서 너무 멀어요' : '나선팔 위에 있어요';
       if (r >= 22 && r <= 34) snapSunToArm(sun);
+    },
+    // 3D 화면에서 ☀를 끌어다 놓았을 때: 은하 좌표(gx, gy · 천 광년)에 놓아요. 원반 밖이면 놓지 않고 false (제자리로 돌아가요)
+    placeSunXY(gx, gy) {
+      if (S.scene !== 'disc') return false;
+      const sun = S.sun, r = Math.hypot(gx, gy);
+      if (r > GR + 3) { sun.mode = 'park'; S.sunHint = ''; Sound.tick(); return false; }
+      sunSnapId++; sun.mode = 'placed'; sun.gx = gx; sun.gy = gy; sun.pop = 1;
+      S.sunHint = r < 22 ? '중심에 너무 가까워요' : r > 34 ? '중심에서 너무 멀어요' : '나선팔 위에 있어요';
+      if (r >= 22 && r <= 34) snapSunToArm(sun);
+      Sound.tone(660, 0.1, 'triangle', 0.09);
+      return true;
     },
     discPoint(distKly) { const g = { x: distKly, y: 0 }; const yw = S.yaw * DEG; const x1 = g.x * Math.cos(yw) - g.y * Math.sin(yw), y1 = g.x * Math.sin(yw) + g.y * Math.cos(yw); return { x: DC.cx + DC.k * x1, y: DC.cy - DC.k * y1 }; },
     VIS,

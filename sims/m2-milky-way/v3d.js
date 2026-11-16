@@ -120,7 +120,7 @@
       const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(1.1, 20, 14), new THREE.MeshBasicMaterial({ color: 0xffd34d }));
       const sunGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: dot, color: 0xffe08a, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending }));
       sunGlow.scale.set(7, 7, 1); sunMesh.add(sunGlow); root.add(sunMesh);
-      function placeSun() { const p = G(sun.x, sun.y, 0); sunMesh.position.set(p[0], p[1], p[2]); orbitRing.scale.setScalar(Math.hypot(sun.x, sun.y) / SUN_R); }
+      function placeSun() { const p = G(sun.x, sun.y, 0); sunMesh.position.set(p[0], p[1], p[2]); orbitRing.scale.setScalar(parked ? 0.0001 : Math.hypot(sun.x, sun.y) / SUN_R); }
 
       /* ---- 태양에서 볼 때만 보이는 주변 별 ---- */
       const nearStars = (function () {
@@ -156,7 +156,7 @@
       function sunDir() { const p = G(sun.x, sun.y, 0); return { x: p[0], z: p[2] }; }
       function updateLabels() {
         const out = mode === 'out';
-        labSun.show(out && !hideSun); labCen.show(out); labDia.show(out); labDist.show(out && !hideSun); distLine.visible = out && !hideSun;
+        labSun.show(out && !hideSun); labCen.show(out); labDia.show(out); labDist.show(out && !hideSun && !parked); distLine.visible = out && !hideSun && !parked;
         labOpen.show(out && showOpen); labGlob.show(out && showGlob); labHalo.show(out && showHalo);
         labBand.show(mode === 'sun'); labUp.show(mode === 'sun'); labGC.show(mode === 'sun');
         if (mode === 'sun') {
@@ -215,17 +215,53 @@
       let sunCtlOn = true;
       const sunTask = () => { try { const g = sim && sim.game && sim.game(), m = g && g.current && g.current(); return !!(m && m._sunTask && g.phase === 'active'); } catch (e) { return false; } };
       let hideSun = false;
+      /* ☀ 끌어다 놓기 (3D): 미션 중 아직 놓지 않았으면 ☀가 화면 오른쪽 아래(은하 밖)에서 기다려요. ☀나 이름표를 잡고 끌면 은하 원반 위를 따라 움직이고,
+         놓으면 2D에서 끌어다 놓은 것과 같아요(sim.placeSunXY). 원반 밖에 놓으면 제자리로 돌아가요. 놓은 뒤에도 다시 끌 수 있어요. */
+      const view = ctx.renderer.domElement.parentElement, ray = new THREE.Raycaster(), gPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hit = new THREE.Vector3(), ndc = new THREE.Vector2(), sp = new THREE.Vector3();
+      let drag = null, parked = false, parkXY = null;
+      function planeAt(cx, cy) {     // 화면 위의 점 → 은하 좌표(천 광년). 원반 면과 만나지 않으면 null
+        const r = view.getBoundingClientRect(); ndc.set((cx - r.left) / r.width * 2 - 1, -((cy - r.top) / r.height * 2 - 1)); ray.setFromCamera(ndc, camera);
+        if (!ray.ray.intersectPlane(gPlane, hit)) return null;
+        root.worldToLocal(hit); const d = Math.hypot(hit.x, hit.z), k = d > 75 ? 75 / d : 1; return { x: hit.x * k, y: -hit.z * k };
+      }
+      function parkPos() {           // 기다리는 자리: 화면 오른쪽 아래쯤, 은하 원반 바깥
+        const r = view.getBoundingClientRect(); let p = planeAt(r.left + r.width * 0.8, r.top + r.height * 0.8) || { x: 44, y: -44 };
+        const d = Math.hypot(p.x, p.y) || 1, want = Math.max(GR + 10, Math.min(72, d)); return { x: p.x / d * want, y: p.y / d * want };
+      }
+      function sunScreen() { const r = view.getBoundingClientRect(); sunMesh.getWorldPosition(sp).project(camera); return { x: r.left + (sp.x + 1) / 2 * r.width, y: r.top + (1 - sp.y) / 2 * r.height }; }
+      view.addEventListener('pointerdown', (e) => {
+        if (!sunCtlOn || !sunMesh.visible || e.button > 0 || drag) return;
+        const s = sunScreen(), lr = labSun.el ? labSun.el.getBoundingClientRect() : null, pad = 6;
+        const onLab = !!lr && lr.width > 0 && e.clientX >= lr.left - pad && e.clientX <= lr.right + pad && e.clientY >= lr.top - pad && e.clientY <= lr.bottom + pad;
+        if (!onLab && Math.hypot(e.clientX - s.x, e.clientY - s.y) > (e.pointerType === 'touch' ? 46 : 30)) return;
+        e.stopImmediatePropagation(); e.preventDefault(); try { view.setPointerCapture(e.pointerId); } catch (err) { /* 무시 */ }
+        drag = { id: e.pointerId, x: sun.x, y: sun.y, dx: e.clientX - s.x, dy: e.clientY - s.y }; lastSunKey = ''; readLesson();
+      }, true);
+      view.addEventListener('pointermove', (e) => {
+        if (!drag || e.pointerId !== drag.id) return;
+        e.stopImmediatePropagation(); const p = planeAt(e.clientX - drag.dx, e.clientY - drag.dy); if (p) { drag.x = p.x; drag.y = p.y; } lastSunKey = ''; readLesson();
+      }, true);
+      const dropSun = (e) => {
+        if (!drag || e.pointerId !== drag.id) return;
+        e.stopImmediatePropagation(); const d = drag; drag = null;
+        if (e.type === 'pointerup' && sim && sim.placeSunXY) sim.placeSunXY(d.x, d.y);
+        lastSunKey = ''; readLesson();
+      };
+      view.addEventListener('pointerup', dropSun, true); view.addEventListener('pointercancel', dropSun, true);
       sideBtns();
 
       let lastSunKey = '';
       function readLesson() { // 수업에서 학생이 ☀를 놓았다면 그 자리를 따라가요 (읽기만)
-        { const q = sim && sim.S && sim.S.sun, st = sunTask(); const key = q ? q.mode + ':' + (q.gx || 0).toFixed(1) + ':' + (q.gy || 0).toFixed(1) + st : ''; if (key === lastSunKey) return; lastSunKey = key;
-          const placed = !!(q && q.mode === 'placed'); hideSun = !placed && st;
+        { const q = sim && sim.S && sim.S.sun, st = sunTask(); const placed = !!(q && q.mode === 'placed'); parked = !placed && st && !drag && mode === 'out'; parkXY = parked ? parkPos() : null;
+          const key = q ? q.mode + ':' + (q.gx || 0).toFixed(1) + ':' + (q.gy || 0).toFixed(1) + st + (drag ? 'd' + drag.x.toFixed(1) + ',' + drag.y.toFixed(1) : '') + (parkXY ? 'p' + parkXY.x.toFixed(1) + ',' + parkXY.y.toFixed(1) : '') : ''; if (key === lastSunKey) return; lastSunKey = key;
+          hideSun = false;
           if (placed && document.activeElement !== sunCtl[1]) sunR.set(Math.round(Math.hypot(q.gx, q.gy))); }
         try {
           const s = sim && sim.S && sim.S.sun;
           if (s && s.mode === 'placed' && isFinite(s.gx) && isFinite(s.gy) && Math.hypot(s.gx, s.gy) > 3) { sun = { x: s.gx, y: s.gy }; } else sun = { x: sunBase[0], y: sunBase[1] };
         } catch (e) { sun = { x: sunBase[0], y: sunBase[1] }; }
+        if (drag) sun = { x: drag.x, y: drag.y }; else if (parked && parkXY) sun = parkXY;
+        labSun.set(parked ? '☀ 태양계 · 끌어서 은하 위에 놓아요' : '☀ 태양계');
         let bi = 0, bd = 1e9; // 태양 바깥쪽 가까이의 산개 성단 하나에 이름표
         opens.forEach((o, i) => { const d = Math.hypot(o[0] - sun.x * 1.3, o[2] + sun.y * 1.3); if (d < bd) { bd = d; bi = i; } });
         anOpen.position.set(opens[bi][0], opens[bi][1], opens[bi][2]);
@@ -336,6 +372,7 @@
             readLesson();
           }
           if (mode === 'sun') root.rotation.y = 0;
+          sunGlow.scale.setScalar(parked ? 8.5 + 2 * Math.sin(tm * 4) : drag ? 9 : 7);     // 기다리는 ☀는 깜빡여서 눈에 띄게
           if (hazeM) hazeM.visible = mode === 'out';
           if (mode === 'sun') { // 카메라를 태양 자리에 두고, 끌면 보는 방향만 바꿔요
             const p = Math.max(0.05, Math.min(Math.PI - 0.05, orbit.phi)), d = 1;
