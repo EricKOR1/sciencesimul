@@ -1,6 +1,7 @@
 /* m1-constellation-change · 3D 지구 공전과 황도 12궁
    태양을 가운데 두고 지구가 북극 위에서 볼 때 시계 반대 방향으로 공전해요. 한밤중에는 지구가 태양의 '반대쪽'을 바라보므로,
    달마다 한밤중 남쪽 하늘에 보이는 별자리가 바뀌어요. (크기·거리는 실제와 달라요. 별자리 그림은 2D 화면과 같은 별 자료를 써요.)
+   3단계(태양의 연주 운동)에서는 지구 뒤에서 태양 쪽을 보는 시점으로 바뀌어요: 지구가 공전하면 태양 뒤의 별자리가 달라지고, [☀️ 햇빛 가리기]를 켜면 태양 뒤 별자리가 보여요.
    링 각도 a: 태양 쪽에서 본 방향을 시계 반대 방향으로 잰 각 (궁수자리 한가운데 = 0°),  지구 위치각 θE(월 초) = 180° + 30°(월 − 1). */
 (function () {
   'use strict';
@@ -17,10 +18,10 @@
     camera: { dist: wide ? 19 : 40, theta: 0.35, phi: 0.82, fov: 45, target: [0, 0, 0], min: 2.5, max: 50 },
     autoRotate: 0,
     bloom: { strength: 0.85, threshold: 1.0 },   // 태양이 둘레로 빛나 보여요
-    levels: [1],   // 2단계(공전하는 지구)만 3D — 남쪽 하늘 · 태양의 길 · 관측 카드(고리 누르기)는 2D
+    levels: [1, 2],   // 2단계(공전하는 지구) · 3단계(태양의 연주 운동: 지구에서 본 태양 뒤의 별자리)가 3D — 남쪽 하늘 · 관측 카드(고리 누르기)는 2D
     build(ctx) {
       const { THREE, scene, root, label, info, controls, orbit } = ctx;
-      const st = { m: 1, play: false, follow: false };
+      const st = { m: 1, play: false, follow: false, view: 'all' };
       try { const s = window.__sim && window.__sim.S; if (s && typeof s.th === 'number') st.m = ((((s.th - 180) / 30) % 12) + 12) % 12 + 1; } catch (e) {}
       const ZODS = (window.__sim && window.__sim.ZODS) || [];
 
@@ -37,9 +38,9 @@
       /* 태양 */
       const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,230,140,1)'); gr.addColorStop(0.25, 'rgba(255,190,60,.55)'); gr.addColorStop(1, 'rgba(255,160,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
       const sun = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 20), new THREE.MeshBasicMaterial({ color: 0xffd23f })); root.add(sun);
-      const SP = ctx.space; SP.skin(sun, 'sun'); SP.sun(sun); root.add(SP.sky(120, 0.6));   // 실제 태양 사진 (못 불러오면 노란 공 그대로) · 지구의 밤 쪽을 알게 · 은하수 밤하늘
+      const SP = ctx.space; SP.skin(sun, 'sun', { done: () => { last = ''; refresh(); } }); SP.sun(sun); root.add(SP.sky(120, 0.6));   // 실제 태양 사진 (못 불러오면 노란 공 그대로) · 지구의 밤 쪽을 알게 · 은하수 밤하늘
       const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); glow.scale.set(4.4, 4.4, 1); glow.material.opacity = 0.17; root.add(glow);
-      label('☀ 태양', [0, 0.95, 0], { size: 13, color: 'rgba(120,70,0,.85)' });
+      const sunLab = label('☀ 태양', [0, 0.95, 0], { size: 13, color: 'rgba(120,70,0,.85)' });
 
       /* 공전 궤도 + 방향 화살표 + 달 표시 */
       { const pts = []; for (let i = 0; i <= 120; i++) pts.push(new THREE.Vector3(...ring(i * 3, RO))); root.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x8fb4ff, transparent: true, opacity: 0.7 }))); }
@@ -91,6 +92,7 @@
       });
       if (!ZODS.length) label('별자리 자료를 불러오지 못했어요', [0, 2, 0], {});
 
+      const midQ = label('한밤중 쪽 ?', [0, 0, 0], { size: 12, color: 'rgba(13,110,100,.9)' }); midQ.show(false);   // 3단계: 한밤중 쪽 별자리는 직접 찾아봐요
       const angDiff = (a, b) => Math.abs(((a - b + 540) % 360) - 180);
       let last = '';
       function refresh() {
@@ -107,17 +109,36 @@
         pin.position.copy(up).multiplyScalar(0.5);
         { const qT = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), axis), v = up.clone().applyQuaternion(qT.clone().invert());   // 지구 사진도 자전축만큼 기울이고, 서울(동경 127°)이 빨간 점 아래에 오게 돌려요
           earthM.quaternion.copy(qT).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(-v.z, v.x) - 127 * DEG)); }
+        const S2 = L2() && L2().S, noon = !!(S2 && S2.noonT > 0.5), glare = noon && !!S2.glare, seen = noon && S2.walkOn && S2.walk ? S2.walk.visited : [];   // 3단계(연주 운동): 태양 쪽 별자리가 주인공이에요
+        if (noon) { dp.setXYZ(1, ...ring(thE + 180, RZ - 0.9)); dp.needsUpdate = true; dayLine.computeLineDistances(); }   // 시선: 지구 → 태양 → 태양 뒤의 별자리
+        { const k = glare ? 0.36 : 1; if (sun.material.map) sun.material.color.setRGB(1.5 * k, 1.42 * k, 1.3 * k); else sun.material.color.set(0xffd23f).multiplyScalar(k);   // 햇빛을 가리면 태양이 어두운 원반으로
+          glow.scale.setScalar(!noon ? 4.4 : glare ? 2.6 : st.view === 'sun' ? 7.5 : 5.4); glow.material.opacity = !noon ? 0.17 : glare ? 0.06 : 0.55;
+          sun.material.transparent = glare; sun.material.opacity = glare ? 0.3 : 1; sun.material.depthWrite = !glare; sun.renderOrder = glare ? 3 : 0; sun.material.needsUpdate = true;   // 가린 태양은 비쳐 보여서 뒤의 별자리가 보여요
+          sunLab.show(!(glare && st.view === 'sun')); earthLab.show(st.view !== 'sun'); }   // 지구에서 태양 보기: 이름표가 태양 · 별자리를 가리지 않게
+        arrow.visible = !noon; midQ.show(noon); midQ.obj = ring(thE, RO + 1.5);
         // 한밤중·태양 쪽 별자리
         let mid = null, md = 1e9, sunC = null, sd = 1e9;
         figs.forEach((f) => { if (f.c.orion) return; const d = angDiff(f.a, thE); if (d < md) { md = d; mid = f; } const d2 = angDiff(f.a, thE + 180); if (d2 < sd) { sd = d2; sunC = f; } });
-        figs.forEach((f) => {
+        figs.forEach((f, fi) => {
+          if (noon) {   // 태양 뒤의 별자리: 낮에는 햇빛에 가려 흐리고, [☀️ 햇빛 가리기]를 켜면 또렷해요. 지나간 별자리에는 ✔
+            const isSun = f === sunC, was = seen.indexOf(fi) >= 0 && !isSun;
+            f.pm.opacity = isSun ? (glare ? 1 : 0.16) : 0.55; f.lm.opacity = isSun ? (glare ? 1 : 0.12) : 0.4;
+            const tx = f.c.name + (isSun ? (glare ? ' ☀ 태양 뒤' : ' ☀ 낮이라 안 보임') : was ? ' ✔' : ''); if (f.tx !== tx) { f.tx = tx; f.lab.set(tx); }
+            f.lab.el.style.fontSize = isSun ? '14px' : '12px'; f.lab.el.style.opacity = isSun && !glare ? 0.7 : 1; f.lab.el.style.outline = isSun && glare ? '2px solid #ffb347' : 'none';
+            return;
+          }
           const isMid = f === mid, isSun = f === sunC, ori = f.c.orion && angDiff(165, thE) < 25;
           f.pm.opacity = isMid || ori ? 1 : isSun ? 0.25 : 0.55; f.lm.opacity = isMid || ori ? 1 : isSun ? 0.2 : 0.4;
           const tx = f.c.name + (isMid ? ' 🌙' : ori ? ' 🌙' : isSun ? ' ☀' : ''); if (f.tx !== tx) { f.tx = tx; f.lab.set(tx); } f.lab.el.style.fontSize = isMid ? '14px' : '12px';
           f.lab.el.style.opacity = isSun ? 0.55 : 1; f.lab.el.style.outline = isMid ? '2px solid #ffd34d' : 'none';
         });
         monLabs.forEach((l, i) => { const on = i + 1 === mi; l.el.style.background = on ? '#ffd34d' : ''; l.el.style.color = on ? '#1b2333' : ''; l.el.style.fontSize = on ? '13px' : '11px'; });
-        {
+        if (noon) {
+          const html = '<b>' + mi + '월</b> · 지구에서 태양을 보면, 태양은 <b style="color:#ffb347">' + (sunC ? sunC.c.name : '') + '</b> 앞에 있어요.<br>' +
+            (glare ? '햇빛을 가리니 태양 뒤의 별자리가 보여요. (실제로는 볼 수 없는 모습이에요)' : '낮에는 햇빛 때문에 별이 보이지 않아요. <b>☀️ 햇빛 가리기</b>를 켜 보세요.') +
+            '<br>지구가 공전하면 태양이 <b>별자리 사이를 옮겨 가는 것처럼</b> 보여요.';
+          if (html !== last) { last = html; info(html); }
+        } else {
           const html = ('<b>' + mi + '월</b> 한밤중 · 지구가 태양의 반대쪽, <b>' + (mid ? mid.c.name : '') + '</b> 🌙 방향(청록 화살표)을 바라봐요.<br>' +
             '<span style="color:#ffb347">☀ 태양 쪽(' + (sunC ? sunC.c.name : '') + ')</span>은 낮이라 별이 안 보여요.<br>지구가 공전하면 한밤중 방향이 달라져 <b>별자리가 계절마다 바뀌어요.</b>');
           if (html !== last) { last = html; info(html); }
@@ -136,15 +157,30 @@
       const rng = controls.range('📅', 1, 13, 0.05, st.m, (v) => { rngV = v; st.play = false; playB.textContent = '▶ 공전 재생'; to2D(v, false); }, monthName);
       fixLab(4.5);
       const playB = controls.button('▶ 공전 재생', () => { st.play = !st.play; playB.textContent = st.play ? '⏸ 멈춤' : '▶ 공전 재생'; });
+      const glareB = controls.button('☀️ 햇빛 가리기', () => { const t = document.getElementById('tGlare'); if (t) t.click(); });   // 2D 조작판의 [☀️ 햇빛 가리기]와 같은 스위치
       controls.text('').style.cssText = 'flex-basis:100%;height:0;padding:0;margin:-3px 0';
-      controls.segment('시점', [{ value: 'all', label: '🌐 전체' }, { value: 'earth', label: '🌍 지구 따라가기' }], 'all', (v) => {
-        st.follow = v === 'earth';
-        if (st.follow) { orbit.dist = 5; orbit.phi = 1.0; } else { Object.assign(orbit, { dist: wide ? 19 : 40, theta: 0.35, phi: 0.82, tx: 0, ty: 0, tz: 0 }); }
-      });
-      refresh();
+      const setView = (v) => {
+        st.view = v; st.follow = v === 'earth';
+        if (v === 'earth') { orbit.dist = 5; orbit.phi = 1.0; }
+        else if (v === 'sun') { Object.assign(orbit, { dist: RO + 6, phi: 1.33, tx: 0, ty: 0, tz: 0 }); }   // 지구 뒤에서 태양 쪽을 봐요 (방향은 update에서 지구를 따라가요)
+        else { Object.assign(orbit, { dist: wide ? 19 : 40, theta: 0.35, phi: 0.82, tx: 0, ty: 0, tz: 0 }); }
+        last = ''; refresh();
+      };
+      const viewSeg = controls.segment('시점', [{ value: 'all', label: '🌐 전체' }, { value: 'earth', label: '🌍 지구 따라가기' }, { value: 'sun', label: '☀ 지구에서 태양 보기' }], 'all', setView);
+      const sunViewB = [...ctlEl.querySelectorAll('button')].find((b) => b.textContent.indexOf('지구에서 태양 보기') >= 0);
+      let modeKey = '';
+      function modeSync() {   // 단계(한밤중 ↔ 태양 쪽) · 햇빛 가리기 · 지나간 별자리가 바뀌면 화면을 다시 맞춰요
+        const S2 = L2() && L2().S, noon = !!(S2 && S2.noonT > 0.5), key = noon + ':' + !!(S2 && S2.glare) + ':' + (S2 && S2.walk && S2.walk.visited ? S2.walk.visited.length : 0);
+        if (key === modeKey) return; const was = modeKey.split(':')[0]; modeKey = key;
+        glareB.style.display = noon ? '' : 'none'; glareB.classList.toggle('on', !!(S2 && S2.glare)); if (sunViewB) sunViewB.style.display = noon ? '' : 'none';
+        if (was !== String(noon)) { const v = noon ? 'sun' : 'all'; if (viewSeg && viewSeg.set) viewSeg.set(v); setView(v); }   // 3단계에 들어오면 '지구에서 태양 보기'로, 나가면 '전체'로
+        last = ''; refresh();
+      }
+      refresh(); modeSync();
 
       return {
         update(dt) {
+          modeSync();
           if (st.play) { st.m += dt / 1.2; if (st.m >= 13) st.m -= 12; rngV = st.m; rng.set(st.m); to2D(st.m, true); refresh(); }
           else {   // 2D 상태(움직이는 지구 S.thA)를 따라가요
             const S2 = L2() && L2().S;
@@ -154,6 +190,7 @@
               if (Math.abs(mT - rngV) > 0.03 && Math.abs(mT - rngV) < 11.9) { rngV = mT; rng.set(mT); }
             }
           }
+          if (st.view === 'sun') { const a = norm(180 + 30 * (st.m - 1)) * DEG; orbit.theta = Math.atan2(Math.cos(a), -Math.sin(a)); }   // 카메라가 지구 뒤에서 태양 쪽을 보게
           if (st.follow) { const p = earth.position; orbit.tx += (p.x - orbit.tx) * Math.min(1, dt * 8); orbit.ty += (p.y - orbit.ty) * Math.min(1, dt * 8); orbit.tz += (p.z - orbit.tz) * Math.min(1, dt * 8); }
           seoulLab.show(orbit.dist < 9);
         },
