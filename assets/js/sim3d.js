@@ -175,9 +175,17 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
   .v3-ctl .v3-row { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
   .v3-ctl .v3-row::-webkit-scrollbar { display: none; }
   .v3-ctl .v3-row > * { flex: none; }
+  .v3-ctl .v3-row > [style*="flex-basis:100%"], .v3-ctl .v3-row > [style*="flex-basis: 100%"] { display: none !important; }   /* PC용 줄바꿈 칸: 휴대폰 한 줄에서는 빈칸이 되므로 숨겨요 */
+  .v3-ctl .v3-row.more-r { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent calc(100% - 24px)); mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent calc(100% - 24px)); }
+  .v3-ctl .v3-row.more-l { -webkit-mask-image: linear-gradient(90deg, transparent, #000 26px); mask-image: linear-gradient(90deg, transparent, #000 26px); }
+  .v3-ctl .v3-row.more-l.more-r { -webkit-mask-image: linear-gradient(90deg, transparent, #000 26px, #000 calc(100% - 56px), transparent calc(100% - 24px)); mask-image: linear-gradient(90deg, transparent, #000 26px, #000 calc(100% - 56px), transparent calc(100% - 24px)); }
+  .v3-ctl .v3-more { position: absolute; right: 4px; z-index: 4; width: 26px; height: 30px; min-height: 0; padding: 0; border: 0; border-radius: 10px; font-size: 21px; line-height: 1; font-weight: 900; background: linear-gradient(180deg, #ffe489, #ffc83a); color: #1a2233; box-shadow: 0 2px 8px rgba(0,0,0,.4); animation: v3more 1.1s ease-in-out 4; }
+  .v3-ctl .v3-more:hover, .v3-ctl .v3-more:active, .v3-ctl .v3-more:focus { background: linear-gradient(180deg, #ffe489, #ffc83a); border: 0; transform: none; }
   .v3-ctl button { min-height: 32px; font-size: 13px; padding: 3px 9px; }
   .v3-title { font-size: 14px; } .v3-info { font-size: 12px; max-width: 75%; } .v3-ctl input[type=range] { width: 110px; } }
-@media (prefers-reduced-motion: reduce) { .v3-wrap { animation: none; } }
+.v3-more { display: none; }
+@keyframes v3more { 50% { transform: translateX(-5px); } }
+@media (prefers-reduced-motion: reduce) { .v3-wrap, .v3-ctl .v3-more { animation: none; } }
 `;
     doc.head.appendChild(st);
   }
@@ -527,7 +535,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
     });
 
     let THREE = null, renderer = null, scene = null, camera = null, root = null, user = null;
-    let failed = false, studioOn = false, bloom = null, space = null, matSeen = -1;   // three.js를 못 불러오면 이 차시는 2D로만 보여 줘요
+    let failed = false, studioOn = false, bloom = null, space = null, matSeen = -1, rowHint = null;   // three.js를 못 불러오면 이 차시는 2D로만 보여 줘요
     let raf = 0, last = 0, isOpen = false, touched = false, built = false, frameN = 0;
     const cam0 = Object.assign({ dist: 8, theta: 0.6, phi: 1.15, fov: 45, target: [0, 0, 0], min: 2, max: 40 }, opts.camera || {});
     const orbit = { dist: cam0.dist, theta: cam0.theta, phi: cam0.phi, tx: cam0.target[0], ty: cam0.target[1], tz: cam0.target[2] };
@@ -838,7 +846,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       perfStep(Math.min(rawDt, 0.5));
       players.forEach((pl) => pl.tick(dt));
       if (user && user.update) { try { user.update(dt, t / 1000); } catch (e) { console.error(e); } }
-      if (frameN++ % 20 === 0) { if (shadowOn) markShadows(); fitShadow(); if (matSeen !== matGen) { matSeen = matGen; root.traverse((o) => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(patchMat); }); } }
+      if (frameN++ % 20 === 0) { if (rowHint) rowHint(); if (shadowOn) markShadows(); fitShadow(); if (matSeen !== matGen) { matSeen = matGen; root.traverse((o) => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(patchMat); }); } }
       stepFit(dt, t / 1000);
       placeCamera();
       if (space) space.update(camera, dt);
@@ -890,9 +898,18 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       }
       // 조작 도구 정리: 버튼·슬라이더는 한 줄(휴대폰에서는 옆으로 밀어 보기), ▶ 재생 막대는 그 아래 줄
       const row = el('div', 'v3-row');
-      const pack = () => { Array.from(ctl.children).forEach((c) => { if (c !== row && !c.classList.contains('v3-player')) row.appendChild(c); }); if (row.parentNode !== ctl) ctl.insertBefore(row, ctl.firstChild); else if (ctl.firstChild !== row) ctl.insertBefore(row, ctl.firstChild); };
+      const pack = () => { Array.from(ctl.children).forEach((c) => { if (c !== row && !c.classList.contains('v3-player') && !c.classList.contains('v3-more')) row.appendChild(c); }); if (row.parentNode !== ctl) ctl.insertBefore(row, ctl.firstChild); else if (ctl.firstChild !== row) ctl.insertBefore(row, ctl.firstChild); };
       pack();
-      if (global.MutationObserver) new MutationObserver((ms) => { if (ms.some((m) => Array.from(m.addedNodes).some((n) => n !== row && n.parentNode === ctl && !(n.classList && n.classList.contains('v3-player'))))) pack(); }).observe(ctl, { childList: true });
+      if (global.MutationObserver) new MutationObserver((ms) => { if (ms.some((m) => Array.from(m.addedNodes).some((n) => n !== row && n.parentNode === ctl && !(n.classList && (n.classList.contains('v3-player') || n.classList.contains('v3-more')))))) pack(); }).observe(ctl, { childList: true });
+      // 휴대폰: 조작 줄이 화면보다 길면(옆으로 밀어야 보이는 조작이 있으면) 오른쪽에 '›' 단추와 흐려지는 가장자리로 알려요. '›'를 누르면 다음 조작으로 넘어가요
+      const more = el('button', 'v3-more', '›'); more.type = 'button'; more.setAttribute('aria-label', '조작 더 보기'); ctl.appendChild(more);
+      rowHint = () => {
+        const over = row.scrollWidth > row.clientWidth + 6, atEnd = row.scrollLeft + row.clientWidth >= row.scrollWidth - 6, on = over && !atEnd;
+        row.classList.toggle('more-r', on); row.classList.toggle('more-l', over && row.scrollLeft > 6);
+        more.style.display = on ? 'block' : 'none'; if (on) more.style.top = (row.offsetTop + Math.max(0, (row.offsetHeight - 30) / 2)) + 'px';
+      };
+      row.addEventListener('scroll', rowHint, { passive: true });
+      more.addEventListener('click', () => { const dx = row.clientWidth * 0.7; if (row.scrollBy) row.scrollBy({ left: dx, behavior: 'smooth' }); else row.scrollLeft += dx; });
       built = true;
       wrap.__v3 = () => ({ THREE, scene, root, camera, labs, orbit, auto, model: (n, f) => loadModel(THREE, n, f), mats: makeMats(THREE), halo: (c, z, o) => makeHalo(THREE, c, z, o), measure: () => { const u = auto.user; auto.user = false; const k = auto.kT; measureFit(false); auto.kT = k; auto.user = u; return { fill: auto.fill, k: auto.k, cx: auto.cx, cy: auto.cy }; } });   // 점검 도구용 (화면에는 영향 없음)
       if (global.ResizeObserver) new ResizeObserver(resize).observe(view);

@@ -158,7 +158,7 @@
       fixLab(4.5);
       const playB = controls.button('▶ 공전 재생', () => { st.play = !st.play; playB.textContent = st.play ? '⏸ 멈춤' : '▶ 공전 재생'; });
       const glareB = controls.button('☀️ 햇빛 가리기', () => { const t = document.getElementById('tGlare'); if (t) t.click(); });   // 2D 조작판의 [☀️ 햇빛 가리기]와 같은 스위치
-      controls.text('').style.cssText = 'flex-basis:100%;height:0;padding:0;margin:-3px 0';
+      controls.text('').style.cssText = wide ? 'flex-basis:100%;height:0;padding:0;margin:-3px 0' : 'display:none';   // PC에서는 여기서 줄을 바꿔요 (휴대폰은 한 줄이라 빈칸이 생기지 않게 숨겨요)
       const setView = (v) => {
         st.view = v; st.follow = v === 'earth';
         if (v === 'earth') { orbit.dist = 5; orbit.phi = 1.0; }
