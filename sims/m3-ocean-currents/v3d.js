@@ -93,7 +93,7 @@
       { const gl = new THREE.Mesh(new THREE.BoxGeometry(TWd + 0.06, TYc(292), TD + 0.06), MT.glass({ opacity: 0.1 })); gl.position.y = TYc(292) / 2; gl.userData.v3bg = true; gl.renderOrder = 3; tankG.add(gl); }   // 수조의 유리 벽
       const glassBox = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(TWd, TYc(292), TD)), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 })); glassBox.position.y = TYc(292) / 2; tankG.add(glassBox);
       const surfG = new THREE.PlaneGeometry(TWd, TD, 50, 4); surfG.rotateX(-Math.PI / 2);
-      const surf = new THREE.Mesh(surfG, sm(0x8fd0ff, { transparent: true, opacity: 0.55, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false })); tankG.add(surf);
+      const surf = new THREE.Mesh(surfG, MT.water(lc(0x8fd0ff), { opacity: 0.55, repeat: 3, strength: 0.3, extra: { side: THREE.DoubleSide } })); tankG.add(surf);
       const base = new THREE.Mesh(new THREE.BoxGeometry(TWd + 14, 0.2, 5), MT.wood(0xd9c7a8, { repeat: 2 })); base.position.y = -0.1; tankG.add(base);
       const ruler = new THREE.Mesh(new THREE.BoxGeometry(TWd, 0.04, 0.4), MT.plastic(lc(0xf2c14e))); ruler.position.set(0, 0.02, TD / 2 + 0.3); tankG.add(ruler);
       const rlA = new THREE.Object3D(); rlA.position.set(0, 0.2, TD / 2 + 0.7); tankG.add(rlA);   // 눈금자 이름표: 수조를 볼 때만 보여요

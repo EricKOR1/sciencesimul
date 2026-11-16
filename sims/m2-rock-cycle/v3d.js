@@ -62,7 +62,7 @@
       root.add(conduit);
       { const vent = new THREE.Object3D(); vent.position.set(-3.1, 2.35, 0); root.add(vent); ctx.halo(vent, 0xff8a3a, 1.7, 0.6); }   // 분화구의 붉은 빛
       // 바다
-      const sea = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.5, D), MT.liquid(lc(0x2f8fd8), { opacity: 0.5 }));
+      const sea = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.5, D), MT.water(lc(0x2f8fd8), { opacity: 0.5, repeat: 2 }));
       sea.position.set(3.2, -0.2, 0); sea.renderOrder = 3; root.add(sea);
       // 앞면 레이어가 보이도록 앞쪽 투명 안내 (생략)
 

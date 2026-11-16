@@ -28,11 +28,11 @@
       const sr = () => { try { return window.__sim && window.__sim.S; } catch (e) { return null; } };
 
       /* 수조: 바닥 + 뒷벽 + 물 */
-      const floorMat = ctx.mats.stone(0x6e5636, { repeat: 4, bump: 0.05 });   // 모래 바닥
+      const floorMat = ctx.mats.ground('sand', { repeat: 4 });   // 모래 바닥
       const floor = new THREE.Mesh(new THREE.BoxGeometry(LX + 0.6, 0.4, LZ + 0.6), floorMat); root.add(floor);
       const body = new THREE.Mesh(new THREE.BoxGeometry(LX, 1, LZ), ctx.mats.liquid(0x0f5a9e, { opacity: 0.15 })); root.add(body);
       const surfGeo = new THREE.PlaneGeometry(LX, LZ, 120, 10); surfGeo.rotateX(-Math.PI / 2);
-      const surf = new THREE.Mesh(surfGeo, ctx.mats.liquid(0x1f7fcc, { opacity: 0.62, extra: { side: THREE.DoubleSide, roughness: 0.08, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.01 } })); root.add(surf);
+      const surf = new THREE.Mesh(surfGeo, ctx.mats.water(0x1f7fcc, { opacity: 0.62, repeat: 4, extra: { side: THREE.DoubleSide } })); root.add(surf);
       const sp = surfGeo.attributes.position, sx = new Float32Array(sp.count); for (let i = 0; i < sp.count; i++) sx[i] = sp.getX(i);
 
       /* 입자: 궤도 6개 열 × 깊이 */

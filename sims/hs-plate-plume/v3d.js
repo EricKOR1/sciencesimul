@@ -27,7 +27,7 @@
       mantle.position.set(0.3, (MB - 0.12) / 2, 0); root.add(mantle);
       const base = new THREE.Mesh(new THREE.BoxGeometry(13.4, 0.18, DEP), ctx.mats.stone(0xd9480f, { repeat: 3, bump: 0.04, extra: { emissive: 0xb91c1c, emissiveIntensity: 0.55 } })); base.position.set(0.3, MB - 0.09, 0); root.add(base);
       /* 바다 */
-      const sea = new THREE.Mesh(new THREE.BoxGeometry(XT - XR + 1.2, 0.4, DEP), ctx.mats.liquid(0x1f6fbf, { opacity: 0.4, extra: { bumpMap: ctx.mats.tex('noise'), bumpScale: 0.01 } }));
+      const sea = new THREE.Mesh(new THREE.BoxGeometry(XT - XR + 1.2, 0.4, DEP), ctx.mats.water(0x1f6fbf, { opacity: 0.4, repeat: 2 }));
       sea.position.set((XR + XT) / 2 - 0.3 + 0.2, 0.2, 0); root.add(sea);
       /* 해양 암석권 + 섭입하는 판 (단면 도형을 압출) */
       const th = thick(XT), dir = [Math.cos(ANG), -Math.sin(ANG)], nrm = [Math.sin(ANG), Math.cos(ANG)];   // 슬래브 진행 방향 · 아래쪽 법선(−nrm)
@@ -42,7 +42,7 @@
       { const h = ctx.halo(null, 0xff7a3a, 1.4, 0.55); h.position.set(XR - 0.02, 0.2, 0); root.add(h); }   // 해령의 뜨거운 마그마 빛
       /* 대륙 (오른쪽, 위에 얹힌 판) */
       const cont = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.95, DEP), ctx.mats.stone(0x7a6a4c, { cracks: true, repeat: 0.5, bump: 0.05 })); cont.position.set(XT + 1.8 + 0.12, 0.2, 0); root.add(cont);
-      const contTop = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.14, DEP), ctx.mats.stone(0x3f7f3f, { repeat: 0.8, bump: 0.05 })); contTop.position.set(XT + 1.92, 0.7, 0); root.add(contTop);
+      const contTop = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.14, DEP), ctx.mats.ground('grass', { repeat: 1.5 })); contTop.position.set(XT + 1.92, 0.7, 0); root.add(contTop);
       const contRoot = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.6, DEP), ctx.mats.stone(0x5d4a32, { repeat: 0.5, bump: 0.05 })); contRoot.position.set(XT + 1.92, -0.58, 0); root.add(contRoot);
 
       /* 판의 이동을 보여 주는 점 (해령 → 해구 → 슬래브) */
@@ -84,7 +84,7 @@
       const lPlume = label('맨틀 플룸', [PX + 0.4, -2.6, 0.2], { color: 'rgba(194,65,12,.92)' }), lHot = label('열점', [PX, 0.8, 0.2], { color: 'rgba(146,64,14,.92)' });
       /* 화산섬 */
       const islG = new THREE.Group(); root.add(islG);
-      const islMat = ctx.mats.stone(0x5b4030, { repeat: 1, bump: 0.04 }), islTop = ctx.mats.stone(0x3f8f55, { repeat: 1, bump: 0.03 });
+      const islMat = ctx.mats.stone(0x5b4030, { repeat: 1, bump: 0.04 }), islTop = ctx.mats.ground('grass', { repeat: 0.6 });
 
       /* 지진파 단층 촬영 (2D '🩻 단층 촬영 영상 보기'와 같은 색: 빨강 = 지진파 느림 = 뜨거움, 파랑 = 빠름 = 차가움) — 단면 앞면에 겹쳐요 */
       const TX0 = -6.4, TX1 = 7.0, TW = 512, TH = 160, tcv = document.createElement('canvas'); tcv.width = TW; tcv.height = TH;

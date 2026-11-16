@@ -42,7 +42,7 @@
       /* 하늘 · 먼 땅 · 나무 */
       const skyC = document.createElement('canvas'); skyC.width = 4; skyC.height = 256; { const x = skyC.getContext('2d'), g = x.createLinearGradient(0, 0, 0, 256); g.addColorStop(0, '#2563b8'); g.addColorStop(0.45, '#7fbdee'); g.addColorStop(0.56, '#dff0fb'); g.addColorStop(1, '#dff0fb'); x.fillStyle = g; x.fillRect(0, 0, 4, 256); }
       const sky = new THREE.Mesh(new THREE.SphereGeometry(48, 24, 16), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(skyC), side: THREE.BackSide, depthWrite: false })); sky.renderOrder = -10; root.add(sky);
-      const farG = new THREE.Mesh(new THREE.CircleGeometry(45, 48), sm(0x234d25, { roughness: 1 })); farG.rotation.x = -Math.PI / 2; farG.position.y = -0.06; root.add(farG);
+      const farG = new THREE.Mesh(new THREE.CircleGeometry(45, 48), ctx.mats.ground('grass', { repeat: 18, color: 0xb4c4a8 })); farG.rotation.x = -Math.PI / 2; farG.position.y = -0.06; root.add(farG);
       for (let i = 0; i < 8; i++) { const a = -0.3 - i * 0.55, r = 24 + (i % 3) * 3, hh = 1.6 + (i % 4) * 0.6; const m = new THREE.Mesh(new THREE.ConeGeometry(4 + (i % 3) * 1.4, hh * 2, 7), sm(i % 2 ? 0x33495f : 0x3d566e, { roughness: 1, flatShading: true })); m.position.set(Math.cos(a) * r, hh - 0.2, Math.sin(a) * r - 8); m.userData.v3bg = true; root.add(m); }
       [sky, farG, terrain].forEach((m) => { m.userData.v3bg = true; });
       // 자동 맞춤용 보이지 않는 상자: 먼 산 · 넓은 들판 대신 가운데 산과 공기 덩어리가 오르내리는 곳에 맞춰요

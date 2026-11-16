@@ -24,14 +24,14 @@
 
       /* ---------- 땅 · 바다 · 대기 ---------- */
       const GW = 13, GD = 5;
-      const land = new THREE.Mesh(new THREE.BoxGeometry(GW * 0.55, 0.8, GD), [0, 1, 2, 3, 4, 5].map((q) => (q === 2 ? ctx.mats.stone(0x2f6f26, { repeat: 6, bump: 0.07 }) : ctx.mats.stone(0x5a4630, { repeat: 4, bump: 0.05 })))); land.position.set(-GW * 0.225, -0.4, 0); land.receiveShadow = true; root.add(land);
-      const sea = new THREE.Mesh(new THREE.BoxGeometry(GW * 0.45, 0.8, GD), new THREE.MeshPhysicalMaterial({ color: 0x0d4aa4, roughness: 0.1, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 1.5 })); sea.position.set(GW * 0.275, -0.4, 0); sea.receiveShadow = true; root.add(sea);
+      const land = new THREE.Mesh(new THREE.BoxGeometry(GW * 0.55, 0.8, GD), [0, 1, 2, 3, 4, 5].map((q) => (q === 2 ? ctx.mats.ground('grass', { repeat: 6 }) : ctx.mats.ground('soil', { repeat: 3 })))); land.position.set(-GW * 0.225, -0.4, 0); land.receiveShadow = true; root.add(land);
+      const sea = new THREE.Mesh(new THREE.BoxGeometry(GW * 0.45, 0.8, GD), ctx.mats.water(0x0d4aa4, { repeat: 4 })); sea.position.set(GW * 0.275, -0.4, 0); sea.receiveShadow = true; root.add(sea);
       const rock = new THREE.Mesh(new THREE.BoxGeometry(GW, 0.5, GD), ctx.mats.stone(0x4a4036, { cracks: true, repeat: 3, bump: 0.07 })); rock.position.y = -1.05; root.add(rock);
       { const NT = 700, tuft = new THREE.InstancedMesh(new THREE.ConeGeometry(0.03, 0.16, 4, 1), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 }), NT), o = new THREE.Object3D(), c = new THREE.Color(); let sd = 23; const rn = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
         for (let q = 0; q < NT; q++) { o.position.set(-GW / 2 + 0.05 + rn() * (GW * 0.55 - 0.15), 0.05, (rn() - 0.5) * (GD - 0.1)); o.rotation.set((rn() - 0.5) * 0.5, rn() * 6.3, (rn() - 0.5) * 0.5); o.scale.set(1, 0.6 + rn(), 1); o.updateMatrix(); tuft.setMatrixAt(q, o.matrix); tuft.setColorAt(q, c.setHSL(0.27 + rn() * 0.07, 0.5, 0.22 + rn() * 0.13)); }
         tuft.userData.v3bg = true; root.add(tuft);   // 풀잎
         const foam = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.03, GD), new THREE.MeshStandardMaterial({ color: 0xe6f2ff, roughness: 0.5, transparent: true, opacity: 0.8 })); foam.position.set(GW * 0.05 + 0.05, 0.005, 0); root.add(foam);   // 바닷가 물거품
-        const sand = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.805, GD + 0.004), ctx.mats.stone(0xbfa878, { repeat: 3, bump: 0.03 })); sand.position.set(GW * 0.05 - 0.22, -0.4, 0); root.add(sand); }   // 모래사장
+        const sand = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.805, GD + 0.004), ctx.mats.ground('sand', { repeat: 1 })); sand.position.set(GW * 0.05 - 0.22, -0.4, 0); root.add(sand); }   // 모래사장
       for (let i = 0; i < 6; i++) { // 숲 (작은 나무)
         const tr = new THREE.Group(), tk = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.3, 8), ctx.mats.wood(0x7a5632)), cr = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.5, 10), mat(0x1f6a30, { roughness: 0.8 })), cr2 = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.42, 10), mat(0x2a7a3a, { roughness: 0.8 }));
         cr.position.y = 0.38; cr2.position.y = 0.66; tr.add(tk, cr, cr2); tr.position.set(-5.8 + i * 0.55, 0.15, -1.6 + (i % 3) * 0.3); tr.traverse((o) => { if (o.isMesh) o.castShadow = true; }); root.add(tr);

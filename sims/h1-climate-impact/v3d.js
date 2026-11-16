@@ -49,17 +49,16 @@
       const side = (x) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.25, H + 0.3, D + 0.2), mats.stone(0x6a5a40, { cracks: true, repeat: 2, bump: 0.05 })); m.position.set(x, -H / 2 + 0.05, 0); root.add(m); return m; };
       side(-W / 2 - 0.12); side(W / 2 + 0.12);
       // 동·서 육지 (해안)
-      const land = (x, c, s) => { const g = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 18, 0, Math.PI * 2, 0, Math.PI / 2), mats.stone(c, { repeat: 3, bump: 0.05 })); g.castShadow = true; g.scale.set(1.4, 0.9 * s, D * 0.5); g.position.set(x, 0, 0); root.add(g); return g; };
+      const land = (x, c, s) => { const g = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 18, 0, Math.PI * 2, 0, Math.PI / 2), (c === 0x4a8a3a ? mats.ground('grass', { repeat: 3 }) : mats.stone(c, { repeat: 3, bump: 0.05 }))); g.castShadow = true; g.scale.set(1.4, 0.9 * s, D * 0.5); g.position.set(x, 0, 0); root.add(g); return g; };
       land(-W / 2 - 0.2, 0x4a8a3a, 1.0); const andes = land(W / 2 + 0.15, 0x7a6c52, 0.45);
-      { const beach = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 12, 0, Math.PI * 2, 0, Math.PI / 2), mats.stone(0xcdb98a, { repeat: 4, bump: 0.02 })); beach.scale.set(1.62, 0.34, D * 0.5); beach.position.set(-W / 2 - 0.2, 0, 0); root.add(beach); }   // 서쪽 해안의 모래사장
+      { const beach = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 12, 0, Math.PI * 2, 0, Math.PI / 2), mats.ground('sand', { repeat: 3 })); beach.scale.set(1.62, 0.34, D * 0.5); beach.position.set(-W / 2 - 0.2, 0, 0); root.add(beach); }   // 서쪽 해안의 모래사장
 
       // ---- 환경: 하늘 배경 · 받침대 · 모래 바닥 · 수조 테두리 · 안데스 산맥과 열대 나무 · 일렁이는 수면 · 용승 거품
       const mkc = (w, h, fn) => { const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); return t; };
       { const sky = mkc(16, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#16275a'); gr.addColorStop(0.5, '#3a5ea0'); gr.addColorStop(0.62, '#8fb8e6'); gr.addColorStop(1, '#27385f'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }); if (THREE.sRGBEncoding) sky.encoding = THREE.sRGBEncoding;
         const dome = new THREE.Mesh(new THREE.SphereGeometry(45, 32, 20), new THREE.MeshBasicMaterial({ map: sky, side: THREE.BackSide, depthWrite: false })); dome.renderOrder = -2; root.add(dome);
         const bench = new THREE.Mesh(new THREE.CylinderGeometry(11, 11.3, 0.4, 96), mats.ceramic(0x18223c, { extra: { roughness: 0.4, clearcoat: 0.5 } })); bench.userData.v3bg = true; bench.position.y = -H - 0.55; root.add(bench); }
-      { const sand = mkc(256, 256, (g, w, h) => { g.fillStyle = '#b9a577'; g.fillRect(0, 0, w, h); for (let i = 0; i < 1500; i++) { const v = 120 + Math.random() * 90 | 0; g.fillStyle = 'rgba(' + v + ',' + (v - 20) + ',' + (v - 60) + ',.35)'; g.fillRect(Math.random() * w, Math.random() * h, 2, 2); } });
-        floor.material = new THREE.MeshStandardMaterial({ map: sand, roughness: 1 }); }
+      floor.material = mats.ground('sand', { repeat: 5 });   // 해저 모래 바닥
       { const fr = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(W + 0.2, H + 0.3, D + 0.2)), new THREE.LineBasicMaterial({ color: 0xdfeaf7, transparent: true, opacity: 0.8 })); fr.position.y = -H / 2 - 0.1; root.add(fr); }
       { const rock = mats.stone(0x7a6c52, { cracks: true, repeat: 2, bump: 0.06, extra: { flatShading: true } }), snow = mat(0xf4f8ff, { roughness: 0.5, flatShading: true });
         const hsh = (x, y, z) => { const q = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453; return q - Math.floor(q); };

@@ -31,8 +31,9 @@
       const p = gg.attributes.position, col = new Float32Array(p.count * 3);
       for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i); p.setY(i, hgt(x, z)); const n = 0.5 + 0.5 * Math.sin(x * 2.3) * Math.sin(z * 2.1 + 1) + 0.15 * Math.sin(x * 7 + z * 5); const c = new THREE.Color().setHSL(0.26 + 0.04 * n, 0.5, 0.3 + 0.07 * n).convertSRGBToLinear(); col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; }
       gg.setAttribute('color', new THREE.BufferAttribute(col, 3)); gg.computeVertexNormals();
-      const ground = new THREE.Mesh(gg, ctx.mats.stone(0xffffff, { repeat: 8, bump: 0.025, extra: { vertexColors: true } })); ground.receiveShadow = true; root.add(ground);
-      const soil = new THREE.Mesh(new THREE.BoxGeometry(W + 0.02, 0.9, H + 0.02), ctx.mats.stone(deep(0x6b4526), { cracks: true, repeat: 3, bump: 0.05 })); soil.position.y = -0.75; root.add(soil);
+      { const uv = gg.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setY(i, uv.getY(i) * H / W); }   // 풀 사진이 늘어나지 않게 (가로세로 같은 크기)
+      const ground = new THREE.Mesh(gg, ctx.mats.ground('grass', { repeat: 10 })); ground.receiveShadow = true; root.add(ground);
+      const soil = new THREE.Mesh(new THREE.BoxGeometry(W + 0.02, 0.9, H + 0.02), ctx.mats.ground('soil', { repeat: 3 })); soil.position.y = -0.75; root.add(soil);
       { const sub = new THREE.Mesh(new THREE.BoxGeometry(W + 0.04, 0.35, H + 0.04), ctx.mats.stone(deep(0x4a3a2c), { repeat: 3, bump: 0.05 })); sub.position.y = -1.37; root.add(sub); }   // 아래 흙층
 
       /* 식물 : 2D 차시의 초지 자료(FIELD_PLANTS · QPLANTS)를 그대로 써요 */

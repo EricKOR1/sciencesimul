@@ -51,7 +51,7 @@
       const L2 = () => (ctx.lesson && ctx.lesson()) || null;
       const st = { names: true, t: 0, demo: false, sig: '' };
       const clamp01 = (x) => Math.max(0, Math.min(1, x));
-      const floor = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.35, 0.3, 96), [mats.stone(0x5a4630, { repeat: 6, bump: 0.05 }), mats.stone(0x3f7f3a, { repeat: 7, bump: 0.06 }), mats.stone(0x5a4630)]); floor.position.y = -0.22; floor.receiveShadow = true; root.add(floor); floor.userData.v3bg = true;   // 풀밭 한 조각 (위: 풀, 옆: 흙)
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.35, 0.3, 96), [mats.ground('soil', { repeat: 6 }), mats.ground('grass', { repeat: 7 }), mats.ground('soil')]); floor.position.y = -0.22; floor.receiveShadow = true; root.add(floor); floor.userData.v3bg = true;   // 풀밭 한 조각 (위: 풀, 옆: 흙)
       { const N = 900, tuft = new THREE.InstancedMesh(new THREE.ConeGeometry(0.035, 0.22, 4, 1), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 }), N), o = new THREE.Object3D(), c = new THREE.Color(); let sd = 31; const rn = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
         for (let i = 0; i < N; i++) { const a = rn() * 6.283, r = Math.sqrt(rn()) * 5.05; o.position.set(Math.cos(a) * r, -0.07 + 0.05, Math.sin(a) * r); o.rotation.set((rn() - 0.5) * 0.5, rn() * 6.3, (rn() - 0.5) * 0.5); o.scale.set(1, 0.6 + rn() * 1.1, 1); o.updateMatrix(); tuft.setMatrixAt(i, o.matrix); tuft.setColorAt(i, c.setHSL(0.27 + rn() * 0.07, 0.5, 0.26 + rn() * 0.14)); }
         tuft.userData.v3bg = true; tuft.receiveShadow = true; root.add(tuft); }   // 풀잎   // 바닥은 배경

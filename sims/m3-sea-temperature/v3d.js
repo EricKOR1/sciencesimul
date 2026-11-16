@@ -30,8 +30,8 @@
       geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(geo.attributes.position.count * 3), 3));
       const water = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.12, transparent: true, opacity: 0.82, clearcoat: 1, clearcoatRoughness: 0.06, envMapIntensity: 1.5 })); seaG.add(water);   // 바닷물: 수온 색 + 반짝이는 겉면
       const edge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(BW, HY, BW).translate(0, -HY / 2, 0)), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45 })); seaG.add(edge);
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(BW + 0.3, 0.25, BW + 0.3), ctx.mats.stone(0xb08d57, { repeat: 3, bump: 0.04 })); floor.position.y = -HY - 0.12; seaG.add(floor);   // 바다 밑 모래
-      const surf = new THREE.Mesh(new THREE.PlaneGeometry(BW + 0.01, BW + 0.01, 30, 30), ctx.mats.liquid(0x5fb4f0, { opacity: 0.55, extra: { side: THREE.DoubleSide } })); surf.rotation.x = -Math.PI / 2; surf.position.y = 0.01; seaG.add(surf);
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(BW + 0.3, 0.25, BW + 0.3), ctx.mats.ground('sand', { repeat: 2 })); floor.position.y = -HY - 0.12; seaG.add(floor);   // 바다 밑 모래
+      const surf = new THREE.Mesh(new THREE.PlaneGeometry(BW + 0.01, BW + 0.01, 30, 30), ctx.mats.water(0x5fb4f0, { opacity: 0.55, extra: { side: THREE.DoubleSide } })); surf.rotation.x = -Math.PI / 2; surf.position.y = 0.01; seaG.add(surf);
       const sp0 = surf.geometry.attributes.position; const sx = [], sz = []; for (let i = 0; i < sp0.count; i++) { sx.push(sp0.getX(i)); sz.push(sp0.getY(i)); }
       const sun = new THREE.Mesh(new THREE.SphereGeometry(0.6, 24, 16), new THREE.MeshBasicMaterial({ color: 0xffd34d })); sun.position.set(1.0, 2.4, -1.4); seaG.add(sun); ctx.halo(sun, 0xffd34d, 2.6, 0.6);   // 햇빛 번짐
       /* 그래프 벽 (수온 축) */

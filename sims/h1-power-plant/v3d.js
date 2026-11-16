@@ -29,7 +29,7 @@
       const pOf = () => (st.src === 'coal' ? st.fuel / 60 : 0.5);
 
       /* ---------- 바닥 ---------- */
-      const base = new THREE.Mesh(new THREE.BoxGeometry(17.5, 0.3, 9.5), mats.stone(0x303a52, { repeat: 8, bump: 0.03, extra: { roughness: 0.85 } })); base.position.set(1.2, -1.3, -0.4); base.receiveShadow = true; root.add(base);
+      const base = new THREE.Mesh(new THREE.BoxGeometry(17.5, 0.3, 9.5), [0, 1, 2, 3, 4, 5].map((q) => (q === 2 ? mats.ground('grass', { repeat: 8 }) : mats.ground('soil', { repeat: 6 })))); base.position.set(1.2, -1.3, -0.4); base.receiveShadow = true; root.add(base);
       const pad = new THREE.Mesh(new THREE.BoxGeometry(11.6, 0.12, 3), mats.stone(0x80899c, { cracks: true, repeat: 5, bump: 0.03 })); pad.position.set(-0.5, -1.08, 0); pad.receiveShadow = true; root.add(pad);
 
       /* ---------- 터빈 + 발전기 (같은 축에 연결) ---------- */

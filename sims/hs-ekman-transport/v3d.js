@@ -31,7 +31,7 @@
       /* 바다 물기둥 */
       const W = 6.6, H = ZS[ZS.length - 1] * YS + 0.4;
       const thick = (a, r) => { const g = new THREE.CylinderGeometry(r, r, 1, 12); g.translate(0, 0.5, 0); const mm = new THREE.MeshBasicMaterial({ transparent: a.line.material.transparent, opacity: a.line.material.opacity }); mm.color = a.line.material.color; a.line.add(new THREE.Mesh(g, mm)); return a; };   // 가는 선 화살표에 굵은 몸통을 덧붙여요
-      const top = new THREE.Mesh(new THREE.PlaneGeometry(W, W), ctx.mats.liquid(0x2f8fdc, { opacity: 0.5, extra: { side: THREE.DoubleSide, bumpMap: ctx.mats.tex('noise'), bumpScale: 0.012, roughness: 0.12 } }));
+      const top = new THREE.Mesh(new THREE.PlaneGeometry(W, W), ctx.mats.water(0x2f8fdc, { opacity: 0.5, repeat: 3, extra: { side: THREE.DoubleSide } }));
       /* 바닷물 기둥의 옆면: 깊을수록 어두워지는 물빛 */
       { const cT = new THREE.Color(0x3fa3e6), cB = new THREE.Color(0x06203f);
         for (let k = 0; k < 4; k++) { const g = new THREE.PlaneGeometry(W, H, 1, 10), p = g.attributes.position, cs = []; for (let i = 0; i < p.count; i++) { const c = cT.clone().lerp(cB, Math.pow(0.5 - p.getY(i) / H, 0.8)); cs.push(c.r, c.g, c.b); } g.setAttribute('color', new THREE.Float32BufferAttribute(cs, 3));

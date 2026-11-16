@@ -32,7 +32,7 @@
       const wallFull = new THREE.Mesh(new THREE.CylinderGeometry(RB, RB, 3.2, 72, 1, true), ctx.mats.stone(0x4e3f31, { repeat: 4, bump: 0.04, extra: { side: THREE.DoubleSide } })); wallFull.position.y = -1.6;
       const cutG = new THREE.Group(), fullG = new THREE.Group(); cutG.add(terrCut, wallCut); fullG.add(terrFull, wallFull); body.add(cutG, fullG);
       // 바다/평지 기반
-      const sea = new THREE.Mesh(new THREE.RingGeometry(RB - 0.01, RB + 3.2, 72), ctx.mats.stone(0x10331c, { cracks: true, repeat: 10, bump: 0.03, extra: { roughness: 0.95 } })); sea.rotation.x = -Math.PI / 2; sea.position.y = 0.005; body.add(sea);
+      const sea = new THREE.Mesh(new THREE.RingGeometry(RB - 0.01, RB + 3.2, 72), ctx.mats.ground('grass', { repeat: 8 })); sea.rotation.x = -Math.PI / 2; sea.position.y = 0.005; body.add(sea);
       /* ---------- 단면(층·화도·마그마 방) ---------- */
       const LAYC = [0x8a7e72, 0xc2a37a, 0x6f6459];
       function caps(rotY) {

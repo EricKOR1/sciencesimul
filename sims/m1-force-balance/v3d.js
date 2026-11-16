@@ -179,7 +179,7 @@
 
       /* ===== 장면 T · 줄다리기(위에서 본 모습): 왼쪽 팀 3명(300 N) · 오른쪽 팀 1~5명(1명 = 100 N) ===== */
       const TS = 1 / 70, TRY = 0;         // 2D px → 그림 단위
-      { const f = new THREE.Mesh(new THREE.BoxGeometry(12, 0.1, 4.6), ctx.mats.stone(0x2e6a2a, { repeat: 8, bump: 0.02 })); f.position.y = -0.05; f.receiveShadow = true; gT.add(f);
+      { const f = new THREE.Mesh(((g, k) => { const a = g.attributes.uv; for (let i = 0; i < a.count; i++) a.setX(i, a.getX(i) * k); return g; })(new THREE.BoxGeometry(12, 0.1, 4.6), 2.6), ctx.mats.ground('grass', { repeat: 2 })); f.position.y = -0.05; f.receiveShadow = true; gT.add(f);
         const c = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.02, 4.6), mat(0xffffff)); c.position.y = 0.01; gT.add(c);
         [-1, 1].forEach((s) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.02, 4.6), mat(0xe8f5e3)); m.position.set(s * 84 * TS, 0.012, 0); m.userData.v3bg = true; gT.add(m); }); f.userData.v3bg = c.userData.v3bg = true; }   // 잔디 운동장은 배경: 자동 맞춤은 줄다리기 선수 · 줄 · 화살표에 맞춰요
       const ropeM = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1, 12), ctx.mats.fabric(0xb8864b, { repeat: 8 })); ropeM.rotation.z = Math.PI / 2; ropeM.position.y = 0.8; gT.add(ropeM);

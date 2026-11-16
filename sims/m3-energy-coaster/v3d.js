@@ -20,7 +20,7 @@
       const V3 = THREE.Vector3;
       const MT = ctx.mats, lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 색이 바래지 않게 (위치 에너지 파랑 · 운동 에너지 주황 · 역학적 에너지 보라가 또렷하게)
       const sm = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: lc(c), roughness: 0.45, metalness: 0.3 }, o || {}));
-      const gnd = new THREE.Mesh(new THREE.BoxGeometry(17, 0.3, 5), MT.stone(lc(0x3d6f3a), { repeat: 6, bump: 0.04 })); gnd.position.set(1.0, -0.15, 0); gnd.userData.v3bg = true; root.add(gnd);   // 바닥은 배경: 자동 맞춤이 진자(코스터)와 에너지 막대에 맞춰요
+      const gnd = new THREE.Mesh(((g, k) => { const a = g.attributes.uv; for (let i = 0; i < a.count; i++) a.setX(i, a.getX(i) * k); return g; })(new THREE.BoxGeometry(17, 0.3, 5), 3.4), MT.ground('grass', { repeat: 2 })); gnd.position.set(1.0, -0.15, 0); gnd.userData.v3bg = true; root.add(gnd);   // 바닥은 배경: 자동 맞춤이 진자(코스터)와 에너지 막대에 맞춰요
       const pendG = new THREE.Group(), coasterG = new THREE.Group(); root.add(pendG, coasterG);
       /* ---------- 진자 ---------- */
       const beam = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.14, 0.5), MT.metal('steel', { brushed: true })); beam.position.set(0, 4.3 + 0.1, 0); pendG.add(beam);

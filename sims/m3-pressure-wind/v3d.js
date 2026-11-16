@@ -31,7 +31,7 @@
       const sandTex = mkTex(256, 256, (x, w, h) => { x.fillStyle = '#e8d3a0'; x.fillRect(0, 0, w, h); for (let i = 0; i < 2400; i++) { const v = 150 + rnd() * 90 | 0; x.fillStyle = 'rgba(' + v + ',' + (v * 0.85 | 0) + ',' + (v * 0.55 | 0) + ',.5)'; x.fillRect(rnd() * w, rnd() * h, 1.5, 1.5); } }, 2, 1.6);
       const waveTex = mkTex(256, 256, (x, w, h) => { x.fillStyle = '#ffffff'; x.fillRect(0, 0, w, h); x.strokeStyle = 'rgba(120,180,240,.35)'; x.lineWidth = 2; for (let j = 0; j < 14; j++) { x.beginPath(); for (let i = 0; i <= 32; i++) { const X = i * w / 32, Y = (j + 0.5) * h / 14 + Math.sin(i * 0.8 + j * 2) * 5; i ? x.lineTo(X, Y) : x.moveTo(X, Y); } x.stroke(); } }, 2, 1.5);
       /* 바다 · 육지 */
-      const seaM = new THREE.MeshPhysicalMaterial({ color: 0x1d6fb5, map: waveTex, roughness: 0.15, clearcoat: 1, clearcoatRoughness: 0.1, transparent: true, opacity: 0.93 });
+      const seaM = ctx.mats.water(0x1d6fb5, { opacity: 0.93 });
       const sea = new THREE.Mesh(new THREE.BoxGeometry(D, 1.2, 4.2, 40, 1, 12), seaM); sea.position.set(-D / 2, -0.6, 0); root.add(sea);
       const seaTop = sea.geometry.attributes.position; const seaY0 = []; for (let i = 0; i < seaTop.count; i++) seaY0.push(seaTop.getY(i));
       const landM = sm(0xd8b873, { roughness: 0.95, map: sandTex }); const land = new THREE.Mesh(new THREE.BoxGeometry(D, 1.2, 4.2), landM); land.position.set(D / 2, -0.6, 0); root.add(land);

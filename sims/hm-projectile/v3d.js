@@ -61,13 +61,13 @@
       const skyTex = ctex(8, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#1e4f9c'); gr.addColorStop(0.55, '#6fb0ea'); gr.addColorStop(0.82, '#cfe8f7'); gr.addColorStop(1, '#eef6df'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
       skyTex.wrapS = skyTex.wrapT = THREE.ClampToEdgeWrapping;
       const sky = new THREE.Mesh(new THREE.SphereGeometry(180, 32, 20), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false, depthWrite: false })); sky.position.set(5, 0, 0); sky.renderOrder = -10; root.add(sky);
-      const hillM = [M(0x2f5a3a, { roughness: 1, metalness: 0 }), M(0x3b6b43, { roughness: 1, metalness: 0 }), M(0x274d36, { roughness: 1, metalness: 0 })];
+      const hillM = [ctx.mats.ground('grass', { repeat: 8, color: 0xc8d2c8 }), ctx.mats.ground('grass', { repeat: 8 }), ctx.mats.ground('grass', { repeat: 8, color: 0xb4c0b4 })];
       for (let i = 0; i < 9; i++) { const hl = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 14, 0, TAU, 0, Math.PI / 2), hillM[i % 3]); const r = 5 + (i * 37 % 7), x = -18 + i * 7.5; hl.scale.set(r * 1.6, 2.2 + (i * 13 % 5) * 0.5, r * 0.8); hl.position.set(x, -0.1, -15 - (i % 3) * 3.5); root.add(hl); }
       const cloudM = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, fog: false }); const clouds = [];
       for (let i = 0; i < 6; i++) { const cg = new THREE.Group(); for (let k = 0; k < 4; k++) { const b = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), cloudM); b.scale.set(1.6 + k * 0.2, 0.7, 0.8); b.position.set(k * 1.3 - 2, (k % 2) * 0.3, 0); cg.add(b); } cg.position.set(-12 + i * 9, 11 + (i % 3) * 2.2, -22 - (i % 2) * 6); cg.userData.sp = 0.15 + (i % 3) * 0.05; root.add(cg); clouds.push(cg); }
       /* 잔디 운동장 + 달리기 트랙 */
-      const grassTex = ctex(256, 256, (g, w, h) => { g.fillStyle = '#4f8f4a'; g.fillRect(0, 0, w, h); for (let i = 0; i < 2600; i++) { const l = 30 + rnd() * 30; g.fillStyle = 'hsla(' + (95 + rnd() * 30) + ',45%,' + l + '%,0.55)'; g.fillRect(rnd() * w, rnd() * h, 1.5, 3 + rnd() * 4); } }, 48, 18);
-      const ground = new THREE.Mesh(new THREE.BoxGeometry(160, 0.3, 70), M(0xffffff, { map: grassTex, roughness: 1, metalness: 0 })); ground.position.set(5, -0.17, 8); ground.receiveShadow = true; root.add(ground);
+      const gGeo = new THREE.BoxGeometry(160, 0.3, 70); { const uv = gGeo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setY(i, uv.getY(i) * 70 / 160); }   // 풀 사진이 늘어나지 않게
+      const ground = new THREE.Mesh(gGeo, ctx.mats.ground('grass', { repeat: 44 })); ground.position.set(5, -0.17, 8); ground.receiveShadow = true; root.add(ground);
       const trackTex = ctex(64, 256, (g, w, h) => { g.fillStyle = '#b4573b'; g.fillRect(0, 0, w, h); for (let i = 0; i < 700; i++) { g.fillStyle = 'rgba(' + (120 + rnd() * 60 | 0) + ',60,40,0.35)'; g.fillRect(rnd() * w, rnd() * h, 2, 2); } }, 1, 1);
       const track = new THREE.Mesh(new THREE.BoxGeometry(26, 0.04, 2.4), M(0xffffff, { map: trackTex, roughness: 0.95 })); track.position.set(5, 0.0, 0.2); track.receiveShadow = true; root.add(track);
       for (const zz of [-1.0, 1.4]) { const ln = new THREE.Mesh(new THREE.BoxGeometry(26, 0.045, 0.05), new THREE.MeshBasicMaterial({ color: 0xffffff })); ln.position.set(5, 0.012, zz); root.add(ln); }

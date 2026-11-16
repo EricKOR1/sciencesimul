@@ -25,7 +25,7 @@
       const windP = () => { const v = st.wind; return v < 3 ? 0 : v >= 12 ? 2 : 2 * Math.pow(v / 12, 3); };
 
       /* ---------- 바닥 ---------- */
-      const ground = new THREE.Mesh(new THREE.CylinderGeometry(4.6, 4.8, 0.3, 64), ctx.mats.stone(0x2f6a28, { repeat: 6, bump: 0.04, extra: { roughness: 0.95 } })); ground.position.y = -0.15; ground.receiveShadow = true; root.add(ground); ground.userData.v3bg = true;   // 바닥·해·햇빛 줄기는 배경: 자동 맞춤이 패널(풍차·연료 전지)에 맞춰요
+      const ground = new THREE.Mesh(new THREE.CylinderGeometry(4.6, 4.8, 0.3, 64), [ctx.mats.ground('soil', { repeat: 6 }), ctx.mats.ground('grass', { repeat: 7 }), ctx.mats.ground('soil')]); ground.position.y = -0.15; ground.receiveShadow = true; root.add(ground); ground.userData.v3bg = true;   // 바닥·해·햇빛 줄기는 배경: 자동 맞춤이 패널(풍차·연료 전지)에 맞춰요
 
       /* ================= ① 태양광 ================= */
       const gS = new THREE.Group(); root.add(gS);

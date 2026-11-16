@@ -18,7 +18,7 @@
       let mode = 'cold', f = -5, sc = 'front', sig = '', tkSig = '', wmSegs = null;
       const MT = ctx.mats, lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 색이 바래지 않게 (찬 공기 파랑 · 따뜻한 공기 주황이 또렷하게)
       const sm = (c, o) => { const q = Object.assign({ color: lc(c), roughness: 0.6, metalness: 0 }, o || {}); if (typeof q.emissive === 'number') q.emissive = lc(q.emissive); return new THREE.MeshStandardMaterial(q); };
-      const gnd = new THREE.Mesh(new THREE.BoxGeometry(XW * 2 + 0.6, 0.4, DZ + 0.4), MT.stone(lc(0x2f6a2c), { repeat: 6, bump: 0.04 })); gnd.position.y = -0.2; gnd.userData.v3bg = true; root.add(gnd);   // 땅은 배경: 자동 맞춤이 공기 덩어리 · 전선면에 맞춰요
+      const gnd = new THREE.Mesh(((g, k) => { const a = g.attributes.uv; for (let i = 0; i < a.count; i++) a.setX(i, a.getX(i) * k); return g; })(new THREE.BoxGeometry(XW * 2 + 0.6, 0.4, DZ + 0.4), 3.84), MT.ground('grass', { repeat: 1.5 })); gnd.position.y = -0.2; gnd.userData.v3bg = true; root.add(gnd);   // 땅은 배경: 자동 맞춤이 공기 덩어리 · 전선면에 맞춰요
       const home = new THREE.Group(); const hb = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.5, 0.7), sm(0xf1f5f9)); hb.position.y = 0.25; const hr = new THREE.Mesh(new THREE.ConeGeometry(0.6, 0.45, 4), sm(0xdc2626)); hr.position.y = 0.72; hr.rotation.y = Math.PI / 4; home.add(hb, hr); home.position.set(XH, 0, 0.9); root.add(home);
       label('우리 동네', home, { offset: [0, 1.0, 0], size: 13, color: 'rgba(15,23,42,.9)' });
       const fronts = new THREE.Group(); root.add(fronts);

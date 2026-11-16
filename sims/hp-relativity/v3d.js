@@ -160,7 +160,7 @@
       /* ================= 📏 뮤온 이야기 ================= */
       const HA = 8, atmE = new THREE.Mesh(new THREE.BoxGeometry(2.6, HA, 1.4), new THREE.MeshStandardMaterial({ color: 0x7ec4ff, transparent: true, opacity: 0.2, depthWrite: false })); atmE.position.set(-4, HA / 2, 0); gM.add(atmE);
       const atmM = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1, 1.4), new THREE.MeshStandardMaterial({ color: 0x7ec4ff, transparent: true, opacity: 0.2, depthWrite: false })); gM.add(atmM);
-      const gnd = [-4, 4].map((x) => { const m = new THREE.Mesh(new THREE.BoxGeometry(4, 0.14, 2), M(0x4caf6a)); m.position.set(x, -0.07, 0); gM.add(m); return m; });
+      const gnd = [-4, 4].map((x) => { const m = new THREE.Mesh(new THREE.BoxGeometry(4, 0.14, 2), ctx.mats.ground('grass', { repeat: 1.5 })); m.position.set(x, -0.07, 0); gM.add(m); return m; });
       const mus = []; for (let i = 0; i < 40; i++) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffd447 })), m2 = e.clone(); gM.add(e, m2); mus.push([e, m2]); }
       const lE = label('지구에서 본 모습: 대기의 높이 15 km', [-4, HA + 0.6, 0], { color: '#1d4ed8', size: 12 }), lM = label('', [4, 0, 0], { color: '#7c5cff', size: 12 }), lMs = label('', [0, 0, 0], { color: '#14a058', size: 12 });
       function muon(A, S) {
