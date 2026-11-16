@@ -31,7 +31,7 @@
       const sm = (c, o) => { const q = Object.assign({ color: lc(c), roughness: 0.5, metalness: 0.05 }, o || {}); if (typeof q.emissive === 'number') q.emissive = lc(q.emissive); return new THREE.MeshStandardMaterial(q); };
       /* 땅 */
       const ground = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 0.5, 64), MT.ground('grass', { repeat: 3 })); ground.position.y = -0.27; root.add(ground);
-      const sea = new THREE.Mesh(new THREE.CylinderGeometry(3.9, 3.9, 0.4, 64), MT.water(lc(0x2a6fb0), { opacity: 0.9, repeat: 4 })); sea.position.y = -0.55; root.add(sea); sea.userData.v3bg = true;
+      const sea = new THREE.Mesh(new THREE.CylinderGeometry(3.9, 3.9, 0.4, 64), MT.water(lc(0x2a6fb0), { opacity: 0.9, repeat: 2 })); sea.position.y = -0.55; root.add(sea); sea.userData.v3bg = true;
       // 자동 맞춤용 보이지 않는 상자: 대기 기둥(0~80 km)과 기온 그래프 전체 + 위쪽 여유(설명 상자에 가리지 않게)
       { const fb = new THREE.Mesh(new THREE.BoxGeometry(8.3, 10.3, 1.4), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); fb.position.set(2.25, 4.55, 0); root.add(fb); }
       /* 네 층 */
