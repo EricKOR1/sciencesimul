@@ -416,7 +416,7 @@
       ctx.lineJoin = 'round'; ctx.lineWidth = 7 * fs; ctx.strokeStyle = '#facc15'; ctx.stroke(); ctx.fill();
       ctx.fillStyle = '#1f1300'; ctx.font = 'bold ' + Math.round(40 * fs) + 'px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('!', wx, wy + s * 0.12); ctx.textBaseline = 'alphabetic';
       pill(ctx, '필터가 없어요! 태양을 직접 보면 눈을 다쳐요', G.cx, G.cy + 62 * fs, { font: fnt(L, 14.5, 'bold'), h: Math.round(30 * fs), pad: 13, bg: 'rgba(127,29,29,.95)', stroke: '#fca5a5' });
-      pill(ctx, '아래 [🕶️ 태양 필터]를 끼워요', G.cx, G.cy + 102 * fs, { font: fnt(L, 14, 'bold'), h: Math.round(28 * fs), pad: 12, bg: 'rgba(14,165,233,.94)' });
+      pill(ctx, '[🕶️ 태양 필터]를 끼워요', G.cx, G.cy + 102 * fs, { font: fnt(L, 14, 'bold'), h: Math.round(28 * fs), pad: 12, bg: 'rgba(14,165,233,.94)' });
       ctx.restore();
     }
   }
@@ -1411,7 +1411,7 @@
           {
             title: '🕶️ 안전하게 관측하기',
             goal: '태양을 볼 때는 <b>필터</b>가 꼭 필요해요. [🕶️ 태양 필터]를 끼워 관측 창을 열어요.',
-            hint: '아래의 <b>[🕶️ 태양 필터 끼우기]</b> 버튼을 눌러요. 필터가 없으면 뚜껑이 닫혀 있어요.',
+            hint: '<b>[🕶️ 태양 필터 끼우기]</b> 버튼을 눌러요. 필터가 없으면 뚜껑이 닫혀 있어요.',
             setup() { setScene('photo'); setFilter(false, true); S.lens = null; S.lensA = 0; S.labs = { gran: false, spot: false }; S.pops = []; setDay(1, true); syncControls(); },
             check: () => S.filter && S.capA > 0.95,
             hold: 0.4,
@@ -1550,7 +1550,7 @@
           {
             title: '⚡ 태양 폭풍 관찰',
             goal: '연도를 <b>2024년</b>으로 맞추고 [⚡ 태양 폭풍]을 눌러, 입자가 지구에 닿아 <b>오로라</b>가 켜질 때까지 지켜봐요.',
-            hint: '아래 연도가 2024년인지 확인하고 <b>[⚡ 태양 폭풍]</b>을 눌러요. 입자 구름이 지구로 가는 모습을 끝까지 봐요.',
+            hint: '연도가 2024년인지 확인하고 <b>[⚡ 태양 폭풍]</b>을 눌러요. 입자 구름이 지구로 가는 모습을 끝까지 봐요.',
             setup() { setScene('earth'); setYear(2024, true); yearEl.value = 2024; yearEl.dispatchEvent(new Event('input')); S.storm = null; S.stormOnce = false; S.hit = false; S.auroraSeen = false; S.auroraT = 0; S.aurora = 0; S.wind = S.wind.filter((p) => p.k === 0); syncControls(); },
             check: () => S.hit && S.auroraSeen,
             hold: 0.5,

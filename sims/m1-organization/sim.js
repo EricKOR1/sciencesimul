@@ -2135,7 +2135,7 @@
         {
           title: '소화계를 이루는 기관 살펴보기',
           goal: '소화계 그림에서 <b>기관 5가지</b>를 모두 눌러 보세요. 여러 기관이 모여 소화계가 돼요.',
-          hint: '그림 속 위·간·식도·창자를 누르거나, 오른쪽 단추를 눌러도 돼요.',
+          hint: '그림 속 위·간·식도·창자를 누르거나, 기관 이름이 적힌 단추를 눌러도 돼요.',
           setup() { setView('animal', 'organs'); S.organSeen = {}; S.organSel = null; showHint('👆 소화계의 기관을 눌러 보세요', 5500); },
           check: () => ORGAN_KEYS.every((k) => S.organSeen[k]),
           hold: 0.5,
