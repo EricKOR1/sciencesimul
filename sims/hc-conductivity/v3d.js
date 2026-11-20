@@ -180,7 +180,7 @@
         const S = SMP[key], c = condNow(), nm = itemName || S.name;
         let txt = key === 'hcl_aq' ? (diss ? 'HCl 분자가 물과 만나 <b>H⁺와 Cl⁻로 이온화</b>했어요.<br>H⁺(흰색)는 (−)극, Cl⁻(초록)는 (+)극 쪽으로 이동해요. 전하 운반자: <b>이온</b>' : 'HCl 분자는 전하가 없어서 전기가 안 통해요. <b>💧 물에 녹이기</b>를 누르면 이온으로 나뉘어요.') : S.txt;
         txt = txt.replace(/\s*전하 운반자: <b>[^<]*<\/b>/, '');   // 다음 미션(전하 운반자 이름 붙이기)의 답은 미리 알려 주지 않아요
-        info('<b>' + nm + '</b> · 전류 ' + (c ? '<span style="color:#7be08a"><b>통해요 ○</b></span>' : '<span style="color:#ff8a8a"><b>안 통해요 ✕</b></span>') + (field ? ' · 전기장 켜짐' : ' · 전기장 꺼짐') + '<br>' + txt);
+        info('<b>' + nm + '</b> · 전류 ' + (c ? '<span style="color:#7be08a"><b>통해요 ○</b></span>' : '<span style="color:#ff8a8a"><b>안 통해요 ✕</b></span>') + (field ? ' · 전기장 켜짐' : ' · 전기장 꺼짐') + '<br>' + (c && !field ? '⚡ 전기장을 켜면 이렇게 움직여요: ' : '') + txt);
       }
       const obsEl = mxBox('tr');
       build();
