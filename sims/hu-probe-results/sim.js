@@ -619,7 +619,7 @@
     if (S.meth < 0) {
       T(p2.x + 14, p2.y + 26 * FS, '🛠 탐사 방식 4가지', 15, '#1e293b', 'left', 800);
       METH.forEach((m, i) => T(p2.x + 14, p2.y + (52 + i * 24) * FS, m.ic + ' ' + m.n, 14, '#334155', 'left', 800));
-      drawWrap(p2.x + 14, p2.y + (52 + 4 * 24 + 8) * FS, '오른쪽 버튼에서 방식을 골라 보세요. 보이저 1호는 약 165 AU(편도 약 23시간)에 있어요.', p2.w - 28, 12.5, { color: '#64748b' });
+      drawWrap(p2.x + 14, p2.y + (52 + 4 * 24 + 8) * FS, '조작판에서 탐사 방식을 골라 보세요. 보이저 1호는 약 165 AU(편도 약 23시간)에 있어요.', p2.w - 28, 12.5, { color: '#64748b' });
     } else {
       T(p2.x + 14, p2.y + 26 * FS, METH[S.meth].ic + ' ' + METH[S.meth].n, 16, '#1e293b', 'left', 800);
       drawWrap(p2.x + 14, p2.y + 52 * FS, METH[S.meth].d, p2.w - 28, 13.5, { color: '#334155' });
@@ -822,7 +822,7 @@
       T(d.x + 8, yy - 6, s, 12.5, '#fff', 'left', 800, { stroke: 'rgba(15,23,42,.55)', strokeWidth: 3 });
     });
     // 별과 빛줄기
-    const bx1 = d.x + d.w * 0.3, bx2 = d.x + d.w * 0.76, top = d.y + 26, col = beamColor(S.lx);
+    const bx1 = d.x + d.w * 0.38, bx2 = d.x + d.w * 0.76, top = d.y + 26, col = beamColor(S.lx);
     T(d.x + d.w * 0.53, d.y + 17, '✦ 먼 천체에서 온 빛', 13, '#fde68a', 'center', 800);
     const abs = T0 < 0.12, aY = absAlt(S.lx) === 'ion' ? yIon : absAlt(S.lx) === 'ozone' ? yOz : yTr - 8;
     const yEnd = abs ? aY : yG - 34;
@@ -1278,7 +1278,7 @@
         {
           title: '허블의 분해능 계산하기', manual: true,
           goal: '허블 우주 망원경(<b>D = 2.4 m</b>)이 <b>λ = 550 nm</b> 가시광선으로 볼 때 분해능 θ = 1.22 λ / D를 <b>초각(″)</b>으로 입력하세요.',
-          hint: '아래 분해능 계산기의 슬라이더를 D = 2.4 m, λ = 550 nm로 맞추면 θ가 나와요. 1 rad = 206265″예요.',
+          hint: '조작판의 분해능 계산기 슬라이더를 D = 2.4 m, λ = 550 nm로 맞추면 θ가 나와요. 1 rad = 206265″예요.',
           setup() { S.flags.calcRes = true; S.D = 1.0; S.lam = 550; S.sep = 0.4; setSlider($('#sD'), $('#oD'), 1.0, (v) => f1(v) + ' m'); setSlider($('#sLamR'), $('#oLamR'), 550, (v) => f0(v) + ' nm'); setSlider($('#sSep'), $('#oSep'), 0.4, (v) => f2(v) + '″'); clrIn('inTheta'); setView('res'); },
           check() {
             const x = numOf('inTheta');

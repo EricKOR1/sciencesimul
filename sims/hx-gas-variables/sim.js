@@ -728,7 +728,7 @@
         {
           title: 'P–V 점 4개 기록하기',
           goal: '피스톤을 움직여 압력과 부피가 <b>서로 다른 점 4개</b>를 <b>📍 기록하기</b>로 모아요.',
-          hint: '오른쪽의 압력 단추(1, 2, 3, 6 atm)를 누르거나 주황색 손잡이를 끌어 부피를 바꿔요. 비슷한 부피는 다시 기록되지 않아요.',
+          hint: '조작판의 압력 단추(1, 2, 3, 6 atm)를 누르거나 주황색 손잡이를 끌어 부피를 바꿔요. 비슷한 부피는 다시 기록되지 않아요.',
           setup() { S.lock = true; S.gate = ''; S.bV = 12.3; clearRec('boyle'); setMode('boyle'); },
           check: () => recDone('boyle', 4), hold: 0.5,
           status: () => '기록 ' + S.rec.boyle.length + ' / 4 ' + mark(recDone('boyle', 4)),

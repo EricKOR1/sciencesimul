@@ -350,7 +350,7 @@
       updateCtl();
     } else {
       PL.miss++; Sound.wrong && Sound.wrong();
-      say(okx ? '세로 자리(log L)가 달라요. 오른쪽 표의 log L 값을 다시 확인해요.' : oky ? '가로 자리(log M)가 달라요. log M 값의 위치를 확인해요.' : '자리가 달라요. log M(가로)과 log L(세로)을 눈금에서 찾아보세요.', true, 2.6);
+      say(okx ? '세로 자리(log L)가 달라요. 목록의 log L 값을 다시 확인해요.' : oky ? '가로 자리(log M)가 달라요. log M 값의 위치를 확인해요.' : '자리가 달라요. log M(가로)과 log L(세로)을 눈금에서 찾아보세요.', true, 2.6);
     }
   }
   function plSlope() {
@@ -416,7 +416,7 @@
     const g = lgGeom(LPl().G);
     for (let i = 0; i < 8; i++) if (inR(p, plRowRect(i))) { if (!PL.placed[i]) { PL.sel = i; PL.miss = 0; Sound.click(); updateCtl(); } return false; }
     if (!inBox(g, p) || PL.lin > 0.3) return false;
-    if (!allPlaced()) { if (PL.sel >= 0 && !PL.placed[PL.sel]) plPlace(PL.sel, p); else say('먼저 오른쪽 목록에서 아직 찍지 않은 별을 골라요.', true, 2.4); return false; }
+    if (!allPlaced()) { if (PL.sel >= 0 && !PL.placed[PL.sel]) plPlace(PL.sel, p); else say('먼저 목록에서 아직 찍지 않은 별을 골라요.', true, 2.4); return false; }
     let best = -1, bd = 22;
     DATA.forEach((d) => { const dd = Math.hypot(p.x - g.X(d.lM), p.y - g.Y(d.lL)); if (dd < bd) { bd = dd; best = d.i; } });
     if (best >= 0) { const k = PL.picks.indexOf(best); if (k >= 0) PL.picks.splice(k, 1); else { PL.picks.push(best); if (PL.picks.length > 2) PL.picks.shift(); } Sound.click(); updateCtl(); }
@@ -610,7 +610,7 @@
         {
           title: '나머지 별 7개의 계산 확인하기',
           goal: '표의 나머지 줄을 눌러 별마다 계산 과정과 <b>광도</b>를 확인하세요. 8개 줄이 모두 열리면 돼요.',
-          hint: '줄을 누르면 오른쪽 사다리에 별의 자리가 나타나고, 아래 칸에 ΔM → 지수 → L의 세 단계가 보여요.',
+          hint: '줄을 누르면 ‘등급 사다리’에 별의 자리가 나타나고, ‘L / L☉’ 계산 칸에 ΔM → 지수 → L의 세 단계가 보여요.',
           setup() { CA.l1Ok = true; CA.rev = CA.rev.map((r, i) => i === IDX12); CA.sel = -1; setView('calc'); },
           check: () => calcAllRev(),
           hold: 0.5,
@@ -639,7 +639,7 @@
       missions: [
         {
           title: '점 8개 찍기',
-          goal: '오른쪽 목록에서 별을 고르고 그래프에서 <b>(log M, log L)</b> 자리를 눌러 점 <b>8개</b>를 모두 찍으세요.',
+          goal: '‘별 고르고 점 찍기’ 목록에서 별을 고르고 그래프에서 <b>(log M, log L)</b> 자리를 눌러 점 <b>8개</b>를 모두 찍으세요.',
           hint: '가로 눈금은 질량(0.5, 1, 2, 5, 10), 세로 눈금은 광도(0.01 ~ 10⁴)예요. 예) 1.0 M☉, 1.03 L☉는 가로 1, 세로 1 근처예요. 두 번 틀리면 알맞은 자리가 점선 원으로 나와요.',
           setup() { setView('plot'); PL.sel = DATA.findIndex((q) => !PL.placed[q.i]); updateCtl(); },
           check: () => allPlaced(),

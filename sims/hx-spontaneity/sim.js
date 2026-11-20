@@ -647,7 +647,7 @@
         {
           title: '같은 변화, 반대로 기우는 저울',
           goal: '「얼음이 녹음」에서 온도를 <b>−5 °C 이하</b>와 <b>+5 °C 이상</b>으로 각각 맞추고, 저울이 반대로 기우는 것을 확인해요.',
-          hint: '슬라이더를 왼쪽 끝 근처(−5 °C 이하)와 오른쪽 끝 근처(+5 °C 이상)로 한 번씩 움직여 봐요.',
+          hint: '온도 슬라이더를 −5 °C 이하로 한 번, +5 °C 이상으로 한 번 움직여 봐요.',
           setup() { S.lock = true; const B = BL(); B.below = false; B.above = false; setBl(0); setMode('bal'); },
           check: () => BL().below && BL().above, hold: 0.4,
           status: () => '−5 °C 이하 ' + mark(BL().below) + ' &nbsp; +5 °C 이상 ' + mark(BL().above),

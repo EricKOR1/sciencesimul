@@ -888,7 +888,7 @@
           hint: '전향점이 가장 높은(M_V가 가장 작은) 성단이 가장 젊어요: A의 전향점이 가장 높아요.',
           setup() { S.order = []; S.rowSel = -1; setView('compare'); },
           check: () => { if (S.order.length < 4) return '네 성단을 모두 눌러 순서를 정해 주세요.'; if (orderOK()) return true; return '전향점이 더 높은 성단이 더 젊어요. 순서를 다시 살펴보세요.'; },
-          explain: '전향점의 M_V는 A −2.2 < B 0.6 < C 3.4 < D 5.1 순서예요(작을수록 높음). 그래서 나이는 <b>A &lt; B &lt; C &lt; D</b>: 1억 년 &lt; 6억 년 &lt; 40억 년 &lt; 120억 년이에요.',
+          explain: '전향점의 M_V는 A −2.2 &lt; B 0.6 &lt; C 3.4 &lt; D 5.1 순서예요(작을수록 높음). 그래서 나이는 <b>A &lt; B &lt; C &lt; D</b>: 1억 년 &lt; 6억 년 &lt; 40억 년 &lt; 120억 년이에요.',
         },
         {
           title: '거리 표 완성하기',

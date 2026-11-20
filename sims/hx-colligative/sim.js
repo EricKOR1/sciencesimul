@@ -608,7 +608,7 @@
     let y = rows[4].y + rows[4].h + 20;
     const ok = F.kok[s];
     if (fitLanded(s) < 5) y += textBlock(R.x + 14, y, R.w - 28, '점을 하나씩 찍으면 어떤 규칙이 보여요. m = 0 인 점은 순수한 물이라 ΔT = 0 이에요.', 13, MUTED, 18, 700);
-    else if (!ok) y += textBlock(R.x + 14, y, R.w - 28, '점들이 원점을 지나는 한 직선 위에 있어요. 왼쪽 그래프의 m 눈금으로 m = 1.00 일 때 ΔT를 읽으면 기울기 K가 돼요.', 13, INK, 18, 800);
+    else if (!ok) y += textBlock(R.x + 14, y, R.w - 28, '점들이 원점을 지나는 한 직선 위에 있어요. 조작판의 m 눈금을 1.00 에 맞춰 그래프에서 ΔT를 읽으면 기울기 K가 돼요.', 13, INK, 18, 800);
     else {
       y += textBlock(R.x + 14, y, R.w - 28, boil ? 'ΔTb = Kb · m' : 'ΔTf = Kf · m', 18, INK, 24, 800);
       y += textBlock(R.x + 14, y + 2, R.w - 28, '기울기 K는 용매마다 정해진 값이에요. 물은 ' + (boil ? 'Kb = 0.51' : 'Kf = 1.86') + ' °C·kg/mol 이에요. 묽은 용액에서는 X용질 ≈ m / 55.5 라서 몰 분율로도 같은 비례 관계가 나와요.', 12.5, MUTED, 17, 700);

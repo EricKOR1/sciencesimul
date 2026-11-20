@@ -1326,7 +1326,7 @@
         {
           title: '세 실험대 확인하기',
           goal: '① <b>🔥 열</b>: 공급하는 열을 <b>1000 J</b>로 맞추기 ② <b>💧 표면</b>: 물과 에탄올에 각각 올려 보기 ③ <b>🧂 용매</b>: 소금 · 설탕 · 기름을 각각 물에 넣어 보기',
-          hint: '위쪽 단추로 실험대를 바꿔요. 표면 실험대는 액체를 고르고 「올려 보기」를, 용매 실험대는 물질을 고르고 「물에 넣기」를 눌러요. 결과가 끝까지 나올 때까지 잠시 기다려요.',
+          hint: '조작판의 🔥 열 · 💧 표면 · 🧂 용매 단추로 실험대를 바꿔요. 표면 실험대는 액체를 고르고 「올려 보기」를, 용매 실험대는 물질을 고르고 「물에 넣기」를 눌러요. 결과가 끝까지 나올 때까지 잠시 기다려요.',
           setup() { const a = S.ap; S.lock = true; a.Q = 0; a.Qd = 0; a.heatOK = false; a.surfSeen = {}; a.solSeen = {}; a.drop = null; a.dis = null; a.liq = 'water'; a.sol = 'nacl'; solReset(); S.sub.apply = 'heat'; setMode('apply'); },
           check: () => S.ap.heatOK && surfAll() && solAll(), hold: 0.4,
           status: () => '열 ' + mark(S.ap.heatOK) + ' &nbsp; 표면 ' + mark(surfAll()) + ' &nbsp; 용매 ' + mark(solAll()),

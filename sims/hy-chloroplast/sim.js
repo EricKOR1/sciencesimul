@@ -541,7 +541,7 @@
       if (b.drag && b.drag.moved) D.ring(an.x, an.y, 15, t + i * 0.13, { color: '#f59e0b', width: 2 });
     });
     const all = bPlaced() === PARTS.length;
-    T(g.cx, g.hintY, b.nameMode ? '핀 ①~⑤가 가리키는 구조의 이름을 오른쪽 목록에서 골라요' : all ? '조립 완료! 화면을 끌어 돌려 보고 단면 슬라이더로 열어 보세요' : '부품 카드를 모형의 물음표(?)로 끌어다 놓아요', PHONE ? 12.5 : 13.5, '#64748b', 'center', 800);
+    T(g.cx, g.hintY, b.nameMode ? '핀 ①~⑤가 가리키는 구조의 이름을 조작판 목록에서 골라요' : all ? '조립 완료! 화면을 끌어 돌려 보고 단면 슬라이더로 열어 보세요' : '부품 카드를 모형의 물음표(?)로 끌어다 놓아요', PHONE ? 12.5 : 13.5, '#64748b', 'center', 800);
     if (!b.nameMode && !all) { b.tok.forEach((k) => { if (!(b.drag && b.drag.t === k)) bTokDraw(k); }); if (b.drag) bTokDraw(b.drag.t); }
     else if (!b.nameMode) b.tok.forEach(bTokDraw);
     if (!PHONE) T(g.cx, 380, '길이 약 5~10 μm · 지름 약 2~3 μm', 12.5, '#7b8aa0', 'center', 700);
@@ -794,7 +794,7 @@
     if (!PHONE) {
       const bx = 14, by = 410, bw = 536; panel(bx, by, bw, 128, 14, '#fffdf6');
       const done = PINS.map((p, i) => [p, i]).filter(([p, i]) => fnOK(i));
-      if (!done.length) T(bx + 16, by + 30, '핀 ①~⑤의 기능을 오른쪽 목록(카드 A~E)에서 골라 보세요.', 14, '#64748b', 'left', 800);
+      if (!done.length) T(bx + 16, by + 30, '핀 ①~⑤의 기능을 조작판 목록(카드 A~E)에서 골라 보세요.', 14, '#64748b', 'left', 800);
       else done.forEach(([p, i], q) => T(bx + 16, by + 26 + q * 22, '①②③④⑤'[i] + ' ' + p.name + ': ' + FUN[p.ans].long, 13, '#1f2d44', 'left', 700));
     }
   }
@@ -918,7 +918,7 @@
       ctx.save(); ctx.translate(sx + (PHONE ? 250 : 360), sy + 62); ctx.beginPath(); ctx.ellipse(0, 0, 36, 16, -0.3, 0, TAU); ctx.fillStyle = col; ctx.fill(); ctx.restore();
       if (PHONE) T(sx + 230, sy + 414, '단풍이 드는 까닭을 색소의 변화로 설명해요.', 13, '#475569', 'center', 700);
       else { T(sx + 520, sy + 110, '단풍이 드는 까닭을', 14, '#475569', 'left', 700); T(sx + 520, sy + 132, '색소의 변화로 설명해요.', 14, '#475569', 'left', 700); }
-      if (!PHONE) { T(sx + 520, sy + 180, '띠를 눌러 “옅어짐”으로 바꾸거나', 13.5, '#64748b', 'left', 700); T(sx + 520, sy + 202, '오른쪽 목록의 버튼을 눌러요.', 13.5, '#64748b', 'left', 700); if (fiOk[0]()) { T(sx + 520, sy + 250, '엽록소가 먼저 분해되어', 14.5, '#15803d', 'left', 800); T(sx + 520, sy + 272, '카로티노이드의 노랑 · 주황이', 14.5, '#15803d', 'left', 800); T(sx + 520, sy + 294, '드러나요. (붉은 단풍의 안토사이아닌은', 14.5, '#15803d', 'left', 800); T(sx + 520, sy + 316, '새로 합성돼요)', 14.5, '#15803d', 'left', 800); } }
+      if (!PHONE) { T(sx + 520, sy + 180, '띠를 눌러 “옅어짐”으로 바꾸거나', 13.5, '#64748b', 'left', 700); T(sx + 520, sy + 202, '조작판의 색소 버튼을 눌러요.', 13.5, '#64748b', 'left', 700); if (fiOk[0]()) { T(sx + 520, sy + 250, '엽록소가 먼저 분해되어', 14.5, '#15803d', 'left', 800); T(sx + 520, sy + 272, '카로티노이드의 노랑 · 주황이', 14.5, '#15803d', 'left', 800); T(sx + 520, sy + 294, '드러나요. (붉은 단풍의 안토사이아닌은', 14.5, '#15803d', 'left', 800); T(sx + 520, sy + 316, '새로 합성돼요)', 14.5, '#15803d', 'left', 800); } }
       else if (fiOk[0]()) T(sx + 230, sy + 446, '엽록소가 먼저 분해되어 카로티노이드의 노랑 · 주황이 드러나요.', 12.5, '#15803d', 'center', 800);
     } else if (f.sit === 1) {
       f.grM.set(f.shade.gr === 'more' && f.shade.b === 'more' ? 1 : 0); f.grM.update(dt, 4);
@@ -1047,7 +1047,7 @@ const k = PHONE ? 1.3 : 1.4, y = sy + (PHONE ? 190 : 250);
         },
         {
           id: 'name', title: '단면 구조에 이름 붙이기', manual: true,
-          goal: '모형을 정면에서 본 <b>세로 단면</b>이에요. 핀 ①~⑤가 가리키는 구조의 이름을 오른쪽 목록에서 고르세요.',
+          goal: '모형을 정면에서 본 <b>세로 단면</b>이에요. 핀 ①~⑤가 가리키는 구조의 이름을 조작판 목록에서 고르세요.',
           hint: '가장 바깥을 감싼 막이 외막이에요. 안쪽 액체가 스트로마, 동전처럼 쌓인 것이 그라나, 납작한 주머니의 안쪽 공간이 틸라코이드 내부예요.',
           setup() { setMode('build'); S.b.nameMode = true; S.nmChk = false; [0, 1, 2, 3, 4].forEach((i) => { $('#nm' + i).value = ''; }); bCut(1); bFront(); updateCtl(); },
           check() {

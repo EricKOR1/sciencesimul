@@ -1160,12 +1160,12 @@
           check: () => dfAll(),
           hold: 0.8,
           status: () => SP4.map((s) => mark(s.ok) + ' ' + s.phi + '°').join(' &nbsp; '),
-          explain: '회합 주기는 <b>26.9 · 27.5 · 28.7 · 29.8일</b>이에요. 위도가 높은 흑점일수록 천천히 돌아서 점이 오른쪽 위로 올라가요.',
+          explain: '회합 주기는 <b>26.9 · 27.5 · 28.7 · 29.8일</b>이에요. 위도가 높은 흑점일수록 천천히 돌아요<span class="only2d">: 그래프의 점이 오른쪽 위로 올라가요</span>.',
         },
         {
           title: '위도에 따른 자전 경향 고르기', manual: true,
           goal: '경과일을 <b>7일</b>까지 재생해 흑점들이 어떻게 어긋나는지 보고, 위도에 따른 자전의 경향을 고르세요.',
-          hint: '위도 45° 흑점이 적도 쪽 흑점보다 뒤처지는지 보세요. 위도가 높을수록 주기가 길어요.',
+          hint: '위도 45° 흑점이 적도 쪽 흑점보다 덜 움직이는지(<span class="only3d">자취가 짧은지</span><span class="only2d">뒤처지는지</span>) 보세요. 위도가 높을수록 주기가 길어요.',
           setup() { S.flags.pickTrend = true; S.df.trend = -1; S.df.cMax = 0; S.df.play = false; setCDay(0); setView('diff'); },
           check() {
             if (S.df.cMax < 6.9) return '경과일을 7일까지 재생해 흑점들이 어떻게 어긋나는지 먼저 확인해요.';
@@ -1173,7 +1173,7 @@
             return S.df.trend === 0 ? true : S.df.trend === 1 ? '위도가 높을수록 주기가 길고 느리게 돌아요.' : '흑점마다 주기가 같지 않아요. 위도에 따라 주기가 달라요.';
           },
           status: () => mark(S.df.cMax >= 6.9) + ' 경과일 7일 &nbsp; ' + mark(S.df.trend === 0) + ' 경향 선택',
-          explain: '적도가 빠르고(주기 짧음) 고위도가 느려요(주기 김). 영상 합성에서도 처음 세로선이 7일 뒤 <b>적도 쪽이 앞서</b> 휘어 보여요.',
+          explain: '적도가 빠르고(주기 짧음) 고위도가 느려요(주기 김). <span class="only2d">영상 합성에서도 처음 세로선이 7일 뒤 <b>적도 쪽이 앞서</b> 휘어 보여요.</span><span class="only3d">7일 동안 적도 쪽 흑점의 자취가 가장 길어요.</span>',
         },
         {
           type: 'quiz', title: '태양에서 차등 자전이 가능한 까닭',

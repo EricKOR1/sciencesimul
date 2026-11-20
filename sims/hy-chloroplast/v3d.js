@@ -230,7 +230,7 @@
       function asmHtml() {
         const L = LB(); if (!L) return '';
         if (L.S.b.cmp) return '<b>⚙️ 미토콘드리아와 비교</b><br><b>공통</b>: 이중막(외막 + 내막) · 안쪽에 기질/스트로마 · 고리 DNA와 70S 리보솜으로 일부 단백질을 스스로 만들어요.<br><b>다른 점</b>: 미토콘드리아는 내막이 안으로 접힌 크리스타, 엽록체는 내막과 따로 있는 틸라코이드 막(그라나)이에요.';
-        if (pinOn()) return '<b>세로 단면</b> · 핀 ①~⑤가 가리키는 구조의 이름을 오른쪽 목록에서 골라요.<br>이중막(외막 · 내막) · 스트로마 · 틸라코이드 · 그라나의 자리를 살펴봐요.';
+        if (pinOn()) return '<b>세로 단면</b> · 핀 ①~⑤가 가리키는 구조의 이름을 조작판 목록에서 골라요.<br>이중막(외막 · 내막) · 스트로마 · 틸라코이드 · 그라나의 자리를 살펴봐요.';
         if (!asmOn()) return '';
         const b = L.S.b, n = b.placed.filter(Boolean).length, P = L.PARTS[b.sel];
         return '<b>엽록체 조립 ' + n + ' / 9</b><br>' + (P && !b.placed[b.sel] ? '고른 부품: <b>' + P.name + '</b> · ' + P.clue + '<br>알맞은 <b>?</b> 자리의 번호 단추를 눌러요.' : '<b>부품 ◀ ▶</b>로 부품 카드를 골라요.');

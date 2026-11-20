@@ -896,7 +896,7 @@
             S.sc.ordered = true; return true;
           },
           status: () => mark(cSc.counts().placed === 4) + ' 놓은 카드 ' + cSc.counts().placed + ' / 4 &nbsp; ' + mark(cSc.counts().right === 4) + ' 알맞게 ' + cSc.counts().right + ' / 4',
-          explain: '<b>은하(0.03 Mpc) &lt; 은하군(2) &lt; 은하단(5) &lt; 초은하단(50)</b> 순이에요. 로그 눈금에서 크기가 몇 자릿수씩 차이 나요. 이제 아래 그래프가 열려요.',
+          explain: '<b>은하(0.03 Mpc) &lt; 은하군(2) &lt; 은하단(5) &lt; 초은하단(50)</b> 순이에요. 로그 눈금에서 크기가 몇 자릿수씩 차이 나요. 이제 비교 그래프가 열려요.',
         },
         {
           title: '1 · 10 · 100 Mpc의 허블 흐름 속도',

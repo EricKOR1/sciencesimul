@@ -587,7 +587,7 @@
     const L = RC.L, A = CA(), eq = caEq(), dH = caDH();
     panel(L.x, L.y, L.w, L.h, 14);
     T(L.x + 14, L.y + 26, '🔢 계수와 방향을 바꾸면 ΔH 는?', PHONE ? 14 : 15, INK, 'left', 800);
-    T(L.x + 14, L.y + 46, '아래 조작판에서 계수 배수와 방향을 바꿔 보세요', PHONE ? 11.5 : 12.5, MUTED, 'left', 700);
+    T(L.x + 14, L.y + 46, '조작판에서 계수 배수와 방향을 바꿔 보세요', PHONE ? 11.5 : 12.5, MUTED, 'left', 700);
     // 식
     D.roundRect(L.x + 12, L.y + 60, L.w - 24, 74, 12); ctx.fillStyle = '#fbfcff'; ctx.fill(); ctx.strokeStyle = '#dbe3f3'; ctx.lineWidth = 1.5; ctx.stroke();
     drawTokens(L.x + L.w / 2, L.y + 92, [{ t: eq.l, c: INK }, { t: '  →  ', c: MUTED }, { t: eq.r, c: INK }], PHONE ? 15.5 : 17.5);

@@ -483,7 +483,7 @@
     $('#lab1').textContent = P.q[0].lab; $('#lab2').textContent = P.q[1] ? P.q[1].lab : '';
     in2.hidden = $('#lab2').hidden = P.q.length < 2;
     [in1, in2].forEach((inp, k) => { const v = S.cv.ans[p][k]; if (document.activeElement !== inp && inp.value !== v) inp.value = v; inp.classList.toggle('ok', k < P.q.length && S.cv.ok[p][k] && v !== ''); if (!inp.classList.contains('ok')) inp.classList.remove('bad'); });
-    $('#cvNote').textContent = S.cv.ordDone[p] ? '카드 순서를 맞췄어요. 계산한 값을 소수로 적어요.' : '먼저 오른쪽 계산 단계 카드를 순서대로 눌러 보고, 계산한 값을 소수로 적어요.';
+    $('#cvNote').textContent = S.cv.ordDone[p] ? '카드 순서를 맞췄어요. 계산한 값을 소수로 적어요.' : '먼저 그림의 계산 단계 카드를 순서대로 눌러 보고, 계산한 값을 소수로 적어요.';
   }
   [in1, in2].forEach((inp, k) => {
     inp.addEventListener('input', () => { const p = S.cv.p; S.cv.ans[p][k] = inp.value; const was = S.cv.ok[p][k]; cvEval(p, k, false); inp.classList.remove('bad'); inp.classList.toggle('ok', S.cv.ok[p][k]); if (S.cv.ok[p][k] && !was) { Sound.tick(); updateCtl(); } });
@@ -591,7 +591,7 @@
         {
           title: '80 °C까지 가열하기',
           goal: '설탕 34.2 g + 물 100 g(1.00 m) 설탕물을 <b>80 °C</b>까지 가열하며 <b>몰 농도(M)</b>와 <b>몰랄 농도(m)</b>가 어떻게 달라지는지 비교해요.',
-          hint: '온도 슬라이더를 오른쪽 끝(80 °C)으로 옮겨요. 비커 옆 확대 눈금에서 액면이 올라가는 것과 계기판의 M, m 값을 비교해요.',
+          hint: '온도 슬라이더를 80 °C까지 올려요. 비커 옆 확대 눈금에서 액면이 올라가는 것과 계기판의 M, m 값을 비교해요.',
           setup() { S.lock = true; S.sol.id = 'sug'; S.sol.k = 10; S.sol.w = 100; S.sol.T = 20; S.sol.Td = 20; setMode('molal'); },
           check: () => S.sol.T === 80 && S.sol.Td > 79.5, hold: 0.6,
           status: () => '온도 ' + Math.round(S.sol.Td) + ' °C ' + mark(S.sol.T === 80 && S.sol.Td > 79.5) + ' &nbsp; M ' + f3(cur().M) + ' · m ' + f2(cur().m),
@@ -629,7 +629,7 @@
         {
           title: '묽은 쪽과 진한 쪽의 근사 비교',
           goal: '용질 입자를 <b>1 ~ 2개</b>(묽은 용액)와 <b>40개 이상</b>(진한 용액)으로 각각 맞추고, 근사값 m / 55.6과 실제 X를 비교해요.',
-          hint: '슬라이더를 왼쪽 끝 가까이(1 ~ 2개)로 옮겨 오차를 읽고, 이어서 오른쪽(40개 이상)으로 옮겨 오차를 읽어요.',
+          hint: '용질 입자 수 슬라이더를 1 ~ 2개로 줄여 오차를 읽고, 이어서 40개 이상으로 늘려 오차를 읽어요.',
           setup() { S.lock = true; S.frac.k = 5; S.frac.seenD = false; S.frac.seenC = false; setMode('frac'); },
           check: () => S.frac.seenD && S.frac.seenC, hold: 0.6,
           status: () => '묽은 용액(1 ~ 2개) ' + mark(S.frac.seenD) + ' &nbsp; 진한 용액(40개 이상) ' + mark(S.frac.seenC),
@@ -658,7 +658,7 @@
         {
           title: '농도 변환 문제 3개',
           goal: '문제 1 ~ 3의 값을 모두 계산해서 적어요. (소수로, 오차 범위 안이면 정답이에요)',
-          hint: '문제마다 오른쪽 계산 단계 카드를 먼저 순서대로 눌러 보면 계산 순서를 알 수 있어요. 몰랄 농도는 용매의 kg으로 나눠요.',
+          hint: '문제마다 그림의 계산 단계 카드를 먼저 순서대로 눌러 보면 계산 순서를 알 수 있어요. 몰랄 농도는 용매의 kg으로 나눠요.',
           setup() { S.lock = true; S.cv.p = 0; S.cv.ans = [['', ''], ['', ''], ['', '']]; S.cv.ok = [[false, false], [false, false], [false, false]]; S.cv.ord = [[], [], []]; S.cv.ordDone = [false, false, false]; setMode('conv'); },
           check: () => [0, 1, 2].every(cvSolved), hold: 0.4,
           status: () => '문제 1 ' + mark(cvSolved(0)) + ' &nbsp; 문제 2 ' + mark(cvSolved(1)) + ' &nbsp; 문제 3 ' + mark(cvSolved(2)),

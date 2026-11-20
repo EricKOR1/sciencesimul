@@ -488,7 +488,7 @@
       ctx.fillStyle = i % 2 ? 'rgba(100,116,139,.05)' : 'rgba(100,116,139,.09)'; rr(P.x + 8, y + 2, P.w - 16, rh - 4, 10).fill();
       const sr = clamp(7 + 9 * Math.sqrt(s.R), 7, 20); D.sphere(P.x + 28, mid, sr * (PHONE ? 0.8 : 1), s.c, { gloss: true, light: '#fff', dark: shade(s.c, -0.3) });
       T(P.x + 50, mid - 2, s.n, PHONE ? 12 : 14, '#1e293b', 'left', 800);
-      T(P.x + 50, mid + 15 * Math.min(FS, 1.1), (i < 4 ? f0(s.T) + ' K' : f0(CM.Tc) + ' K') + ' · L ' + (s.L < 0.01 ? f3(s.L) : f2(s.L)), PHONE ? 10 : 11.5, '#64748b', 'left', 700);
+      T(P.x + 50, mid + 15 * Math.min(FS, 1.1), (i < 4 ? f0(s.T) + ' K' : f0(CM.Tc) + ' K') + ' · L ' + (s.L < 0.01 ? s.L.toPrecision(2) : f2(s.L)), PHONE ? 10 : 11.5, '#64748b', 'left', 700);
       // 띠
       const bx0 = X(s.in), bx1 = X(s.out), bh = Math.min(rh * 0.38, 22);
       ctx.fillStyle = 'rgba(100,116,139,.12)'; rr(ix, mid - bh / 2, iw, bh, bh / 2).fill();
@@ -782,7 +782,7 @@
         {
           title: '네 별의 HZ 안쪽 경계 계산하기',
           goal: '표의 광도 L로 네 별(M·K·G·F형)의 <b>HZ 안쪽 경계 0.95√L (AU)</b>를 계산해 입력하세요.',
-          hint: 'M형: √0.0016 = 0.04 → 0.038, K형: √0.18 = 0.42 → 0.40, G형: 0.95, F형: √2.7 = 1.64 → 1.55예요.',
+          hint: 'M형: √0.0016 = 0.04 → 0.038, K형: √0.18 = 0.42 → 0.40, G형: 0.95, F형: √2.67 ≈ 1.63 → 1.55예요.',
           setup() { CM.ok = false; CM.vals = [false, false, false, false]; S.flags.calcCmp = true; clrIn('inC0', 'inC1', 'inC2', 'inC3'); setView('compare'); },
           check: () => cmpOK(),
           hold: 0.6,

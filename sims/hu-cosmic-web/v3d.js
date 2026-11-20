@@ -248,6 +248,7 @@
         if (nm === 'struct' && S.st) fog = S.st.fog || 0;
         const key = nm + '|' + g + '|' + f.toFixed(3) + '|' + fog.toFixed(2);
         if (plRow) plRow.style.display = nm === 'origin' ? '' : 'none';
+        [cB, vB, sB].forEach((b) => { b.style.display = nm === 'origin' ? 'none' : ''; });
         if (key === ostat) return; ostat = key;
         mode = nm; gate = g; gF = f; gFog = fog;
         if (nm === 'origin') { const a = S.or.ageD != null ? S.or.ageD : S.or.age; syncing = true; player.set(Math.max(0, Math.min(1, (a - 1) / 137))); syncing = false; }

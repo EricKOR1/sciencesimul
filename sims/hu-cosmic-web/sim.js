@@ -492,7 +492,7 @@
     const nc = markersOK().filter((m) => m.kind === 'c').length, nv = markersOK().filter((m) => m.kind === 'v').length;
     if (!PHONE) {
       T(I.x + 14, I.y + 26, '은하가 몰린 곳(은하단) ' + nc + ' / 3 · 빈 곳(보이드) ' + nv + ' / 3', 14.5, '#1e293b', 'left', 800);
-      T(I.x + 14, I.y + 50, M.mixT ? '점을 무작위로 뿌리면 이런 모습이에요: 큰 덩어리나 빈 곳이 없어요.' : '점이 빽빽한 곳은 은하단, 은하가 거의 없는 넓은 곳은 보이드예요. 오른쪽 도구로 표시해요.', 12.5, '#64748b', 'left', 700);
+      T(I.x + 14, I.y + 50, M.mixT ? '점을 무작위로 뿌리면 이런 모습이에요: 큰 덩어리나 빈 곳이 없어요.' : '점이 빽빽한 곳은 은하단, 은하가 거의 없는 넓은 곳은 보이드예요. 조작판의 도구로 표시해요.', 12.5, '#64748b', 'left', 700);
     } else {
       T(I.x + 14, I.y + 28 * FS, '은하단 ' + nc + ' / 3 · 보이드 ' + nv + ' / 3', 14, '#1e293b', 'left', 800);
       drawWrap(I.x + 14, I.y + 56 * FS, '빽빽한 곳은 은하단, 은하가 거의 없는 넓은 곳은 보이드예요. 아래 그림은 같은 개수(400개)의 점을 무작위로 뿌린 모습이에요.', I.w - 28, 12, { color: '#64748b' });
@@ -901,7 +901,7 @@
       missions: [
         {
           title: '노란 칸의 은하 수 n 세기',
-          goal: '노란 테두리의 셀(먼 은하단의 가운데)을 오른쪽 확대 그림으로 보고, 셀 안의 <b>은하 수 n</b>을 세어 입력하세요.',
+          goal: '노란 테두리의 셀(먼 은하단의 가운데)을 확대 그림으로 보고, 셀 안의 <b>은하 수 n</b>을 세어 입력하세요.',
           hint: '확대 그림의 노란 점이 은하예요. 하나씩 세어 보세요. (n은 20개보다 많아요)',
           setup() { setView('grid'); S.gr.s = 16; setSlider($('#sS'), $('#oS'), 16, (v) => v + ' Mpc'); S.gr.lock = false; S.gr.sel = MISSION_CELL; S.gr.hide = true; S.gr.nOK = false; S.gr.dOK = false; S.flags.calcN = true; S.flags.calcD = false; clrIn('inN', 'inDl'); S.gr.fill = 0; updateCtl(); },
           check: () => S.gr.nOK,
@@ -912,7 +912,7 @@
         {
           title: '이 셀의 밀도 대비 δ 구하기',
           goal: 'n = 24, n̄ (전체 평균, 화면에 표시)로 <b>δ = (n − n̄) / n̄</b>를 계산해 입력하세요. (소수 첫째 자리까지)',
-          hint: 'δ = (24 − 3.3) / 3.3 ≈ 6.3이에요(n̄ = 3.31로 계산하면 6.2). n̄는 오른쪽 숫자 칸에 표시돼요.',
+          hint: 'δ = (24 − 3.3) / 3.3 ≈ 6.3이에요(n̄ = 3.31로 계산하면 6.2). n̄는 ‘전체 평균 n̄’ 칸에 표시돼요.',
           setup() { setView('grid'); S.gr.s = 16; setSlider($('#sS'), $('#oS'), 16, (v) => v + ' Mpc'); S.gr.lock = false; S.gr.sel = MISSION_CELL; S.gr.hide = true; S.gr.nOK = true; S.gr.dOK = false; S.flags.calcN = true; S.flags.calcD = true; clrIn('inDl'); updateCtl(); },
           check: () => S.gr.dOK,
           hold: 0.5,
@@ -957,7 +957,7 @@
             S.st.order = true; return true;
           },
           status: () => mark(cSt.counts().placed === 5) + ' 연결 ' + cSt.counts().placed + ' / 5 &nbsp; ' + mark(cSt.counts().right === 5) + ' 알맞게 ' + cSt.counts().right + ' / 5',
-          explain: '<b>은하단 약 10 Mpc</b>, <b>보이드 20~100 Mpc</b>, <b>초은하단 30~100 Mpc 이상</b>, <b>CfA 장성 약 200 Mpc</b>, <b>슬론 장성 약 400 Mpc</b>예요. 오른쪽 표에서 각 구조의 H₀d와 팽창의 영향도 비교해 보세요.',
+          explain: '<b>은하단 약 10 Mpc</b>, <b>보이드 20~100 Mpc</b>, <b>초은하단 30~100 Mpc 이상</b>, <b>CfA 장성 약 200 Mpc</b>, <b>슬론 장성 약 400 Mpc</b>예요.<span class="only2d"> ‘허블 흐름 H₀d’ 표에서 각 구조의 H₀d와 팽창의 영향도 비교해 보세요.</span>',
         },
         {
           title: 'CfA 장성을 빛이 가로지르는 시간',

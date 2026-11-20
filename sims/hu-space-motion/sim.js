@@ -769,7 +769,7 @@
         {
           title: '바너드별의 접선 속도 계산하기',
           goal: '바너드별의 고유 운동 <b>μ = 10.358″/년</b>, 거리 <b>d = 1.83 pc</b>로 <b>v_t = 4.74 × μ × d</b>를 계산해 입력하세요 (km/s). 두 사진도 깜박여 보세요.',
-          hint: '4.74 × 10.358 × 1.83 ≈ 89.9예요. 약 90 km/s예요.',
+          hint: '4.74 × 10.358 × 1.83 ≈ 89.8이에요. 약 90 km/s예요.',
           setup() { S.tn.sel = 0; S.flags.calcVt = true; S.tn.ok = false; clrIn('inVt'); setView('tan'); updateCtl(); },
           check: () => S.tn.sel === 0 && S.tn.ok,
           hold: 0.7,
@@ -793,8 +793,8 @@
         '<p>v_r과 v_t는 서로 <b>직각</b>이라서 <b>v = √(v_r² + v_t²)</b>이고, 시선과 이루는 각은 <b>θ = arctan(v_t / |v_r|)</b>예요. 시간 슬라이더로 바너드별이 앞으로 지구와 얼마나 가까워지는지도 볼 수 있어요.</p>',
       features: ['vec'],
       setup() { S.vc.vOk = false; S.vc.dmOk = false; S.flags.calcV = false; S.flags.calcDm = false; clrIn('inV', 'inDm'); setTv(0); setViews(['vec']); setView('vec'); },
-      recap: '공간 속도는 v = √(v_r² + v_t²)이고, 바너드별은 약 9800년 뒤 약 1.15 pc까지 가까워진 뒤 다시 멀어져요.',
-      summary: '<ul><li><b>공간 속도</b> v = √(v_r² + v_t²). 바너드별: √(110.5² + 89.8²) ≈ <b>142.4 km/s</b>. 시선과 이루는 각 θ = arctan(v_t / |v_r|) ≈ 39°.</li><li><b>최근접 거리</b> d_min = d × v_t / v = 1.83 × 89.8 / 142.4 ≈ <b>1.15 pc</b>(약 3.8광년), 약 9800년 뒤. 그 뒤에는 다시 멀어져요.</li><li>시선 속도는 도플러 이동, 접선 속도는 고유 운동 × 거리로 구한 값을 직각으로 합성해요.</li></ul>',
+      recap: '공간 속도는 v = √(v_r² + v_t²)이고, 바너드별은 약 9700년 뒤 약 1.15 pc까지 가까워진 뒤 다시 멀어져요.',
+      summary: '<ul><li><b>공간 속도</b> v = √(v_r² + v_t²). 바너드별: √(110.5² + 89.8²) ≈ <b>142.4 km/s</b>. 시선과 이루는 각 θ = arctan(v_t / |v_r|) ≈ 39°.</li><li><b>최근접 거리</b> d_min = d × v_t / v = 1.83 × 89.8 / 142.4 ≈ <b>1.15 pc</b>(약 3.8광년), 약 9700년 뒤. 그 뒤에는 다시 멀어져요.</li><li>시선 속도는 도플러 이동, 접선 속도는 고유 운동 × 거리로 구한 값을 직각으로 합성해요.</li></ul>',
       missions: [
         {
           title: '바너드별의 공간 속도 계산하기',
@@ -813,7 +813,7 @@
           setup() { S.flags.calcDm = true; S.vc.dmOk = false; clrIn('inDm'); setView('vec'); },
           check() { const v = numM('inDm'); if (v == null) return '최근접 거리를 입력해 주세요 (pc).'; if (near(v, barMin, 0.05)) return true; return v > 1.6 ? '지금 거리(1.83 pc)보다 가까워질 거예요. v_t / v를 곱해 보세요.' : '1.83 × (v_t / v)를 다시 계산해 보세요.'; },
           status: () => mark(S.vc.dmOk) + ' d_min ' + ($('#inDm').value.trim() || '—') + ' pc',
-          explain: 'd_min = d × v_t / v = 1.83 × 89.8 / 142.4 ≈ <b>1.15 pc</b>(약 3.8광년)이에요. 약 9800년 뒤 가장 가깝고, 그 뒤에는 다시 멀어져요.',
+          explain: 'd_min = d × v_t / v = 1.83 × 89.8 / 142.4 ≈ <b>1.15 pc</b>(약 3.8광년)이에요. 약 9700년 뒤 가장 가깝고, 그 뒤에는 다시 멀어져요.',
         },
       ],
     },
@@ -857,7 +857,7 @@
         {
           title: '10만 년 뒤의 북두칠성', 
           goal: '시간 슬라이더를 <b>±8만 년 이상</b>으로 움직여, 별자리 모양이 지금과 어떻게 다른지 확인하세요.',
-          hint: '시간 슬라이더를 오른쪽 끝(+100,000년) 쪽으로 움직여 보세요. 두베와 알카이드는 반대로 움직여요.',
+          hint: '시간 슬라이더를 +100,000년 끝까지 움직여 보세요. 두베와 알카이드는 반대로 움직여요.',
           setup() { S.cn.ds = 'dip'; setT(0); setYaw(0); updateCtl(); setView('con'); },
           check: () => S.cn.ds === 'dip' && Math.abs(S.cn.t) >= 80000,
           hold: 0.8,
