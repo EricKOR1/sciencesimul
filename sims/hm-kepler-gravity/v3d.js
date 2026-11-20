@@ -134,7 +134,7 @@
       const lfP = reg('force', label('', fP, { color: '#1d4ed8', size: 12 })), lfF = reg('force', label('', fA, { color: '#e2464b', size: 13 })), lfR = reg('force', label('', [0, 0, 0], { color: '#475569', size: 12 }));
       function forceScene(A, S) {
         const f = S.fo, R = f.r * 1.6, th = f.th || 0; const p = new V3(R * Math.cos(th), 0.2, -R * Math.sin(th)); fP.position.copy(p);
-        const hideR = !!(window.__sim && window.__sim.showCalc && window.__sim.showCalc('ratIn'));
+        const hideR = !!(window.__sim && window.__sim.ratHide && window.__sim.ratHide());
         const ratio = 1 / (f.r * f.r), dir = p.clone().multiplyScalar(-1).setY(0).normalize();
         setArrow(fA, p, p.clone().addScaledVector(dir, 0.4 + ratio * 1.6)); lfF.obj = p.clone().addScaledVector(dir, 0.4 + ratio * 1.6); lfF.set('F = ' + (f.r === 1 ? 'F₀' : hideR ? '? F₀' : (1 / (f.r * f.r)).toFixed(3).replace(/0+$/, '') + ' F₀')); lfF.off = [0, 0.4, 0];
         fR.setA(new V3(0, 0.1, 0), p.clone().setY(0.1)); lfR.obj = p.clone().multiplyScalar(0.5); lfR.set('r = ' + f.r.toFixed(1) + ' AU'); lfR.off = [0, 0.3, 0]; lfP.set('같은 질량의 행성'); lfP.off = [0, 0.5, 0];

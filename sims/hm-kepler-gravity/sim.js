@@ -145,6 +145,8 @@
     updateCtl();
   }
   const setFlag = (k, v) => { S.flags[k] = v; updateCtl(); };
+  /* 힘의 비를 구하는 미션 중에는 값을 가리고, 맞히면 다시 보여 줘요 */
+  const ratHide = () => !!(eff('ratIn') && !S.flags.ratOK);
   const ordV = (ord, rules) => { const pos = {}; ord.forEach((id, i) => { pos[id] = i; }); return rules.filter(([a, b]) => pos[a] > pos[b]); };
 
   /* 궤도 시간 */
@@ -426,7 +428,7 @@
       if (cur) { ctx.fillStyle = 'rgba(56,103,244,.1)'; D.roundRect(x0 - 8, y - 14, c.x + c.w - x0 - 2, PHONE ? 38 : 40, 8); ctx.fill(); }
       T(x0, y + 8, 'r = ' + r + ' AU', 13.5, '#26324a', 'left', 800);
       D.arrow(x0 + (PHONE ? 62 : 80), y + 4, x0 + (PHONE ? 62 : 80) + Math.max(len, 3), y + 4, { color: cur ? RED : '#e89a9d', width: cur ? 5 : 4, head: Math.min(10, Math.max(4, len * 0.45)) });
-      T(c.x + c.w - 10, y + 9, (r === 1 ? 'F₀' : eff('ratIn') ? '? F₀' : (1 / (r * r)).toFixed(3).replace(/0+$/, '') + ' F₀'), 13.5, cur ? RED : '#5a6679', 'right', 800);
+      T(c.x + c.w - 10, y + 9, (r === 1 ? 'F₀' : ratHide() ? '? F₀' : (1 / (r * r)).toFixed(3).replace(/0+$/, '') + ' F₀'), 13.5, cur ? RED : '#5a6679', 'right', 800);
     });
     ctx.restore();
     // 아래: F/F0 – r 그래프
@@ -571,7 +573,7 @@
       const g = S.gr, p = g.cur >= 0 ? PL[g.cur] : null;
       L1 = '찍은 점'; a = grDone() + ' / 6'; L2 = p ? p.n + ' T² / r³' : 'T² / r³'; b = p ? rat(p).toFixed(2) + ' 년²/AU³' : '—'; L3 = '직선의 기울기 k'; c = grDone() >= 6 ? g.k.toFixed(2) : '—';
     } else if (S.mode === 'force') {
-      const r = S.fo.r; L1 = '태양과의 거리 r'; a = r.toFixed(1) + ' AU'; L2 = '힘 F / F₀ = 1 / r²'; b = eff('ratIn') && r !== 1 ? '?' : foRatio().toFixed(3); L3 = '공전 주기 T (= r^1.5)'; c = Math.pow(r, 1.5).toFixed(2) + ' 년';
+      const r = S.fo.r; L1 = '태양과의 거리 r'; a = r.toFixed(1) + ' AU'; L2 = '힘 F / F₀ = 1 / r²'; b = ratHide() && r !== 1 ? '?' : foRatio().toFixed(3); L3 = '공전 주기 T (= r^1.5)'; c = Math.pow(r, 1.5).toFixed(2) + ' 년';
     } else {
       const h = eff('hideCmp'); L1 = '달의 a (구심)'; a = h ? '?' : (moonA() * 1000).toFixed(2) + '×10⁻³ m/s²'; L2 = 'g / 3600'; b = h ? '?' : (G_SURF / 3600 * 1000).toFixed(2) + '×10⁻³ m/s²'; L3 = '비교'; c = h ? '—' : '같아요 ✅';
     }
@@ -705,12 +707,12 @@
           title: '거리가 2배일 때 힘의 비', manual: true,
           goal: '지구 궤도(1 AU)의 같은 질량 행성이 받는 힘을 F₀라고 할 때, <b>2 AU</b>에 있는 행성이 받는 힘은 F₀의 몇 배일까요? 소수로 입력하세요.',
           hint: 'F ∝ 1 / r²이에요. r가 2배가 되면 (1/2)²예요. 슬라이더로 r = 2 AU를 놓고 화살표 길이를 비교해 봐요.',
-          setup() { S.fo.r = 1; S.fo.seen2 = false; clr('iRat'); setFlag('order', false); setFlag('ratIn', true); setScene('force'); },
+          setup() { S.fo.r = 1; S.fo.seen2 = false; clr('iRat'); S.flags.ratOK = false; setFlag('order', false); setFlag('ratIn', true); setScene('force'); },
           check() {
             const x = num('iRat');
             if (x == null) return '숫자를 입력해 주세요. (예: 0.5)';
             const ok = Math.abs(x - 0.25) <= 0.01; fb([[$('#iRat'), ok]]);
-            if (ok) return true;
+            if (ok) { S.flags.ratOK = true; return true; }
             if (Math.abs(x - 0.5) <= 0.02) return '거리에 반비례(1/2)라고 생각했어요. 힘은 거리의 제곱에 반비례해요.';
             if (Math.abs(x - 4) <= 0.1 || Math.abs(x - 2) <= 0.1) return '거리가 멀어지면 힘은 커지지 않고 작아져요.';
             return 'F ∝ 1 / r²에서 r가 2배이면 힘은 1 ÷ 2² = ?';
@@ -800,7 +802,7 @@
   /* ---------- 디버그 (Playwright) ---------- */
   window.__sim = {
     S, VW, VH, get game() { return game; }, setScene, setFlag, grProcess, sectorFrac, kepE, marsObs, moonA, PL, rat, ordV, RULES_A, RULES_B,
-    E_AREA, E_MARS, A_MARS, MARS_N, kpos, showCalc, MOON_R, MOON_T,
+    ratHide, E_AREA, E_MARS, A_MARS, MARS_N, kpos, showCalc, MOON_R, MOON_T,
     stepAll(sec) { const n = Math.ceil(sec / 0.02); for (let i = 0; i < n; i++) { obStep(0.02); grStep(0.02); foStep(0.02); } },
   };
 })();
