@@ -849,7 +849,7 @@
         {
           id: 'sort', title: '특징 분류', manual: true,
           goal: '특징 카드 9장을 알맞은 <b>줄기세포 종류</b> 상자에 넣으세요.',
-          hint: '"배반포"와 "배아"는 배아줄기세포, "골수"와 "제한"은 성체줄기세포, "4인자"와 "환자 자신의 세포"는 iPS와 관련돼요.',
+          hint: '"배반포"와 "배아"는 배아줄기세포, "골수"와 "제한"은 성체줄기세포, "전사 인자 4종"과 "환자 자신의 세포"는 iPS와 관련돼요.',
           setup() { sortSorter.reset(); setMode('sort'); },
           check() {
             if (sortSorter.placed < 9) { sortSorter.markBad([]); return '카드를 모두 상자에 넣어 주세요. (' + sortSorter.placed + ' / 9)'; }

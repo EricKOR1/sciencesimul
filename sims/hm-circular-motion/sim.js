@@ -913,7 +913,7 @@
     '<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#e2464b"/></marker></defs>' +
     '<circle cx="90" cy="90" r="56" fill="none" stroke="#9aa6bb" stroke-width="2.5" stroke-dasharray="6 5"/><circle cx="90" cy="90" r="4" fill="#5a6679"/>' +
     '<line x1="90" y1="90" x2="146" y2="90" stroke="#8a6d3b" stroke-width="2.5"/><circle cx="146" cy="90" r="9" fill="#f26b3a"/>' +
-    '<path d="M 130 52 A 60 60 0 0 1 150 66" fill="none" stroke="#3867f4" stroke-width="2.5"/><path d="M 150 66 l-8 0 l6 -7 z" fill="#3867f4"/><text x="104" y="40" font-size="13" fill="#3867f4" font-weight="800">반시계 방향</text>' +
+    '<path d="M 150 66 A 60 60 0 0 0 132 54" fill="none" stroke="#3867f4" stroke-width="2.5"/><path d="M 130 52 L 138.4 55 L 132.6 60.6 z" fill="#3867f4"/><text x="104" y="40" font-size="13" fill="#3867f4" font-weight="800">반시계 방향</text>' +
     '<line x1="156" y1="90" x2="222" y2="90" stroke="#e2464b" stroke-width="3" marker-end="url(#ah)"/><text x="206" y="82" font-size="15" font-weight="800" fill="#26324a">A</text>' +
     '<line x1="146" y1="80" x2="146" y2="14" stroke="#e2464b" stroke-width="3" marker-end="url(#ah)"/><text x="154" y="26" font-size="15" font-weight="800" fill="#26324a">B</text>' +
     '<line x1="136" y1="90" x2="112" y2="90" stroke="#e2464b" stroke-width="3" marker-end="url(#ah)"/><text x="116" y="116" font-size="15" font-weight="800" fill="#26324a">C</text>' +
