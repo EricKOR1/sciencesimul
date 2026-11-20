@@ -1200,7 +1200,7 @@
           title: '숨 따라가기',
           goal: '“숨 쉬기 시작”을 누르고, 들이쉰 공기가 <b>폐포</b>까지 가는 것을 <b>2번</b> 지켜보세요.',
           hint: '오른쪽 위 단추로 숨 쉬기를 시작해요. 파란 공기 입자가 어디를 지나는지 따라가 봐요. 숨을 내쉴 때는 주황색으로 나와요.',
-          setup() { setScene('airway'); AW.cardsOn = false; AW.breaths = 0; AW.reached = 0; showHint('💨 “숨 쉬기 시작”을 눌러요', 7000); },
+          setup() { setScene('airway'); AW.cardsOn = false; AW.breaths = 0; AW.reached = 0; },
           check: () => AW.breaths >= 2,
           hold: 0.5,
           status: () => '폐포까지 간 숨: <b>' + Math.min(AW.breaths, 2) + ' / 2</b>번',

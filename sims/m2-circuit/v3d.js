@@ -86,7 +86,7 @@
       const eInst = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 12, 8), new THREE.MeshStandardMaterial({ color: lin(0x3f78ff), emissive: lin(0x2f5cf0), emissiveIntensity: 1.0, roughness: 0.3 }), NE); eInst.frustumCulled = false; gCir.add(eInst);
       const NI = 12;
       const iInst = new THREE.InstancedMesh(new THREE.ConeGeometry(0.17, 0.46, 14), new THREE.MeshBasicMaterial({ color: lin(0xff5a48) }), NI); iInst.frustumCulled = false; gCir.add(iInst);
-      const LB = [label('전지', batt, { offset: [0, 1.2, 0] }), label('전구', bulb, { offset: [0, 2.6, 0] }), label('스위치', sw, { offset: [0, 0.8, 0.2] })];
+      const LB = [label('전원 장치', batt, { offset: [0, 1.2, 0] }), label('전구', bulb, { offset: [0, 2.6, 0] }), label('스위치', sw, { offset: [0, 0.8, 0.2] })];
       const lE = label('전자의 이동 방향', [-HX, 0.8, 0], { color: 'rgba(40,80,200,.95)' }), lI = label('전류의 방향', [HX, 0.8, 0], { color: 'rgba(200,70,60,.95)' });
 
 
@@ -163,7 +163,7 @@
         const k = (closed ? 'c' : 'o') + V.toFixed(1) + (e ? 'e' : '') + (i ? 'i' : '');
         if (k === lastInfo) return; lastInfo = k;
         if (!closed) { info('<b>열린 회로</b>: 스위치가 열려 있어서 회로가 끊겼어요. <b>전류가 흐르지 않아</b> 전구도 꺼져 있어요.'); return; }
-        let t = `<b>닫힌 회로</b>: 전지 → 전구 → 스위치가 도선으로 이어져 <b>전류가 흘러</b> 전구가 켜져요.<br>전지 ${V.toFixed(1)} V → 전구 ${V > 4.2 ? '아주 밝아요' : V > 2.4 ? '밝아요' : '어두워요'}`;
+        let t = `<b>닫힌 회로</b>: 전원 장치 → 전구 → 스위치가 도선으로 이어져 <b>전류가 흘러</b> 전구가 켜져요.<br>전원 장치 ${V.toFixed(1)} V → 전구 ${V > 4.2 ? '아주 밝아요' : V > 2.4 ? '밝아요' : '어두워요'}`;
         if (e) t += '<br><b style="color:#8fb0ff">전자(파랑)</b>가 어느 극에서 어느 극으로 움직이는지 보세요.';
         if (i) t += '<br><b style="color:#ff9d90">전류(주황 화살표)</b>의 방향을 전자와 비교해 보세요.';
         if (!e && !i) t += '<br><span style="color:#ffd34d">[전자 흐름 보기] · [전류 방향 보기]를 켜 보세요.</span>';
@@ -171,7 +171,7 @@
       }
       // 2D 실험과 같은 스위치 · 전압 · 보기 설정을 써요 (3D에서 바꾸면 2D도 바뀌어요)
       controls.button('🔌 스위치 열기/닫기', () => { const s = sm(); if (s) { s.S.touched.sw = true; s.setClosed(!s.S.closed); } });
-      const vr = controls.range('전지 전압', 0.5, 6, 0.5, 3, (v) => { const s = sm(); if (s) s.setV(v); }, (v) => v.toFixed(1) + ' V');
+      const vr = controls.range('전원 장치 전압', 0.5, 6, 0.5, 3, (v) => { const s = sm(); if (s) s.setV(v); }, (v) => v.toFixed(1) + ' V');
       const eB = controls.button('전자 흐름 보기', () => { const s = sm(); if (s) s.setShow(!s.S.showE, s.S.showI); });
       const iB = controls.button('전류 방향 보기', () => { const s = sm(); if (s) s.setShow(s.S.showE, !s.S.showI); });
       controls.button('이름표', () => { labs = !labs; LB.forEach((l) => l.show(labs)); lE.show(labs && showE); lI.show(labs && showI); });

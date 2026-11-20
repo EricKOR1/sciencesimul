@@ -1683,7 +1683,7 @@
       S.gel = 'white'; S.revealRed = true; setScene('stage');
     } else if (i === 6) {
       S.gel = 'white'; S.seen = { red: 0, green: 0, blue: 0 }; setScene('stage');
-      showHint('🎭 아래 버튼으로 조명 색을 바꿔 보세요', 5000);
+      showHint('🎭 무대 조명의 색 버튼으로 조명 색을 바꿔 보세요', 5000);
     } else if (i === 7) {
       S.gel = 'blue'; setScene('stage');
     } else if (i === 8) {
@@ -1732,7 +1732,7 @@
           {
             title: '사과가 빨갛게 보이는 과정',
             goal: '💡 전등을 켜고, 사과에 닿은 빛이 어떻게 되는지 <b>5초</b> 동안 살펴보세요.',
-            hint: '아래 <b>전등 켜기</b> 버튼이나 화면의 전등을 눌러요. 🔍 돋보기에서 빨강·초록·파랑 빛이 각각 어떻게 되는지 보세요.',
+            hint: '<b>전등 켜기</b> 버튼이나 화면의 전등을 눌러요. 🔍 돋보기에서 빨강·초록·파랑 빛이 각각 어떻게 되는지 보세요.',
             check: () => S.lampOn && S.obs >= 5,
             hold: 0.4,
             status: () => '전등 ' + mark(S.lampOn) + ' · 관찰 <b>' + fmt(Math.min(5, S.obs), 1) + ' / 5초</b>',
@@ -1840,7 +1840,7 @@
           {
             title: '조명 색을 바꿔 보기',
             goal: '무대 조명을 <b>빨강 · 초록 · 파랑</b>으로 차례로 바꿔 보며 세 물체의 색을 살펴보세요. (각각 1.5초 이상)',
-            hint: '아래 버튼으로 조명 색을 바꿔요. 초록 잎이 가장 밝게 보이는 조명은 무슨 색일까요?',
+            hint: '<b>무대 조명의 색</b> 버튼(흰색·빨강·초록·파랑)으로 조명 색을 바꿔요. 초록 잎이 가장 밝게 보이는 조명은 무슨 색일까요?',
             check: () => S.seen.red >= SEEN_NEED && S.seen.green >= SEEN_NEED && S.seen.blue >= SEEN_NEED,
             hold: 0.4,
             status: () => ['red', 'green', 'blue'].map((k, i) => CH_DOT[i] + ' ' + mark(S.seen[k] >= SEEN_NEED)).join(' · '),

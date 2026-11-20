@@ -799,7 +799,7 @@
             check: () => S.scene === 'coil' && S.sawOn && S.sawRev && S.sawStrong && S.I >= 1,
             status: () => box(S.sawOn) + ' 전류 흘리기 · ' + box(S.sawRev) + ' 방향 바꾸기 · ' + box(S.sawStrong) + ' 2.5 A 이상 · 지금 ' + (S.I ? S.I.toFixed(1) : '0.0') + ' A',
             hold: 0.6,
-            explain: '전류가 흐르면 바늘이 움직여 자기장이 생겼음을 알 수 있어요. 방향을 바꾸면 바늘이 <b>반대로</b> 돌고 N극·S극이 바뀌며, 전류를 세게 하면 자기장이 <b>더 세져요</b>(철가루가 진해져요).',
+            explain: '전류가 흐르면 바늘이 움직여 자기장이 생겼음을 알 수 있어요. 방향을 바꾸면 바늘이 <b>반대로</b> 돌고 N극·S극이 바뀌며, 전류를 세게 하면 자기장이 <b>더 세져요</b><span class="only2d">(철가루가 진해져요)</span>.',
           },
           {
             type: 'quiz',

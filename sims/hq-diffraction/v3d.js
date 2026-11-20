@@ -80,7 +80,7 @@
     return { V3, Yax, mat, basic, glass, mkArrow, setArrow, arrowSet, mkSeg, setSeg, anchor, sphere, tube, box, cyl, fib, grab, showCtl, toggleBtn };
   }
   window.SciSim3D.attach({
-    title: '물결 탱크 회절 3D',
+    title: '회절과 홀로그램 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: 15.5 * KD, theta: -0.35, phi: 0.95, min: 7, max: 30, target: [1.0, -0.4, 0] },
     autoRotate: 0,
@@ -208,7 +208,7 @@
         setSeg(sightS, eyePos, sph.position); setSeg(sightT, eyePos, star.position); sightS.visible = !!v.sphIn; sightT.visible = !!v.starIn;
         lSph.set('앞 물체(공)'); lStar.set(v.star ? '가려졌던 별이 보여요!' : v.starIn ? '별 (공에 가려져요)' : '별'); lSph.show(!!v.sphIn && !!labs.play.on); lStar.show(!!v.starIn && !!labs.play.on);
         lEye.set('눈 (e = ' + Math.round(e) + ')'); lFilm.set(full ? '필름 전체' : '필름 한 조각');
-        info('<b>🎞️ 재생: 기준광만 비춰도 입체상이 떠올라요</b><br>' + (P.ref ? '기준광을 필름에 비추면 필름 뒤에 <b>입체상</b>이 보여요.' : '기준광이 없으면 상이 재생되지 않아요.') + '<br>눈을 옆으로 옮기면(눈 위치 슬라이더) 앞의 공이 비켜나며 가려진 별이 보여요 (시차).<br>' + (full ? '필름 전체' : '필름 한 조각만으로도 전체 상이 보이지만 볼 수 있는 범위가 좁아져요.') + (v.star ? '<br><b>지금은 가려진 별이 보여요!</b>' : ''));
+        info('<b>🎞️ 재생: 기준광만 비춰도 입체상이 떠올라요</b><br>' + (P.ref ? '기준광을 필름에 비추면 필름 뒤에 <b>입체상</b>이 보여요.' : '기준광이 없으면 상이 재생되지 않아요.') + '<br>눈 위치 슬라이더로 눈을 옮기면 앞의 공이 비켜나며 가려진 별이 보여요 (시차).<br>' + (full ? '필름 전체' : '필름 한 조각만으로도 전체 상이 보이지만 볼 수 있는 범위가 좁아져요.') + (v.star ? '<br><b>지금은 가려진 별이 보여요!</b>' : ''));
       }
 
       /* ================= ⑤ 레이저의 회절 (laser) ================= */
