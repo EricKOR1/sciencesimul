@@ -352,7 +352,7 @@
       D.sphere(x, y, 8 * k, '#0ea5e9', { gloss: true });
       T(x + 12, y - 8, s[0] + '일', PHONE ? 10.5 : 11.5, '#0369a1', 'left', 800);
     });
-    if (n === 0) T(b.x + b.w / 2, b.y + b.h / 2, '왼쪽 목록의 (P, m)을 그래프에 찍어요', 13.5, '#94a3b8', 'center', 800);
+    if (n === 0) T(b.x + b.w / 2, b.y + b.h / 2, '목록의 (P, m)을 그래프에 찍어요', 13.5, '#94a3b8', 'center', 800);
     if (n === 5 && !smcFitOK()) T(b.x + b.w / 2, b.y + 20, '두 동그라미를 끌어 직선을 점들에 맞춰요', 13, '#b45309', 'center', 800);
     if (S.fitGlow > 0.02 || FREE()) {
       const a = FREE() ? 1 : S.fitGlow;
@@ -459,7 +459,7 @@
     outlineT(g.X(0) + 10, g.Y(0) - 10, '태양', PHONE ? 11 : 12, '#fde68a', 'left');
     outlineT(b.x + b.w - 8, g.Y(0) - 8, 'ℓ = 0° (궁수자리 방향) →', PHONE ? 10.5 : 11.5, '#cbd5e1', 'right');
     if (S.mk.set && S.mapMode === 0) outlineT(b.x + 8, b.y + b.h - 10, '표시한 중심: 태양에서 ' + f1(Math.hypot(S.mk.x, S.mk.y)) + ' kpc, ℓ = ' + f0((Math.atan2(S.mk.y, S.mk.x) / DEG + 360) % 360) + '°', PHONE ? 11 : 12.5, '#fde047', 'left');
-    if (mapCount() === 0 && S.mapMode === 0) outlineT(b.x + b.w / 2, b.y + b.h / 2 - 40, '오른쪽 번호 단추에서 성단을 골라 거리를 계산해요', PHONE ? 11.5 : 13, '#cbd5e1', 'center');
+    if (mapCount() === 0 && S.mapMode === 0) outlineT(b.x + b.w / 2, b.y + b.h / 2 - 40, '번호 단추에서 성단을 골라 거리를 계산해요', PHONE ? 11.5 : 13, '#cbd5e1', 'center');
     // 성단 단추
     const C = L.C; panel(C.x, C.y, C.w, C.h, { r: 14 });
     T(C.x + 14, C.y + 24 * FS, '구상 성단 24개  (' + mapCount() + ' / 24 계산)', PHONE ? 12.5 : 13.5, '#1e293b', 'left', 800);
@@ -660,7 +660,7 @@
         },
         {
           title: '소마젤란 은하의 세페이드 그래프',
-          goal: '왼쪽 목록의 (P, m) 5개를 그래프에 찍고, 점들을 지나는 <b>직선</b>을 맞추세요.',
+          goal: '‘관측한 세페이드’ 목록의 (P, m) 5개를 그래프에 찍고, 점들을 지나는 <b>직선</b>을 맞추세요.',
           hint: '가로 눈금은 log P예요: P = 10일이면 log P = 1, P = 100일이면 2예요. 직선 양 끝의 동그라미를 위아래로 끌어요.',
           setup() { setView('smc'); },
           check: () => smcFitOK(), hold: 0.8,

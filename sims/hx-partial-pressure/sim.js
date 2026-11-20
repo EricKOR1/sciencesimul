@@ -534,7 +534,7 @@
         {
           title: '세 기체를 넣고 분압의 합 구하기', manual: true,
           goal: '<b>He, N₂, O₂</b>를 모두 넣은 뒤, 막대에 나온 <b>분압 세 개의 합</b>을 atm 단위로 써서 <span class="only3d">막대 위에 나온 전체 압력</span><span class="only2d">압력계의 전체 압력</span>과 비교해요. <b>✔ 확인하기</b>를 눌러요.',
-          hint: '오른쪽의 기체 단추를 눌러 세 기체를 모두 넣어요. 분압은 He 0.40, N₂ 0.60, O₂ 1.00이에요. 더한 값이 <span class="only3d">막대 위의 전체 압력</span><span class="only2d">압력계의 값</span>과 같아요.',
+          hint: '조작판의 기체 단추를 눌러 세 기체를 모두 넣어요. 분압은 He 0.40, N₂ 0.60, O₂ 1.00이에요. 더한 값이 <span class="only3d">막대 위의 전체 압력</span><span class="only2d">압력계의 값</span>과 같아요.',
           setup() { S.lock = true; S.gate = 'sumin'; sumReset(); setMode('sum'); },
           check() {
             if (!injAll()) return '먼저 He, N₂, O₂를 모두 넣어 주세요.';
@@ -655,11 +655,11 @@
         {
           title: '40 m에서 안전한 혼합 기체',
           goal: '깊이를 <b>40 m</b>로 두고, 산소 비율을 조절해 <b>산소 분압을 0.16 ~ 1.4 atm</b>에 맞춰요.',
-          hint: '지금 산소가 40 %라서 P(O₂) = 0.40 × 5.0 = 2.0 atm으로 위험해요. 산소 비율을 낮춰요. 공기(21 %)도 안전해요.',
+          hint: '지금 산소가 40 %라서 P(O₂) = 0.40 × 5.0 = 2.0 atm으로 위험해요. 산소 비율을 낮춰요. 공기(21 %)도 산소 분압으로는 안전해요.',
           setup() { S.lock = true; S.gate = ''; S.dv.depth = 40; S.dv.o2 = 40; S.dv.dil = 'n2'; setMode('dive'); },
           check: () => S.dv.depth === 40 && dvSafe(), hold: 0.7,
           status: () => '깊이 ' + S.dv.depth + ' m ' + mark(S.dv.depth === 40) + ' &nbsp; P(O₂) ' + f2(dvO2()) + ' atm ' + mark(dvSafe()),
-          explain: '40 m는 전체 압력 5.0 atm이에요. 공기(O₂ 21 %)는 P(O₂) = 0.21 × 5.0 = <b>1.05 atm</b>으로 안전해요. 산소 비율이 28 %를 넘으면 1.4 atm을 넘어 위험해요.',
+          explain: '40 m는 전체 압력 5.0 atm이에요. 공기(O₂ 21 %)는 P(O₂) = 0.21 × 5.0 = <b>1.05 atm</b>으로 산소 분압은 안전해요(질소 분압은 0.79 × 5.0 ≈ 4.0 atm이라 질소 마취는 조심해야 해요). 산소 비율이 28 %를 넘으면 1.4 atm을 넘어 위험해요.',
         },
         {
           title: '60 m에서 안전한 혼합 기체',

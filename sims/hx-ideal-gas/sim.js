@@ -404,7 +404,7 @@
     if (s.err) T(L.x + L.w - 24, py + 54, '온도계가 ' + sgn(s.err) + ' °C 틀림', 13.5, BAD, 'right', 800);
     const typed = s.mTyped[g];
     if (s.mok[g]) { T(L.x + 24, py + 86, '= ' + f1(mExact(g, 300)) + ' g/mol  (가장 가까운 후보: ' + nearestM(g) + ') ✅', 16, '#14803f', 'left', 800); }
-    else T(L.x + 24, py + 86, '= ? g/mol   (계산해서 오른쪽 아래 칸에 써요)', 14, '#9aa5b6', 'left', 700);
+    else T(L.x + 24, py + 86, '= ? g/mol   (계산해서 조작판의 M 칸에 써요)', 14, '#9aa5b6', 'left', 700);
     if (s.err && S.gate === 'err') {
       const ma = mExact('A', 300), mb = mExact('A', Tr);
       T(L.x + 24, py + 114, '정확한 T = 300 K → M = ' + f1(ma), 14, INK, 'left', 800);
@@ -445,7 +445,7 @@
       ctx.strokeStyle = '#a16207'; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(cxT - 30, yT - 10); ctx.lineTo(cxT + 40, yT - 52); ctx.stroke();
       if (k > 0.04) D.flame(cxT + 40, yT - 52, 38 * k, S.t); else if (!RM) { dot(cxT + 40, yT - 62, 5, '#94a3b8', 0.5); }
       T(cxT + 62, yT - 40, tb.gas === 'A' ? (p > 0.7 ? '불꽃이 꺼져요' : '기체 속으로') : tb.gas === 'B' ? '불꽃이 타올라요' : '펑 소리가 나며 타요', 13.5, tb.gas === 'A' ? '#6d28d9' : MUTED, 'left', 800);
-    } else T(Rr.x + Rr.w / 2, ty + 22 + th / 2 + 5, '아래 단추로 시험해요', 13.5, '#9aa5b6', 'center', 700);
+    } else T(Rr.x + Rr.w / 2, ty + 22 + th / 2 + 5, '조작판의 시험 단추로 확인해요', 13.5, '#9aa5b6', 'center', 700);
     void t;
   }
   function candTap(p) {
@@ -500,7 +500,7 @@
     const steps = ['2NaN₃ → 2Na + 3N₂', 'NaN₃ 65 g = 1 mol → N₂ 1.5 mol', '조건: 27 °C = 300 K, 1.00 atm', 'V = nRT / P'];
     steps.forEach((q, i) => T(lx + 4, L.y + 64 + i * 28, q, 14.5, i === 3 ? PUR : MUTED, 'left', 800));
     const fv = 'V = (1.5 × 0.082 × 300) / 1.00';
-    T(lx + 4, L.y + 64 + 4 * 28, '= ' + (lm.bagOk ? f1(BAG_V) + ' ≈ 37 L ✅' : '?  (오른쪽 칸에 계산해서 써요)'), 15, lm.bagOk ? '#14803f' : '#9aa5b6', 'left', 800);
+    T(lx + 4, L.y + 64 + 4 * 28, '= ' + (lm.bagOk ? f1(BAG_V) + ' ≈ 37 L ✅' : '?  (조작판 칸에 계산해서 써요)'), 15, lm.bagOk ? '#14803f' : '#9aa5b6', 'left', 800);
     T(lx + 4, L.y + 64 + 5 * 28 + 4, fv, 13.5, MUTED, 'left', 700);
     if (lm.fired) { const cmp = '내가 쓴 값 ' + (isNaN(lm.bagVal) ? '—' : fx(lm.bagVal, 1)) + ' L / 실제 ' + f1(BAG_V) + ' L'; textBlock(lx + 4, L.y + 64 + 6 * 28 + 10, w - 20, '에어백이 순식간에 약 37 L로 부풀어요. ' + cmp + ' (고체가 분해해 기체가 생겨서 압력이 아니라 부피가 커져요.)', 13.5, '#14803f', 18, 800); }
     // 장면
@@ -807,7 +807,7 @@
         {
           title: '고압에서 이상 기체와 비교하기',
           goal: '<b>실제 기체</b> 화면에서 CO₂의 압력을 <b>50 atm</b>까지 올려 25 °C와 100 °C의 PV/nRT를 비교해요.',
-          hint: '아래 탭에서 "실제 기체"를 고르고 압력을 50 atm으로 올려요. 25 °C와 100 °C 두 온도에서 모두 확인해요. 이상 기체는 1.0이에요.',
+          hint: '조작판에서 "📉 실제 기체"를 고르고 압력을 50 atm으로 올려요. 25 °C와 100 °C 두 온도에서 모두 확인해요. 이상 기체는 1.0이에요.',
           setup() { S.lock = true; S.gate = ''; S.sub.limit = 'real'; S.lim.zP = 1; S.lim.zT = 25; S.lim.zMax = { 25: 1, 100: 1 }; setMode('limit'); },
           check: () => S.lim.zMax[25] >= 50 && S.lim.zMax[100] >= 50, hold: 0.5,
           status: () => '25 °C 50 atm ' + mark(S.lim.zMax[25] >= 50) + ' &nbsp; 100 °C 50 atm ' + mark(S.lim.zMax[100] >= 50) + ' &nbsp; 지금 ' + f2(zAt(S.lim.zT === 25 ? Z25 : Z100, S.lim.zP)),

@@ -500,7 +500,7 @@
         {
           title: '세 반응기에서 농도 2배 확인',
           goal: '세 반응기 모두 농도를 <b>×2</b>로 올려, 처음 속도가 몇 배가 되는지 확인해요.',
-          hint: '조작판에서 반응기마다 ×2 를 눌러요. 막대 길이와 오른쪽 표의 「2배 → 몇 배」를 읽어요.',
+          hint: '조작판에서 반응기마다 ×2 를 눌러요. 막대 길이와 「농도 2배일 때 속도」 표의 「2배 → 몇 배」를 읽어요.',
           setup() { S.lock = true; resetObs(); setMode('obs'); },
           check: () => OB().rec.every(Boolean), hold: 0.5,
           status: () => '① ' + mark(OB().rec[0]) + ' &nbsp; ② ' + mark(OB().rec[1]) + ' &nbsp; ③ ' + mark(OB().rec[2]),

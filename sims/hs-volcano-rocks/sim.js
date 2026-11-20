@@ -1015,7 +1015,7 @@
       const nt = k === 'Se' && S.role === 2 ? '응회암(퇴적암)' : n.t;
       D.text(p.x, p.y + 5 * FS, nt, { size: small ? 12.5 : 14, weight: 800, color: '#1e293b' });
     });
-    D.text(A.x + A.w / 2, A.y + A.h - 12, '굵은 화살표 = 화산 활동이 하는 일 (아래 단추로 바꿔요)', { size: 12.5, weight: 700, color: '#64748b' });
+    D.text(A.x + A.w / 2, A.y + A.h - 12, '굵은 화살표 = 화산 활동이 하는 일 (조작판의 역할 단추로 바꿔요)', { size: 12.5, weight: 700, color: '#64748b' });
 
     // B: 판 경계별 화산
     card(B, '🗺️ 어디에서 어떤 마그마가 올라올까?');
@@ -1193,7 +1193,7 @@
         {
           title: '분출물 카드 분류', manual: true,
           goal: '카드 6장을 <b>용암 · 화산 가스 · 화산재 · 화산력 · 화산탄·화산괴</b> 중 알맞은 것으로 분류해요.',
-          hint: '아래 지름 눈금을 봐요. 지름 2 mm 미만은 화산재, 2~64 mm는 화산력, 64 mm 초과는 화산탄·화산괴예요.',
+          hint: '그림의 ‘화산 쇄설물의 지름’ 눈금을 봐요. 지름 2 mm 미만은 화산재, 2~64 mm는 화산력, 64 mm 초과는 화산탄·화산괴예요.',
           setup() { S.cardsShow = true; selEject.reset(); setMode('eject'); setCtl(['selEject']); },
           status: () => mark(selEject.ok()) + ' 분류한 카드 ' + selEject.count() + ' / 6',
           check() {
@@ -1270,7 +1270,7 @@
         {
           title: '암석과 생성 장소 짝짓기', manual: true,
           goal: '<b>현무암 · 안산암 · 응회암</b>을 각각 만들어지는 곳과 이어요.',
-          hint: '오른쪽 그림을 봐요. 해령과 열점은 맨틀에서 올라온 현무암질 마그마, 섭입대는 안산암질 마그마예요. 응회암은 화산재가 굳은 퇴적암이에요.',
+          hint: '‘어디에서 어떤 마그마가 올라올까?’ 그림을 봐요. 해령과 열점은 맨틀에서 올라온 현무암질 마그마, 섭입대는 안산암질 마그마예요. 응회암은 화산재가 굳은 퇴적암이에요.',
           setup() { pairRock.reset(); setMode('cycle'); setCtl(['roles', 'pairRock']); },
           status: () => mark(pairRock.ok()) + ' 이은 짝 ' + pairRock.count() + ' / 3',
           check() {

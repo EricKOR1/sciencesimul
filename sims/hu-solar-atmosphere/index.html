@@ -104,9 +104,9 @@
         </div>
 
         <div class="control" data-modes="phen">
-          <div class="control-head"><label for="sRot">☀ 태양 자전</label><output id="oRot">0.0일</output></div>
-          <input type="range" id="sRot" min="0" max="13" step="0.1" value="0" aria-label="태양이 자전한 날수 (일)">
-          <div class="btn-row"><button class="btn btn-sm" id="bPlayR" type="button">▶ 자전 재생</button><button class="btn btn-sm" id="bFlare" type="button">⚡ 플레어 일으키기</button></div>
+          <div class="control-head only2d"><label for="sRot">☀ 태양 자전</label><output id="oRot">0.0일</output></div>
+          <input class="only2d" type="range" id="sRot" min="0" max="13" step="0.1" value="0" aria-label="태양이 자전한 날수 (일)">
+          <div class="btn-row"><button class="btn btn-sm only2d" id="bPlayR" type="button">▶ 자전 재생</button><button class="btn btn-sm" id="bFlare" type="button">⚡ 플레어 일으키기</button></div>
         </div>
         <div class="control" data-modes="phen" id="calcE" hidden>
           <div class="in-row"><span>플레어 에너지는 인류 연간<br>에너지의 약 몇 만 배?</span><input class="num-in" id="inE" type="text" inputmode="decimal" placeholder="예: 5" aria-label="큰 플레어 에너지는 인류 연간 에너지 소비의 몇 만 배인지" autocomplete="off"></div>
