@@ -208,6 +208,7 @@
         if (P.rope !== st.rope0) { if (st.rope0 != null) st.pickRope = true; st.rope0 = P.rope; }
         { const nk = P.n1 + '|' + P.n2; if (nk !== st.nk0) { if (st.nk0 != null) st.pickRope = false; st.nk0 = nk; } }
         const useRope = S.show.selA || st.pickRope, rope = useRope ? P.rope : (state === 'flip' ? 'fixed' : 'free'), refl = useRope ? 1 : (state === 'none' ? 0 : 1);
+        if (!useRope && P.rope !== rope) { P.rope = rope; st.rope0 = rope; try { sim.ropeSeg.set(rope); } catch (e) { /* 없음 */ } }   // 조작판의 '줄의 끝 모양' 표시를 3D 줄과 맞춰요
         const s = rope === 'fixed' ? -1 : 1, Ln = 8, c = -2 + phP * (2 * Ln + 4);
         wall.visible = rope === 'fixed'; pole.visible = ring.visible = rope === 'free';
         for (let i = 0; i < NR; i++) {
@@ -222,7 +223,7 @@
         lWallL.set(rope === 'fixed' ? '고정단 (벽)' : '자유단 (고리)');
         lMed.set(useRope ? '' : 'n₁ = ' + n1.toFixed(2) + ' → n₂ = ' + n2.toFixed(2));
         lMed.show(!useRope && !!labs.phase.on);
-        info('<b>🧵 반사와 위상: 줄 파동의 반사</b><br>' + (rope === 'fixed' ? '고정단: 반사 펄스가 위아래로 <b>뒤집혀요</b> (위상 π).' : '자유단: 반사 펄스가 그대로예요 (위상 변화 없음).') + '<br>' + (useRope ? '줄의 끝 모양을 바꿔 가며 반사 펄스를 견주어 봐요.' : '빛은 굴절률이 <b>큰 쪽 경계</b>(n₂ > n₁)에서 반사할 때 위상이 π 바뀌고, 작은 쪽(n₂ < n₁)에서는 그대로예요. 지금: ' + (state === 'flip' ? 'n₂ > n₁ → 위상 π 변화 (고정단과 같아요)' : state === 'same' ? 'n₂ < n₁ → 위상 변화 없음 (자유단과 같아요)' : 'n₁ = n₂ → 경계가 없어 반사가 없어요')));
+        info('<b>🧵 반사와 위상: 줄 파동의 반사</b><br>' + (!refl ? '경계가 없어서 반사 펄스가 생기지 않아요.' : (rope === 'fixed' ? '고정단: 반사 펄스가 위아래로 <b>뒤집혀요</b> (위상 π).' : '자유단: 반사 펄스가 그대로예요 (위상 변화 없음).')) + '<br>' + (useRope ? '줄의 끝 모양을 바꿔 가며 반사 펄스를 견주어 봐요.' : '빛은 굴절률이 <b>큰 쪽 경계</b>(n₂ > n₁)에서 반사할 때 위상이 π 바뀌고, 작은 쪽(n₂ < n₁)에서는 그대로예요. 지금: ' + (state === 'flip' ? 'n₂ > n₁ → 위상 π 변화 (고정단과 같아요)' : state === 'same' ? 'n₂ < n₁ → 위상 변화 없음 (자유단과 같아요)' : 'n₁ = n₂ → 경계가 없어 반사가 없어요')));
       }
 
       /* ---------- 간섭 조건 · 코팅 (두 반사광의 합) ---------- */

@@ -967,7 +967,7 @@
         {
           title: '무늬가 생기고 사라지는 조건 정리하기', manual: true,
           goal: '광자(레이저)로도 <b>300개</b> 이상 쏘고, “📈 두 가지 계산 곡선 비교”를 켜 본 뒤 문장을 완성하세요.',
-          hint: '“쏘는 입자”에서 광자를 고르고 “+100”을 3번 눌러요. 곡선 비교를 켜면 회색 점선과 보라색 곡선이 보여요.',
+          hint: '“쏘는 입자”에서 광자를 고르고 “+100”을 3번 눌러요. 곡선 비교를 켜면 회색 곡선과 보라색 곡선이 보여요.',
           setup() { S.mx.photon = 0; S.seen.cmp = false; S.show.cmp = false; S.show.selW = true; SEL_W.reset(); setScene('which'); },
           check() {
             if (S.mx.photon < 300) return '쏘는 입자를 “광자 (레이저)”로 바꿔 300개 이상 쏘아 보세요. (지금 ' + S.mx.photon + '개)';

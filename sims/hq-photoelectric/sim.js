@@ -1025,7 +1025,7 @@
       missions: [
         {
           title: '화소 밝기 값 128 만들기',
-          goal: '낮 장면에서 <b>노출 시간</b>을 조절해 노란 테두리 화소(달의 한가운데)의 디지털 값을 <b>128 (±5)</b>로 맞춰 보세요.',
+          goal: '낮 장면에서 <b>노출 시간</b>을 조절해 노란 테두리 화소(밝은 원의 한가운데)의 디지털 값을 <b>128 (±5)</b>로 맞춰 보세요.',
           hint: '이 화소는 전자 400개가 쌓이면 255가 돼요. 낮에는 1 ms마다 전자가 100개씩 쌓이니, 128이 되려면 전자가 약 200개 쌓여야 해요.',
           setup() { S.te.sub = 'sensor'; S.te.day = 'day'; S.te.ti = 2; slT.set(2); S.show.selB = false; setScene('tech'); },
           check: () => S.te.sub === 'sensor' && S.te.day === 'day' && Math.abs(dTarget() - 128) <= 5,

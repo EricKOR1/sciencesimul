@@ -198,7 +198,7 @@
         for (; k < NRAY; k++) dots.setMatrixAt(k, zero);
         dots.instanceMatrix.needsUpdate = true; if (dots.instanceColor) dots.instanceColor.needsUpdate = true;
         const rms = cnt ? Math.sqrt(sum / cnt) : 0;
-        const sharp = sharpFn ? sharpFn() : rms < 0.1; lBlur.show(convex); lBlur.set(sharp ? '상이 선명해요' : '번진 크기 ' + rms.toFixed(1)); lBlur.el.style.background = sharp ? '#15803d' : '#c2410c';
+        const sharp = sharpFn ? sharpFn() : rms < 0.1; lBlur.show(convex); lBlur.set(sharp ? '상이 선명해요' : (sharpFn ? '상이 번져요' : '번진 크기 ' + rms.toFixed(1))); lBlur.el.style.background = sharp ? '#15803d' : '#c2410c';
         aBlur.position.set(st.xs, 2.9, 0);
         const ab = st.real ? (st.chroma ? '색마다 초점이 달라 가장자리에 <b>무지개 번짐</b>(색수차)이 생겨요.' : '가장자리 빛이 <b>더 가까운 곳</b>에서 모여요 (구면 수차). 조리개를 줄이면 줄어요.') : '이상적인 렌즈는 모든 빛을 한 점 F에 모아요.';
         info(infoFn ? infoFn(rms, convex) : (convex ? '<b>볼록 렌즈</b>는 평행광을 모아요.<br>' + ab + '<br>스크린을 앞뒤로 움직여 가장 선명한 곳을 찾아보세요.' : '<b>오목 렌즈</b>는 평행광을 퍼뜨려요.<br>퍼진 빛의 연장선은 렌즈 앞쪽의 허초점 F′에서 나온 것처럼 보여요.<br>상을 스크린에 맺을 수는 없어요.'));
@@ -288,7 +288,7 @@
           const sv = kind.split(':')[1], fo = 10, tube = S.sc.tube, fe = 1.0, mk = S.gate === 'x';
           const mkLens = (x, r, thick) => { const mm = new THREE.Mesh(new THREE.SphereGeometry(r, 28, 18), ctx.mats.glass({ tint: 0xcdeeff, opacity: 0.4 })); mm.scale.set(thick, 1, 1 * 0.5); mm.position.set(x, 0, 0); return tmp(mm); };
           if (sv === 'refr' || sv === 'refl') {
-            const eyeX = fo + fe + (tube - 1010) * 0.12;
+            const eyeX = fo + fe + (tube - 1025) * 0.12;
             if (sv === 'refr') {
               mkLens(0, 2.2, 0.28); mkLens(eyeX, 0.5, 0.18);
               tmp(A(new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.3, eyeX + 1.2, 28, 1, true), ctx.mats.metal('aluminium', { brushed: true, extra: { side: THREE.DoubleSide, transparent: true, opacity: 0.2, depthWrite: false } })), { rotation: new THREE.Euler(0, 0, Math.PI / 2), position: v(eyeX / 2 - 0.1, 0) }));
@@ -301,9 +301,9 @@
                   if (Math.abs(y1) < 0.5) { const outSl = inSl - y1 / fe, o2 = v(1, outSl).normalize(); seg2(v(eyeX, y1), v(eyeX, y1).addScaledVector(o2, 4.5), col, 0.025, 0.9); }
                 });
               });
-              setLab(0, '대물렌즈 (긴 초점거리)', 0, 2.9, '#0369a1'); setLab(1, '접안렌즈 (짧은 초점거리)', eyeX, 1.2, '#0f766e'); setLab(2, '두 별에서 온 평행광', -4.5, 2.2, '#475569'); setLab(3, '경통 길이 ' + tube + ' mm' + (Math.abs(tube - 1010) <= 2 ? ' → 평행광으로 나와요 (선명)' : ' → 초점이 어긋나요'), eyeX / 2, -2.9, Math.abs(tube - 1010) <= 2 ? '#15803d' : '#b45309');
+              setLab(0, '대물렌즈 (긴 초점거리)', 0, 2.9, '#0369a1'); setLab(1, '접안렌즈 (짧은 초점거리)', eyeX, 1.2, '#0f766e'); setLab(2, '두 별에서 온 평행광', -4.5, 2.2, '#475569'); setLab(3, '경통 길이 ' + tube + ' mm' + (Math.abs(tube - 1025) <= 3 ? ' → 평행광으로 나와요 (선명)' : ' → 초점이 어긋나요'), eyeX / 2, -2.9, Math.abs(tube - 1025) <= 3 ? '#15803d' : '#b45309');
               ctl.dist = 22 * KD; ctl.tx = 5;
-              info('<b>굴절 망원경</b>: 긴 초점거리의 대물렌즈가 먼 천체의 상을 만들고, 짧은 초점거리의 접안렌즈가 이를 확대해요. 두 렌즈 사이의 거리(경통 길이 ' + tube + ' mm)가 f₀ + fₑ(= 1010 mm)에 맞을 때 가장 선명해요.' + (mk ? '' : ''));
+              info('<b>굴절 망원경</b>: 긴 초점거리의 대물렌즈가 먼 천체의 상을 만들고, 짧은 초점거리의 접안렌즈가 이를 확대해요. 두 렌즈 사이의 거리(경통 길이 ' + tube + ' mm)가 f₀ + fₑ(= 1000 + 25 = 1025 mm)에 맞을 때 가장 선명해요.' + (mk ? '' : ''));
             } else {
               tmp(A(new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.4, 0.2, 64, 1), ctx.mats.metal('chrome', { roughness: 0.04 })), { rotation: new THREE.Euler(0, 0, Math.PI / 2), position: v(10, 0) }));
               [-1.6, -0.8, 0.8, 1.6].forEach((hh) => { const M = v(10 - hh * hh / 40, hh); seg2(v(-4, hh), M, W, 0.025); const dd = v(0, 0).sub(M).normalize(); seg2(M, M.clone().addScaledVector(dd, 6.0), W, 0.025); });
@@ -338,13 +338,13 @@
         const m = S.mode; infoFn = null; sharpFn = null;
         if (m === 'aber') {
           const A = S.ab;
-          if (A.view === 'a') { Object.assign(st, { type: 'convex', ap: 2.0 * A.apD / 100, real: true, chroma: false, A: Infinity, xs: 5, disp: 1 }); sharpFn = () => { try { return !!sim.abState().spOK; } catch (e) { return false; } }; infoFn = (rms) => '<b>🌫️ 가장자리 빛이 더 가까운 곳에 모여요</b> (구면 수차)<br>렌즈에서 쓰는 부분 ' + Math.round(A.apD) + ' % → 점의 번짐 ' + rms.toFixed(2) + '<br>조리개를 줄이면(가운데만 쓰면) 번짐이 줄고 상이 선명해져요 (대신 어두워져요).'; }
+          if (A.view === 'a') { Object.assign(st, { type: 'convex', ap: 2.0 * A.apD / 100, real: true, chroma: false, A: Infinity, xs: 5, disp: 1 }); sharpFn = () => { try { return !!sim.abState().spOK; } catch (e) { return false; } }; infoFn = (rms) => '<b>🌫️ 가장자리 빛이 더 가까운 곳에 모여요</b> (구면 수차)<br>렌즈에서 쓰는 부분 ' + Math.round(A.apD) + ' % → 점의 번짐 ' + (() => { try { return sim.abState().sp.toFixed(1) + ' 눈금'; } catch (e) { return rms.toFixed(2); } })() + '<br>조리개를 줄이면(가운데만 쓰면) 번짐이 줄고 상이 선명해져요 (대신 어두워져요).'; }
           else { Object.assign(st, { type: 'convex', ap: 1.4, real: true, chroma: true, A: Infinity, xs: 5, disp: A.el === 'doublet' ? 0.12 : 1 }); infoFn = () => '<b>🌫️ 색에 따라 초점이 달라요</b> (색수차)<br>' + (A.el === 'doublet' ? '볼록 + 오목 렌즈를 붙이면 색에 따른 초점 차이가 거의 없어져요.' : '볼록렌즈 한 장은 파란빛이 빨간빛보다 렌즈에 더 가까운 곳에 모여 가장자리에 색 번짐이 생겨요.') + ' (색에 따른 차이는 실제보다 크게 그렸어요.)'; }
         } else if (m === 'camera') {
           const C = S.cm, a = { far: Infinity, mid: 5000, near: 500 }[C.subj] * 0.1;
           Object.assign(st, { type: 'convex', ap: C.apD / 20, real: true, chroma: false, A: a, xs: C.bs.value * 0.1, disp: 1 });
           sharpFn = () => { try { return !!sim.camState().sharpSub; } catch (e) { return false; } };
-          infoFn = (rms) => '<b>📸 카메라: 렌즈와 센서의 거리 b = ' + C.bs.value.toFixed(1) + ' mm</b> (초점거리 50 mm)<br>피사체: ' + { far: '먼 풍경 (∞)', mid: '5 m', near: '0.5 m' }[C.subj] + ' · 조리개 ' + (C.ap === 'big' ? '크게' : '작게') + '<br>' + (sharpFn() ? '센서에 상이 <b>선명하게</b> 맺혀요.' : '센서가 상이 맺히는 곳에서 어긋나 상이 <b>번져요</b> (번짐 ' + rms.toFixed(2) + '). 렌즈를 앞뒤로 움직여 초점을 맞춰요.') + '<br>가까운 피사체일수록 렌즈를 센서에서 멀리(b를 크게) 해야 해요.';
+          infoFn = (rms) => '<b>📸 카메라: 렌즈와 센서의 거리 b = ' + C.bs.value.toFixed(1) + ' mm</b> (초점거리 50 mm)<br>피사체: ' + { far: '먼 풍경 (∞)', mid: '5 m', near: '0.5 m' }[C.subj] + ' · 조리개 ' + (C.ap === 'big' ? '크게' : '작게') + '<br>' + (sharpFn() ? '센서에 상이 <b>선명하게</b> 맺혀요.' : '센서가 상이 맺히는 곳에서 어긋나 상이 <b>번져요</b>. 렌즈를 앞뒤로 움직여 초점을 맞춰요.') + '<br>가까운 피사체일수록 렌즈를 센서에서 멀리(b를 크게) 해야 해요.';
         } else {
           const part = S.pt.part; Object.assign(st, { type: part === 'concave' ? 'concave' : 'convex', ap: 1.8, real: false, chroma: false, A: Infinity, xs: 5, disp: 1 });
         }
