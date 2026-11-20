@@ -651,7 +651,7 @@
     T(INFO.x + 16, INFO.y + 26, 'NaOH ' + V + ' mL 를 넣었을 때', 15, '#b45309', 'left', 800);
     let body = inf.l1 + '\n' + inf.l2;
     if (known) body += (V === 20 ? '' : '  →  ') + (V === 20 ? '' : 'pH = ' + inf.ph.toFixed(2)) + (V === 20 ? '\n그래서 pH = 7.00' : '');
-    else body += '\n이 지점의 pH 는 아래 “지점별 pH 계산”에서 직접 구해 보세요.';
+    else body += '\n이 지점의 pH 는 조작판의 “지점별 pH 계산”에서 직접 구해 보세요.';
     textBlock(INFO.x + 16, INFO.y + 54, INFO.w - 32, body, 14.5, INK, 21, 700);
   }
 
