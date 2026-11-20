@@ -203,7 +203,7 @@
       function showZoom(j) {
         const L = L2(); zg.forEach((g, k) => { g.visible = scene === 'zoom' && k === j; zl[k].forEach((l) => l.show(scene === 'zoom' && k === j)); });
         const lv = L ? L.LV[j] : null;
-        info(lv ? '<b>' + lv.name + ': ' + lv.ex + '</b> (' + lv.size + ')<br>하는 일: ' + lv.role + (j < 4 ? '<br>↓ 더 확대하면 ' + L.LV[j + 1].name + '(' + L.LV[j + 1].ex + ')이 보여요.' : '<br>가장 작은 단계예요. 세포가 모여 조직을 이뤄요.') : '');
+        info(lv ? '<b>' + lv.name + ': ' + lv.ex + '</b> (' + lv.size + ')<br>하는 일: ' + lv.role + (j < 4 ? '<br>↓ 더 확대하면 ' + L.LV[j + 1].name + '(' + L.LV[j + 1].ex + ') 단계가 보여요.' : '<br>가장 작은 단계예요. 세포가 모여 조직을 이뤄요.') : '');
         orbit.dist = (narrow ? [12, 11, 10, 13, 9] : [9.2, 8.6, 10.5, 11.5, 8])[j]; orbit.phi = 1.25;
       }
       function showGroup(g) {

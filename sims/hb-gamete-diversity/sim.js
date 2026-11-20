@@ -712,8 +712,9 @@
     panel(STV.x, STV.y, STV.w, STV.h, 16, '#fff');
     const sq = St.seq, vi = St.play ? St.view : St.sel;
     if (!sq.length) {
-      T(STV.x + STV.w / 2, STV.y + STV.h / 2 - 6, '오른쪽 장면 도구에서 장면을 골라 모델을 만들어 보세요', PHONE ? 14 : 18, '#94a3b8', 'center', 800);
-      T(STV.x + STV.w / 2, STV.y + STV.h / 2 + 22, '(필수 요소 7개를 모두 넣으면 완성!)', PHONE ? 13 : 15, '#94a3b8', 'center', 700);
+      const ecx = PHONE ? STV.x + STV.w / 2 : STV.x + (STV.w - 230) / 2;
+      T(ecx, STV.y + STV.h / 2 - 6, '오른쪽 장면 도구에서 장면을 골라 모델을 만들어 보세요', PHONE ? 14 : 16, '#94a3b8', 'center', 800);
+      T(ecx, STV.y + STV.h / 2 + 22, '(필수 요소 7개를 모두 넣으면 완성!)', PHONE ? 13 : 15, '#94a3b8', 'center', 700);
     } else {
       const id = sq[clamp(vi, 0, sq.length - 1)], fl = St.flip;
       ctx.save(); ctx.globalAlpha = 1 - fl * 0.6; ctx.translate(STV.x + STV.w / 2, STV.y + STV.h / 2); ctx.scale(1 - fl * 0.06, 1 - fl * 0.06); ctx.translate(-(STV.x + STV.w / 2), -(STV.y + STV.h / 2));

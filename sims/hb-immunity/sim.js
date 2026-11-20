@@ -1122,7 +1122,7 @@
       if (M.run && A < 1 && ep !== 'A2') { D.label(zx(0) + 90 * rs, zy(ep === 'B1' ? 1 : 0) + 4, '⏳ 활성화 대기 중…', { bg: '#475569', size: PHONE ? 11.5 : 12.5, pad: 6 }); }
       else if (M.run && ep === 'A2') D.label(mp(0.4, 0.07).x, mp(0.4, 0.07).y, '⚡ 기억 세포가 빠르게 분열!', { bg: '#b45309', size: PHONE ? 11.5 : 12.5, pad: 6 });
       else if (M.run && A >= 1 && A < 8) D.label(mp(0.4, 0.07).x, mp(0.4, 0.07).y, '항체를 만들기 시작해요', { bg: '#2563eb', size: PHONE ? 11.5 : 12.5, pad: 6 });
-    } else T(sc.x + sc.w * 0.62, sc.y + sc.h * 0.5, '왼쪽 단추로 병원체를 침입시켜 보세요', 14, '#7c2d12', 'center', 800);
+    } else T(sc.x + sc.w * 0.62, sc.y + sc.h * 0.5, '조작 패널의 단추로 병원체를 침입시켜 보세요', 14, '#7c2d12', 'center', 800);
     ctx.restore();
     T(sc.x + sc.w - 12, sc.y + 22, ep ? (EPN[ep] + ' · ' + (Math.floor(M.day * 10) / 10) + '일째') : '혈관 속 (모형)', PHONE ? 12.5 : 14, '#374151', 'right', 900);
     // ----- 그래프 -----
@@ -1345,7 +1345,7 @@
         {
           title: '같은 병원체를 두 번 만나기',
           goal: '① 병원체 A 첫 침입 → ② A 두 번째 침입 → ③ 병원체 B 첫 침입을 차례로 침입시켜 세 곡선을 비교하세요.',
-          hint: '왼쪽 단추를 ①, ②, ③ 순서로 눌러요. 한 번에 약 9초 걸려요. ②는 ①이 끝나야 눌러져요.',
+          hint: '조작 패널의 침입 단추를 ①, ②, ③ 순서로 눌러요. 한 번에 약 9초 걸려요. ②는 ①이 끝나야 눌러져요.',
           setup() { makeMem(); setScene('mem'); syncControls(); },
           check: () => S.M.done.A1 && S.M.done.A2 && S.M.done.B1, hold: 0.5,
           status: () => ['A1', 'A2', 'B1'].map((k) => (S.M.done[k] ? '✅' : '⬜') + EPN[k]).join(' '),
