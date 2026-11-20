@@ -1190,7 +1190,7 @@
         {
           id: 'cell', title: '위치 찾기와 실 감기',
           goal: '세포 그림에서 <b>DNA</b>(핵 · 미토콘드리아 · 엽록체)와 <b>RNA</b>(핵 · 세포질)가 있는 곳을 표시하고, 🧵 실 감기를 끝까지 감아 보세요.',
-          hint: '위의 도구로 DNA 표시 / RNA 표시를 바꿔가며 세포 그림을 눌러요. 실 감기 슬라이더를 20 km까지 올려요.',
+          hint: '조작판에서 DNA 표시 / RNA 표시를 바꿔가며 세포 그림을 눌러요. 실 감기 슬라이더를 20 km까지 올려요.',
           setup() { S.cell.marks = { dna: {}, rna: {} }; S.thr.km = 0; S.thr.f = 0; S.thr.seen = false; $('#sThr').value = 0; setMode('cell'); },
           check: () => { const o = cellOk(); return o.dna && o.rna && S.thr.seen; }, hold: 0.6,
           status: () => { const o = cellOk(), d = S.cell.marks.dna, r = S.cell.marks.rna; return mark(o.dna) + ' DNA ' + [d.nuc, d.mi1 || d.mi2, d.ch1 || d.ch2].filter(Boolean).length + '/3곳 &nbsp; ' + mark(o.rna) + ' RNA ' + [r.nuc, r.cyto].filter(Boolean).length + '/2곳 &nbsp; ' + mark(S.thr.seen) + ' 실 감기'; },

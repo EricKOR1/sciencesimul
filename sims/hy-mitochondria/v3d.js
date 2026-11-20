@@ -233,7 +233,7 @@
           const so = L.S.mp.so, c = L.S.mp.pick, zn = (id) => ({ cyto: '세포질', ims: '막 사이 공간', inner: '내막', matrix: '기질' })[id];
           return '<b>위치 지도</b> · 놓은 카드 ' + so.placed + ' / 5<br>고른 카드: <b>' + (c ? c.label : '—') + '</b>' + (c && c.sub ? ' (' + c.sub + ')' : '') + '<br>' + so.cards.filter((q) => q.zone).map((q) => q.label + ' → ' + zn(q.zone)).join('<br>');
         }
-        if (pinOn()) return '<b>세로 단면</b> · 핀 ①~⑤가 가리키는 구조의 이름을 오른쪽 목록에서 골라요.<br>외막 · 내막 · 막 사이 공간 · 기질 · 크리스타의 자리를 살펴봐요.';
+        if (pinOn()) return '<b>세로 단면</b> · 핀 ①~⑤가 가리키는 구조의 이름을 조작판의 목록에서 골라요.<br>외막 · 내막 · 막 사이 공간 · 기질 · 크리스타의 자리를 살펴봐요.';
         if (!asmOn()) return '';
         const b = L.S.b, n = b.placed.filter(Boolean).length, P = L.PARTS[b.sel];
         return '<b>미토콘드리아 조립 ' + n + ' / 7</b><br>' + (P && !b.placed[b.sel] ? '고른 부품: <b>' + P.name + '</b> · ' + P.clue + '<br>알맞은 <b>?</b> 자리의 번호 단추를 눌러요.' : '<b>부품 ◀ ▶</b>로 부품 카드를 골라요.');

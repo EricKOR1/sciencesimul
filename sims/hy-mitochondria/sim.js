@@ -511,7 +511,7 @@
     });
     // 안내
     const all = bPlaced() === PARTS.length;
-    T(g.cx, g.hintY, b.nameMode ? '핀 ①~⑤가 가리키는 구조의 이름을 오른쪽 목록에서 골라요' : all ? '조립 완료! 화면을 끌어 돌려 보고 단면 슬라이더로 열어 보세요' : '부품 카드를 모형의 물음표(?)로 끌어다 놓아요', 13.5, '#64748b', 'center', 800);
+    T(g.cx, g.hintY, b.nameMode ? '핀 ①~⑤가 가리키는 구조의 이름을 조작판의 목록에서 골라요' : all ? '조립 완료! 화면을 끌어 돌려 보고 단면 슬라이더로 열어 보세요' : '부품 카드를 모형의 물음표(?)로 끌어다 놓아요', 13.5, '#64748b', 'center', 800);
     // 부품 카드
     if (!b.nameMode && !all) { b.tok.forEach((k) => { if (!(b.drag && b.drag.t === k)) bTokDraw(k); }); if (b.drag) bTokDraw(b.drag.t); }
     else if (!b.nameMode) b.tok.forEach(bTokDraw);
@@ -1027,7 +1027,7 @@
         },
         {
           id: 'name', title: '단면 구조에 이름 붙이기', manual: true,
-          goal: '모형을 정면에서 본 <b>세로 단면</b>이에요. 핀 ①~⑤가 가리키는 구조의 이름을 오른쪽 목록에서 고르세요.',
+          goal: '모형을 정면에서 본 <b>세로 단면</b>이에요. 핀 ①~⑤가 가리키는 구조의 이름을 조작판의 목록에서 고르세요.',
           hint: '가장 바깥을 감싼 막은 외막이에요. 안쪽 막이 안으로 접힌 주름이 크리스타이고, 내막 안쪽의 액체가 기질이에요.',
           setup() { setMode('build'); bFillAll(); S.b.nameMode = true; S.nmChk = false; [0, 1, 2, 3, 4].forEach((i) => { $('#nm' + i).value = ''; }); bCut(1); bFront(); updateCtl(); },
           check() {
@@ -1074,7 +1074,7 @@
         {
           id: 'cn', title: '호흡 억제제 시험',
           goal: '<b>내막 확대</b> 화면에서 <b>시안화물</b>을 처리하고, <b>산소 소비와 ATP 생산이 모두 0</b>이 되는 것을 확인하세요.',
-          hint: '오른쪽 "🧪 시안화물" 버튼을 눌러요. 전자가 마지막 복합체에서 멈추고 게이지가 줄어드는 것을 기다려요.',
+          hint: '조작판의 "🧪 시안화물" 버튼을 눌러요. 전자가 마지막 복합체에서 멈추고 게이지가 줄어드는 것을 기다려요.',
           setup() { setMode('zoom'); znReset(); },
           check: () => S.zm.cn && S.zm.o2.v < 1 && S.zm.atp.v < 1, hold: 0.8,
           status: () => mark(S.zm.cn) + ' 시안화물 처리 &nbsp; ' + mark(S.zm.cn && S.zm.o2.v < 1) + ' 산소 소비 ' + fi(S.zm.o2.v) + ' &nbsp; ' + mark(S.zm.cn && S.zm.atp.v < 1) + ' ATP 생산 ' + fi(S.zm.atp.v),
@@ -1102,7 +1102,7 @@
         {
           id: 'a8', title: 'N = 8 일 때 표면적',
           goal: '슬라이더로 <b>N = 8</b>을 만들고, 내막 표면적(μm²)을 계산해 입력하세요.',
-          hint: '표면적 = 3.5 × (1 + 0.5 × 8) = 3.5 × 5 예요. 오른쪽 위 패널의 계산 과정을 참고해요.',
+          hint: '표면적 = 3.5 × (1 + 0.5 × 8) = 3.5 × 5 예요. 그림의 ‘내막 표면적’ 계산 과정을 참고해요.',
           setup() { setMode('area'); S.ar.calc = true; $('#inArea').value = ''; arSetN(0); },
           check: () => S.ar.N === 8 && near(numIn('inArea'), arArea(8), 0.15), hold: 0.6,
           status: () => mark(S.ar.N === 8) + ' N = 8 (지금 ' + S.ar.N + ') &nbsp; ' + mark(S.ar.N === 8 && near(numIn('inArea'), arArea(8), 0.15)) + ' 표면적 입력',
