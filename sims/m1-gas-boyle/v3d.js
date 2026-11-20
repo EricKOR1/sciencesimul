@@ -133,7 +133,9 @@
       refresh();
       function text() {
         const pr = 40 / st.Vs;
-        info('부피 <b>' + Math.round(st.Vs) + ' mL</b> → 압력 <b>' + (Math.round(pr * 100) / 100) + '기압</b><br>피스톤에 부딪히는 입자: <b>초당 약 ' + Math.round(st.rate) + '번</b><br>부피를 바꿔 가며 부딪히는 횟수와 압력계 바늘을 비교해 봐요.');   // 퀴즈의 답(까닭)은 미리 알려 주지 않아요
+        const s2 = window.__sim && window.__sim.S;
+        const rate = s2 && Array.isArray(s2.hits) ? s2.hits.length / 2 : st.rate;   // 아래 '피스톤에 부딪히는 횟수' 표시와 같은 값(2D 계산)
+        info('부피 <b>' + Math.round(st.Vs) + ' mL</b> → 압력 <b>' + (Math.round(pr * 100) / 100) + '기압</b><br>피스톤에 부딪히는 입자: <b>초당 약 ' + Math.round(rate) + '번</b><br>부피를 바꿔 가며 부딪히는 횟수와 압력계 바늘을 비교해 봐요.');   // 퀴즈의 답(까닭)은 미리 알려 주지 않아요
       }
 
       /* 조작 */
