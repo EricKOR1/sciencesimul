@@ -402,7 +402,7 @@
     ctx.restore();
     const lab = (x, y, s, bg) => D.label(x, y, s, { bg, size: 13, align: 'left' });
     /* vx, v₀y를 계산하는 미션 중에는 속도 값을 가려요 */
-    const hv = eff('vcalc');
+    const hv = eff('vcalc') && !S.vOK;
     lab(fr.x + 12, fr.y + 24, '→ vx = ' + (hv ? '?' : VX.toFixed(1)) + ' m/s (일정)', '#1d6fb8');
     lab(fr.x + 12, fr.y + 52, '↑ vy = ' + (hv ? '?' : Math.abs(vy) > 0.05 ? fx(vy, 1) : '0.0') + ' m/s' + (!hv && Math.abs(vy) <= 0.05 ? ' (최고점)' : ''), '#c2760d');
     lab(fr.x + 12, fr.y + 80, '↓ a = 10 m/s² (중력, 항상 아래)', '#b91c1c');
@@ -613,7 +613,7 @@
           title: 'vx와 처음 연직 속도 v₀y 계산하기', manual: true,
           goal: '표에서 <b>수평 속도 vx</b>와 <b>처음 연직 속도 v₀y</b>를 계산해 입력하고 ✔ 확인하기를 누르세요.',
           hint: 'vx = 구간의 Δx ÷ 0.2 s = 1.2 ÷ 0.2. 첫 구간의 평균 연직 속도 7.0 m/s는 t = 0.1 s의 속도예요. 연직 속도는 1 s에 10 m/s씩 줄어요.',
-          setup() { S.vd.mk = new Array(NF).fill(true); $('#iVx').value = ''; $('#iVy').value = ''; $('#iVx').classList.remove('ok', 'bad'); $('#iVy').classList.remove('ok', 'bad'); setFlag('vcalc', true); setScene('video'); },
+          setup() { S.vd.mk = new Array(NF).fill(true); $('#iVx').value = ''; $('#iVy').value = ''; $('#iVx').classList.remove('ok', 'bad'); $('#iVy').classList.remove('ok', 'bad'); S.vOK = false; setFlag('vcalc', true); setScene('video'); },
           check() {
             const a = num('iVx'), b = num('iVy');
             if (a == null || b == null) return '두 칸에 숫자를 입력해 주세요.';
@@ -621,6 +621,7 @@
             fb([[$('#iVx'), okA], [$('#iVy'), okB]]);
             if (!okA) return 'vx는 한 구간에서 x가 얼마나 늘었는지(1.2 m)를 시간(0.2 s)으로 나눠요.';
             if (!okB) return '첫 구간(0~0.2 s)의 평균 속도 7.0 m/s는 t = 0.1 s의 속도예요. 처음(t = 0) 속도는 그보다 1 s에 10 m/s씩 줄어든 만큼 더 커요.';
+            S.vOK = true;
             return true;
           },
           status: () => 'vx ' + ($('#iVx').value.trim() || '—') + ' · v₀y ' + ($('#iVy').value.trim() || '—'),

@@ -435,12 +435,19 @@
     const gr = { x: PX, y: PY, w: PW, h: PH };
     const a = axes(gr, { xmin: 0.5, xmax: 4.5, xstep: 0.5, xd: 1, ymin: 0, ymax: 1.2, ystep: 0.3, yd: 1, title: '힘의 크기 F / F₀ – 거리 r (AU)', right: 'F ∝ 1 / r²' });
     ctx.save(); ctx.beginPath(); ctx.rect(a.ix, a.iy - 4, a.iw, a.ih + 8); ctx.clip();
-    ctx.strokeStyle = RED; ctx.lineWidth = 3; ctx.beginPath();
-    for (let i = 0; i <= 80; i++) { const r = 0.85 + (4.5 - 0.85) * i / 80, y = 1 / (r * r); if (i) ctx.lineTo(a.gx(r), a.gy(y)); else ctx.moveTo(a.gx(r), a.gy(y)); } ctx.stroke();
-    [1, 2, 3, 4].forEach((r) => D.sphere(a.gx(r), a.gy(1 / (r * r)), 5, '#7b869a', { gloss: false, outline: '#fff', outlineWidth: 1 }));
+    const gh = ratHide();
+    if (!gh) {
+      ctx.strokeStyle = RED; ctx.lineWidth = 3; ctx.beginPath();
+      for (let i = 0; i <= 80; i++) { const r = 0.85 + (4.5 - 0.85) * i / 80, y = 1 / (r * r); if (i) ctx.lineTo(a.gx(r), a.gy(y)); else ctx.moveTo(a.gx(r), a.gy(y)); } ctx.stroke();
+    }
+    (gh ? [1] : [1, 2, 3, 4]).forEach((r) => D.sphere(a.gx(r), a.gy(1 / (r * r)), 5, '#7b869a', { gloss: false, outline: '#fff', outlineWidth: 1 }));
     ctx.restore();
-    D.ring(a.gx(f.r), a.gy(foRatio()), 9, S.clock, { color: '#3867f4', width: 2.5 });
-    D.label(clamp(a.gx(f.r) + 70, a.ix + 80, a.ix + a.iw - 70), clamp(a.gy(foRatio()) - 24, a.iy + 14, a.iy + a.ih - 14), 'F / F₀ = 1 / r² = ' + foRatio().toFixed(3), { bg: '#3867f4', size: 13.5, pad: 8 });
+    /* 미션 중에는 그래프를 비워 두고, 맞히면 곡선과 값을 보여 줘요 */
+    if (gh) D.label(a.ix + a.iw / 2, a.iy + a.ih / 2, PHONE ? 'F / F₀ = ? (계산해 봐요)' : 'r = 2 AU에서 F / F₀ = ? (계산해서 입력하면 그래프가 나타나요)', { bg: '#3867f4', size: 13.5, pad: 8 });
+    else {
+      D.ring(a.gx(f.r), a.gy(foRatio()), 9, S.clock, { color: '#3867f4', width: 2.5 });
+      D.label(clamp(a.gx(f.r) + 70, a.ix + 80, a.ix + a.iw - 70), clamp(a.gy(foRatio()) - 24, a.iy + 14, a.iy + a.ih - 14), 'F / F₀ = 1 / r² = ' + foRatio().toFixed(3), { bg: '#3867f4', size: 13.5, pad: 8 });
+    }
     parts.update(dt); parts.draw(ctx);
   }
   /* ================= ④ 사과와 달 ================= */
