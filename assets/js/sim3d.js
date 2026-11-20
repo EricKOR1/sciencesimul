@@ -94,7 +94,7 @@
 .v3-mode [data-v3="2d"], .v3-mode .v3-2d-wrap { display: none !important; }
 .v3-mode .v3-empty { display: none !important; }
 body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 3D 화면에서만/2D 화면에서만 보일 글·조작 */
-.v3-on > .stage-hint { z-index: 30; top: 54px; bottom: auto; height: auto; }   /* 미션 힌트·피드백이 3D 화면 위에 보이게 */
+.v3-on > .stage-hint { z-index: 30; top: 54px; bottom: auto; height: auto; }   /* 미션 힌트·피드백이 3D 화면 위에 보이게 (왼쪽 위 설명 상자와 겹치면 그 아래로 내려요: hintDodge) */
 .v3-seg.float { position: absolute; top: 10px; right: 10px; z-index: 26; background: rgba(255,255,255,.94); box-shadow: 0 4px 14px rgba(20,30,60,.18); }
 .v3-on > .v3-seg.float { background: rgba(10,16,30,.72); border-color: rgba(255,255,255,.22); top: 6px; right: 6px; }
 .v3-on > .v3-seg.float button:not(.on) { color: #dbe4f7; }
@@ -544,7 +544,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
     });
 
     let THREE = null, renderer = null, scene = null, camera = null, root = null, user = null;
-    let failed = false, studioOn = false, bloom = null, space = null, matSeen = -1, rowHint = null;   // three.js를 못 불러오면 이 차시는 2D로만 보여 줘요
+    let failed = false, studioOn = false, bloom = null, space = null, matSeen = -1, rowHint = null, dodgeAt = 0;   // three.js를 못 불러오면 이 차시는 2D로만 보여 줘요
     let raf = 0, last = 0, isOpen = false, touched = false, built = false, frameN = 0;
     const cam0 = Object.assign({ dist: 8, theta: 0.6, phi: 1.15, fov: 45, target: [0, 0, 0], min: 2, max: 40 }, opts.camera || {});
     const orbit = { dist: cam0.dist, theta: cam0.theta, phi: cam0.phi, tx: cam0.target[0], ty: cam0.target[1], tz: cam0.target[2] };
@@ -834,6 +834,15 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
     }
     const credits = [];   // 화면 왼쪽 아래 출처 표기 (사진 · 모델 자료)
     function addCredit(t) { if (credits.indexOf(t) >= 0) return; credits.push(t); let c = view.querySelector('.v3-credit'); if (!c) { c = el('div', 'v3-credit'); view.appendChild(c); } c.textContent = credits.join(' · '); }
+    /* 차시의 안내 말풍선(.stage-hint)이 3D 설명 상자를 덮으면 설명 상자 바로 아래로 내려요 */
+    function hintDodge() {
+      const sh = host.querySelector(':scope > .stage-hint'); if (!sh) return;
+      if (sh.classList.contains('hide') || !info.textContent) { if (sh.style.top) sh.style.top = ''; return; }
+      const a = info.getBoundingClientRect(), b = sh.getBoundingClientRect(), h = host.getBoundingClientRect();
+      const overlapX = b.left < a.right + 6 && b.right > a.left - 6, base = h.top + 54;   // base: 말풍선의 기본 자리(위에서 54px)
+      const want = overlapX && a.height > 0 && a.bottom > base - 4 ? Math.round(a.bottom - h.top + 8) + 'px' : '';
+      if (sh.style.top !== want) sh.style.top = want;
+    }
     function lowQuality() {
       if (!renderer) return;
       renderer.setPixelRatio(1); if (bloom) bloom.on = false;     // 느린 기기: 빛 번짐 후처리도 꺼요
@@ -856,6 +865,7 @@ body:not(.v3-mode) .only3d, .v3-mode .only2d { display: none !important; }   /* 
       players.forEach((pl) => pl.tick(dt));
       if (user && user.update) { try { user.update(dt, t / 1000); } catch (e) { console.error(e); } }
       for (let i = 0; i < waterTex.length; i++) { const w = waterTex[i]; w.t.offset.x += dt * 0.018 * w.sp; w.t.offset.y += dt * 0.011 * w.sp; }   // 물결 흐르기
+      if (t - dodgeAt > 250) { dodgeAt = t; hintDodge(); }
       if (frameN++ % 20 === 0) { if (rowHint) rowHint(); if (shadowOn) markShadows(); fitShadow(); if (matSeen !== matGen) { matSeen = matGen; root.traverse((o) => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(patchMat); }); } }
       stepFit(dt, t / 1000);
       placeCamera();
