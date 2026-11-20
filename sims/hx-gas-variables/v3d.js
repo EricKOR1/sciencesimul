@@ -126,7 +126,7 @@
       }
       controls.segment('입자 색', [{ value: 'spd', label: '속도 색' }, { value: 'one', label: '한 가지 색' }], 'spd', (v) => { colorBySpeed = v === 'spd'; });
       const fb = controls.button('충돌 반짝임 ✓', () => { flashOn = !flashOn; fb.classList.toggle('on', flashOn); fb.textContent = '충돌 반짝임 ' + (flashOn ? '✓' : '✕'); }); fb.classList.add('on');
-      controls.text('온도·부피·몰수는 옆 조작판에서 바꿔요.');
+      controls.text('온도·부피·몰수는 조작판에서 바꿔요.');
       /* 몰수 단계: 📍 기록하기로 모은 값을 3D 화면에도 기록표로 보여 줘요 (2D 기록표와 같은 값) */
       const recP = v3pan('tr'), KN = { he: 'He', n2: 'N₂', co2: 'CO₂', gen: '기체' };
       function drawRec() {

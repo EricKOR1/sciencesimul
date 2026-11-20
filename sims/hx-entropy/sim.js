@@ -217,7 +217,7 @@
     D.roundRect(rc.x, by, rc.w, 8, 4); ctx.fillStyle = '#e2e8f3'; ctx.fill();
     D.roundRect(rc.x, by, Math.max(0, rc.w * O.p / NS), 8, 4); ctx.fillStyle = O.dir === -1 ? PUR : '#8a95a8'; ctx.fill();
     T(rc.x, by + 28, '0 초', 12, MUTED, 'left', 700); T(rc.x + rc.w, by + 28, '8 초', 12, MUTED, 'right', 700);
-    const msg = !O.played[k] ? '재생을 눌러 어떻게 되는지 봐요.' : !O.rev[k] ? '이제 ⏪ 거꾸로 재생을 눌러 반대 방향의 영상을 봐요.' : O.judged[k] === 1 ? '✅ 이 장면은 판정을 마쳤어요.' : '이런 거꾸로의 일이 실제로 일어날까요? 오른쪽 조작판에서 판정해요.';
+    const msg = !O.played[k] ? '재생을 눌러 어떻게 되는지 봐요.' : !O.rev[k] ? '이제 ⏪ 거꾸로 재생을 눌러 반대 방향의 영상을 봐요.' : O.judged[k] === 1 ? '✅ 이 장면은 판정을 마쳤어요.' : '이런 거꾸로의 일이 실제로 일어날까요? 조작판에서 판정해요.';
     textBlock(L.x + 14, by + 54, L.w - 28, msg, 13, INK, 18, 800);
     // 판정 표시
     O.judged.forEach((j, i) => { const cx = L.x + L.w - 24 - (3 - i) * 24; if (j === 1) D.check(cx, L.y + 26, 9, 1); else D.sphere(cx, L.y + 26, 6, i === k ? PUR : '#c7cedd', { gloss: false }); });

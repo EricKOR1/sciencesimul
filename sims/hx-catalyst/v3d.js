@@ -109,7 +109,7 @@
         phases: [[0, STAGES[0]], [0.125, STAGES[1]], [0.375, STAGES[2]], [0.625, STAGES[3]], [0.875, STAGES[4]]],
         onFrame(p) { prog = p * 4; demo = true; },
       });
-      controls.text('촉매 있음 · 없음은 오른쪽 조작판에서 골라요.');
+      controls.text('촉매 있음 · 없음은 조작판에서 골라요.');
 
       /* 평형 화면: 2D와 같은 농도–시간 그래프를 오른쪽 아래 작은 창에 그려요 (보라 = 촉매 없음, 청록 = 촉매 있음 · 실선 [A], 점선 [B]) */
       const view = ctx.renderer.domElement.parentElement;

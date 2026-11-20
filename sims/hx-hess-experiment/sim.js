@@ -412,7 +412,7 @@
       T(x + 12, by + 46, '차이 ' + f1(pctTh(i)) + ' %  (측정값의 크기가 조금 작아요)', 13.5, INK, 'left', 800);
       textBlock(x + 12, by + 66, w - 24, '열이 일부 컵 밖으로 빠져나가 ΔT 가 실제보다 작게 측정되기 때문이에요.', 12.5, MUTED, 16, 700);
     } else {
-      textBlock(x + 4, by + 16, w - 8, 'ΔT 가 양수이면 용액이 열을 얻었어요(q > 0). 반응은 그 열을 내놓았으니 ΔH 는 음수예요. 오른쪽 조작판에 세 값을 적어요.', 13, MUTED, 18, 700);
+      textBlock(x + 4, by + 16, w - 8, 'ΔT 가 양수이면 용액이 열을 얻었어요(q > 0). 반응은 그 열을 내놓았으니 ΔH 는 음수예요. 조작판에 세 값을 적어요.', 13, MUTED, 18, 700);
     }
     T(L.x + 14, L.y + L.h - 18, 'ΔH 를 구한 반응 ' + A.solved.filter((v) => v).length + ' / 3', 13, caAll() ? GOOD : MUTED, 'left', 800);
     if (A.flash > 0) { ctx.fillStyle = 'rgba(20,160,88,' + (A.flash * 0.12) + ')'; D.roundRect(L.x, L.y, L.w, L.h, 14); ctx.fill(); }
