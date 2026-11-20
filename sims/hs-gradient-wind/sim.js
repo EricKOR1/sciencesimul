@@ -362,7 +362,7 @@
     ctx.lineTo(tx + Math.cos(ta - 2.5) * head * 0.8, ty + Math.sin(ta - 2.5) * head * 0.8);
     ctx.closePath(); ctx.fill(); ctx.restore();
   }
-  /* 오른쪽 패널에 글을 위에서 아래로 쌓아요 (좁은 화면에서는 두 칸으로 넘겨요) */
+  /* 조작판에 글을 위에서 아래로 쌓아요 (좁은 화면에서는 두 칸으로 넘겨요) */
   function makeFlow(B, cols, top) {
     const gap = 14, cw = (B.w - 28 - gap * (cols - 1)) / cols;
     const f = { col: 0, cw, x0: B.x + 14, B, top: B.y + (top || 52) * FS };

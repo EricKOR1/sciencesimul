@@ -502,7 +502,7 @@
     const L = RC.L, e = EQ(), E = WE();
     panel(L.x, L.y, L.w, L.h, 14);
     T(L.x + 14, L.y + 26, '✍️ ' + e.name + ': 네 칸을 차례로 채워요', PHONE ? 14 : 15, INK, 'left', 800);
-    T(L.x + 14, L.y + 46, '오른쪽 조작판에서 알맞은 것을 골라요 (25 °C, 1 atm)', PHONE ? 11.5 : 12.5, MUTED, 'left', 700);
+    T(L.x + 14, L.y + 46, '조작판에서 알맞은 것을 골라요 (25 °C, 1 atm)', PHONE ? 11.5 : 12.5, MUTED, 'left', 700);
     // 단계 표시
     const pw = (L.w - 28 - 18) / 4;
     STAGES.forEach((s, i) => {

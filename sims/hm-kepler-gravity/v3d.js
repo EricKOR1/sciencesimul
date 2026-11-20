@@ -1,6 +1,6 @@
 /* hm-kepler-gravity · 3D 케플러 법칙과 중력
    2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: 🌌 태양계(r · T) · 🔭 화성 관측 점 · ⏱ 같은 시간 같은 넓이 · 📊 T²–r³ 그래프 · 🔗 힘과 거리의 제곱 · 🍎 사과와 달.
-   원 궤도로 단순화한 분석이에요 (같은 넓이 장면만 이심률을 크게 그린 모형). 값은 옆 조작판과 2D 화면이 정하고 3D는 따라가요. */
+   원 궤도로 단순화한 분석이에요 (같은 넓이 장면만 이심률을 크게 그린 모형). 값은 조작판과 2D 화면이 정하고 3D는 따라가요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -45,7 +45,7 @@
   const RAD = Math.PI / 180;
   window.SciSim3D.attach({
     title: '케플러 법칙과 중력 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 조작판에서 바꿔요',
     camera: { dist: 12 * KDX, theta: 0.3, phi: 0.85, min: 4, max: 36, target: [0, 0, 0] },
     autoRotate: 0,
     levels: [2, 3],   // ①②는 캔버스에서 점 찍기 · 색칠하기가 필요해서 2D로 시작해요
@@ -73,7 +73,7 @@
         const sp = planets[o.sel]; lsSel.obj = sp; lsSel.set(A.PL[o.sel].n); lsSel.off = [0, 0.7, 0];
         sun.scale.setScalar(Math.max(0.5, Math.min(1.1, (1.75 / o.zr) ** 0.35)));
         const p = A.PL[o.sel], rec = o.rec.filter(Boolean).length;
-        info('<b>🌌 위에서 본 태양계 (원 궤도로 단순화)</b> · t = ' + o.t.toFixed(1) + ' 년 · ' + (o.zm === 'in' ? '안쪽 행성' : '바깥쪽 행성까지') + ' 보기<br>고른 행성: <b>' + p.n + '</b> · 거리 r = ' + p.r.toFixed(3) + ' AU · 공전 주기 T = ' + p.T.toFixed(3) + ' 년<br>1 AU = 지구–태양 거리 · 태양에서 멀수록 천천히 돌아요. 기록한 행성 ' + rec + ' / 6<br><span style="opacity:.8">행성 고르기 · 보기 · 속도는 옆 조작판에서 해요.</span>');
+        info('<b>🌌 위에서 본 태양계 (원 궤도로 단순화)</b> · t = ' + o.t.toFixed(1) + ' 년 · ' + (o.zm === 'in' ? '안쪽 행성' : '바깥쪽 행성까지') + ' 보기<br>고른 행성: <b>' + p.n + '</b> · 거리 r = ' + p.r.toFixed(3) + ' AU · 공전 주기 T = ' + p.T.toFixed(3) + ' 년<br>1 AU = 지구–태양 거리 · 태양에서 멀수록 천천히 돌아요. 기록한 행성 ' + rec + ' / 6<br><span style="opacity:.8">행성 고르기 · 보기 · 속도는 조작판에서 해요.</span>');
       }
       /* ================= 🔭 화성 관측 (티코) ================= */
       const marsRing = ring(G.mars, 1.524 * 2.6, 0x8fb0ff, 0.0, 0.015); const marsPts = [];
@@ -138,7 +138,7 @@
         const ratio = 1 / (f.r * f.r), dir = p.clone().multiplyScalar(-1).setY(0).normalize();
         setArrow(fA, p, p.clone().addScaledVector(dir, 0.4 + ratio * 1.6)); lfF.obj = p.clone().addScaledVector(dir, 0.4 + ratio * 1.6); lfF.set('F = ' + (f.r === 1 ? 'F₀' : hideR ? '? F₀' : (1 / (f.r * f.r)).toFixed(3).replace(/0+$/, '') + ' F₀')); lfF.off = [0, 0.4, 0];
         fR.setA(new V3(0, 0.1, 0), p.clone().setY(0.1)); lfR.obj = p.clone().multiplyScalar(0.5); lfR.set('r = ' + f.r.toFixed(1) + ' AU'); lfR.off = [0, 0.3, 0]; lfP.set('같은 질량의 행성'); lfP.off = [0, 0.5, 0];
-        info('<b>🔗 태양이 행성을 당기는 힘</b> · 같은 질량의 행성이 태양에서 r = ' + f.r.toFixed(1) + ' AU 떨어져 돌 때<br>빨간 화살표 길이 = 태양이 당기는 힘의 크기 (F₀ = 1 AU에서의 힘)<br>지금 힘의 크기: <b>F = ' + (f.r === 1 ? 'F₀' : hideR ? '? F₀ (화살표 길이로 비교해요)' : (1 / (f.r * f.r)).toFixed(3).replace(/0+$/, '') + ' F₀') + '</b> · r를 바꿔 화살표 길이를 비교해 봐요.<br><span style="opacity:.8">거리 r은 옆 조작판에서 바꿔요.</span>');
+        info('<b>🔗 태양이 행성을 당기는 힘</b> · 같은 질량의 행성이 태양에서 r = ' + f.r.toFixed(1) + ' AU 떨어져 돌 때<br>빨간 화살표 길이 = 태양이 당기는 힘의 크기 (F₀ = 1 AU에서의 힘)<br>지금 힘의 크기: <b>F = ' + (f.r === 1 ? 'F₀' : hideR ? '? F₀ (화살표 길이로 비교해요)' : (1 / (f.r * f.r)).toFixed(3).replace(/0+$/, '') + ' F₀') + '</b> · r를 바꿔 화살표 길이를 비교해 봐요.<br><span style="opacity:.8">거리 r은 조작판에서 바꿔요.</span>');
       }
       /* ================= 🍎 사과와 달 (크기는 과장해서 그렸어요) ================= */
       /* 지구: 바다 · 대륙 · 구름 무늬 (그림으로 만든 무늬) */ const eTex = (() => { const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d'); g.fillStyle = '#1d5fae'; g.fillRect(0, 0, 512, 256); let sd = 7; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; }; for (let k = 0; k < 9; k++) { const cx = rnd() * 512, cy = 50 + rnd() * 156, r = 18 + rnd() * 40; g.fillStyle = k % 3 ? '#4f9a4a' : '#8a9a54'; for (let i = 0; i < 26; i++) { g.beginPath(); g.arc(cx + (rnd() - 0.5) * r * 2.2, cy + (rnd() - 0.5) * r * 1.2, r * (0.3 + rnd() * 0.5), 0, Math.PI * 2); g.fill(); } } g.fillStyle = '#eef4fb'; g.fillRect(0, 0, 512, 14); g.fillRect(0, 242, 512, 14); g.fillStyle = 'rgba(255,255,255,.35)'; for (let i = 0; i < 70; i++) { g.beginPath(); g.ellipse(rnd() * 512, rnd() * 256, 10 + rnd() * 30, 3 + rnd() * 6, 0, 0, Math.PI * 2); g.fill(); } const t = new THREE.CanvasTexture(c); if ('encoding' in t) t.encoding = THREE.sRGBEncoding; return t; })();

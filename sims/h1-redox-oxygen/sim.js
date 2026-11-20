@@ -461,7 +461,7 @@
     const chip = (x, col, txt, on) => { ctx.fillStyle = col; rr(x, cy2 - 18, cw2, 36, 10).fill(); ctx.strokeStyle = on ? '#7c3aed' : '#cbd5e1'; ctx.lineWidth = on ? 3 : 1.5; rr(x, cy2 - 18, cw2, 36, 10).stroke(); D.text(x + cw2 / 2, cy2 + 5, txt, { size: ph ? 12.5 : 13.5, weight: 800, color: '#fff' }); };
     chip(B.x + 20, '#1f2937', '산화 구리(Ⅱ) 검은색', kc < 0.5); chip(B.x + 60 + cw2, '#c2562c', '구리 붉은색', kc >= 0.5);
     D.arrow(B.x + 24 + cw2, cy2, B.x + 56 + cw2, cy2, { color: '#7c3aed', width: 3.5, head: 10, alpha: 0.4 + 0.6 * sleft(kc, 0.2, 0.6) });
-    D.text(B.x + B.w / 2, cy2 + 40, key === 'h2' ? '생성물: 물(H₂O) · 이름표는 오른쪽 조작판에서 붙여요' : '생성물: 이산화 탄소(CO₂) → 석회수가 뿌옇게', { size: 13, weight: 700, color: '#6b21a8' });
+    D.text(B.x + B.w / 2, cy2 + 40, key === 'h2' ? '생성물: 물(H₂O) · 이름표는 조작판에서 붙여요' : '생성물: 이산화 탄소(CO₂) → 석회수가 뿌옇게', { size: 13, weight: 700, color: '#6b21a8' });
     // 유리관
     ctx.fillStyle = 'rgba(224,242,254,.55)'; rr(x0, y0, x1 - x0, th, th / 2).fill();
     // 가루

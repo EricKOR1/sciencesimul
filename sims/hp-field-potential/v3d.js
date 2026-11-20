@@ -1,6 +1,6 @@
 /* hp-field-potential · 3D 전기장과 전위차
    2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: ⚡ 전기력(두 점전하) · 🧭 전기장 지도(화살표 · 시험 전하) · 🔋 평행판 전위차(전하·전자).
-   전하량·거리·전압 같은 값은 옆 조작판이 정하고 3D는 따라가요. 🏠 적용(회로의 전위 · 전기 집진기 · 번개와 피뢰침)도 입체로 봐요. */
+   전하량·거리·전압 같은 값은 조작판이 정하고 3D는 따라가요. 🏠 적용(회로의 전위 · 전기 집진기 · 번개와 피뢰침)도 입체로 봐요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -45,7 +45,7 @@
   const POS = 0xe2464b, NEG = 0x2f6df6;
   window.SciSim3D.attach({
     title: '전기장과 전위차 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 조작판에서 바꿔요',
     camera: { dist: 9 * KD, theta: 0.2, phi: 0.95, min: 3, max: 30, target: [0, 0, 0] },
     autoRotate: 0,
     levels: [0, 2],   // 2단계는 시험 전하를 캔버스에서 끌어 놓아야 하고, 4단계는 캔버스의 전위 그래프를 읽어야 해서 2D
@@ -89,7 +89,7 @@
         ruler.scale.x = f.d; ruler.position.set(f.d / 2, 0.03, 2.9); ticks.forEach((t, i) => { t.visible = i <= f.d + 0.001; t.position.set(i, 0.05, 2.9); });
         lD.obj = [f.d / 2, 0.05, 2.9]; lD.off = [0, 0.1, 0.55]; lD.set('거리 ' + f.d.toFixed(1) + '칸');
         guideA.visible = false;
-        info('<b>⚡ 두 전하 사이에 작용하는 전기력</b><br>힘의 세기 ' + pct + ' % (가장 센 배치 = 100 %)<br>A가 받는 힘 ' + pct + ' % · B가 받는 힘 ' + pct + ' % → 크기는 같고 방향은 반대예요 (작용·반작용)<br>두 전하는 서로 ' + (same ? '<b>밀어내요</b> (같은 부호)' : '<b>끌어당겨요</b> (다른 부호)') + ' · 거리 ' + f.d.toFixed(1) + '칸 · A ' + f.qa + ' · B ' + f.qb + '<br><span style="opacity:.8">전하량·부호·거리는 옆 조작판에서 바꿔요.</span>');
+        info('<b>⚡ 두 전하 사이에 작용하는 전기력</b><br>힘의 세기 ' + pct + ' % (가장 센 배치 = 100 %)<br>A가 받는 힘 ' + pct + ' % · B가 받는 힘 ' + pct + ' % → 크기는 같고 방향은 반대예요 (작용·반작용)<br>두 전하는 서로 ' + (same ? '<b>밀어내요</b> (같은 부호)' : '<b>끌어당겨요</b> (다른 부호)') + ' · 거리 ' + f.d.toFixed(1) + '칸 · A ' + f.qa + ' · B ' + f.qb + '<br><span style="opacity:.8">전하량·부호·거리는 조작판에서 바꿔요.</span>');
       }
       /* ================= 🧭 전기장 지도 (위에서 본 모습, 1칸 = 52px) ================= */
       const gridTex = ctex(64, 64, (g, w, h) => { g.fillStyle = '#243459'; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(160,190,240,.45)'; g.lineWidth = 2; g.strokeRect(0, 0, w, h); }, 1, 1);
@@ -137,7 +137,7 @@
         tokM.visible = on && !upd; lTok.show(tokM.visible);
         if (tokM.visible) { const u = toU(tx, ty); tokM.position.set(u[0], 0.25, u[1]); lTok.off = [0, 0.45, 0]; f = (tx > A.MX0 && tx < A.MX1 && ty > A.MY0 && ty < A.MY1) ? A.fieldAt(tx, ty) : null; }
         if (tokM.visible && trl && trl.length > 2) { const pts = trl.filter((_, i) => i % Math.ceil(trl.length / 60) === 0).map((p) => { const u = toU(p.x, p.y); return new V3(u[0], 0.15, u[1]); }); if (pts.length > 2) { trail.geometry.dispose(); trail.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), Math.max(8, pts.length * 2), 0.04, 6, false); trail.visible = true; } else trail.visible = false; } else trail.visible = false;
-        info('<b>🧭 전기장 지도 · ' + PRESET[fl.preset] + '</b><br>화살표는 (+)1 시험 전하가 받는 힘의 방향이에요. (+)에서 나가고 (−)로 들어가요.<br>' + (f ? '시험 전하가 받는 힘의 방향: <b>' + dirTxt(f) + '</b> · 힘의 세기: <b>' + (f.e >= 0.03 ? strengthTxt(f.e) : '—') + '</b>' : '시험 전하를 놓아 보세요 (▶ 아래 재생 또는 옆 조작판의 ▶ 놓아 주기).') + '<br><span style="opacity:.8">전하 배치는 옆 조작판에서 골라요.</span>');
+        info('<b>🧭 전기장 지도 · ' + PRESET[fl.preset] + '</b><br>화살표는 (+)1 시험 전하가 받는 힘의 방향이에요. (+)에서 나가고 (−)로 들어가요.<br>' + (f ? '시험 전하가 받는 힘의 방향: <b>' + dirTxt(f) + '</b> · 힘의 세기: <b>' + (f.e >= 0.03 ? strengthTxt(f.e) : '—') + '</b>' : '시험 전하를 놓아 보세요 (▶ 아래 재생 또는 조작판의 ▶ 놓아 주기).') + '<br><span style="opacity:.8">전하 배치는 조작판에서 골라요.</span>');
       }
       /* ================= 🔋 평행판 전위차 (1 cm = 1칸) ================= */
       const VMAX = 12, DCM = 6;
@@ -190,7 +190,7 @@
         /* 2D 캔버스의 기록 칸(옮긴 전하의 에너지 · 도착한 전자의 속력)을 3D에도 보여 줘요 */
         { const P = S.pl; if (!el) { const rs = (P.recs || []).slice(-4); t2 += '<br>📋 기록 (끝까지 옮겼을 때): ' + (rs.length ? rs.map((r) => r.q + ' C · ' + r.V + ' V → <b>' + r.E + ' J</b>').join(' / ') : '— (+)판까지 옮겨 보세요'); }
           else { const ks = Object.keys(P.erecs || {}).map(Number).sort((a, b) => a - b).slice(-4); t2 += '<br>📋 기록 (도착했을 때): ' + (ks.length ? ks.map((k) => k + ' V → ' + k + ' eV · <b>' + P.erecs[k].v.toFixed(2) + ' × 10⁶ m/s</b>').join(' / ') : '— 전자를 놓아 보세요'); } }
-        info('<b>🔋 평행판 사이의 전위차 · 판 사이 전압 ' + V + ' V</b><br>이 위치(' + trim(fmt(x, 1)) + ' cm)의 전위 ' + trim(fmt(vv, 1)) + ' V ((−)판이 0 V)<br>' + t2 + '<br><span style="opacity:.8">전압·전하 종류는 옆 조작판에서 바꿔요.</span>');
+        info('<b>🔋 평행판 사이의 전위차 · 판 사이 전압 ' + V + ' V</b><br>이 위치(' + trim(fmt(x, 1)) + ' cm)의 전위 ' + trim(fmt(vv, 1)) + ' V ((−)판이 0 V)<br>' + t2 + '<br><span style="opacity:.8">전압·전하 종류는 조작판에서 바꿔요.</span>');
       }
       function ez(x) { return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; }
 
@@ -358,7 +358,7 @@
         lBurn.show(burning); lBurn.obj = [hxw, ROOF_TOP + 0.9, 0]; lRod.show(!!a.rod); lRod.obj = [hxw - 2.4, ROD_TOP, 0.3];
         lHouse.obj = [hxw, -0.1, 1.2]; lHouse.set(a.rod ? '피뢰침이 있는 집' : '피뢰침이 없는 집'); lCloud.obj = [-0.2, (L.gy - L.cy) / LS + 1.0, 0]; lGrd.obj = [-3.4, 0.0, 1.6];
         const E = A.LE / 1e9;
-        info('<b>⛈️ ' + (a.rod ? '피뢰침이 있는 집에 번개가 치면?' : '피뢰침이 없는 집에 번개가 치면?') + '</b><br>구름–지면 전위차 약 10<sup>' + A.LVEXP + '</sup> V · 이동하는 전하 약 ' + A.LQ + ' C<br>에너지 = ' + A.LQ + ' C × 10<sup>' + A.LVEXP + '</sup> V = <b>' + fmt(E, 1) + ' × 10⁹ J</b><br>' + (a.rod ? '뾰족한 도체 끝에는 전하가 모여요. 번개는 피뢰침 끝으로 떨어지고 전하는 도선을 따라 땅으로 흘러가요 → 집은 안전해요.' : '피뢰침이 없으면 번개가 지붕에 직접 떨어져 위험해요.') + '<br><span style="opacity:.8">번개 치기와 피뢰침 여부는 옆 조작판에서 해요.</span>');
+        info('<b>⛈️ ' + (a.rod ? '피뢰침이 있는 집에 번개가 치면?' : '피뢰침이 없는 집에 번개가 치면?') + '</b><br>구름–지면 전위차 약 10<sup>' + A.LVEXP + '</sup> V · 이동하는 전하 약 ' + A.LQ + ' C<br>에너지 = ' + A.LQ + ' C × 10<sup>' + A.LVEXP + '</sup> V = <b>' + fmt(E, 1) + ' × 10⁹ J</b><br>' + (a.rod ? '뾰족한 도체 끝에는 전하가 모여요. 번개는 피뢰침 끝으로 떨어지고 전하는 도선을 따라 땅으로 흘러가요 → 집은 안전해요.' : '피뢰침이 없으면 번개가 지붕에 직접 떨어져 위험해요.') + '<br><span style="opacity:.8">번개 치기와 피뢰침 여부는 조작판에서 해요.</span>');
       }
       /* ▶ 재생 줄: 장면마다 하나씩 */
       let plM = null, plC = null, plE = null;

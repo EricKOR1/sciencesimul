@@ -1,6 +1,6 @@
 /* hp-motor-speaker · 3D 자기장 속 전류 · 전동기 · 스피커
    2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: ⚡ 자기장 속 도선이 받는 힘 F = BIL · ⚙️ 직류 전동기(코일 · 정류자 · 전력) · 🔊 스피커의 원리(보이스 코일 · 진동판).
-   값(B · I · L · 부하 · 진폭 · 진동수)은 옆 조작판이 정하고 3D는 따라가요. 🛠️ 스피커 설계는 내가 고른 값으로 만든 스피커 단면과 주파수 시험을 입체로 보여 주고, 시험 곡선 그래프는 2D에서 봐요.
+   값(B · I · L · 부하 · 진폭 · 진동수)은 조작판이 정하고 3D는 따라가요. 🛠️ 스피커 설계는 내가 고른 값으로 만든 스피커 단면과 주파수 시험을 입체로 보여 주고, 시험 곡선 그래프는 2D에서 봐요.
    전동기 약속: N극이 왼쪽, S극이 오른쪽 → B는 N→S(+x). 앞에서 보면 오른쪽 변의 전류가 안쪽(⊗), 왼쪽 변이 바깥쪽(⊙)이에요. */
 (function () {
   'use strict';
@@ -12,7 +12,7 @@
 
   window.SciSim3D.attach({
     title: '전동기와 스피커 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 조작판에서 바꿔요',
     levels: [0, 1, 2],   // 4단계(설계)는 캔버스의 시험 곡선 그래프를 읽어야 해서 2D
     camera: { dist: 14 * KD, theta: 0.55, phi: 1.15, min: 6, max: 26, target: [0, -0.6, 0.4] },
     autoRotate: 0,
@@ -150,7 +150,7 @@
         const near = Math.abs(cs) < 0.18;
         const ph = Mt.burnt ? '코일이 타 버렸어요 (소손). 수리하기를 눌러요.' : !st.on ? '전원이 꺼져 전류가 없으니 힘도 없어요.' : near ? '코일 면이 B에 <b>수직</b>이라 짝힘의 회전 효과가 0 → 관성으로 지나가는 순간, <b>정류자</b>가 솔을 바꿔 전류 방향을 뒤집어요.' : Math.abs(cs) > 0.85 ? '코일 면이 B와 <b>나란해서</b> 짝힘의 회전 효과가 가장 커요.' : '두 변이 받는 <b>반대 방향의 힘</b>이 코일을 돌려요.';
         const Fside = 50 * 0.4 * st.I * 0.25, pin = demoOn ? 24 * st.I : Mt.pin, heat = demoOn ? st.I * st.I * 1.5 : Mt.heat, pout = demoOn ? Math.max(0, pin - heat) : Mt.pout;
-        const txt = '<b>⚙️ 직류 전동기</b> · ' + rot + (Mt.stall ? ' (🛑 회전 막음)' : '') + '<br>전류 I = <b>' + f1(st.I) + ' A</b> · 각 변이 받는 힘 F = ' + f1(Fside) + ' N (코일 50회 · B 0.40 T · 변 길이 0.25 m) · 두 변은 반대 방향 (짝힘)<br>입력 P = V × I = ' + f1(pin) + ' W · 열 I²R = ' + f1(heat) + ' W · 출력(운동) = ' + f1(pout) + ' W<br>부하 토크 ' + f1(Mt.load) + ' N·m · 코일 온도 ' + Math.round(Mt.T) + ' ℃<br>' + ph + '<br><span style="opacity:.8">전원·부하·회전 막기는 옆 조작판에서 해요.</span>';
+        const txt = '<b>⚙️ 직류 전동기</b> · ' + rot + (Mt.stall ? ' (🛑 회전 막음)' : '') + '<br>전류 I = <b>' + f1(st.I) + ' A</b> · 각 변이 받는 힘 F = ' + f1(Fside) + ' N (코일 50회 · B 0.40 T · 변 길이 0.25 m) · 두 변은 반대 방향 (짝힘)<br>입력 P = V × I = ' + f1(pin) + ' W · 열 I²R = ' + f1(heat) + ' W · 출력(운동) = ' + f1(pout) + ' W<br>부하 토크 ' + f1(Mt.load) + ' N·m · 코일 온도 ' + Math.round(Mt.T) + ' ℃<br>' + ph + '<br><span style="opacity:.8">전원·부하·회전 막기는 조작판에서 해요.</span>';
         if (txt !== lastTxt) { lastTxt = txt; info(txt); }
       }
 
@@ -198,7 +198,7 @@
         /* 2D처럼: 힘 센서 값과 측정 기록표를 보여 주고, 식(F = BIL)은 2D에서 식이 공개된 뒤에만 보여 줘요 */
         const LS0 = lessonS(), showF = !!(f.showF || (LS0 && LS0.game && LS0.game.free)), rows = (f.rows || []).slice(-4);
         const txt = '<b>⚡ 자기장 속 전류가 받는 힘</b> · 도선(막대)이 레일 위에 놓여 있어요 (위에서 본 모습)<br>' + (par ? '자기장이 도선과 <b>나란할 때</b> 힘 센서: <b>F = 0 N</b>' : '힘 센서: <b>F = ' + f2(Fn) + ' N</b>' + (showF ? ' (F = B × I × L = ' + f2(f.B) + ' × ' + f1(f.I) + ' × ' + f2(f.L) + ')' : '') + (f.I > 0 ? ' · 힘은 ' + (Fs0 > 0 ? '오른쪽 →' : '왼쪽 ←') : ' · 전류가 0이라 힘도 0')) +
-          '<br>📋 측정 기록표 (B · I · L → F): ' + (rows.length ? rows.map((r) => f2(r.B) + ' T · ' + f1(r.I) + ' A · ' + f2(r.L) + ' m → <b>' + f2(r.F) + ' N ' + (r.dir > 0 ? '→' : '←') + '</b>').join(' / ') : '📏 기록하기를 눌러 값을 모아요') + '<br><span style="opacity:.8">B · I · L · 방향은 옆 조작판에서 바꿔요.</span>';
+          '<br>📋 측정 기록표 (B · I · L → F): ' + (rows.length ? rows.map((r) => f2(r.B) + ' T · ' + f1(r.I) + ' A · ' + f2(r.L) + ' m → <b>' + f2(r.F) + ' N ' + (r.dir > 0 ? '→' : '←') + '</b>').join(' / ') : '📏 기록하기를 눌러 값을 모아요') + '<br><span style="opacity:.8">B · I · L · 방향은 조작판에서 바꿔요.</span>';
         if (txt !== lastTxtF) { lastTxtF = txt; info(txt); }
       }
       let lastTxtF = '', tmT = 0; const tmpT = () => tmT;
@@ -228,7 +228,7 @@
         waves.forEach((w, i) => { const r = s.rings[i]; if (!r) { w.visible = false; return; } w.visible = true; const q = r.r / 300; w.position.y = 2.6 + q * 6; w.scale.setScalar(2 + q * 4); w.material.opacity = 0.5 * r.a * (1 - q); });
         lCo.obj = [1.2, 0.7 + xm, 0]; lDi.obj = [3.6, 2.0 + xm, 0]; lCo.off = [1.3, 0, 0]; lDi.off = [0.9, 0.2, 0];
         const dc = s.kind === 'dc';
-        const txt = '<b>🔊 스피커의 단면</b> · 신호 ' + (dc ? '<b>직류</b>' : '<b>교류</b>') + '<br>신호 전류 i = ' + (s.i >= 0 ? '+' : '−') + f2(Math.abs(s.i)) + ' A (진폭 ' + f2(s.A) + ' A' + (dc ? '' : ' · 진동수 ' + s.f + ' Hz') + ') · 진동판 위치 x = ' + (s.x >= 0 ? '+' : '−') + f2(Math.abs(s.x)) + ' mm<br>' + (dc ? '직류는 방향이 일정해서 진동판이 한쪽으로 밀려 <b>고정</b>돼요 → 소리가 나지 않아요.' : '전류 방향이 바뀌면 힘의 방향도 바뀌어 진동판이 <b>앞뒤로 떨려요</b> → 공기가 떨려 소리가 돼요. 진폭이 크면 큰 소리, 진동수가 높으면 높은 소리예요.') + '<br><span style="opacity:.8">화면은 실제보다 500배 느려요 · 신호 종류 · 진폭 · 진동수는 옆 조작판에서 바꿔요.</span>';
+        const txt = '<b>🔊 스피커의 단면</b> · 신호 ' + (dc ? '<b>직류</b>' : '<b>교류</b>') + '<br>신호 전류 i = ' + (s.i >= 0 ? '+' : '−') + f2(Math.abs(s.i)) + ' A (진폭 ' + f2(s.A) + ' A' + (dc ? '' : ' · 진동수 ' + s.f + ' Hz') + ') · 진동판 위치 x = ' + (s.x >= 0 ? '+' : '−') + f2(Math.abs(s.x)) + ' mm<br>' + (dc ? '직류는 방향이 일정해서 진동판이 한쪽으로 밀려 <b>고정</b>돼요 → 소리가 나지 않아요.' : '전류 방향이 바뀌면 힘의 방향도 바뀌어 진동판이 <b>앞뒤로 떨려요</b> → 공기가 떨려 소리가 돼요. 진폭이 크면 큰 소리, 진동수가 높으면 높은 소리예요.') + '<br><span style="opacity:.8">화면은 실제보다 500배 느려요 · 신호 종류 · 진폭 · 진동수는 조작판에서 바꿔요.</span>';
         if (txt !== lastTxtS) { lastTxtS = txt; info(txt); }
       }
 

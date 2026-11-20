@@ -1089,7 +1089,7 @@ function drawStemCase(dt) {
   SCASE.forEach((c, i) => {
     const v = vals[i];
     y += textBlock(R.x + 14, y + 12, R.w - 28, c.t, PHONE ? 12.5 : 13.5, COL.ink, PHONE ? 17 : 19, 800);
-    D.label(R.x + 22, y + (PHONE ? 12 : 16), v ? '→ ' + PARTS[v].name : '→ 부위를 골라요 (오른쪽 조작판)', { bg: v ? C.shade(PARTS[v].col, -0.15) : '#9aa6b8', size: PHONE ? 12.5 : 13.5, align: 'left' });
+    D.label(R.x + 22, y + (PHONE ? 12 : 16), v ? '→ ' + PARTS[v].name : '→ 부위를 골라요 (조작판)', { bg: v ? C.shade(PARTS[v].col, -0.15) : '#9aa6b8', size: PHONE ? 12.5 : 13.5, align: 'left' });
     y += PHONE ? 38 : 50;
   });
   T(R.x + 14, R.y + R.h - 14, '교육용 가상 사례예요. 의학적 조언이 아니에요.', 12.5, COL.mut, 'left', 700);
@@ -1329,7 +1329,7 @@ const levels = [
       {
         title: '대뇌 3D 모형 탐색',
         goal: '모형을 돌려 보며 <b>네 개의 엽을 모두 눌러</b> 기능을 확인하고, <b>✂️ 단면 보기</b>로 겉질과 속질도 살펴보세요.',
-        hint: '모형을 끌어서 돌리고 전두엽 · 두정엽 · 측두엽 · 후두엽을 차례로 눌러요. 오른쪽 조작판의 ✂️ 단면 보기를 누르면 잘린 면이 나타나요.',
+        hint: '모형을 끌어서 돌리고 전두엽 · 두정엽 · 측두엽 · 후두엽을 차례로 눌러요. 조작판의 ✂️ 단면 보기를 누르면 잘린 면이 나타나요.',
         setup() { setScene('cer', 'ex'); },
         check: () => LOBES.every((l) => S.cer.seen[l]) && S.cer.cutSeen,
         hold: 0.5,
@@ -1413,7 +1413,7 @@ const levels = [
       {
         title: '교감 · 부교감 스위치 실험',
         goal: '<b>교감 신경</b>과 <b>부교감 신경</b>을 각각 켜서 여섯 기관의 반응이 반대로 바뀌는 것을 확인하세요.',
-        hint: '오른쪽 조작판의 평상시 · 교감 신경 · 부교감 신경 버튼을 번갈아 눌러 보세요. 동공 크기와 심장 박동 수가 달라져요.',
+        hint: '조작판의 평상시 · 교감 신경 · 부교감 신경 버튼을 번갈아 눌러 보세요. 동공 크기와 심장 박동 수가 달라져요.',
         setup() { setScene('per', 'auto'); },
         check: () => !!(S.per.visited.sym && S.per.visited.par),
         hold: 0.6,

@@ -1,6 +1,6 @@
 /* hp-momentum · 3D 작용 반작용과 운동량 보존
    2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: 🤝 줄로 연결된 두 수레(작용 반작용) · 🎱 일차원 충돌(합체/튕김) · 🚀 반동과 발사.
-   질량·속도·충돌 유형은 옆 조작판이 정하고 3D는 따라가요. 위쪽 화살표는 각 물체의 운동량 p = mv, 아래 흰색 화살표는 총 운동량이에요.
+   질량·속도·충돌 유형은 조작판이 정하고 3D는 따라가요. 위쪽 화살표는 각 물체의 운동량 p = mv, 아래 흰색 화살표는 총 운동량이에요.
    🏟️ 적용(자동차·당구공·수영 출발·대포·뉴턴의 요람)도 입체로 봐요. */
 (function () {
   'use strict';
@@ -46,7 +46,7 @@
   const GUN = { M: 4.0, m: 0.010, v: 400 }, SPACE = { M: 80, m: 2, v: 3 }, ROCKET = { mdot: 50, u: 2000 };
   window.SciSim3D.attach({
     title: '작용 반작용과 운동량 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 조작판에서 바꿔요',
     camera: { dist: 12 * KD, theta: 0.3, phi: 1.1, min: 4, max: 30, target: [5, 0.8, 0] },
     autoRotate: 0,
     levels: [0, 1, 2, 3],
@@ -143,7 +143,7 @@
         const tn = c.type === 'stick' ? '합체' : '튕김', pb = c.mA * c.vA + c.mB * c.vB, pa = c.mA * c.v2A + c.mB * c.v2B;
         const kb = 0.5 * c.mA * c.vA * c.vA + 0.5 * c.mB * c.vB * c.vB, ka = 0.5 * c.mA * c.v2A * c.v2A + 0.5 * c.mB * c.v2B * c.v2B;
         tag.show(!c.willHit); tag.obj = [5, 3.4, 0]; tag.set('⚠ A가 B를 따라잡지 못해요 (충돌 없음)');
-        info('<b>🎱 마찰 없는 트랙 · ' + tn + ' 충돌</b><br>A ' + f1(c.mA) + ' kg · ' + sg(c.vA, 1) + ' m/s &nbsp; B ' + f1(c.mB) + ' kg · ' + sg(c.vB, 1) + ' m/s<br>' + (c.willHit && !c.rec ? '총 운동량 전 ' + sg(pb, 2) + ' kg·m/s → 후 ? (▶ 충돌 시키기로 측정해요)<br>운동 에너지 전 ' + f2(kb) + ' J' : c.willHit ? '총 운동량 전 ' + sg(pb, 2) + ' → 후 ' + sg(pa, 2) + ' kg·m/s<br>운동 에너지 ' + f2(kb) + ' → ' + f2(ka) + ' J' + (c.type === 'stick' ? ' (일부는 열 등으로)' : ' (거의 보존)') : 'A가 B보다 느려서 부딪히지 않아요. A의 속도를 B보다 크게 해 보세요.') + '<br><span style="opacity:.8">질량·속도·충돌 유형은 옆 조작판에서 바꿔요.</span>');
+        info('<b>🎱 마찰 없는 트랙 · ' + tn + ' 충돌</b><br>A ' + f1(c.mA) + ' kg · ' + sg(c.vA, 1) + ' m/s &nbsp; B ' + f1(c.mB) + ' kg · ' + sg(c.vB, 1) + ' m/s<br>' + (c.willHit && !c.rec ? '총 운동량 전 ' + sg(pb, 2) + ' kg·m/s → 후 ? (▶ 충돌 시키기로 측정해요)<br>운동 에너지 전 ' + f2(kb) + ' J' : c.willHit ? '총 운동량 전 ' + sg(pb, 2) + ' → 후 ' + sg(pa, 2) + ' kg·m/s<br>운동 에너지 ' + f2(kb) + ' → ' + f2(ka) + ' J' + (c.type === 'stick' ? ' (일부는 열 등으로)' : ' (거의 보존)') : 'A가 B보다 느려서 부딪히지 않아요. A의 속도를 B보다 크게 해 보세요.') + '<br><span style="opacity:.8">질량·속도·충돌 유형은 조작판에서 바꿔요.</span>');
       }
       /* ===== 🤝 줄로 연결된 두 수레 ===== */
       function pair(S) {
@@ -166,7 +166,7 @@
         const mA_ = p.mA * vA, mB_ = p.mB * vB;
         arrows([[aA, lA, xA, mA_, 2.3, 'pA ' + sg(mA_, 1)], [aB, lB, xB, mB_, 2.3, 'pB ' + sg(mB_, 1)]], mA_ + mB_, 5, 0.35, taut);
         lnA.set('A ' + f1(p.mA) + ' kg'); lnB.set('B ' + f1(p.mB) + ' kg'); lnA.off = [0, 0.3, 0.7]; lnB.off = [0, 0.3, 0.7]; lnA.show(true); lnB.show(true);
-        info('<b>🤝 줄로 연결된 두 수레 · 서로 당겨요</b><br>두 힘은 <b>크기가 같고 방향이 반대</b>이며 서로 다른 물체에 작용해요 (작용 반작용).<br>가속도 A ' + f2(aA_) + ' · B ' + f2(aB_) + ' m/s² (질량에 반비례) · 처음 총 운동량 0 → 총 운동량 ' + sg(mA_ + mB_, 1) + '<br><span style="opacity:.8">수레 질량과 당기는 세기는 옆 조작판에서 바꿔요.</span>');
+        info('<b>🤝 줄로 연결된 두 수레 · 서로 당겨요</b><br>두 힘은 <b>크기가 같고 방향이 반대</b>이며 서로 다른 물체에 작용해요 (작용 반작용).<br>가속도 A ' + f2(aA_) + ' · B ' + f2(aB_) + ' m/s² (질량에 반비례) · 처음 총 운동량 0 → 총 운동량 ' + sg(mA_ + mB_, 1) + '<br><span style="opacity:.8">수레 질량과 당기는 세기는 조작판에서 바꿔요.</span>');
       }
       /* ===== 🚀 반동과 발사 ===== */
       const rocket = new THREE.Group(); root.add(rocket); rocket.visible = false;
@@ -187,7 +187,7 @@
           const sp = r.env === 'space';
           if (on) { setArrow(rA1, new V3(1.4, 3.2, 0), new V3(1.4, 4.7, 0)); setArrow(rA2, new V3(1.4, 2.4, 0), new V3(1.4, 0.9, 0)); lr1.obj = [1.4, 4.0, 0]; lr2.obj = [1.4, 1.7, 0]; lr1.show(true); lr2.show(true); } else { rA1.visible = rA2.visible = false; lr1.show(false); lr2.show(false); }
           [aA, aB, aT].forEach((a) => (a.visible = false));
-          info('<b>🚀 ' + (sp ? '우주 공간' : '대기 중') + ' · 분사 가스 ' + ROCKET.mdot + ' kg/s × ' + ROCKET.u + ' m/s</b><br>가스를 밀어내는 힘 F = ' + ROCKET.mdot + ' × ' + ROCKET.u + ' = ' + String(ROCKET.mdot * ROCKET.u).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' N<br>가스가 로켓을 미는 반작용으로 나아가요. 대기 중이든 우주 공간이든 같아요.<br><span style="opacity:.8">환경과 분사하기는 옆 조작판에서 해요.</span>');
+          info('<b>🚀 ' + (sp ? '우주 공간' : '대기 중') + ' · 분사 가스 ' + ROCKET.mdot + ' kg/s × ' + ROCKET.u + ' m/s</b><br>가스를 밀어내는 힘 F = ' + ROCKET.mdot + ' × ' + ROCKET.u + ' = ' + String(ROCKET.mdot * ROCKET.u).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' N<br>가스가 로켓을 미는 반작용으로 나아가요. 대기 중이든 우주 공간이든 같아요.<br><span style="opacity:.8">환경과 분사하기는 조작판에서 해요.</span>');
           return;
         }
         rocket.visible = false; rA1.visible = rA2.visible = false; lr1.show(false); lr2.show(false);
@@ -220,7 +220,7 @@
         else if (sc === 'skate') t1 = '0 = ' + r.mL + ' × (' + sg(r.vL, 2) + ') + ' + r.mR + ' × (' + sg(r.vR, 2) + ')<br>속력의 비 = ' + r.mR + ' : ' + r.mL + ' (질량의 반비율) · 질량이 큰 선수일수록 속력이 작아요.';
         else if (sc === 'gun') t1 = '0 = ' + f1(GUN.M) + ' × (' + sg(r.vL, 2) + ') + ' + GUN.m.toFixed(3) + ' × (' + sg(GUN.v, 0) + ')<br>총의 반동 속력 = ' + f1(r.Q) + ' / ' + f1(GUN.M) + ' = ' + Math.abs(r.vL).toFixed(1) + ' m/s';
         else t1 = '0 = ' + SPACE.M + ' × (' + sg(r.vL, 3) + ') + ' + SPACE.m + ' × (' + sg(SPACE.v, 0) + ')<br>우주인의 반동 속력 = ' + r.Q + ' / ' + SPACE.M + ' = ' + Math.abs(r.vL).toFixed(3) + ' m/s (공기가 없어도 돼요) · ⏩ 10배 빠르게';
-        info('<b>' + ({ skate: '⛸️ 스케이트 · 얼음판 10 m (마찰 없음)', gun: '🔫 총 쏘기', space: '👨‍🚀 우주 공간 (마찰·공기 없음)' }[sc]) + '</b><br>' + t1 + '<br><span style="opacity:.8">장면·질량은 옆 조작판에서 고르고 버튼을 눌러요.</span>');
+        info('<b>' + ({ skate: '⛸️ 스케이트 · 얼음판 10 m (마찰 없음)', gun: '🔫 총 쏘기', space: '👨‍🚀 우주 공간 (마찰·공기 없음)' }[sc]) + '</b><br>' + t1 + '<br><span style="opacity:.8">장면·질량은 조작판에서 고르고 버튼을 눌러요.</span>');
       }
 
       /* ===== 🏟️ 적용 장면: 🚗 자동차 · 🎱 당구공 · 🏊 수영 출발 · 💥 대포 · 🔔 뉴턴의 요람 ===== */
@@ -309,7 +309,7 @@
           t1 = '총 운동량 = ' + CAR3.mA + ' × ' + CAR3.vA + ' + ' + CAR3.mB + ' × (' + sg(CAR3.vB, 0) + ') = ' + sg(P, 0) + ' kg·m/s<br>' +
             (done ? '합체 후 속도 v = ' + sg(P, 0) + ' / ' + (CAR3.mA + CAR3.mB) + ' = <b>' + sg(c.v2A, 1) + ' m/s</b> (SUV 방향)<br>속도 변화: 승용차 ' + Math.abs(c.v2A - c.vA) + ' m/s, SUV ' + Math.abs(c.v2B - c.vB) + ' m/s → 가벼운 승용차가 더 크게 변해요.' : '▶ 충돌 시키기를 눌러 결과를 확인해요.');
         } else t1 = '같은 질량 + 정면 탄성 충돌 → 속도를 서로 바꿔 가져요.<br>' + (done ? '충돌 후 A <b>' + sg(c.v2A, 1) + ' m/s</b>, B <b>' + sg(c.v2B, 1) + ' m/s</b> (운동량·운동 에너지 모두 보존)' : '▶ 충돌 시키기를 눌러 결과를 확인해요.');
-        info('<b>' + (car ? '🚗 자동차 정면 충돌 · 한 덩어리로 합체' : '🎱 당구공 정면 충돌 · 튕김') + '</b><br>' + t1 + '<br><span style="opacity:.8">위쪽 화살표는 p = mv, 아래 화살표는 총 운동량이에요. 식 고르기는 옆 조작판에서 해요.</span>');
+        info('<b>' + (car ? '🚗 자동차 정면 충돌 · 한 덩어리로 합체' : '🎱 당구공 정면 충돌 · 튕김') + '</b><br>' + t1 + '<br><span style="opacity:.8">위쪽 화살표는 p = mv, 아래 화살표는 총 운동량이에요. 식 고르기는 조작판에서 해요.</span>');
       }
       const CAR3 = { mA: 1000, vA: 15, mB: 2000, vB: -15 };
       function apRc(S, sel) {
@@ -344,7 +344,7 @@
         const e2 = n === 1 ? '½mv²' : '½m(' + n + 'v)² = ' + (n * n) + '·(½mv²)';
         info('<b>🔔 뉴턴의 요람 · 마찰을 무시한 이상적인 경우</b><br>충돌 전: 공 ' + n + '개, 속력 v → 운동량 ' + n + 'mv · 운동 에너지 ' + (n === 1 ? '½mv²' : n + '·(½mv²)') +
           '<br><span style="color:#7be3a0">○ ' + n + '개가 속력 v로</span>: 운동량 ' + n + 'mv · 에너지 ' + n + '·(½mv²) → 둘 다 보존!<br><span style="color:#ff9b9b">' + (n === 1 ? '○ 1개가 속력 v로 (위와 같아요)' : '✕ 1개가 속력 ' + n + 'v로') + '</span>' + (n === 1 ? '' : ': 운동량 ' + n + 'mv 같지만 에너지 ' + e2 + ' → 보존 안 돼요') +
-          '<br><span style="opacity:.8">운동량과 운동 에너지가 모두 보존되는 경우만 가능해요. 공 개수는 옆 조작판에서 골라요.</span>');
+          '<br><span style="opacity:.8">운동량과 운동 에너지가 모두 보존되는 경우만 가능해요. 공 개수는 조작판에서 골라요.</span>');
       }
       function apply(S) {
         const a = S.ap; if (!a) return; const sel = a.sel;

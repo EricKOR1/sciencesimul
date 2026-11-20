@@ -841,7 +841,7 @@
     if (L.fade > 0.01) { ctx.fillStyle = 'rgba(255,255,255,' + (L.fade * 0.95).toFixed(3) + ')'; ctx.fillRect(0, 0, SW, SH); }
   }
 
-  /* ----- 오른쪽 패널: 잎 세포 속 들여다보기 ----- */
+  /* ----- 조작판: 잎 세포 속 들여다보기 ----- */
   const CELLC = [[0.24, 0.34, 0.22], [0.66, 0.3, -0.2], [0.42, 0.7, 0.1], [0.78, 0.72, 0.3]];
   const GRN = [[0.1, 0.5], [0.34, 0.18], [0.55, 0.52], [0.86, 0.5], [0.58, 0.88], [0.2, 0.86], [0.9, 0.2], [0.44, 0.44], [0.72, 0.5], [0.28, 0.6]];
   function drawCell(x, y, w, h, z, titleTxt, titleCol) {
@@ -1317,7 +1317,7 @@
   function dropperAt(x, y, o) { ironDropper(x, y, o); }
   function tubePath(c, x, y, w, h) { c.beginPath(); c.moveTo(x - w / 2, y); c.lineTo(x - w / 2, y + h - w / 2); c.arc(x, y + h - w / 2, w / 2, Math.PI, 0, true); c.lineTo(x + w / 2, y); }
 
-  /* ----- 오른쪽 패널: 검출 결과 기록표 ----- */
+  /* ----- 조작판: 검출 결과 기록표 ----- */
   function labCell(x, y, w, h, kind, id) {
     const r = LAB.res[id][kind], sp = SAMP.find((q) => q.id === id);
     ctx.fillStyle = r == null ? '#f1f4f8' : '#fff'; D.roundRect(x, y, w, h, 10); ctx.fill();

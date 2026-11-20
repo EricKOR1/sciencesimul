@@ -332,7 +332,7 @@
     row(ey, '↑ 증발', re, '#f59e0b'); row(ey + 28, '↓ 응축', rc, '#3867f4');
     D.roundRect(g.ex, ey + 62, PHONE ? 440 : 440, 30, 15); ctx.fillStyle = v.eq ? '#e6f7ee' : '#f1f5f9'; ctx.fill(); ctx.strokeStyle = v.eq ? GOOD : '#c9d2df'; ctx.lineWidth = 2; ctx.stroke();
     T(g.ex + 220, ey + 82, v.eq ? '⚖️ 동적 평형: 증발 속도 = 응축 속도, 압력 일정' : '아직 평형이 아니에요 (증발이 더 많거나 응축이 더 많아요)', 13, v.eq ? '#14803f' : MUTED, 'center', 800);
-    // 오른쪽 패널
+    // 조작판
     panel(Rr.x, Rr.y, Rr.w, Rr.h, 14);
     drawEnergy(null, Rr.x + 10, Rr.y + 10, Rr.w - 20, PHONE ? 142 : 214, v.Td);
     const y0 = Rr.y + (PHONE ? 158 : 240);
@@ -614,7 +614,7 @@
     ctx.save(); D.shadow(() => { ctx.beginPath(); ctx.arc(px, py, ph.drag ? 11 : 9.5, 0, TAU); ctx.fillStyle = tc; ctx.fill(); }, { blur: 8, y: 3 });
     ctx.beginPath(); ctx.arc(px, py, ph.drag ? 11 : 9.5, 0, TAU); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
     if (!RM) D.ring(px, py, 14, t, { color: tc, width: 2 });
-    // 오른쪽 패널
+    // 조작판
     const md = ph.md, sc = PHONE ? 10 : 9.5, bw = GW * sc, bh = GH * sc, bx = PHONE ? Rr.x + 16 : Rr.x + (Rr.w - bw) / 2, by = Rr.y + (PHONE ? 38 : 38);
     T(Rr.x + 14, Rr.y + 24, '🔍 분자 모형 상자', 13.5, INK, 'left', 800);
     ctx.fillStyle = C.mix('#f1f5f9', SCOL[ph.st], 0.65); D.roundRect(bx, by, bw, bh, 8); ctx.fill();

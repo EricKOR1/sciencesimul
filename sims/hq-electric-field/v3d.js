@@ -106,7 +106,7 @@
 
   window.SciSim3D.attach({
     title: '점전하의 전기장 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 조작판에서 바꿔요',
     camera: { dist: 12.5 * KD, theta: 0.15, phi: 1.2, min: 5, max: 28 },
     autoRotate: 0,
     levels: [3],   // 1~3단계는 표 기록·시험 전하 끌어 놓기·E–r 그래프가 캔버스에 있어서 2D, 4단계(전기장의 합)는 3D

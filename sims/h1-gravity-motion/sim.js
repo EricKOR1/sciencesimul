@@ -432,7 +432,7 @@
     D.text(ax - 8, ay + 46, '(천체 중심 방향)', { size: 11, weight: 700, color: theme.stars ? '#fff' : '#7f1d1d', align: 'right', stroke: theme.stars ? 'rgba(0,0,0,.5)' : 'rgba(255,255,255,.7)', strokeWidth: 3 });
   }
 
-  /* ---------- 오른쪽 패널: 비교 ---------- */
+  /* ---------- 조작판: 비교 ---------- */
   function drawCompareInfo(t) {
     const R = CF.R, C = S.C;
     panel(R);
@@ -479,7 +479,7 @@
     if (!PHONE) textBlock('x = v₀ × t', gx + 20, gy + 50, R.w - 40, { size: 13.5, weight: 800, color: '#1b2333' });
   }
 
-  /* ---------- 오른쪽 패널: 천체 ---------- */
+  /* ---------- 조작판: 천체 ---------- */
   function drawPlanetInfo(t) {
     const R = CF.R, Pn = S.P;
     panel(R);

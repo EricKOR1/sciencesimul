@@ -286,7 +286,7 @@
     // 인력 막대 끝에 열운동 막대가 닿는 위치 표시
     const mx = bx + bw * clamp(sub.ttr / 600, 0, 1);
     ctx.strokeStyle = PUR; ctx.lineWidth = 2; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(mx, by1 - 4); ctx.lineTo(mx, by2 + 24); ctx.stroke(); ctx.setLineDash([]);
-    // 오른쪽 패널
+    // 조작판
     panel(Rr.x, Rr.y, Rr.w, Rr.h, 14);
     T(Rr.x + 14, Rr.y + 28, '🌡️ 온도계', 14.5, INK, 'left', 800);
     const th = PHONE ? 156 : 190, tx = Rr.x + 40, ty = Rr.y + 52, tw = 22;

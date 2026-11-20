@@ -842,7 +842,7 @@ function drawExp(dt) {
   const R1 = PHONE ? { x: 8, y: 456, w: 464, h: 176 } : { x: 14, y: 296, w: 772, h: 250 };
   panel(D1.x, D1.y, D1.w, D1.h, 16);
   T(D1.x + 14, D1.y + 24, '🧪 실험 설계 카드', PHONE ? 14 : 15.5, COL.ink, 'left', 800);
-  if (!e.q) textBlock(D1.x + 14, D1.y + 54, D1.w - 28, '오른쪽 조작판에서 ① 알아볼 질문을 골라요. 그다음 바꿀 조건 하나와 같게 할 조건을 정해요.', PHONE ? 13 : 14, COL.mut, PHONE ? 19 : 21, 700);
+  if (!e.q) textBlock(D1.x + 14, D1.y + 54, D1.w - 28, '조작판에서 ① 알아볼 질문을 골라요. 그다음 바꿀 조건 하나와 같게 할 조건을 정해요.', PHONE ? 13 : 14, COL.mut, PHONE ? 19 : 21, 700);
   else {
     const Q = EXQ[e.q]; let y = D1.y + 40;
     y += textBlock(D1.x + 14, y, D1.w - 28, '질문: ' + Q.q, PHONE ? 12.5 : 13.5, COL.ink, PHONE ? 17 : 19, 800) + 6;

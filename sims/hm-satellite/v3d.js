@@ -1,6 +1,6 @@
 /* hm-satellite · 3D 인공위성의 운동
    2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: 🛰️ 궤도 속력(발사 속력 · 고도 → 원 궤도) · 📏 주기와 반지름(측정) · 🌍 정지 위성(주기 24시간) · ⚖️ 질량 구하기(이오 · 달 · 지구) · 무중량(자유 낙하).
-   원 궤도에 한정해요 (v = √(GM/r), T = 2πr/v). 값은 옆 조작판과 2D 화면이 정하고 3D는 따라가요. 위성은 중력 하나만으로 움직여요. */
+   원 궤도에 한정해요 (v = √(GM/r), T = 2πr/v). 값은 조작판과 2D 화면이 정하고 3D는 따라가요. 위성은 중력 하나만으로 움직여요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -65,7 +65,7 @@
   window.SciSim3D.attach({
     button: null,
     title: '인공위성 궤도 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 조작판에서 바꿔요',
     camera: { dist: 12, theta: 0.5, phi: 1.1, min: 4, max: 110, target: [0, 0, 0] },
     autoRotate: 0,
     levels: [0, 1, 3],   // ③ 정지 위성은 지상에서 본 모습 · 지도(극 궤도) 화면이 캔버스에만 있어서 2D예요
@@ -121,7 +121,7 @@
         const vNow = o.meas ? A.vcNow() : o.v;
         let t;
         if (o.meas) t = '<b>📏 ' + b.n + ' 둘레 원 궤도 · 고도 ' + S.me.h + ' km</b> (측정 장면)<br>궤도 반지름 r = ' + sci(r0, 2) + ' m · 속력 v = <b>' + f2(vNow) + ' km/s</b> (이 고도의 원 궤도 속력)<br>v와 한 바퀴 도는 시간 T를 측정해 표와 그래프를 채워요 (T = 2πr/v).<br>' + (S.me.rec && S.me.rec.length ? '📏 측정 기록: ' + S.me.rec.map((q) => q.h.toLocaleString('ko-KR') + ' km → v ' + f2(q.v / 1000) + ' km/s · T ' + Math.round(q.T / 60).toLocaleString('ko-KR') + '분').join(' / ') + '<br>' : '');
-        else t = '<b>🛰️ ' + b.n + ' 둘레 원 궤도 만들기</b> · 고도 ' + h + ' km → r = ' + sci(r0, 2) + ' m<br>발사 속력 v = <b>' + f2(vNow) + ' km/s</b> (옆 조작판) · ' + (o.st === 'ready' ? '속력을 정하고 발사하세요. 중력이 구심력 역할을 하는 속력(원 궤도 속력)이 아니면 원이 아니에요.' : o.st === 'run' ? '도는 중… 돈 바퀴 수 ' + f1(o.revs) : o.msg || '궤도를 마쳤어요') + '<br>';
+        else t = '<b>🛰️ ' + b.n + ' 둘레 원 궤도 만들기</b> · 고도 ' + h + ' km → r = ' + sci(r0, 2) + ' m<br>발사 속력 v = <b>' + f2(vNow) + ' km/s</b> (조작판) · ' + (o.st === 'ready' ? '속력을 정하고 발사하세요. 중력이 구심력 역할을 하는 속력(원 궤도 속력)이 아니면 원이 아니에요.' : o.st === 'run' ? '도는 중… 돈 바퀴 수 ' + f1(o.revs) : o.msg || '궤도를 마쳤어요') + '<br>';
         info(t + '위성에는 <b>중력만</b> 작용해요: 중력이 구심력이라 GMm/r² = mv²/r → v = √(GM/r) (위성의 질량은 상관없어요).');
       }
       /* ================= 🌍 정지 위성 ================= */
@@ -154,7 +154,7 @@
         const tw = new V3(); pin.getWorldPosition(tw); const pa = sight.geometry.attributes.position; pa.setXYZ(0, tw.x, tw.y, tw.z); pa.setXYZ(1, pos.x, pos.y, pos.z); pa.needsUpdate = true; sight.computeLineDistances();
         const near = orbit.dist < 26; lNorth.show(near); lPin.show(near);
         const rel = T < Tsid ? '위성이 더 빨라서 지상에서 보면 <b>동쪽으로 흘러가요</b>' : '위성이 더 느려서 지상에서 보면 <b>서쪽으로 뒤처져요</b>';
-        info('<b>🌍 정지 위성</b> · 고도 <b>' + Math.round(h).toLocaleString('ko-KR') + ' km</b> · 속력 ' + f2(v) + ' km/s · 주기 <b>' + (T / 3600).toFixed(1) + '시간</b> (지구 자전 24시간)<br>' + (stat ? '<b style="color:#86efac">지상에서 정지해 보여요!</b> 적도 상공 · 자전과 같은 방향 · 주기 24시간' : (g.inc !== 0 ? '궤도면이 적도면과 달라서(극궤도) 주기가 24시간이어도 지상에서 <b>정지해 보이지 않아요</b>.' : rel)) + '<br><span style="opacity:.8">고도 · 궤도면 · 속도는 옆 조작판에서 바꿔요 (고도는 계산해서 찾아요).</span>');
+        info('<b>🌍 정지 위성</b> · 고도 <b>' + Math.round(h).toLocaleString('ko-KR') + ' km</b> · 속력 ' + f2(v) + ' km/s · 주기 <b>' + (T / 3600).toFixed(1) + '시간</b> (지구 자전 24시간)<br>' + (stat ? '<b style="color:#86efac">지상에서 정지해 보여요!</b> 적도 상공 · 자전과 같은 방향 · 주기 24시간' : (g.inc !== 0 ? '궤도면이 적도면과 달라서(극궤도) 주기가 24시간이어도 지상에서 <b>정지해 보이지 않아요</b>.' : rel)) + '<br><span style="opacity:.8">고도 · 궤도면 · 속도는 조작판에서 바꿔요 (고도는 계산해서 찾아요).</span>');
       }
       /* ================= ⚖️ 질량 구하기 ================= */
       const mC = new THREE.Mesh(new THREE.SphereGeometry(1, 56, 40), planetMat('#d9a066')), mS = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), planetMat('#f2d45c')); G.mass.add(mC, mS); const mAtmo = atmo(G.mass, 1.07, 0xffd9a8);
@@ -165,7 +165,7 @@
         setPlanet(mC, p.c, p.col); mC.scale.setScalar(p.cs / 34 * 1.6); mS.scale.setScalar(p.ss / 34 * 1.6); setPlanet(mS, p.sat, p.sat === '이오' ? '#f2d45c' : p.sat === '지구' ? '#3b82f6' : '#d9dde6'); mAtmo.scale.setScalar(p.cs / 34 * 1.6 * 1.07); mAtmo.visible = p.c !== '달'; mC.material.emissive.set(p.c === '태양' ? 0xff8a00 : 0x000000); mC.material.emissiveIntensity = p.c === '태양' ? 0.85 : 0; mAtmo.material.uniforms.c.value.set(p.c === '태양' ? 0xffc84a : p.c === '지구' ? 0x6db3ff : 0xffd9a8);
         mRing.setR(R, 0); mS.position.set(R * Math.cos(ms.ang), 0, -R * Math.sin(ms.ang)); mRod.geometry.setFromPoints([new V3(), mS.position.clone()]); mRod.geometry.boundingBox = mRod.geometry.boundingSphere = null;
         lmC.set(p.c); lmS.set(p.sat); lmC.off = [0, p.cs / 34 * 1.6 + 0.4, 0]; lmS.off = [0, 0.5, 0];
-        info('<b>⚖️ 위성으로 천체의 질량 재기: ' + p.name + '</b><br>관측한 r = <b>' + sci(p.r, 2) + ' m</b> · 관측한 T = <b>' + sci(p.T, 2) + ' s</b> (' + p.Tt + ')<br>' + (hide ? 'r³ = ' + sci(p.r * p.r * p.r, 2) + ' m³ · T² = ' + sci(p.T * p.T, 2) + ' s²<br>중심 천체의 질량 M = 4π²r³ / (GT²)을 계산해 옆 조작판에 입력해요.' : p.c + '의 질량 M = ' + sci(A.massOf(p), 2) + ' kg') + '<br>중력이 구심력 → GMm/r² = m(2πr/T)² → 위성의 질량은 약분돼요.<br><span style="opacity:.8">어느 천체인지는 옆 조작판에서 골라요.</span>');
+        info('<b>⚖️ 위성으로 천체의 질량 재기: ' + p.name + '</b><br>관측한 r = <b>' + sci(p.r, 2) + ' m</b> · 관측한 T = <b>' + sci(p.T, 2) + ' s</b> (' + p.Tt + ')<br>' + (hide ? 'r³ = ' + sci(p.r * p.r * p.r, 2) + ' m³ · T² = ' + sci(p.T * p.T, 2) + ' s²<br>중심 천체의 질량 M = 4π²r³ / (GT²)을 계산해 조작판에 입력해요.' : p.c + '의 질량 M = ' + sci(A.massOf(p), 2) + ' kg') + '<br>중력이 구심력 → GMm/r² = m(2πr/T)² → 위성의 질량은 약분돼요.<br><span style="opacity:.8">어느 천체인지는 조작판에서 골라요.</span>');
       }
       /* ================= 🚀 무중량 (자유 낙하) ================= */
       const wE = new THREE.Mesh(new THREE.SphereGeometry(2.0, 56, 40), new THREE.MeshStandardMaterial({ map: earthTex, roughness: 0.8 })); G.wless.add(wE); SP.skin(wE, 'earth'); SP.earth(wE, 2.0, { night: false }); atmo(G.wless, 2.14, 0x6db3ff); const wRing = ringLine(G.wless, 0xffffff, 0.4);
@@ -180,7 +180,7 @@
         wV.position.copy(pos); wV.setDirection(tv); wV.setLength(1.6, 0.4, 0.28); wGr.position.copy(pos); wGr.setDirection(gd); wGr.setLength(1.1, 0.4, 0.28);
         lwG.obj = pos.clone().addScaledVector(gd, 1.2).toArray(); lwS.off = [0, 1.0, 0];
         wSat.userData.man[0].position.y = 0.25 + 0.06 * Math.sin(w.t * 1.7); wSat.userData.man[1].position.y = -0.1 + 0.06 * Math.sin(w.t * 1.7);
-        info('<b>🚀 위성 안은 왜 무중량일까</b> · 고도 ' + w.h + ' km<br>이 고도의 중력 가속도 = ' + f2(gO) + ' m/s² (지표 g의 ' + Math.round(gO / g0 * 100) + ' %) — 중력은 여전히 커요!<br>위성과 우주인은 <b>함께 자유 낙하</b>하고 있어서 서로 누르지 않아요 → 둥둥 떠요 (무중량). 위성은 접선 방향으로 가려다 계속 지구 쪽으로 떨어져요.<br><span style="opacity:.8">고도는 옆 조작판에서 바꿔요.</span>');
+        info('<b>🚀 위성 안은 왜 무중량일까</b> · 고도 ' + w.h + ' km<br>이 고도의 중력 가속도 = ' + f2(gO) + ' m/s² (지표 g의 ' + Math.round(gO / g0 * 100) + ' %) — 중력은 여전히 커요!<br>위성과 우주인은 <b>함께 자유 낙하</b>하고 있어서 서로 누르지 않아요 → 둥둥 떠요 (무중량). 위성은 접선 방향으로 가려다 계속 지구 쪽으로 떨어져요.<br><span style="opacity:.8">고도는 조작판에서 바꿔요.</span>');
       }
       let cur = '';
       function setMode(S) {

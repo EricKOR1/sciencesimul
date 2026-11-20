@@ -214,7 +214,7 @@
         lEdP.show(act > 0.12 && !!labs.pend.on); aEdP.position.set(PL_ * Math.sin(ph), PIV.y - PL_ * Math.cos(ph) - 0.7, 1.5);
         lPlate.set(M.name + '판');
         mgN.material.emissive.setHex(NC); mgN.material.emissiveIntensity = 0.08 * (b.mag || 1); mgS.material.emissive.setHex(SC); mgS.material.emissiveIntensity = 0.08 * (b.mag || 1);
-        info('<b>🌪️ 도체판 진자: 와전류가 운동을 막아요</b><br>판의 재질: ' + M.name + ' · 자석 세기: ' + ['', '약', '중', '강'][b.mag || 1] + '<br>' + (b.run ? '진자가 자석 사이를 지나가요. 멈출 때까지 걸리는 시간을 재요.' : '옆 조작판의 ▶ 진자 놓기로 진자를 놓아 보세요.') +
+        info('<b>🌪️ 도체판 진자: 와전류가 운동을 막아요</b><br>판의 재질: ' + M.name + ' · 자석 세기: ' + ['', '약', '중', '강'][b.mag || 1] + '<br>' + (b.run ? '진자가 자석 사이를 지나가요. 멈출 때까지 걸리는 시간을 재요.' : '조작판의 ▶ 진자 놓기로 진자를 놓아 보세요.') +
           '<br>📋 측정 기록: ' + ['cu', 'al', 'pl', 'slot'].map((k) => { const rc = b.rec && b.rec[k], nm = (sim.MATS[k] || {}).name || k; return nm + ' ' + (rc ? (rc.status === 'stop' ? '<b>' + rc.t.toFixed(1) + ' s</b> (왕복 ' + rc.n + '회)' : '<b>' + ((sim.PEND && sim.PEND.tmax) || 20) + ' s+</b> (안 멈춤)') : '—'); }).join(' · '));
       }
 
@@ -261,7 +261,7 @@
         else { aFe.visible = false; Fm = 0.1333 * v; const fl = Math.min(2.2, Fm / 1.1 * 2.2); if (run) setArrow(aFm, at.clone().add(new V3(0.2, 0.5, -0.6)), at.clone().add(new V3(0.2 + fl, 0.5, -0.6))); else aFm.visible = false; }
         lBr.set('B ⊗ 화면 속으로 ' + (fake ? '0.50' : l.rB.toFixed(2)) + ' T (아래로)'); lV.set('v = ' + v.toFixed(2) + ' m/s'); lV.show(run); lV.obj = [bxs + 0.3, 1.1, zT - 0.5];
         lFe.show(!fake && !!aFe.visible); lFe.obj = [bxs + 1.2, 0.9, 0.6]; lFm.show(!!aFm.visible); lFm.set(fake ? '자기력이 운동 방향!' : (masked ? '자기력 F = ?' : '자기력 F = BIL')); lFm.obj = [bxs - (fake ? -1.2 : 1.2), 0.9, -0.6];
-        lMsg.set(fake ? '외력 = 0 인데 막대가 점점 빨라져요' : (l.push ? '막대는 일정한 속력 (화면은 느리게 보여 줘요)' : '옆 조작판의 ▶ 막대 밀기를 눌러 보세요')); lMsg.el.style.background = fake ? 'rgba(127,29,29,.9)' : 'rgba(255,255,255,.0)';
+        lMsg.set(fake ? '외력 = 0 인데 막대가 점점 빨라져요' : (l.push ? '막대는 일정한 속력 (화면은 느리게 보여 줘요)' : '조작판의 ▶ 막대 밀기를 눌러 보세요')); lMsg.el.style.background = fake ? 'rgba(127,29,29,.9)' : 'rgba(255,255,255,.0)';
         lBang.set('❌ 불가능! 에너지가 공짜로 늘어나요'); lBang.show(doneF); lEn.set(fake ? '운동 에너지 · 외력이 한 일' : '외력 Fv · 열 I²R');
         // 에너지 막대
         const KE = 0.5 * 0.1 * v * v, a0 = fake ? 0 : (masked ? 0 : Fm * v * (run ? 1 : 0) / 3.6), a1 = fake ? KE / 4 : (masked ? 0 : I * I * 0.3 / 3.6);
@@ -365,7 +365,7 @@
             lEd.show(fast > 0.1 && !!labs.pipe.on); aEd.position.set(-2.2, ycu, 1.25);
             lTc.set(tdone[0] ? '⏱ ' + tdone[0].toFixed(1) + '초' : (tt >= 0 ? '⏱ ' + tt.toFixed(1) + '초' : '')); lTp.set(tdone[1] ? '⏱ ' + tdone[1].toFixed(1) + '초' : (tt >= 0 ? '⏱ ' + tt.toFixed(1) + '초' : ''));
             lTc.show(tt >= 0 && !!labs.pipe.on); lTp.show(tt >= 0 && !!labs.pipe.on);
-            info('<b>🌪️ 구리관 속 자석은 천천히 떨어져요</b> (자석 세기: ' + ['', '약', '중', '강'][st.strong] + ')<br>자석이 움직이면 관에 <b>와전류</b>가 생기고, 렌츠 법칙에 따라 자석의 운동을 방해하는 자기장이 만들어져요. 플라스틱관은 전류가 흐르지 못해 그대로 떨어져요.<br>' + (tdone[0] ? '구리관 ' + tdone[0].toFixed(1) + '초 vs 플라스틱관 ' + tdone[1].toFixed(1) + '초 (모형 시간)' : '옆 조작판의 ▶ 자석 떨어뜨리기나 아래 ▶ 로 떨어뜨려 보세요.'));
+            info('<b>🌪️ 구리관 속 자석은 천천히 떨어져요</b> (자석 세기: ' + ['', '약', '중', '강'][st.strong] + ')<br>자석이 움직이면 관에 <b>와전류</b>가 생기고, 렌츠 법칙에 따라 자석의 운동을 방해하는 자기장이 만들어져요. 플라스틱관은 전류가 흐르지 못해 그대로 떨어져요.<br>' + (tdone[0] ? '구리관 ' + tdone[0].toFixed(1) + '초 vs 플라스틱관 ' + tdone[1].toFixed(1) + '초 (모형 시간)' : '조작판의 ▶ 자석 떨어뜨리기나 아래 ▶ 로 떨어뜨려 보세요.'));
           }
           if (sc === 'pend') updPend(S, sim, dt);
           if (sc === 'rail') updRail(S, sim, dt);

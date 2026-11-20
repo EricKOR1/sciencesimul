@@ -274,7 +274,7 @@
       if (bx1 < rcA.x + rcA.w - 4) br(bx0, bx1, cy - 52, '#e2464b', '앞 ' + fx(lf.front, 2) + ' m', 40);
       if (cx1 > rcA.x + 4) br(cx0, cx1, cy - 52, '#2563eb', '뒤 ' + fx(lf.back, 2) + ' m', 18);
     }
-    // 오른쪽 패널: 파원은 가만히, 관측자가 움직임
+    // 조작판: 파원은 가만히, 관측자가 움직임
     const sx2 = rcB.x + B.xs(B.P) * ppm; SPK(sx2, cy, 13);
     const ox2 = rcB.x + B.xo(0, B.P) * ppm; earIcon(ox2, cy + 38, 'C', ORANGE);
     if (vs > 0) D.arrow(ox2 + 16, cy + 38, ox2 + 16 + Math.min(70, 16 + vs * 0.22), cy + 38, { color: '#16a34a', width: 3.5, head: 10 });

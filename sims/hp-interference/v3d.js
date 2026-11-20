@@ -1,6 +1,6 @@
 /* hp-interference · 3D 빛의 간섭
    2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: 🌊 파동의 중첩(수면 파문의 보강·상쇄선 · 줄 위 두 펄스) · 🔦 이중 슬릿 · 📏 간섭 조건(경로차 · 무늬 간격 Δx = λL/d).
-   파장·간격·거리 같은 값은 옆 조작판이 정하고 3D는 따라가요. 🛠️ 간섭 기술(무반사 코팅 · 비눗방울 · 소음 제거 헤드폰 · 간섭계)도 입체로 봐요. */
+   파장·간격·거리 같은 값은 조작판이 정하고 3D는 따라가요. 🛠️ 간섭 기술(무반사 코팅 · 비눗방울 · 소음 제거 헤드폰 · 간섭계)도 입체로 봐요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -44,7 +44,7 @@
   const f1 = (v) => (Math.round(v * 10) / 10).toFixed(1);
   window.SciSim3D.attach({
     title: '빛의 간섭 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 조작판에서 바꿔요',
     camera: { dist: 13 * KDX, theta: 0.0, phi: 0.95, min: 4, max: 30, target: [5, 0, 0] },
     autoRotate: 0,
     levels: [3],   // 1~3단계는 캔버스에서 점·P·표지를 끌거나 총알 모형(2D)을 봐야 해서 2D, 4단계(간섭 기술)는 3D
@@ -102,7 +102,7 @@
         sA.position.set(cx * UC, 0.25, y1 * UC); sB.position.set(cx * UC, 0.25, y2 * UC);
         rippleLines(A, S);
         const lam = A.WV / r.fT;
-        info('<b>🌊 두 파원의 물결이 겹쳐요</b> · 파원 간격 d = ' + Math.round(r.dT) + ' cm · 파장 λ = ' + lam.toFixed(1) + ' cm (진동수 ' + r.fT.toFixed(1) + ' Hz)<br>마루와 마루(골과 골)가 만나면 <b style="color:#4ade80">보강</b>, 마루와 골이 만나면 <b style="color:#f87171">상쇄</b> → 잔잔한 선이 생겨요.<br>오른쪽의 선의 수: 보강 ' + r.nB + ' · 상쇄 ' + r.nD + (r.lines ? ' (선 표시 켜짐)' : '') + '<br><span style="opacity:.8">파원 간격과 진동수는 옆 조작판에서 바꿔요.</span>');
+        info('<b>🌊 두 파원의 물결이 겹쳐요</b> · 파원 간격 d = ' + Math.round(r.dT) + ' cm · 파장 λ = ' + lam.toFixed(1) + ' cm (진동수 ' + r.fT.toFixed(1) + ' Hz)<br>마루와 마루(골과 골)가 만나면 <b style="color:#4ade80">보강</b>, 마루와 골이 만나면 <b style="color:#f87171">상쇄</b> → 잔잔한 선이 생겨요.<br>오른쪽의 선의 수: 보강 ' + r.nB + ' · 상쇄 ' + r.nD + (r.lines ? ' (선 표시 켜짐)' : '') + '<br><span style="opacity:.8">파원 간격과 진동수는 조작판에서 바꿔요.</span>');
       }
       /* ================= 🌊 줄 위의 두 펄스 (1 m = 3칸, 1 cm = 0.3칸) ================= */
       const PU = 3, CU = 0.3, NP = 160;
@@ -220,7 +220,7 @@
           txt = '<b>📏 무늬 간격에 영향을 주는 요인</b> · 지금 조건: ' + S.sl.lamT + ' nm · ' + S.sl.dT.toFixed(2) + ' mm · ' + S.sl.LT.toFixed(1) + ' m<br>밝은 줄 사이 간격 <b>Δx = λL/d = ' + (sm.lam * sm.L / sm.d * 1e-3).toFixed(1) + ' mm</b><br>λ가 크고 L이 클수록, d가 작을수록 무늬 간격이 넓어져요. 하나씩만 바꾸어 비교해요.';
         }
         void dx; void par;
-        info(txt + '<br><span style="opacity:.8">파장 · 슬릿 간격 · 거리는 옆 조작판에서 바꿔요.</span>');
+        info(txt + '<br><span style="opacity:.8">파장 · 슬릿 간격 · 거리는 조작판에서 바꿔요.</span>');
       }
 
       /* ================= 🛠️ 간섭 기술: 🔍 무반사 코팅 · 🫧 비눗방울 · 🎧 소음 제거 헤드폰 · 🛰️ 간섭계 ================= */

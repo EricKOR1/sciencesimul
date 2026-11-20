@@ -1,6 +1,6 @@
 /* hm-string-wave · 3D 현의 정상파
    2D 실험(window.__sim)의 줄을 그대로 입체로 보여 줘요: 〰 정상파(진동수를 올리며 공명 찾기 · 입사파 + 반사파) · 📏 파장 조건(L = nλ/2) · 🎵 진동수(길이 · 장력 · 굵기) · 🎸 현악기(프렛 · 자연 배음).
-   구동되는 줄은 2D와 같은 식으로 계산해요 (세로 눈금은 확대했어요). 값은 옆 조작판이 정하고 3D는 따라가요. */
+   구동되는 줄은 2D와 같은 식으로 계산해요 (세로 눈금은 확대했어요). 값은 조작판이 정하고 3D는 따라가요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -42,7 +42,7 @@
   }
   window.SciSim3D.attach({
     title: '현의 정상파 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 조작판에서 바꿔요',
     camera: { dist: 11 * KD, theta: 0.35, phi: 1.2, min: 5, max: 28, target: [0, 0, 0] },
     autoRotate: 0,
     levels: [0, 1, 2, 3],
@@ -91,12 +91,12 @@
           const parts = d.parts; sInc.visible = sRef.visible = parts; if (parts) { set(sInc, (xx) => A.strAt(F, A.L0 - (xx + LU / 2) / LU * A.L0, wt).inc * YD + 2.9); set(sRef, (xx) => A.strAt(F, A.L0 - (xx + LU / 2) / LU * A.L0, wt).ref * YD + 1.5); lI.show(true); lR.show(true); lI.obj = [-4.75, 2.9, 0]; lR.obj = [-4.75, 1.5, 0]; }
           gen.visible = true; gen.position.set(LU / 2 + 0.45, (A.strAt(F, 0, wt).tot) * YD, 0); pR.position.x = 100; pR.visible = false; lGen.show(true); lGen.off = [0, 0.8, 0];
           const nn = Math.round(f / A.FNR(1)), res = Math.abs(f - A.FNR(nn)) < 6 && nn >= 1; nodes(res ? nn : 0, -LU / 2, LU, res);
-          txt = '<b>〰 정상파: 고정된 줄의 공명</b> · 구동 진동수 f = <b>' + Math.round(f) + ' Hz</b><br>' + (res ? '줄이 크게 떨려요 (공명). 배(가장 크게 떠는 곳)와 마디(움직이지 않는 곳)를 세어 보세요.' : '이 진동수에서는 줄이 조금만 떨려요. 진동수를 천천히 올리며 크게 떨리는 진동수를 찾아요.') + '<br>정상파 = 입사파(주황) + 반사파(파랑)의 합(노랑). 마디에서는 두 파동이 늘 상쇄돼요.<br><span style="opacity:.8">진동수는 옆 조작판에서 올려요 (▶ 아래 재생도 가능).</span>';
+          txt = '<b>〰 정상파: 고정된 줄의 공명</b> · 구동 진동수 f = <b>' + Math.round(f) + ' Hz</b><br>' + (res ? '줄이 크게 떨려요 (공명). 배(가장 크게 떠는 곳)와 마디(움직이지 않는 곳)를 세어 보세요.' : '이 진동수에서는 줄이 조금만 떨려요. 진동수를 천천히 올리며 크게 떨리는 진동수를 찾아요.') + '<br>정상파 = 입사파(주황) + 반사파(파랑)의 합(노랑). 마디에서는 두 파동이 늘 상쇄돼요.<br><span style="opacity:.8">진동수는 조작판에서 올려요 (▶ 아래 재생도 가능).</span>';
         } else if (mode === 'lam') {
           const l = S.lam, Lw = LU * l.L / 500, x0 = -Lw / 2; pL.position.x = x0 - 0.1; pR.position.x = x0 + Lw + 0.1;
           const fn = stand(l.n, Lw, x0, 0.75, 0.5), t = tm; set(sTot, (xx) => (xx < x0 || xx > x0 + Lw ? 0 : fn(xx, t)) );
           nodes(l.n, x0, Lw, true); lTop.show(false);
-          txt = '<b>📏 파장 조건: L = nλ/2</b> · 줄의 길이 L = ' + (l.L / 1000).toFixed(3) + ' m · n = ' + l.n + ' (마디 ' + (l.n + 1) + '개)<br>마디와 마디 사이는 반 파장(λ/2)이므로 L = n × λ/2 이고, 파장은 λ = 2L/n 이에요.' + (l.show ? '<br>지금 파장 λ = ' + (2 * l.L / l.n).toFixed(0) + ' mm' : '') + '<br><span style="opacity:.8">n과 길이는 옆 조작판에서 바꿔요.</span>';
+          txt = '<b>📏 파장 조건: L = nλ/2</b> · 줄의 길이 L = ' + (l.L / 1000).toFixed(3) + ' m · n = ' + l.n + ' (마디 ' + (l.n + 1) + '개)<br>마디와 마디 사이는 반 파장(λ/2)이므로 L = n × λ/2 이고, 파장은 λ = 2L/n 이에요.' + (l.show ? '<br>지금 파장 λ = ' + (2 * l.L / l.n).toFixed(0) + ' mm' : '') + '<br><span style="opacity:.8">n과 길이는 조작판에서 바꿔요.</span>';
         } else if (mode === 'freq') {
           const q = S.fq, Lw = LU * q.L / 500, x0 = -Lw / 2; pL.position.x = x0 - 0.1; pR.position.x = x0 + Lw + 0.1;
           const f1 = A.f1Of(q.L / 1000, q.T, q.mu), fn = stand(1, Lw, x0, 0.75, 0.35 + 0.5 * Math.log2(Math.max(1, f1 / 100)) * 0.6), t = tm; set(sTot, (xx) => (xx < x0 || xx > x0 + Lw ? 0 : fn(xx, t))); nodes(1, x0, Lw, true);
@@ -105,7 +105,7 @@
           const s = S.ins, ratio = A.insF1open() / (A.insF() / (s.harm ? 2 : 1)) , Lw = LU, x0 = -LU / 2; const leff = Math.max(0.15, Math.min(1, 1 / (A.insF() / (s.harm ? 2 : 1) / A.insF1open())));
           const n = s.harm ? 2 : 1, x1 = x0 + Lw * (1 - leff); neck.visible = true; fret.visible = leff < 0.999; fret.position.set(x1, 0, 0.1); lFr.show(fret.visible); lFr.off = [0, 0.9, 0];
           const fn = stand(n, Lw * leff, x1, 0.75, 0.8), t = tm; set(sTot, (xx) => (xx < x1 ? 0 : fn(xx, t))); nodes(n, x1, Lw * leff, true); void ratio;
-          txt = '<b>🎸 기타 1번 줄 (E4)</b> · 장력과 프렛 위치 · ' + (s.harm ? '자연 배음 (줄 가운데를 살짝 건드려요)' : '프렛으로 줄을 짧게 눌러요') + '<br>진동하는 줄의 길이가 짧을수록 높은 음이 나요: 진동수 ' + A.insF().toFixed(0) + ' Hz' + (s.harm ? ' (기본음의 2배, 한 옥타브 위)' : '') + '<br><span style="opacity:.8">장력 · 프렛 · 배음은 옆 조작판에서 바꿔요.</span>';
+          txt = '<b>🎸 기타 1번 줄 (E4)</b> · 장력과 프렛 위치 · ' + (s.harm ? '자연 배음 (줄 가운데를 살짝 건드려요)' : '프렛으로 줄을 짧게 눌러요') + '<br>진동하는 줄의 길이가 짧을수록 높은 음이 나요: 진동수 ' + A.insF().toFixed(0) + ' Hz' + (s.harm ? ' (기본음의 2배, 한 옥타브 위)' : '') + '<br><span style="opacity:.8">장력 · 프렛 · 배음은 조작판에서 바꿔요.</span>';
         }
         if (txt !== last) { last = txt; info(txt); }
       }

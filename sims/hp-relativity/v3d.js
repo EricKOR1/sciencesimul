@@ -44,7 +44,7 @@
   const ez = (x) => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
   window.SciSim3D.attach({
     title: '상대성 이론 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 조작판에서 바꿔요',
     camera: { dist: 15 * KD, theta: 0.1, phi: 1.25, min: 5, max: 36, target: [5, 1.2, 0] },
     autoRotate: 0,
     levels: [2],   // 1·2·4단계는 캔버스의 측정 표·그래프·조사 카드를 읽고 눌러야 해서 2D, 3단계(길이 수축 · 뮤온)는 3D
@@ -93,7 +93,7 @@
         let t2 = '<b>🚆 지면에 서 있는 관측자가 속력을 재요</b> · 속력 = 게이트 간격 D ÷ 걸린 시간<br>기차 속력 ' + f1(bt) + ' c' + (r ? ' · 지금 ' + (r.kind === 'ball' ? '🏐 공' : '🔦 빛') + ' 측정 중…' : '');
         if (tq != null) t2 += '<br>공: 기차 ' + f1(bt) + ' c + 던진 속력 ' + f1(A.U_BALL) + ' c → 지면에서 ' + f2(bt + A.U_BALL) + ' c (더해져요) · 빛: 기차가 달려도 <b>항상 1.00 c</b> (더해지지 않아요)';
         else if (last) t2 += '<br>마지막 측정: ' + (last.kind === 'ball' ? '🏐 공' : '🔦 빛') + ' · 예상(기차 + 대상) ' + f2(last.exp) + ' c → 측정 <b>' + f2(last.meas) + ' c</b> ' + (Math.abs(last.exp - last.meas) < 0.005 ? '✅ 같아요' : '❗ 달라요');
-        else t2 += '<br>기차 속력을 정하고 공이나 빛을 쏘아 보세요 (옆 조작판).';
+        else t2 += '<br>기차 속력을 정하고 공이나 빛을 쏘아 보세요 (조작판).';
         info(t2 + '<br><span style="opacity:.8">공은 기차 안에서 ' + f1(A.U_BALL) + ' c로 던져요 (비교용 단순 덧셈).</span>');
       }
       /* ================= 🕒 빛시계 ================= */
@@ -133,7 +133,7 @@
         let t2 = '<b>🕒 ' + (ship ? '우주선 안에서 본 빛시계' : '지면 관측자의 눈으로 본 두 개의 빛시계') + '</b><br>';
         if (!ship) t2 += '지면의 같은 시간 동안 똑딱: A ' + k.A.ticks + '번 · B ' + k.B.ticks + '번 → ' + (k.A.ticks >= 3 ? (k.B.ticks < k.A.ticks ? '<b>B는 A보다 똑딱이 적어요</b> → B의 시계가 느리게 갔어요' : 'B도 A와 같은 횟수예요 (속력이 거의 0일 때)') : '속력을 올려 똑딱 횟수를 비교해 보세요') + '<br>움직이는 시계가 가는 빠르기 = <b>' + f2(rt) + '</b> (정지한 시계 = 1) · 속력 ' + f2(b) + ' c';
         else t2 += '우주선 안의 사람에게는 자기 시계가 <b>정상</b>이에요. 빛은 위아래로 똑바로 오가고 똑딱은 ' + k.S2.ticks + '번이에요. 느려지는 것은 지면의 관측자가 볼 때예요.';
-        info(t2 + '<br><span style="opacity:.8">속력과 보기는 옆 조작판에서 바꿔요.</span>');
+        info(t2 + '<br><span style="opacity:.8">속력과 보기는 조작판에서 바꿔요.</span>');
       }
       /* ================= 📏 길이 수축: 우주선 ================= */
       function shipMk(col) {
@@ -155,7 +155,7 @@
         const l = S.l, b = demoL.on ? 0.995 * (1 - Math.abs(2 * demoL.p - 1)) : l.b, r = A.rate(b);
         s0.scale.x = r; s0.position.x = 0; rodG.scale.x = 4 + 1.1; rodG.position.x = 0.0;
         lS.off = [0, 1.2, 0]; lSg.off = [0, 1.2, 0]; lRod.off = [0, -0.5, 0]; lLen.set('길이 ' + Math.round(100 * r) + ' %'); lLen.off = [0, -1.3, 0];
-        info('<b>📏 지면의 막대 옆을 지나가는 우주선</b> · 속력 ' + f2(b) + ' c<br>지면에서 본 우주선의 크기 (정지했을 때 = 100 %): <b>길이 ' + Math.round(100 * r) + ' %</b> · 높이 100 %<br>속력을 바꾸며 길이와 높이가 각각 어떻게 달라지는지 살펴봐요.<br><span style="opacity:.8">속력은 옆 조작판에서 바꿔요.</span>');
+        info('<b>📏 지면의 막대 옆을 지나가는 우주선</b> · 속력 ' + f2(b) + ' c<br>지면에서 본 우주선의 크기 (정지했을 때 = 100 %): <b>길이 ' + Math.round(100 * r) + ' %</b> · 높이 100 %<br>속력을 바꾸며 길이와 높이가 각각 어떻게 달라지는지 살펴봐요.<br><span style="opacity:.8">속력은 조작판에서 바꿔요.</span>');
       }
       /* ================= 📏 뮤온 이야기 ================= */
       const HA = 8, atmE = new THREE.Mesh(new THREE.BoxGeometry(2.6, HA, 1.4), new THREE.MeshStandardMaterial({ color: 0x7ec4ff, transparent: true, opacity: 0.2, depthWrite: false })); atmE.position.set(-4, HA / 2, 0); gM.add(atmE);
@@ -173,7 +173,7 @@
         mus.forEach(([e, m2], i) => { const q = list && list[i]; if (!q) { e.visible = m2.visible = false; return; } const x = (q.x - 0.5) * 2.0; const dd = dead(q) || (p >= q.pd && q.pd < 1); const pe = dd ? q.pd : p; if (dd) dec++; else if (p >= 1) arr++;
           e.visible = m2.visible = true; e.position.set(-4 + x, HA * (1 - pe), 0.2); m2.position.set(4 + x, hThin * (1 - pe), 0.2); const col = dd ? 0xe2464b : 0xffd447; e.material.color.setHex(col); m2.material.color.setHex(col); if (dd) { e.scale.setScalar(0.7); m2.scale.setScalar(0.7); } else { e.scale.setScalar(1); m2.scale.setScalar(1); } });
         lM.obj = [4, hThin + 0.6, 0]; lM.set('뮤온이 본 모습: 대기의 두께 ' + f1(A.H_THIN_KM) + ' km (줄어들어 보여요)');
-        info('<b>📏 뮤온 이야기</b> · 뮤온 속력 ' + A.BETA_MU + ' c · 정지했을 때 평균 수명 ' + A.TAU_MU_US + ' μs<br>수명 동안 ' + A.D_NOREL_M + ' m밖에 못 갈 것 같지만 지표까지 도착해요.<br>지구에서 볼 때와 뮤온에서 볼 때 무엇이 달라 보이는지(뮤온의 시계 · 대기의 두께) 살펴보고 두 설명을 연결해요.<br>' + (list ? (done ? '지표에 도착한 뮤온 ' + arr + '개 / ' + A.N_MU + '개' : '내려가는 중…') : '뮤온을 내려보내 보세요 (옆 조작판 또는 아래 ▶).'));
+        info('<b>📏 뮤온 이야기</b> · 뮤온 속력 ' + A.BETA_MU + ' c · 정지했을 때 평균 수명 ' + A.TAU_MU_US + ' μs<br>수명 동안 ' + A.D_NOREL_M + ' m밖에 못 갈 것 같지만 지표까지 도착해요.<br>지구에서 볼 때와 뮤온에서 볼 때 무엇이 달라 보이는지(뮤온의 시계 · 대기의 두께) 살펴보고 두 설명을 연결해요.<br>' + (list ? (done ? '지표에 도착한 뮤온 ' + arr + '개 / ' + A.N_MU + '개' : '내려가는 중…') : '뮤온을 내려보내 보세요 (조작판 또는 아래 ▶).'));
       }
       /* ================= 장면 · ▶ 재생 ================= */
       let plO = null, plL = null, plM = null;

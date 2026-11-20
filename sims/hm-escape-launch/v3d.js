@@ -1,6 +1,6 @@
 /* hm-escape-launch · 3D 탈출 속도와 로켓
    2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: 📈 탈출 조건(연직으로 쏘아 올리기 · 총 에너지 E = ½mv² − GMm/r) · 🧑‍🚀 우주인과 공(운동량 보존) · 🔥 로켓 분출(작용 반작용).
-   값(발사 속력 · 공 · 분출 속력 · 분출량)은 옆 조작판이 정하고 3D는 따라가요. 로켓 방정식과 공기 저항은 다루지 않아요.
+   값(발사 속력 · 공 · 분출 속력 · 분출량)은 조작판이 정하고 3D는 따라가요. 로켓 방정식과 공기 저항은 다루지 않아요.
    🪐 행성 비교(대기 분자) · 🛰️ 궤도 진입 · 🎯 다단 로켓도 입체로 보여 줘요. */
 (function () {
   'use strict';
@@ -46,7 +46,7 @@
   function sci(x, d) { if (x === 0) return '0'; const e = Math.floor(Math.log10(Math.abs(x))); let m = x / Math.pow(10, e); if (+m.toFixed(d) >= 10) { m /= 10; return m.toFixed(d) + ' × 10' + sup(e + 1); } return m.toFixed(d) + ' × 10' + sup(e); }
   window.SciSim3D.attach({
     title: '탈출 속도와 로켓 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 조작판에서 바꿔요',
     camera: { dist: 16 * KD, theta: 0.5, phi: 1.3, min: 5, max: 40, target: [0, 3.5, 0] },
     autoRotate: 0,
     levels: [0, 2, 3],
@@ -77,7 +77,7 @@
         setArrow(wV, new V3(0.4, y + 0.5, 0), new V3(0.4, y + 0.5 + (w.v >= 0 ? 1 : -1) * Math.min(1.8, 0.3 + Math.abs(w.v) / 1000 * 0.12), 0)); setArrow(wGr, new V3(-0.4, y + 0.5, 0), new V3(-0.4, y + 0.5 - 0.6, 0)); lwv.off = [0.5, 0.2, 0]; lwg.off = [-0.6, -0.2, 0];
         lwr.set(w.st === 'ready' ? '우주선 (발사 대기)' : '우주선'); lwr.off = [0.9, 0.8, 0];
         lwa.show(!!w.apex); if (w.apex) lwa.obj = [0.6, yOf(w.apex), 0];
-        info('<b>📈 연직으로 쏘아 올리기</b> · 발사 속력 v₀ = <b>' + w.v0.toFixed(1) + ' km/s</b> · 지금 속도 ' + f1(w.v / 1000) + ' km/s · 높이 ' + sci(Math.max(0, (w.r - A.RE_) / 1000), 1) + ' km<br>총 에너지 E = ½mv² − GMm/r (1 kg당 ' + (E >= 0 ? '+' : '−') + Math.abs(E).toFixed(1) + ' MJ) ' + (E >= 0 ? '≥ 0 → <b>탈출</b>해요 (되돌아오지 않아요)' : '< 0 → 최고점에서 멈추고 <b>되돌아와요</b>') + '<br>' + (w.msg || '발사해서 최고 고도를 기록해요 (세로 눈금은 로그 눈금이에요).') + (w.rec && w.rec.length ? '<br>📋 최고 고도 기록: ' + w.rec.slice(-4).map((q) => q.v0.toFixed(1) + ' km/s → ' + sci(q.h, 1) + ' km').join(' · ') : '') + '<br><span style="opacity:.8">발사 속력은 옆 조작판에서 정해요.</span>');
+        info('<b>📈 연직으로 쏘아 올리기</b> · 발사 속력 v₀ = <b>' + w.v0.toFixed(1) + ' km/s</b> · 지금 속도 ' + f1(w.v / 1000) + ' km/s · 높이 ' + sci(Math.max(0, (w.r - A.RE_) / 1000), 1) + ' km<br>총 에너지 E = ½mv² − GMm/r (1 kg당 ' + (E >= 0 ? '+' : '−') + Math.abs(E).toFixed(1) + ' MJ) ' + (E >= 0 ? '≥ 0 → <b>탈출</b>해요 (되돌아오지 않아요)' : '< 0 → 최고점에서 멈추고 <b>되돌아와요</b>') + '<br>' + (w.msg || '발사해서 최고 고도를 기록해요 (세로 눈금은 로그 눈금이에요).') + (w.rec && w.rec.length ? '<br>📋 최고 고도 기록: ' + w.rec.slice(-4).map((q) => q.v0.toFixed(1) + ' km/s → ' + sci(q.h, 1) + ' km').join(' · ') : '') + '<br><span style="opacity:.8">발사 속력은 조작판에서 정해요.</span>');
       }
       /* ================= 🧑‍🚀 우주인과 공 (우주 공간에 정지한 눈금 기준) ================= */
       const rulerA = new THREE.Mesh(new THREE.BoxGeometry(18, 0.06, 0.4), ctx.mats.metal('aluminium', { brushed: true })); rulerA.position.set(0, -1.6, 0); G.astro.add(rulerA);
@@ -94,7 +94,7 @@
         const va = cm * cv / A.M_ASTRO;
         if (a.st !== 'ready') { setArrow(aMan, new V3(mx, 1.9, 0), new V3(mx - Math.min(2.2, va * 1.1 + 0.2), 1.9, 0)); setArrow(aBall, new V3(bx, 1.4, 0), new V3(bx + Math.min(3.0, cv * 0.12 + 0.2), 1.4, 0)); } else { aMan.visible = aBall.visible = false; }
         laM.off = [0, 1.9, 0]; laB.set('공 ' + cm + ' kg'); laB.off = [0, 0.7, 0];
-        info('<b>🧑‍🚀 우주인과 공 (운동량 보존)</b> · 우주인 ' + A.M_ASTRO + ' kg · 공 ' + cm + ' kg · 던지는 속력 ' + cv + ' m/s<br>처음 총 운동량은 0 → 공을 던지면 우주인은 <b>반대 방향</b>으로 밀려나요.<br>' + (a.st === 'ready' ? '공을 던져 보세요 (옆 조작판).' : '공의 운동량 ' + (cm * cv) + ' kg·m/s = 우주인의 운동량 → 우주인의 속력 = ' + f2(va) + ' m/s') + '<br><span style="opacity:.8">공의 질량과 던지는 속력은 옆 조작판에서 바꿔요.</span>');
+        info('<b>🧑‍🚀 우주인과 공 (운동량 보존)</b> · 우주인 ' + A.M_ASTRO + ' kg · 공 ' + cm + ' kg · 던지는 속력 ' + cv + ' m/s<br>처음 총 운동량은 0 → 공을 던지면 우주인은 <b>반대 방향</b>으로 밀려나요.<br>' + (a.st === 'ready' ? '공을 던져 보세요 (조작판).' : '공의 운동량 ' + (cm * cv) + ' kg·m/s = 우주인의 운동량 → 우주인의 속력 = ' + f2(va) + ' m/s') + '<br><span style="opacity:.8">공의 질량과 던지는 속력은 조작판에서 바꿔요.</span>');
       }
       /* ================= 🔥 로켓 분출 ================= */
       const rk = new THREE.Group(); { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.5, 2.2, 40), ctx.mats.ceramic(0xe8ebf0)); rk.add(b); const nz = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.42, 0.35, 32, 1, true), ctx.mats.metal('iron', { extra: { side: THREE.DoubleSide } })); nz.position.y = -1.27; rk.add(nz); const n = new THREE.Mesh(new THREE.ConeGeometry(0.45, 0.9, 40), ctx.mats.plastic(0xd63a40)); n.position.y = 1.55; rk.add(n); [0, 2.1, 4.2].forEach((a) => { const f = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.7, 0.5), ctx.mats.plastic(0xd63a40)); f.position.set(Math.cos(a) * 0.62, -0.8, Math.sin(a) * 0.62); f.rotation.y = -a; rk.add(f); }); const w = new THREE.Mesh(new THREE.SphereGeometry(0.17, 24, 16), ctx.mats.glass({ tint: 0x6cb4ff, opacity: 0.85, extra: { depthWrite: true } })); w.position.set(0, 0.5, 0.45); rk.add(w); } G.rocket.add(rk);
@@ -113,7 +113,7 @@
         if (r.firing) { const L = clamp(th * 0.2, 0.7, 2.6); setArrow(gasA, new V3(1.0, y - 0.6, 0), new V3(1.0, y - 0.6 - L, 0)); setArrow(rkA, new V3(1.0, y + 0.2, 0), new V3(1.0, y + 0.2 + L, 0)); } else { gasA.visible = rkA.visible = false; }
         lrG.off = [0.8, 0, 0]; lrR.off = [0.8, 0, 0]; lrG.show(!!r.firing); lrR.show(!!r.firing);
         if (pad) { setArrow(wtA, new V3(-1.0, y + 0.2, 0), new V3(-1.0, y + 0.2 - 1.4, 0)); lrW.show(true); lrW.off = [-0.7, 0, 0]; } else { wtA.visible = false; lrW.show(false); }
-        info('<b>🔥 로켓 분출 · ' + (pad ? '발사대 (대기 중)' : '우주 공간 (진공)') + '</b><br>가스를 뒤로 밀어내면 가스가 로켓을 앞으로 미는 <b>반작용</b>이 생겨요 (작용 반작용 · 운동량 보존).<br>분출 속력 u = ' + r.u + ' · 분출량 f = ' + r.f + ' → 추력 ∝ u × f = ' + th + (pad ? ' (로켓 무게 ' + A.WEIGHT + ')' : '') + '<br>' + (pad ? (r.lifted || th > A.WEIGHT ? '추력이 무게보다 크면 떠올라요.' : '추력이 무게보다 작으면 뜨지 못해요.') : '밀어낼 공기가 없어도 가스를 밀어내는 반작용으로 가속돼요. 속도 ' + f1(r.vel)) + '<br><span style="opacity:.8">환경 · 분출 속력 · 분출량은 옆 조작판에서 바꿔요.</span>');
+        info('<b>🔥 로켓 분출 · ' + (pad ? '발사대 (대기 중)' : '우주 공간 (진공)') + '</b><br>가스를 뒤로 밀어내면 가스가 로켓을 앞으로 미는 <b>반작용</b>이 생겨요 (작용 반작용 · 운동량 보존).<br>분출 속력 u = ' + r.u + ' · 분출량 f = ' + r.f + ' → 추력 ∝ u × f = ' + th + (pad ? ' (로켓 무게 ' + A.WEIGHT + ')' : '') + '<br>' + (pad ? (r.lifted || th > A.WEIGHT ? '추력이 무게보다 크면 떠올라요.' : '추력이 무게보다 작으면 뜨지 못해요.') : '밀어낼 공기가 없어도 가스를 밀어내는 반작용으로 가속돼요. 속도 ' + f1(r.vel)) + '<br><span style="opacity:.8">환경 · 분출 속력 · 분출량은 조작판에서 바꿔요.</span>');
       }
       const STG = [0, 1, 2];
       /* ================= 🪐 행성 비교: 대기 분자가 빠져나가는 상자 ================= */

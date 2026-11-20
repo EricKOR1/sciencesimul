@@ -312,7 +312,7 @@
           const lw = L2(), vN = lw && lw.S ? lw.S.view : '';
           applyN(NEWV[vN] ? vN : 'old');
           if (NEWV[vN]) {
-            const h = vN === 'box' ? updBox(lw) : vN === 'rate' ? updRate(lw) : vN === 'type' ? ((lTy.forEach((l) => l.show(true)), lTyU.show(true), '<b>부정합의 세 가지 종류</b><br>부정합면(붉은 선) 아래의 모습이 가 · 나 · 다마다 달라요. 아래가 화성암인지, 수평한 지층인지, 기울어진 지층인지 살펴봐요.<br><span style="color:#9fb0d4">오른쪽 조작판에서 가 · 나 · 다의 이름을 골라요.</span>')) : updCorr(lw);
+            const h = vN === 'box' ? updBox(lw) : vN === 'rate' ? updRate(lw) : vN === 'type' ? ((lTy.forEach((l) => l.show(true)), lTyU.show(true), '<b>부정합의 세 가지 종류</b><br>부정합면(붉은 선) 아래의 모습이 가 · 나 · 다마다 달라요. 아래가 화성암인지, 수평한 지층인지, 기울어진 지층인지 살펴봐요.<br><span style="color:#9fb0d4">조작판에서 가 · 나 · 다의 이름을 골라요.</span>')) : updCorr(lw);
             if (h !== lastN) { lastN = h; info(h); }
             return;
           }

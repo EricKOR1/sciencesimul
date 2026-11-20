@@ -81,7 +81,7 @@
       }
       controls.segment('크기', [{ label: '모형', value: false }, { label: '실제 비율 느낌', value: true }], false, (v) => { tiny = v; });
       controls.button('이름표 켜기/끄기', () => { labs = !labs; labNuc.show(labs); labE.show(labs); });
-      // 양성자 버튼은 오른쪽 패널에 양성자 조절이 열린 단계에서만 보여요
+      // 양성자 버튼은 조작판에 양성자 조절이 열린 단계에서만 보여요
       const pBtns = [controls.button('양성자 +', () => sm() && sm().plus('p')), controls.button('양성자 −', () => sm() && sm().minus('p'))];
       const pOn = () => { const r = document.querySelector('.p-row'); return !!(r && r.offsetParent !== null); };
       controls.button('전자 +', () => sm() && sm().plus('e'));

@@ -91,7 +91,7 @@
 
   window.SciSim3D.attach({
     title: '전기력선과 등전위면 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 조작판에서 바꿔요',
     camera: { dist: 14 * KD, theta: 0.2, phi: 1.3, min: 5, max: 30 },
     autoRotate: 0,
     levels: [3],   // 1~3단계는 캔버스에서 방향을 가리키거나 점 X·Y, 십자(✚)를 끌어야 해서 2D, 4단계(그림 해석)는 3D
@@ -252,7 +252,7 @@
         setSeg(dSeg, new V3(-3.2, -gap / 2, 0), new V3(-3.2, gap / 2, 0)); aD.position.set(-3.55, 0, 0); lD.set('d = ' + g3(d) + ' cm');
         const F = E_CH * E, ae = F / M_E, ap = F / M_P, gapc = step / V * d;
         info('<b>🔋 평행판 사이의 균일한 전기장</b><br>인접한 선: ΔV = ' + step + ' V, 간격 ' + g3(gapc) + ' cm<br>E = ΔV / Δd = ' + (mk ? '?' : step + ' / ' + g3(gapc / 100) + ' = ' + g3(E) + ' V/m') + '<br>판 전체: E = V / d = ' + (mk ? '?' : V + ' / ' + g3(d / 100) + ' = ' + g3(E) + ' V/m') + '<br>F = eE = ' + (mk ? '?' : sci(F) + ' N') + ', 가속도 전자 ' + (mk ? '?' : sci(ae) + ' m/s²') + ', 양성자 ' + (mk ? '?' : sci(ap) + ' m/s²') +
-          (u > 0 ? '<br>전자 운동 에너지 ' + g3(V * u * u) + ' eV, 양성자 ' + (V * u * u / (M_P / M_E) < 0.01 ? sci(V * u * u / (M_P / M_E), 1) : g3(V * u * u / (M_P / M_E))) + ' eV' : '<br>▶ 재생이나 옆 조작판의 ▶ 전자·양성자 놓기로 놓아 보세요'));
+          (u > 0 ? '<br>전자 운동 에너지 ' + g3(V * u * u) + ' eV, 양성자 ' + (V * u * u / (M_P / M_E) < 0.01 ? sci(V * u * u / (M_P / M_E), 1) : g3(V * u * u / (M_P / M_E))) + ' eV' : '<br>▶ 재생이나 조작판의 ▶ 전자·양성자 놓기로 놓아 보세요'));
       }
 
       /* ---------- ▶ 재생 ---------- */

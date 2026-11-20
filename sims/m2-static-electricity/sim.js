@@ -1033,7 +1033,7 @@
           {
             title: '끌림과 밀어냄 모두 만들기',
             goal: '각 막대의 <b>(−)/(+) 버튼</b>으로 전기 종류를 바꿔 가며 <b>끌어당김</b>과 <b>밀어냄</b>을 모두 만들어 보세요. 가까이 갈수록 화살표가 커져요.',
-            hint: '‘매달린 막대’와 ‘손에 든 막대’ 이름표가 붙은 (−)/(+) 버튼으로 전기 종류를 바꾸고(오른쪽 패널의 버튼도 같아요), 오른쪽 막대를 매달린 막대 가까이 끌어 가요.',
+            hint: '‘매달린 막대’와 ‘손에 든 막대’ 이름표가 붙은 (−)/(+) 버튼으로 전기 종류를 바꾸고(조작판의 버튼도 같아요), 오른쪽 막대를 매달린 막대 가까이 끌어 가요.',
             setup() { setScene('force'); resetForce(); setForceQ('hq', -1); setForceQ('hq2', -1); S.force.sawA = false; S.force.sawR = false; },
             check: () => S.scene === 'force' && S.force.sawA && S.force.sawR,
             status: () => box(S.force.sawA) + ' 끌어당김 (다른 종류) · ' + box(S.force.sawR) + ' 밀어냄 (같은 종류)',

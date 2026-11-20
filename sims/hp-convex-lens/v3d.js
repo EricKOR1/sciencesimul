@@ -1,6 +1,6 @@
 /* hp-convex-lens · 3D 볼록렌즈와 상
    2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: 🔺 굴절과 렌즈(평행 광선 · 프리즘 조각/곡면 렌즈) · 🧭 광선 추적(세 주광선) · 🔬 상 실험(광학대 · 스크린) · 🏭 노광 공정(마스크 → 렌즈 → 웨이퍼).
-   물체 거리·렌즈 곡률·스크린 위치는 옆 조작판이 정하고 3D는 따라가요. 결상 공식은 쓰지 않고, 광선의 작도와 직접 측정으로만 상을 찾아요.
+   물체 거리·렌즈 곡률·스크린 위치는 조작판이 정하고 3D는 따라가요. 결상 공식은 쓰지 않고, 광선의 작도와 직접 측정으로만 상을 찾아요.
    🏭 노광 공정은 웨이퍼 단면(6단계)도 입체로 봐요. (광학대 그림은 2D처럼 세로 방향을 2.4배로 늘려 그렸어요) */
 (function () {
   'use strict';
@@ -46,7 +46,7 @@
   const f1 = (v) => (Math.round(v * 10) / 10).toFixed(1), f2 = (v) => (Math.round(v * 100) / 100).toFixed(2);
   window.SciSim3D.attach({
     title: '볼록렌즈와 상 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 조작판에서 바꿔요',
     camera: { dist: 16 * KD, theta: 0.0, phi: 1.2, min: 4, max: 40, target: [0, 0, 0] },
     autoRotate: 0,
     levels: [3],   // 1~3단계는 캔버스에서 깃발·점·스크린을 끌어야 해서 2D, 4단계(노광 공정)는 3D
@@ -90,7 +90,7 @@
         if (!im) t2 += '물체가 초점에 있으면 렌즈를 지난 광선들이 서로 평행해서 한 점에서 만나지 않아요. 그래서 상이 맺히지 않아요.';
         else if (showImg) t2 += '작도로 찾은 상: 렌즈 ' + (real ? '오른쪽' : '왼쪽') + ' ' + Math.abs(ix).toFixed(1) + ' cm, 물체의 ' + (Math.abs(ix) / a).toFixed(2) + '배, ' + (real ? '거꾸로 선 <b>실상</b> (스크린에 맺혀요)' : '바로 선 <b>허상</b> (스크린에 맺히지 않아요)');
         else t2 += '세 주광선: ① 광축에 평행하게 들어가면 렌즈를 지나 초점을 지나요 ② 렌즈 중심을 지나면 그대로 직진해요 ③ 앞쪽 초점을 지나 들어가면 렌즈를 지나 광축에 평행하게 나가요.';
-        info(t2 + '<br><span style="opacity:.8">물체 거리 · 보일 광선은 옆 조작판에서 골라요.</span>');
+        info(t2 + '<br><span style="opacity:.8">물체 거리 · 보일 광선은 조작판에서 골라요.</span>');
       }
       /* ================= 🔬 상 실험 · 🏭 노광 공정 (광학대) ================= */
       benchBase(gB, 30);
@@ -145,8 +145,8 @@
         dimA.show(showA); dimB.show(true);
         dimA.obj = [ox / 2 * UX * 1 - 0, -4.4, 0.9]; dimA.obj = [(ox / 2) * UX, -4.1, 0.9]; dimA.set(litho ? '마스크~렌즈 ' + a.toFixed(0) + ' cm' : 'a = ' + a.toFixed(1) + ' cm'); dimB.obj = [(sx / 2) * UX, -4.1, 0.9]; dimB.set(litho ? '렌즈~웨이퍼 ' + sx.toFixed(1) + ' cm' : 'b = ' + sx.toFixed(1) + ' cm');
         lSharp.show(st.sharp); lSharp.off = [0, 2.3, 0];
-        if (!litho) info('<b>🔬 상 실험 · 광학대</b><br>물체 거리 a = ' + (far ? '∞ (먼 풍경)' : a.toFixed(1) + ' cm') + ' · 스크린 거리 b = ' + sx.toFixed(1) + ' cm' + (far ? '' : ' · 상의 크기 = 물체의 ' + f2(g.m) + '배') + '<br>' + (st.sharp ? '<b>상이 선명해요!</b> 📏 기록하기를 눌러요.' : '스크린을 움직여 상이 선명해지는 곳을 찾아요. (번짐 ' + f1(bl) + ' cm)') + (cfg.cover ? '<br>🃏 렌즈의 아래쪽 절반을 가렸어요: 상은 어떻게 될까요?' : '') + '<br><span style="opacity:.8">초점거리 f는 직접 재서 구해요 · 물체 거리와 스크린은 옆 조작판에서 바꿔요.</span>');
-        else info('<b>🏭 노광: 마스크 → 렌즈 → 웨이퍼</b><br>마스크는 렌즈에서 ' + A.A_LITHO.toFixed(0) + ' cm · 웨이퍼 위치 ' + sx.toFixed(1) + ' cm' + (st.sharp ? ' → <b>초점이 맞아요</b> (선명)' : ' → 초점이 맞지 않아요 (번짐 ' + f1(bl) + ' cm)') + '<br>빛의 파장 ' + ({ '436': '436 nm', '365': '365 nm 자외선', '193': '193 nm 심자외선', '13.5': '13.5 nm 극자외선' }[S.lt.wl]) + ' · 파장을 바꿔 어느 선까지 인쇄되는지 비교해요.<br>' + (S.lt.okSharp ? '인쇄된 선: ' + A.LITHO_W.map((w) => w + ' nm ' + (w >= +S.lt.wl ? '✔' : '✘')).join(' · ') : st.sharp ? '노광하는 중이에요…' : '초점을 맞추면 선이 인쇄돼요.') + '<br><span style="opacity:.8">웨이퍼 위치와 파장은 옆 조작판에서 바꿔요.</span>');
+        if (!litho) info('<b>🔬 상 실험 · 광학대</b><br>물체 거리 a = ' + (far ? '∞ (먼 풍경)' : a.toFixed(1) + ' cm') + ' · 스크린 거리 b = ' + sx.toFixed(1) + ' cm' + (far ? '' : ' · 상의 크기 = 물체의 ' + f2(g.m) + '배') + '<br>' + (st.sharp ? '<b>상이 선명해요!</b> 📏 기록하기를 눌러요.' : '스크린을 움직여 상이 선명해지는 곳을 찾아요. (번짐 ' + f1(bl) + ' cm)') + (cfg.cover ? '<br>🃏 렌즈의 아래쪽 절반을 가렸어요: 상은 어떻게 될까요?' : '') + '<br><span style="opacity:.8">초점거리 f는 직접 재서 구해요 · 물체 거리와 스크린은 조작판에서 바꿔요.</span>');
+        else info('<b>🏭 노광: 마스크 → 렌즈 → 웨이퍼</b><br>마스크는 렌즈에서 ' + A.A_LITHO.toFixed(0) + ' cm · 웨이퍼 위치 ' + sx.toFixed(1) + ' cm' + (st.sharp ? ' → <b>초점이 맞아요</b> (선명)' : ' → 초점이 맞지 않아요 (번짐 ' + f1(bl) + ' cm)') + '<br>빛의 파장 ' + ({ '436': '436 nm', '365': '365 nm 자외선', '193': '193 nm 심자외선', '13.5': '13.5 nm 극자외선' }[S.lt.wl]) + ' · 파장을 바꿔 어느 선까지 인쇄되는지 비교해요.<br>' + (S.lt.okSharp ? '인쇄된 선: ' + A.LITHO_W.map((w) => w + ' nm ' + (w >= +S.lt.wl ? '✔' : '✘')).join(' · ') : st.sharp ? '노광하는 중이에요…' : '초점을 맞추면 선이 인쇄돼요.') + '<br><span style="opacity:.8">웨이퍼 위치와 파장은 조작판에서 바꿔요.</span>');
       }
       /* ================= 🔺 굴절과 렌즈 (평행 광선, 1 cm = 0.45칸) ================= */
       const UR = 0.45, flagG = new THREE.Group(); gR.add(flagG);
@@ -167,7 +167,7 @@
         }
         flagG.position.set(rf.flag * UR, 0, 0); lFlag.off = [0.3, 1.5, 0];
         lLensR.obj = [0, 3.2, 0]; lLensR.set(view === 'prism' ? '프리즘 조각' : '곡면 렌즈');
-        info('<b>🔺 ' + (view === 'prism' ? '프리즘 조각' : '곡면 렌즈') + '에서 빛이 꺾여요</b> · 곡률 반지름 R = ' + R + ' cm<br>' + (view === 'prism' ? '평행 광선이 각 조각에서 꺾이는 정도가 달라요. 가장자리 조각일수록 더 많이 꺾여요.' : '평행 광선이 렌즈를 지나며 한 점으로 모여요. 깃발(초점 표지)을 광선이 모이는 곳에 놓아 보세요. 렌즈를 더 볼록하게(R↓) 하면 모이는 곳이 가까워져요.') + '<br><span style="opacity:.8">보기 · R · 깃발은 옆 조작판에서 바꿔요.</span>');
+        info('<b>🔺 ' + (view === 'prism' ? '프리즘 조각' : '곡면 렌즈') + '에서 빛이 꺾여요</b> · 곡률 반지름 R = ' + R + ' cm<br>' + (view === 'prism' ? '평행 광선이 각 조각에서 꺾이는 정도가 달라요. 가장자리 조각일수록 더 많이 꺾여요.' : '평행 광선이 렌즈를 지나며 한 점으로 모여요. 깃발(초점 표지)을 광선이 모이는 곳에 놓아 보세요. 렌즈를 더 볼록하게(R↓) 하면 모이는 곳이 가까워져요.') + '<br><span style="opacity:.8">보기 · R · 깃발은 조작판에서 바꿔요.</span>');
       }
       /* ================= 장면 · ▶ 재생 ================= */
       let plT = null;
@@ -222,7 +222,7 @@
         });
         const cur = reveal ? Math.min(5, Math.floor(ordPlay / 0.5)) : -1;
         lWt.show(false);
-        info('<b>🏭 노광 공정 순서</b> · 웨이퍼 단면이 단계마다 어떻게 바뀌는지 보여 줘요<br>' + (reveal ? (cur >= 0 && ordPlay < 6.5 ? A.STAGE_TXT[Math.min(5, Math.max(0, Math.floor((ordPlay - 0.25) / 0.5)))] + '<br>' : '') + '노광에서 마스크의 큰 회로 무늬를 투영 렌즈로 줄여 감광제에 맺고, 현상·식각을 거치면 웨이퍼 위에 아주 작은 회로가 만들어져요. 이 과정을 층마다 반복해요.' : '고른 카드 <b>' + l.order.length + ' / 6</b> · 옆 조작판의 카드를 순서대로 눌러 보세요.<br>맞게 고르면 단계마다 웨이퍼 단면이 나타나요.'));
+        info('<b>🏭 노광 공정 순서</b> · 웨이퍼 단면이 단계마다 어떻게 바뀌는지 보여 줘요<br>' + (reveal ? (cur >= 0 && ordPlay < 6.5 ? A.STAGE_TXT[Math.min(5, Math.max(0, Math.floor((ordPlay - 0.25) / 0.5)))] + '<br>' : '') + '노광에서 마스크의 큰 회로 무늬를 투영 렌즈로 줄여 감광제에 맺고, 현상·식각을 거치면 웨이퍼 위에 아주 작은 회로가 만들어져요. 이 과정을 층마다 반복해요.' : '고른 카드 <b>' + l.order.length + ' / 6</b> · 조작판의 카드를 순서대로 눌러 보세요.<br>맞게 고르면 단계마다 웨이퍼 단면이 나타나요.'));
       }
       pW = controls.player({ duration: 9, loop: true, autoplay: false, label: '공정 다시 보기', phases: [[0, '세척'], [0.08, '감광제 도포'], [0.16, '노광'], [0.24, '현상'], [0.32, '식각'], [0.4, '감광제 제거'], [0.55, '완성']], onFrame(p) { demoW.p = p; demoW.on = p > 0 || !!(pW && pW.playing); } });
       { const rr = [...ctx.renderer.domElement.parentNode.parentNode.querySelectorAll('.v3-player')]; plT.row = rr[0]; pW.row = rr[1]; }

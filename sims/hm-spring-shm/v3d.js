@@ -1,6 +1,6 @@
 /* hm-spring-shm · 3D 용수철 진자와 단진동
    2D 실험(window.__sim)의 진자를 그대로 입체로 보여 줘요: 🌀 진자 관찰 · 🧲 복원력(F = −kx) · ⏱️ 주기(질량 · 용수철 상수 · 진폭) · 📈 에너지와 위상.
-   수평·수직 용수철, 질량 m, 용수철 상수 k, 진폭은 옆 조작판이 정하고 3D는 따라가요. 변위 x는 평형점 O에서 재요. */
+   수평·수직 용수철, 질량 m, 용수철 상수 k, 진폭은 조작판이 정하고 3D는 따라가요. 변위 x는 평형점 O에서 재요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -44,7 +44,7 @@
   const f2 = (v) => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(2);
   window.SciSim3D.attach({
     title: '용수철 진자 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 조작판에서 바꿔요',
     camera: { dist: 12 * KDX, theta: 0.4, phi: 1.3, min: 4, max: 30, target: [0, 0, 0] },
     autoRotate: 0,
     levels: [2],   // ①②④는 캔버스의 x–t · a–x · 세 그래프를 읽어야 해서 2D예요
@@ -86,7 +86,7 @@
         else if (mode === 'period') t2 += '질량 m · 용수철 상수 k · 진폭 A 가운데 무엇이 주기를 바꿀까요? 한 번에 하나씩만 바꿔 📍 주기를 기록해 비교해요.' + (S.pe && S.pe.rec && S.pe.rec.length ? '<br>📍 주기 기록: ' + S.pe.rec.slice(-4).map((q) => 'm ' + q.m + ' · k ' + q.k + ' · A ' + q.A + ' → T ' + q.T.toFixed(2) + ' s').join(' / ') : '');
         else if (mode === 'energy') { const Ep = 0.5 * k * x * x, Et = 0.5 * k * o.x0 * o.x0; t2 += '역학적 에너지: 운동 E<sub>k</sub> = ' + (Et - Ep).toFixed(3) + ' J + 탄성 E<sub>p</sub> = ' + Ep.toFixed(3) + ' J = ½kA² = ' + Et.toFixed(3) + ' J (일정). 양 끝점에서 속력 0, 평형점에서 가장 빠름.'; }
         else t2 += '끝점(±A)에서는 속력이 0이고 가속도가 가장 커요. 평형점에서는 가속도 0, 속력 최대예요.';
-        if (t2 !== lastTxt) { lastTxt = t2; info(t2 + '<br><span style="opacity:.8">진폭 · 용수철 · 질량은 옆 조작판에서 바꿔요.</span>'); }
+        if (t2 !== lastTxt) { lastTxt = t2; info(t2 + '<br><span style="opacity:.8">진폭 · 용수철 · 질량은 조작판에서 바꿔요.</span>'); }
       }
       function springKey(p0, p1) { const key = [p0.x, p0.y, p1.x.toFixed(2), p1.y.toFixed(2)].join('|'); if (key === skey) return; skey = key; springM.geometry.dispose(); springM.geometry = coil(p0, p1, 9, 0.22); }
       pl = controls.player({ duration: 5, loop: true, autoplay: false, label: '한 주기', phases: [[0, '오른쪽(+) 끝점'], [0.25, '평형점 (가장 빠름)'], [0.5, '왼쪽(−) 끝점'], [0.75, '평형점 (가장 빠름)']], onFrame(p) { demo.p = p; demo.on = p > 0 || !!(pl && pl.playing); } });

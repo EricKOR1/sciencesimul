@@ -151,7 +151,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHONE ? 15.5 : 12.6, theta: 0.5, phi: 1.38, fov: 40, min: 5, max: 26, target: [0, PHONE ? 1.5 : 0, 0] },
     autoRotate: 0.25,
-    levels: [2],   // 염기쌍 · 이중 나선 단계만 3D(짝 단추 · ①②③ 단추가 옆 조작판에 있어요). 샤가프 표 · X선 눈금자 · 발표 카드는 캔버스에서 해요
+    levels: [2],   // 염기쌍 · 이중 나선 단계만 3D(짝 단추 · ①②③ 단추가 조작판에 있어요). 샤가프 표 · X선 눈금자 · 발표 카드는 캔버스에서 해요
     build(ctx) {
       const { THREE, root, label, info, controls, orbit, camera, renderer } = ctx;
       const H = makeHelix(THREE, root, { N: 20, seq: SEQ20, a: 0.5, rings: true, strandCols: SC, arrows: true, arrowCols: [0x93c5fd, 0xc4b5fd] });

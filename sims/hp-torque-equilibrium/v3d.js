@@ -1,6 +1,6 @@
 /* hp-torque-equilibrium · 3D 돌림힘과 평형
    2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: 🔧 스패너(τ = F × ℓ) · ⚖️ 시소(회전 평형) · 📦 기울기 · 📚 책장(안정성) · 🌀 우력 · 🌉 널빤지 · 🏗️ 크레인.
-   값은 2D 옆 조작판이 정하고 3D는 따라가요. 우력 · 🌉 널빤지 다리 · 🏗️ 크레인도 입체로 봐요. */
+   값은 2D 조작판이 정하고 3D는 따라가요. 우력 · 🌉 널빤지 다리 · 🏗️ 크레인도 입체로 봐요. */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -46,7 +46,7 @@
   const nf = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   window.SciSim3D.attach({
     title: '돌림힘과 평형 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 조작판에서 바꿔요',
     camera: { dist: 9 * KD, theta: 0.35, phi: 1.2, min: 3, max: 26, target: [0, 1.2, 0] },
     autoRotate: 0,
     levels: [0, 2, 3],   // 2단계(시소)는 추를 캔버스에서 끌어 거리를 바꿔야 해서 2D
@@ -127,7 +127,7 @@
         const okNow = tau >= NEED;
         info('<b>🔧 τ = F × ℓ = ' + F + ' N × ' + ell.toFixed(2) + ' m = ' + tau.toFixed(1) + ' N·m</b><br>🔩 녹슨 볼트는 ' + NEED + ' N·m 이상이어야 풀려요 · ' +
           (s.loose && !demo.on ? '✅ 풀렸어요!' : (okNow ? 'τ ' + tau.toFixed(1) + ' ≥ ' + NEED + ' → 풀려요' : 'τ ' + tau.toFixed(1) + ' < ' + NEED + ' → 안 풀려요')) +
-          '<br>' + (ell === 0 ? '힘의 작용선이 회전축을 지나면 ℓ = 0이라서 힘이 커도 돌림힘은 0이에요.' : '같은 힘이라도 축에서 수직 거리가 길수록 돌림힘이 커요.') + '<br><span style="opacity:.8">힘·위치·방향은 옆 조작판에서 바꾸고 🔧 돌려 보기를 눌러요.</span>');
+          '<br>' + (ell === 0 ? '힘의 작용선이 회전축을 지나면 ℓ = 0이라서 힘이 커도 돌림힘은 0이에요.' : '같은 힘이라도 축에서 수직 거리가 길수록 돌림힘이 커요.') + '<br><span style="opacity:.8">힘·위치·방향은 조작판에서 바꾸고 🔧 돌려 보기를 눌러요.</span>');
         phaseName = phase;
       }
       let phaseName = '';
@@ -215,8 +215,8 @@
         lTq.show(idle && t.deg > 0); lTq.obj = [(cgx < 0 ? -w - 0.4 : 0.9), 0.9, 0.5]; lTq.set(inside ? '↺ 되돌리는 돌림힘' : '↻ 넘어뜨리는 돌림힘'); lTq.el.style.background = inside ? '#14a058' : '#e2464b';
         lAng.show(true); lAng.obj = [0.9, 0.2, 0.5]; lAng.set('📐 ' + deg.toFixed(1) + '°');
         const r1 = (v) => Math.round(v * 10) / 10;
-        if (kind === 'tilt') info('<b>📦 직육면체를 기울이면 언제 넘어질까?</b><br>tan θ한계 = (w/2) / h = ' + (w / 2).toFixed(2) + ' / ' + h.toFixed(2) + ' = ' + (w / 2 / h).toFixed(2) + ' → <b>θ한계 = ' + r1(tc).toFixed(1) + '°</b><br>' + (idle ? (inside ? '무게중심의 수직선이 받침면 안 → 되돌려 놓아요.' : '수직선이 받침면 밖 → 넘어져요.') : '💥 넘어졌어요! 한계 각 ' + r1(tc).toFixed(1) + '°') + '<br><span style="opacity:.8">폭 w · 무게중심 높이 h · 기울이는 각 θ는 옆 조작판에서 바꿔요.</span>');
-        else info('<b>📚 책장(' + SHELF.MS + ' kg) + 무거운 책(' + SHELF.MB + ' kg)의 무게중심</b><br>무거운 책을 ' + SHELF.NAME[t.pos] + '에 → h = ' + h.toFixed(3) + ' m<br>tan θ한계 = ' + (SHELF.W / 2).toFixed(2) + ' / ' + h.toFixed(3) + ' → <b>θ한계 = ' + r1(tc).toFixed(1) + '°</b>' + (idle ? '' : '<br>💥 쓰러졌어요!') + '<br><span style="opacity:.8">무거운 책의 칸 · 기울이는 각은 옆 조작판에서 바꿔요.</span>');
+        if (kind === 'tilt') info('<b>📦 직육면체를 기울이면 언제 넘어질까?</b><br>tan θ한계 = (w/2) / h = ' + (w / 2).toFixed(2) + ' / ' + h.toFixed(2) + ' = ' + (w / 2 / h).toFixed(2) + ' → <b>θ한계 = ' + r1(tc).toFixed(1) + '°</b><br>' + (idle ? (inside ? '무게중심의 수직선이 받침면 안 → 되돌려 놓아요.' : '수직선이 받침면 밖 → 넘어져요.') : '💥 넘어졌어요! 한계 각 ' + r1(tc).toFixed(1) + '°') + '<br><span style="opacity:.8">폭 w · 무게중심 높이 h · 기울이는 각 θ는 조작판에서 바꿔요.</span>');
+        else info('<b>📚 책장(' + SHELF.MS + ' kg) + 무거운 책(' + SHELF.MB + ' kg)의 무게중심</b><br>무거운 책을 ' + SHELF.NAME[t.pos] + '에 → h = ' + h.toFixed(3) + ' m<br>tan θ한계 = ' + (SHELF.W / 2).toFixed(2) + ' / ' + h.toFixed(3) + ' → <b>θ한계 = ' + r1(tc).toFixed(1) + '°</b>' + (idle ? '' : '<br>💥 쓰러졌어요!') + '<br><span style="opacity:.8">무거운 책의 칸 · 기울이는 각은 조작판에서 바꿔요.</span>');
       }
 
       /* ================= 🌀 우력: 얼음 위의 막대 (위에서 본 모습, 1 m = 8칸, 위쪽 힘 = 화면 위 = −z) ================= */
@@ -257,8 +257,8 @@
         lCpRes.el.style.background = done && a === 0 && t === 0 ? '#14a058' : '#26324a';
         const sT = (t > 0 ? '+' : '') + t.toFixed(1);
         info('<b>🌀 얼음 위의 막대 (위에서 본 모습, 마찰 없음)</b><br>① 알짜힘 ΣF = <b>' + (a > 0 ? '+' : '') + a + ' N</b>' + (a === 0 ? ' ✔' : '') + ' &nbsp; ② 돌림힘의 합 Στ = <b>' + sT + ' N·m</b>' + (t === 0 ? ' ✔' : '') +
-          '<br>' + (f.every((v) => v === 0) ? '옆 조작판에서 힘을 정해 주세요.' : (running ? '🐌 슬로모션으로 움직이는 중…' : '결과: <b>' + cpKind(f) + '</b>')) +
-          '<br><span style="opacity:.8">Στ = (−0.2)×F왼 + 0×F가운데 + 0.2×F오른 (반시계 +) · 힘은 옆 조작판에서 정해요.</span>');
+          '<br>' + (f.every((v) => v === 0) ? '조작판에서 힘을 정해 주세요.' : (running ? '🐌 슬로모션으로 움직이는 중…' : '결과: <b>' + cpKind(f) + '</b>')) +
+          '<br><span style="opacity:.8">Στ = (−0.2)×F왼 + 0×F가운데 + 0.2×F오른 (반시계 +) · 힘은 조작판에서 정해요.</span>');
       }
       /* ================= 🌉 널빤지 다리 (옆에서 본 모습, 1 m = 1칸) ================= */
       const PH = 1.8, PTH = 0.25, FSC3 = 0.0025, PLK = { SPAN: 4, LEN: 8, WP: 200, WL: 400, OVER: 2 }, labPk = [];

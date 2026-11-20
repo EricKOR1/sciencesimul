@@ -14,7 +14,7 @@
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     camera: { dist: PHN ? 21 : 15.5, theta: 0.3, phi: 1.3, min: 7, max: 34, target: [1.2, 2.5, 0] },
     autoRotate: 0,
-    levels: [0, 1, 2, 3],      // 모든 단계를 3D로: 처음 높이·재생 속도·질량은 오른쪽 패널, ▶ 놓기 · 출발은 아래 막대
+    levels: [0, 1, 2, 3],      // 모든 단계를 3D로: 처음 높이·재생 속도·질량은 조작판, ▶ 놓기 · 출발은 아래 막대
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3;

@@ -325,7 +325,7 @@
           else { st.alpha = S.va.pitch; vanInfo(); van.t = 0; vTr.clear(); vp.material.color.setHex(S.va.sp === 'p' ? 0xffe14d : 0x7ab6ff); vp.material.emissive.setHex(S.va.sp === 'p' ? 0xffc800 : 0x3b82f6); van.dirS = S.va.sp === 'p' ? 1 : -1; }
         }
         if (sc === 'tok') { tkB = S.tk.Bd; tkTs = S.tk.Ts; }
-        if (sc === 'van' && S.va.p !== lastVaP) { lastVaP = S.va.p; van.t = 0; vTr.clear(); }   // 옆 조작판의 ▶ 입자 넣기: 적도에서 새 입자가 출발해요
+        if (sc === 'van' && S.va.p !== lastVaP) { lastVaP = S.va.p; van.t = 0; vTr.clear(); }   // 조작판의 ▶ 입자 넣기: 적도에서 새 입자가 출발해요
         return sim;
       }
       return {

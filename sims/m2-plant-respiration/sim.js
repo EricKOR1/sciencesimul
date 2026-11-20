@@ -1058,7 +1058,7 @@
     else if (scene === 'day') { sceneCard(drawDay); drawDayPanel(); }
     else if (scene === 'room') { sceneCard(drawRoom); drawRoomPanel(); }
   }
-  /* BTB 오른쪽 패널: 색 변화 기록표 */
+  /* BTB 조작판: 색 변화 기록표 */
   function colName(c) { return c < -0.35 ? '파랑' : c > 0.35 ? '노랑' : '초록'; }
   function drawBtbPanel() {
     const p = LAY.pn, B = BTB;

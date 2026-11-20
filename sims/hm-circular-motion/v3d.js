@@ -1,6 +1,6 @@
 /* hm-circular-motion · 3D 원운동과 구심력
    2D 실험(window.__sim)의 장면을 그대로 입체로 보여 줘요: 🧊 퍽에 힘 주기 · 📐 구심 가속도(Δv) · 🧵 줄의 장력(F = mv²/r) · 🛣️ 커브 도로의 마찰력 · 🎡 놀이기구(회전 그네 · 관람차 · 로터).
-   힘 · 속력 · 반지름은 옆 조작판이 정하고 3D는 따라가요. 원운동에서 속도는 접선 방향, 알짜힘과 가속도는 늘 중심을 향해요. g = 10 m/s². */
+   힘 · 속력 · 반지름은 조작판이 정하고 3D는 따라가요. 원운동에서 속도는 접선 방향, 알짜힘과 가속도는 늘 중심을 향해요. g = 10 m/s². */
 (function () {
   'use strict';
   if (!window.SciSim3D) return;
@@ -44,7 +44,7 @@
   const RAD = Math.PI / 180;
   window.SciSim3D.attach({
     title: '원운동과 구심력 3D',
-    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 옆 조작판에서 바꿔요',
+    hint: '드래그: 돌리기 · 휠/두 손가락: 확대 · 값은 조작판에서 바꿔요',
     camera: { dist: 13 * KD, theta: 0.3, phi: 0.9, min: 4, max: 40, target: [0, 0, 0] },
     autoRotate: 0,
     levels: [0, 1, 2, 3],
@@ -86,7 +86,7 @@
         const tr = demoP.on && !P.run ? [] : P.trail; const key = tr.length + '|' + (tr.length ? tr[tr.length - 1].join(',') : '');
         if (key !== pTrKey) { pTrKey = key; if (pTr) { G.puck.remove(pTr); pTr.geometry.dispose(); pTr = null; } if (tr.length > 1) { pTr = tube(tr.map((q) => toP(q[0], q[1]).setY(0.05)), 0.04, 0x2563eb, { basic: true, op: 0.7 }); G.puck.add(pTr); } }
         const nm = { 0: '같은 방향', 180: '반대 방향', 90: '수직', 45: '비스듬히(45°)' }[phi] || phi + '°';
-        info('<b>🧊 퍽(1 kg)에 힘 주기</b> · 처음 속력 ' + A.PUCK_V0 + ' m/s<br>힘 F = ' + F + ' N · 힘의 방향: 속도와 <b>' + nm + '</b><br>속력 v = ' + f1(v) + ' m/s' + (Math.abs(hd) > 0.01 ? ' · 방향이 ' + Math.round(Math.abs(hd) / RAD) + '° 바뀌었어요' : '') + '<br>' + (phi === 90 ? '힘이 늘 속도에 <b>수직</b>이면 속력은 그대로이고 방향만 바뀌어 <b>원운동</b>을 해요.' : (phi === 0 || phi === 180 ? '힘이 속도와 나란하면 속력만 변하고 방향은 그대로예요.' : '힘의 속도 방향 성분은 속력을, 수직 성분은 방향을 바꿔요.')) + '<br><span style="opacity:.8">힘의 크기와 방향은 옆 조작판에서 바꿔요.</span>');
+        info('<b>🧊 퍽(1 kg)에 힘 주기</b> · 처음 속력 ' + A.PUCK_V0 + ' m/s<br>힘 F = ' + F + ' N · 힘의 방향: 속도와 <b>' + nm + '</b><br>속력 v = ' + f1(v) + ' m/s' + (Math.abs(hd) > 0.01 ? ' · 방향이 ' + Math.round(Math.abs(hd) / RAD) + '° 바뀌었어요' : '') + '<br>' + (phi === 90 ? '힘이 늘 속도에 <b>수직</b>이면 속력은 그대로이고 방향만 바뀌어 <b>원운동</b>을 해요.' : (phi === 0 || phi === 180 ? '힘이 속도와 나란하면 속력만 변하고 방향은 그대로예요.' : '힘의 속도 방향 성분은 속력을, 수직 성분은 방향을 바꿔요.')) + '<br><span style="opacity:.8">힘의 크기와 방향은 조작판에서 바꿔요.</span>');
       }
       const PUCK_V = 3;
       /* ================= 📐 구심 가속도 (Δv 작도) ================= */
@@ -118,7 +118,7 @@
         const dvm = 2 * d.v * Math.sin(dth / 2), off = dth / 2 / RAD;
         /* 가속도 화살표와 '가속도의 방향 = 중심'은 Δt를 충분히 줄여 Δv가 중심을 향할 때(3° 이하) 보여 줘요 (그 전에는 학생이 찾아요) */
         const found = off <= 3.05; dva.visible = found; ldva.show(found);
-        info('<b>📐 구심 가속도: Δv 작도</b> · v = ' + d.v + ' m/s · r = ' + d.r + ' m · Δt = ' + dtv.toFixed(2) + ' s<br>짧은 시간 Δt 동안 속도는 방향이 ' + Math.round(dth / RAD) + '° 바뀌어요. Δv(빨강)는 v와 v′의 차이예요.<br>Δv가 <b>중심 방향에서 벗어난 각</b> = ' + off.toFixed(1) + '°' + (found ? ' → Δv가 거의 중심을 향해요. 초록 화살표: <b>가속도의 방향 = 중심</b>.' : ' → Δt를 바꾸며 Δv의 방향을 살펴봐요.') + '<br><span style="opacity:.8">v · r · Δt는 옆 조작판에서 바꿔요.</span>');
+        info('<b>📐 구심 가속도: Δv 작도</b> · v = ' + d.v + ' m/s · r = ' + d.r + ' m · Δt = ' + dtv.toFixed(2) + ' s<br>짧은 시간 Δt 동안 속도는 방향이 ' + Math.round(dth / RAD) + '° 바뀌어요. Δv(빨강)는 v와 v′의 차이예요.<br>Δv가 <b>중심 방향에서 벗어난 각</b> = ' + off.toFixed(1) + '°' + (found ? ' → Δv가 거의 중심을 향해요. 초록 화살표: <b>가속도의 방향 = 중심</b>.' : ' → Δt를 바꾸며 Δv의 방향을 살펴봐요.') + '<br><span style="opacity:.8">v · r · Δt는 조작판에서 바꿔요.</span>');
       }
       /* ================= 🧵 줄에 매단 공 (위에서 본 모습, 1 m = 3칸) ================= */
       const ballFloor = floorMk(G.ball, 4.4, 0x56718f);
@@ -138,7 +138,7 @@
         setArrow(bV, pa, pa.clone().addScaledVector(cutOn ? new V3(b.cvx, 0, b.cvy).normalize() : t, b.v * 0.35)); lbV.obj = pa.clone().addScaledVector(t, b.v * 0.35); lbV.off = [0, 0.3, 0];
         const Fn = b.m * b.v * b.v / b.r;
         if (!cutOn) { setArrow(bF, pa, pa.clone().addScaledVector(pos.clone().setY(0).multiplyScalar(-1).normalize(), 0.4 + Fn * 0.12)); lbF.obj = pa.clone().addScaledVector(pos.clone().setY(0).multiplyScalar(-1).normalize(), 0.4 + Fn * 0.12); lbF.set('장력 F = ' + f1(Fn) + ' N'); lbF.off = [0, 0.3, 0]; lbF.show(true); } else { bF.visible = false; lbF.show(false); }
-        info('<b>🧵 줄의 장력이 구심력이에요</b> · 공 m = ' + b.m.toFixed(2) + ' kg · r = ' + b.r.toFixed(1) + ' m · v = ' + b.v.toFixed(1) + ' m/s<br>' + (cutOn ? '줄이 끊어졌어요: 구심력이 사라져 <b>접선 방향으로 직진</b>해요 (관성).' : '장력 F = mv²/r = ' + f1(Fn) + ' N · 속도는 접선 방향, 힘은 중심 방향<br>v를 바꾸며 F를 기록하면 F–v² 그래프가 <b>직선</b>이에요 (기울기 m/r).') + '' + (b.rec && b.rec.length ? '<br>📏 기록한 장력: ' + b.rec.slice(-4).map((x) => 'v² = ' + Math.round(x.v * x.v) + ' → F = ' + f1(x.F) + ' N').join(' · ') : '') + '<br><span style="opacity:.8">m · r · v와 줄 끊기는 옆 조작판에서 해요.</span>');
+        info('<b>🧵 줄의 장력이 구심력이에요</b> · 공 m = ' + b.m.toFixed(2) + ' kg · r = ' + b.r.toFixed(1) + ' m · v = ' + b.v.toFixed(1) + ' m/s<br>' + (cutOn ? '줄이 끊어졌어요: 구심력이 사라져 <b>접선 방향으로 직진</b>해요 (관성).' : '장력 F = mv²/r = ' + f1(Fn) + ' N · 속도는 접선 방향, 힘은 중심 방향<br>v를 바꾸며 F를 기록하면 F–v² 그래프가 <b>직선</b>이에요 (기울기 m/r).') + '' + (b.rec && b.rec.length ? '<br>📏 기록한 장력: ' + b.rec.slice(-4).map((x) => 'v² = ' + Math.round(x.v * x.v) + ' → F = ' + f1(x.F) + ' N').join(' · ') : '') + '<br><span style="opacity:.8">m · r · v와 줄 끊기는 조작판에서 해요.</span>');
       }
       /* ================= 🛣️ 커브 도로 (반지름 50 m, 1 m = 0.1칸) ================= */
       const roadArc = new THREE.Mesh(new THREE.TorusGeometry(5, 0.38, 6, 160), M(0x3b4250, { roughness: 0.95 })); roadArc.rotation.x = Math.PI / 2; roadArc.scale.z = 0.12; G.road.add(roadArc);
@@ -165,7 +165,7 @@
         lrV.off = [0, 0.3, 0]; lrF.off = [0, 0.3, 0];
         const key = r.trail.length + '|' + r.skid; if (key !== rdKey) { rdKey = key; if (rdTr) { G.road.remove(rdTr); rdTr.geometry.dispose(); rdTr = null; } if (r.trail.length > 1) { rdTr = tube(r.trail.map((q) => toM(q[0], q[1]).setY(0.08)), 0.04, 0xfacc15, { basic: true, op: 0.8 }); G.road.add(rdTr); } }
         const hide = A.eff('hideLim');
-        info('<b>🛣️ 커브 도로: 마찰력이 구심력이에요</b> · 반지름 50 m · 자동차 1000 kg<br>도로 마찰 계수 μ = ' + r.mu + ' · 속력 ' + r.kmh + ' km/h (' + f1(v) + ' m/s)<br>' + (r.skid ? '🚨 마찰력이 모자라 <b>미끄러져요</b>: 접선 방향으로 바깥쪽으로 나가요.' : '마찰력이 구심력(mv²/r)을 충분히 내고 있어 커브를 돌아요.') + (hide ? '' : '<br>한계 속력 = ' + f1(A.rdVmax(r.mu) * 3.6) + ' km/h') + '<br><span style="opacity:.8">도로 상태와 속력은 옆 조작판에서 바꿔요.</span>');
+        info('<b>🛣️ 커브 도로: 마찰력이 구심력이에요</b> · 반지름 50 m · 자동차 1000 kg<br>도로 마찰 계수 μ = ' + r.mu + ' · 속력 ' + r.kmh + ' km/h (' + f1(v) + ' m/s)<br>' + (r.skid ? '🚨 마찰력이 모자라 <b>미끄러져요</b>: 접선 방향으로 바깥쪽으로 나가요.' : '마찰력이 구심력(mv²/r)을 충분히 내고 있어 커브를 돌아요.') + (hide ? '' : '<br>한계 속력 = ' + f1(A.rdVmax(r.mu) * 3.6) + ' km/h') + '<br><span style="opacity:.8">도로 상태와 속력은 조작판에서 바꿔요.</span>');
       }
       /* ================= 🎡 회전 그네 (1 m = 0.45칸) ================= */
       const UH = 0.45;
@@ -185,7 +185,7 @@
         setArrow(sW, hang, hang.clone().add(new V3(0, -1.1, 0))); lsW.obj = hang.clone().add(new V3(0, -1.2, 0));
         setArrow(sC, hang, hang.clone().addScaledVector(inw, 0.5 + w.w * w.w * 0.6)); lsC.obj = hang.clone().addScaledVector(inw, 0.5 + w.w * w.w * 0.6); lsC.off = [0, 0.25, 0];
         const hide = A.eff('hideTh') || A.eff('hideA');
-        info('<b>🎡 회전 그네</b> · 회전 빠르기 ω = ' + f1(w.w) + ' rad/s' + (hide ? '' : ' · 반지름 r = ' + f1(sv.r) + ' m · 줄이 수직과 이루는 각 θ = ' + (th / RAD).toFixed(1) + '°') + '<br>장력의 연직 성분은 중력과 균형, <b>수평 성분이 구심력</b>이에요. ω가 커질수록 바깥으로 더 벌어져요.' + (A.eff('lockW') ? '' : '<br><span style="opacity:.8">ω는 옆 조작판에서 바꿔요.</span>'));
+        info('<b>🎡 회전 그네</b> · 회전 빠르기 ω = ' + f1(w.w) + ' rad/s' + (hide ? '' : ' · 반지름 r = ' + f1(sv.r) + ' m · 줄이 수직과 이루는 각 θ = ' + (th / RAD).toFixed(1) + '°') + '<br>장력의 연직 성분은 중력과 균형, <b>수평 성분이 구심력</b>이에요. ω가 커질수록 바깥으로 더 벌어져요.' + (A.eff('lockW') ? '' : '<br><span style="opacity:.8">ω는 조작판에서 바꿔요.</span>'));
       }
       /* ================= 🎡 관람차 (반지름 10 m, 1 m = 0.4칸) ================= */
       const UW = 0.4;
@@ -207,7 +207,7 @@
         setArrow(wG, me.clone().add(new V3(0.5, 0, 0.4)), me.clone().add(new V3(0.5, -1.0, 0.4))); lwG.obj = me.clone().add(new V3(0.6, -1.1, 0.4));
         setArrow(wN, me.clone().add(new V3(-0.5, 0, 0.4)), me.clone().add(new V3(-0.5, 0.35 + Math.max(0, az) * 1.0, 0.4))); lwN.obj = me.clone().add(new V3(-0.5, 0.5 + Math.max(0, az), 0.4)); lwN.set(hide ? '좌석이 나를 미는 힘 N' : 'N = ' + f2(az) + ' mg');
         lwMe.off = [0, -0.7, 0]; lwV.off = [0.4, 0.3, 0]; lwG.off = [0.3, 0, 0]; lwN.off = [-0.4, 0.2, 0];
-        info('<b>🎡 관람차</b> · 반지름 ' + A.WH_R + ' m · 속력 ' + f1(w.v) + ' m/s<br>빨간 곤돌라(나)의 스마트폰 연직 센서' + ' = <b>' + f2(az) + ' g</b> (1 g = 가만히 있을 때)' + (hide ? ' → 센서 값으로 좌석이 미는 힘을 구해요.' : '') + '<br>최저점에서는 센서 값이 커지고, 최고점에서는 작아져요 (원운동의 구심 가속도 때문).' + (A.eff('lockV') ? '' : '<br><span style="opacity:.8">속력은 옆 조작판에서 바꿔요.</span>'));
+        info('<b>🎡 관람차</b> · 반지름 ' + A.WH_R + ' m · 속력 ' + f1(w.v) + ' m/s<br>빨간 곤돌라(나)의 스마트폰 연직 센서' + ' = <b>' + f2(az) + ' g</b> (1 g = 가만히 있을 때)' + (hide ? ' → 센서 값으로 좌석이 미는 힘을 구해요.' : '') + '<br>최저점에서는 센서 값이 커지고, 최고점에서는 작아져요 (원운동의 구심 가속도 때문).' + (A.eff('lockV') ? '' : '<br><span style="opacity:.8">속력은 조작판에서 바꿔요.</span>'));
       }
       /* ================= 🎡 로터 (반지름 2 m, 1 m = 0.9칸) ================= */
       const UR = 0.9, ROH = 5;
@@ -229,7 +229,7 @@
         setArrow(oG, P0.clone().add(new V3(0, -0.2, 0)), P0.clone().add(new V3(0, -1.2, 0))); loG.obj = P0.clone().add(new V3(0, -1.3, 0));
         const sl = fmax >= 50 * 10 - 1e-9; setArrow(oF, P0.clone().add(new V3(0, 0.2, 0)), P0.clone().add(new V3(0, 0.2 + Math.min(1.2, fmax / 500), 0))); loF.obj = P0.clone().add(new V3(0, 0.3 + Math.min(1.2, fmax / 500), 0));
         const hide = A.eff('hideLim') || A.eff('hideN');
-        info('<b>🎡 로터</b> · 반지름 ' + A.RO_R + ' m · 사람 50 kg · 벽 마찰 계수 μ = ' + r.mu + '<br>ω = ' + f1(r.w) + ' rad/s' + (hide ? '' : ' · 벽이 미는 힘 N = mω²r = ' + Math.round(Nn) + ' N · 최대 정지 마찰력 μN = ' + Math.round(fmax) + ' N (중력 500 N)') + '<br>' + (r.st === 'stuck' ? '마찰력이 중력을 이겨 사람이 벽에 <b>붙어 있어요</b>.' : r.st === 'slide' ? '마찰력이 모자라 사람이 <b>미끄러져요</b>.' : r.st === 'down' ? '바닥까지 내려왔어요.' : '바닥을 내려 사람이 벽에 붙는지 확인해 보세요 (옆 조작판).') + '<br><span style="opacity:.8">ω · 마찰 계수 · 바닥 내리기는 옆 조작판에서 해요.</span>');
+        info('<b>🎡 로터</b> · 반지름 ' + A.RO_R + ' m · 사람 50 kg · 벽 마찰 계수 μ = ' + r.mu + '<br>ω = ' + f1(r.w) + ' rad/s' + (hide ? '' : ' · 벽이 미는 힘 N = mω²r = ' + Math.round(Nn) + ' N · 최대 정지 마찰력 μN = ' + Math.round(fmax) + ' N (중력 500 N)') + '<br>' + (r.st === 'stuck' ? '마찰력이 중력을 이겨 사람이 벽에 <b>붙어 있어요</b>.' : r.st === 'slide' ? '마찰력이 모자라 사람이 <b>미끄러져요</b>.' : r.st === 'down' ? '바닥까지 내려왔어요.' : '바닥을 내려 사람이 벽에 붙는지 확인해 보세요 (조작판).') + '<br><span style="opacity:.8">ω · 마찰 계수 · 바닥 내리기는 조작판에서 해요.</span>');
       }
       /* ================= 장면 · ▶ 재생 ================= */
       const PL = {}; let cur = '';

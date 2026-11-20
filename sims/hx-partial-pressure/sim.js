@@ -424,7 +424,7 @@
     T(tx + tw / 2, ty - 8, '혼합 기체 (몰 분율 = 부피 %)', 12.5, '#fff', 'center', 800);
     T(tx + 6, ty + 18, 'O₂ ' + dv.o2 + ' %', 13, '#fff', 'left', 800);
     T(tx + tw - 6, ty + 18, (dv.dil === 'he' ? 'He ' : 'N₂ ') + (100 - dv.o2) + ' %', 13, dv.dil === 'he' ? '#5a4300' : '#fff', 'right', 800);
-    // 오른쪽 패널
+    // 조작판
     panel(Rr.x, Rr.y, Rr.w, Rr.h, 14);
     const gx = Rr.x + Rr.w / 2, gy = Rr.y + (PHONE ? 112 : 108), gr = PHONE ? 66 : 64, po2 = dvO2();
     T(Rr.x + 14, Rr.y + 26, '🧭 산소 분압 P(O₂) = X(O₂) × P(전체)', 14, INK, 'left', 800);

@@ -597,7 +597,7 @@
     // 열 화살표 (파랑: 들어옴)
     if (NA.flame && prog < 1) { [[fx - 40, 316, -Math.PI * 0.75], [fx, 300, -Math.PI / 2], [fx + 46, 312, -Math.PI * 0.3]].forEach((p) => heatArrow(p[0], p[1], p[2] + Math.PI, 0.9, false, t)); }
     if (NA.flame && prog < 1) D.label(fx + 70, 272, '열을 흡수해서 분해돼요', { bg: 'rgba(255,255,255,.95)', color: '#1d5fb8', size: 13, border: '#a8c9f1' });
-    // 오른쪽 패널
+    // 조작판
     panel(432, 18, 358, 300);
     txt('📈 분해된 정도', 611, 46, 15, COL.ink, 'center', 800);
     const gx0 = 480, gx1 = 770, gy0 = 80, gy1 = 270, tmax = 40;

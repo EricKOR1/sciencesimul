@@ -859,7 +859,7 @@
         {
           title: '전사 시작',
           goal: '<b>▶ 전사 시작</b>을 눌러 RNA 중합 효소가 DNA 이중 가닥을 푸는 모습을 지켜보세요.',
-          hint: '오른쪽 패널의 ▶ 전사 시작 버튼을 눌러요. DNA가 지퍼처럼 열려요.',
+          hint: '조작판의 ▶ 전사 시작 버튼을 눌러요. DNA가 지퍼처럼 열려요.',
           setup() { ensure('tr'); },
           check: () => S.tr.opened || S.tr.ph === 'synth' || S.tr.done, hold: 0.4,
           status: () => mark(S.tr.started) + ' 전사 시작 · ' + mark(S.tr.opened || S.tr.done) + ' DNA가 풀림',

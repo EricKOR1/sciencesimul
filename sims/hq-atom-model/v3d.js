@@ -109,7 +109,7 @@
           const n = st.n, tr = st.tr;
           let h = '<b>보어 모형</b> · 전자는 정해진 궤도만 돌아요.<br>n = <b>' + n + '</b> · 반지름 rₙ = 0.053 n² = <b>' + (A0NM * n * n).toFixed(3) + ' nm</b> · 에너지 Eₙ = −13.6/n² = <b>' + (-13.6 / (n * n)).toFixed(2) + ' eV</b>';
           if (tr) h += '<br>전이 ' + tr.ni + '→' + tr.nf + ' (' + tr.name + '): ΔE = <b>' + trE(tr.key).toFixed(2) + ' eV</b> → hf = ΔE, 파장 λ = 1240/ΔE ≈ <b>' + Math.round(lamOf(tr.key)) + ' nm</b>' + (tr.key === '2-1' ? ' (자외선)' : '');
-          else h += '<br>높은 궤도 → 낮은 궤도로 전이하면 hf = ΔE 인 빛이 나와요. 옆 조작판의 전이 버튼을 눌러 보세요.';
+          else h += '<br>높은 궤도 → 낮은 궤도로 전이하면 hf = ΔE 인 빛이 나와요. 조작판의 전이 버튼을 눌러 보세요.';
           info(h);
         } else {
           const N = st.N; let inA = 0, in3 = 0; for (let i = 0; i < N; i++) { if (RS[i] <= 1) inA++; if (RS[i] <= 3) in3++; }
