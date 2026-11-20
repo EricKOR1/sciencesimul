@@ -493,8 +493,8 @@
     [-160, -120, -80, -40, 0, 40, 80, 120, 160].forEach((km) => { ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X2(Q, km), Q.y + Q.h); ctx.lineTo(X2(Q, km), Q.y + Q.h + 5); ctx.stroke(); D.text(X2(Q, km), Q.y + Q.h + 18 * FS, String(Math.abs(km)), { size: 12, weight: 700, color: '#64748b' }); });
     D.text(Q.x + Q.w / 2, Q.y + Q.h + 34 * FS, '해령 축에서 떨어진 거리 (km)', { size: 12, weight: 700, color: '#64748b' });
     [0.78, 2.58, 3.6].forEach((age) => { const km = age * VH_KM; if (km >= ext) return; [-1, 1].forEach((sg) => { ctx.fillStyle = '#f59e0b'; poly([[X2(Q, sg * km), Q.y - 1], [X2(Q, sg * km) - 5, Q.y - 10], [X2(Q, sg * km) + 5, Q.y - 10]]); ctx.fill(); }); });
-    const lab = (age, txt) => { const km = age * VH_KM; if (km >= ext) return; D.text(X2(Q, km), Q.y - 14, txt, { size: 11.5, weight: 800, color: '#b45309', stroke: 'rgba(255,255,255,.8)', strokeWidth: 3 }); };
-    lab(0.78, '78만 년 전'); if (!PHONE) { lab(2.58, '258만 년'); lab(3.6, '360만 년'); }
+    const lab = (age, txt, sg = 1) => { const km = age * VH_KM; if (km >= ext) return; D.text(X2(Q, sg * km), Q.y - 14, txt, { size: 11.5, weight: 800, color: '#b45309', stroke: 'rgba(255,255,255,.8)', strokeWidth: 3 }); };
+    lab(0.78, '78만 년 전'); if (!PHONE) { lab(2.58, '258만 년', -1); lab(3.6, '360만 년'); }
     D.text(Q.x + 4, B.y + 44 * FS, '■ 정상 자기(현재와 같음)  □ 역전 자기', { size: 12, weight: 800, color: '#334155', align: 'left' });
     D.text(Q.x + Q.w - 4, B.y + 44 * FS, '▲ 지자기 역전 경계', { size: 12, weight: 800, color: '#b45309', align: 'right' });
     // 시추 시료의 나이 그래프

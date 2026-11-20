@@ -706,7 +706,7 @@
           title: '100 m당 기압 감소량', manual: true,
           goal: '층의 두께 Δz = <b>100 m</b>일 때, <b>지표 부근(ρ = 1.2)</b>과 <b>5 km 부근(ρ = 0.74)</b>에서 100 m당 기압 감소량 Δp = ρgΔz를 hPa로 계산해 입력해요.',
           hint: '지표: 1.2 × 9.8 × 100 = 1176 Pa = 약 11.8 hPa, 5 km: 0.74 × 9.8 × 100 = 725 Pa = 약 7.3 hPa예요. (1 hPa = 100 Pa) 밀도 단추와 두께 슬라이더로 확인해도 돼요.',
-          setup() { $('#iDp0').value = ''; $('#iDp5').value = ''; setRho(1.2); setDz(100); setMode('hydro'); setCtl(['rho', 'grav', 'dpIn']); },
+          setup() { $('#iDp0').value = ''; $('#iDp5').value = ''; setRho(1.2); setDz(100); setMode('hydro'); setCtl(['rho', 'dzS', 'grav', 'dpIn']); },
           status: () => mark(near($in('#iDp0'), 11.76, 0.7)) + ' 지표 ' + ($in('#iDp0') == null ? '—' : $in('#iDp0')) + ' · ' + mark(near($in('#iDp5'), 7.25, 0.7)) + ' 5 km ' + ($in('#iDp5') == null ? '—' : $in('#iDp5')) + ' (hPa)',
           check() {
             const a = $in('#iDp0'), b = $in('#iDp5'); if (a == null || b == null) return '두 칸에 모두 값을 입력해 주세요.';

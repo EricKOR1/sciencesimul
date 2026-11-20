@@ -715,8 +715,9 @@
     const rl = (k, tgt) => roll(k, tgt, dt, 8);
     D.text(tx, C.y + 56, 'Q = ' + S.q + ' W/m²  (L = 2.5×10⁶ J/kg)', { size: 14, weight: 800, color: '#334155', align: 'left' });
     D.text(tx, C.y + 56 + 28 * FS * 0.85, 'm = Q / L = ' + (mq * 1e5).toFixed(1) + '×10⁻⁵ kg/(m²·s)', { size: 14, weight: 800, color: '#334155', align: 'left' });
-    D.text(tx, C.y + 56 + 56 * FS * 0.85, '1일(86400 s) 동안 = ' + (S.q === 0 ? '0.0' : evapDay(S.q).toFixed(1)) + ' mm/일', { size: 15.5, weight: 800, color: '#b91c1c', align: 'left' });
-    D.text(tx, C.y + 56 + 84 * FS * 0.85, '1년 동안 ≈ ' + (S.q === 0 ? '0' : String(Math.round(yr / 10) * 10)) + ' mm/년', { size: 15.5, weight: 800, color: '#0369a1', align: 'left' });
+    const evShow = S.showEvap || (game && game.free);
+    D.text(tx, C.y + 56 + 56 * FS * 0.85, '1일(86400 s) 동안 = ' + (!evShow ? '? (직접 계산해요)' : (S.q === 0 ? '0.0' : evapDay(S.q).toFixed(1)) + ' mm/일'), { size: 15.5, weight: 800, color: '#b91c1c', align: 'left' });
+    D.text(tx, C.y + 56 + 84 * FS * 0.85, '1년 동안 ≈ ' + (!evShow ? '?' : (S.q === 0 ? '0' : String(Math.round(yr / 10) * 10)) + ' mm/년'), { size: 15.5, weight: 800, color: '#0369a1', align: 'left' });
     drawWrap(C.x + C.w / 2, C.y + C.h - (PHONE ? 38 : 50), '전 지구 평균 강수량은 약 1000 mm/년 → 증발한 물은 모두 비로 돌아와요. (1 kg/m² = 1 mm)', C.w - 24, 12.5, { color: '#475569', weight: 800 });
   }
 
@@ -871,7 +872,7 @@
     S.proc = 'scatter'; S.procSeen = { scatter: true }; S.elev = 60; S.elevR = 0; S.surf = 'snow'; S.surfSeen = { snow: true };
     setSlider($('#sElev'), $('#oElev'), 60, (v) => v + '°'); setSlider($('#sElevR'), $('#oElevR'), 0, (v) => (+v).toFixed(1) + '°'); syncSeg('#procBtns', 'pr', 'scatter'); syncSeg('#surfBtns', 's', 'snow');
     S.fill = {}; S.used = {}; S.sel = 'ref'; S.wrongIds = []; syncBank();
-    S.q = 80; S.qSeen = { 80: true }; setSlider($('#sQ'), $('#oQ'), 80, (v) => v + ' W/m²'); lbars.rad = lbars.sen = lbars.lat = 0; heatCloud = 0;
+    S.q = 80; S.qSeen = { 80: true }; S.showEvap = true; setSlider($('#sQ'), $('#oQ'), 80, (v) => v + ' W/m²'); lbars.rad = lbars.sen = lbars.lat = 0; heatCloud = 0;
     S.co2 = 280; S.fb = false; setSlider($('#sCo2'), $('#oCo2'), 280, (v) => v + ' ppm'); S.runSeen = { 280: true }; syncFb(); resetWarm();
     if (li === 0) { setMode('path'); setCtl(['proc', 'elev', 'elevR', 'ratioIn']); showHint('과정을 하나씩 눌러 빛이 어떻게 달라지는지 봐요', 5200); }
     else if (li === 1) { setMode('budget'); setCtl(['bank']); showHint('빈칸(❔)을 누르고 숫자 카드를 눌러 채워요', 5200); }
@@ -989,7 +990,7 @@
           title: '증발량 계산', manual: true,
           goal: '잠열 <b>80 W/m²</b>가 증발시키는 물의 양을 <b>m = Q / L</b>(L = 2.5×10⁶ J/kg)로 구해 <b>mm/일</b>로 입력해요. (1 kg/m² = 1 mm)',
           hint: 'm = 80 / 2.5×10⁶ = 3.2×10⁻⁵ kg/(m²·s)이에요. 하루는 86400초이니 3.2×10⁻⁵ × 86400을 계산해 봐요.',
-          setup() { $('#iEvap').value = ''; S.q = 80; setSlider($('#sQ'), $('#oQ'), 80, (v) => v + ' W/m²'); setMode('latent'); setCtl(['qSl', 'evapIn']); },
+          setup() { $('#iEvap').value = ''; S.showEvap = false; S.q = 80; setSlider($('#sQ'), $('#oQ'), 80, (v) => v + ' W/m²'); setMode('latent'); setCtl(['qSl', 'evapIn']); },
           status: () => mark(S.q === 80) + ' Q = ' + S.q + ' W/m² (목표 80) · ' + mark(near($in('#iEvap'), evapDay(80), 0.1)) + ' 입력 ' + ($in('#iEvap') == null ? '—' : $in('#iEvap') + ' mm/일'),
           check() {
             if (S.q !== 80) return '먼저 잠열 플럭스 Q를 80 W/m²로 맞춰 주세요.';
@@ -1004,7 +1005,7 @@
           title: '열 이동의 크기 순서', manual: true,
           goal: '지표에서 대기로 열을 옮기는 세 가지 방식을 <b>큰 순서대로</b> 눌러 번호를 매겨요.',
           hint: '막대 그래프를 보세요. 잠열 80, 순 복사 60, 현열 20이에요.',
-          setup() { ordHeat.reset(); setMode('latent'); setCtl(['qSl', 'ordHeat']); },
+          setup() { S.showEvap = true; ordHeat.reset(); setMode('latent'); setCtl(['qSl', 'ordHeat']); },
           status: () => mark(ordHeat.ok()) + ' 고른 항목 ' + ordHeat.seq.length + ' / 3',
           check() {
             if (!ordHeat.complete()) return '세 가지를 모두 눌러 순서를 매겨 주세요.';
@@ -1016,7 +1017,7 @@
         {
           type: 'quiz', title: '구름이 만들어질 때 공기가 데워지는 까닭',
           goal: '구름이 만들어질 때 주변 공기가 따뜻해지는 까닭은?',
-          setup() { setMode('latent'); setCtl(['qSl']); },
+          setup() { S.showEvap = true; setMode('latent'); setCtl(['qSl']); },
           choices: ['수증기가 응결하면서 증발할 때 저장해 둔 잠열을 방출하기 때문이에요.', '증발할 때 열이 사라졌다가 구름에서 새로 생기기 때문이에요.', '구름이 태양 빛을 모두 흡수하기 때문이에요.', '수증기가 물방울이 되면 에너지가 줄어들어 온도가 오르기 때문이에요.'],
           answer: 0,
           feedback: ['', '열은 사라지지 않아요. 수증기 속에 저장(잠열)되어 있다가 응결할 때 방출돼요.', '구름은 태양 빛을 대부분 반사·산란해서 흰색으로 보여요. 공기를 데우는 주된 열원은 응결 잠열이에요.', '에너지는 줄어드는 것이 아니라 열의 형태로 주변에 방출돼요.'],
@@ -1078,7 +1079,7 @@
       else if (S.proc === 'absorb') setReadouts(['자외선', '오존이 흡수', '가시광선', '대부분 통과', '적외선', '수증기·CO₂가 흡수']);
       else setReadouts(['실제 고도', fx(S.elevR, 1) + '°', '보이는 고도', fx(S.elevR + refrR(S.elevR), 2) + '°', '굴절각', fx(refrR(S.elevR), 2) + '°']);
     } else if (m === 'budget') setReadouts(['채운 칸', filledN() + ' / 8', '균형이 맞는 곳', okRows() + ' / 3', '선택한 칸', S.sel ? BNAME[S.sel] : '—']);
-    else if (m === 'latent') setReadouts(['잠열 플럭스 Q', S.q + ' W/m²', '증발량', fx(evapDay(S.q), 1) + ' mm/일', '연 증발량', (S.q === 0 ? '0' : String(Math.round(evapDay(S.q) * 365 / 10) * 10)) + ' mm/년']);
+    else if (m === 'latent') setReadouts(['잠열 플럭스 Q', S.q + ' W/m²', '증발량', S.showEvap || (game && game.free) ? fx(evapDay(S.q), 1) + ' mm/일' : '직접 계산해요', '연 증발량', S.showEvap || (game && game.free) ? (S.q === 0 ? '0' : String(Math.round(evapDay(S.q) * 365 / 10) * 10)) + ' mm/년' : '—']);
     else setReadouts(['CO₂ 농도', S.co2 + ' ppm', '불균형 N', fx(warmN(), 1) + ' W/m²', '지표 온도 변화 ΔT', '+' + fx(S.dT, 1) + ' K']);
   }
 
