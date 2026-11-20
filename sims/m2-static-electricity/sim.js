@@ -1079,7 +1079,7 @@
           {
             title: '유도 현상 관찰하기',
             goal: '<b>(−) 막대</b>와 <b>(+) 막대</b>를 각각 금속 막대 가까이에 대 보세요. 금속 속 전자가 어느 쪽으로 움직이나요?',
-            hint: '막대의 끝이 금속 막대의 끝에 닿을 듯 가까이 가야 해요. 위쪽 버튼으로 (−), (+)를 바꿔요.',
+            hint: '막대의 끝이 금속 막대의 끝에 닿을 듯 가까이 가야 해요. ‘대전체(막대)의 전기’ 버튼으로 (−), (+)를 바꿔요.',
             setup() { setScene('induce'); setIndObj('metal'); setIndQ(-1); S.ind.negDone = false; S.ind.posDone = false; S.ind.hold = { '-1': 0, '1': 0 }; },
             check: () => S.scene === 'induce' && S.ind.negDone && S.ind.posDone,
             status: () => box(S.ind.negDone) + ' (−) 막대로 유도 · ' + box(S.ind.posDone) + ' (+) 막대로 유도' + (S.ind.obj !== 'metal' ? '<br><span style="color:#c2410c">🧪 대상을 금속 막대로 바꿔요</span>' : ''),
