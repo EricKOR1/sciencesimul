@@ -759,7 +759,7 @@
           title: '스피드건의 Δf로 속력 구하기', manual: true,
           goal: '스피드건(24 GHz)이 반사파에서 <b>Δf = 4800 Hz</b>를 잰 자동차의 속력을 <b>m/s</b>와 <b>km/h</b>로 구해 입력하세요. (c = 3.0×10⁸ m/s)',
           hint: 'Δf ≈ 2 f u / c에서 u = Δf · c / (2 f)예요. m/s를 km/h로 바꾸려면 3.6을 곱해요.',
-          setup() { resetFlags(); clr('iGu', 'iGk'); setFlag('gunOK', true); S.gun.ui = 4; setScene('gun'); enterScene('gun'); updateCtl(); },
+          setup() { resetFlags(); clr('iGu', 'iGk'); setFlag('gunOK', true); S.gun.ui = 2; setScene('gun'); enterScene('gun'); updateCtl(); },
           check() {
             const a = num('iGu'), b = num('iGk'); if (a == null || b == null) return '두 칸 모두 입력해 주세요.';
             const oks = [near(a, 30, 1), near(b, 108, 3)]; fb([[$('#iGu'), oks[0]], [$('#iGk'), oks[1]]]);
@@ -775,7 +775,7 @@
           title: '초음파 혈류의 속도 구하기', manual: true,
           goal: '5.0 MHz 초음파 혈류계가 <b>Δf ≈ 3.2 kHz</b>(3200 Hz)를 잰 혈류의 속도를 <b>m/s</b>로 구해 입력하세요. (혈액 속 소리 v = 1540 m/s)',
           hint: 'Δf ≈ 2 f u / v에서 u = Δf · v / (2 f)예요. 5.0 MHz = 5.0×10⁶ Hz.',
-          setup() { resetFlags(); clr('iBu'); setFlag('bloodOK', true); S.bl.ui = 4; setScene('blood'); enterScene('blood'); updateCtl(); },
+          setup() { resetFlags(); clr('iBu'); setFlag('bloodOK', true); S.bl.ui = 1; setScene('blood'); enterScene('blood'); updateCtl(); },
           check() {
             const a = num('iBu'); if (a == null) return '속도를 숫자로 입력해 주세요 (m/s).';
             const ok = near(a, 0.5, 0.03); fb([[$('#iBu'), ok]]);

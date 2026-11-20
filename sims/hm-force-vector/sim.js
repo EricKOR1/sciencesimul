@@ -113,6 +113,9 @@
   let game = null;
   const l1 = $('#l1'), l2 = $('#l2'), l3 = $('#l3'), v1 = $('#v1'), v2 = $('#v2'), v3 = $('#v3');
   const eff = (k) => (game && game.free ? (k === 'rec') : S.flags[k]);
+  /* 예측 미션 중에는 놓기·시뮬레이션 전까지 답이 되는 값을 ?로 가려요 */
+  const slHide = () => eff('spred') && !S.sl.last;
+  const prHide = () => eff('ppred') && !S.pr.done[S.pr.sc];
 
   function setScene(mode) {
     if (S.mode !== mode) { S.fade = 1; parts.clear(); if (S.sl.st === 'run') slReset(); if (S.pr.st === 'run') prReset(); }
@@ -279,8 +282,8 @@
     D.sphere(cx, cy, 7, '#7c8aa5', { gloss: false, outline: '#3a465c' });
     const lab = (x, y, s, bg, al) => labIn(x, y, s, { bg, size: 13, align: al || 'center' }, f.bx + 4, VW - 12);
     lab(cx + 10, cy + PL.m * G * k * 0.7, 'mg = ' + (PL.m * G).toFixed(1) + ' N', '#5a6679', 'left');
-    lab(cx + 10, cy - cal.N * k + 2, 'N = ' + cal.N.toFixed(1) + ' N', '#3867f4', 'left');
-    if (cal.f > 0.02) lab(cx - cal.f * k - 6, cy + 24, 'f = ' + cal.f.toFixed(1) + ' N', '#d97706', 'right');
+    lab(cx + 10, cy - cal.N * k + 2, 'N = ' + (S.pu.hide ? '?' : cal.N.toFixed(1)) + ' N', '#3867f4', 'left');
+    if (cal.f > 0.02) lab(cx - cal.f * k - 6, cy + 24, 'f = ' + (S.pu.hide ? '?' : cal.f.toFixed(1)) + ' N', '#d97706', 'right');
     lab(cx + cal.fx * k + 10, cy - cal.fy * k - 24, 'F = ' + PL.F + ' N', '#e2464b', 'left');
     if (cal.fx > 0.05) lab(cx + cal.fx * k - 4, cy + 20, 'Fx', '#db2777', 'center');
     if (cal.fy > 0.3) lab(cx + cal.fx * k + 24, cy - cal.fy * k / 2, 'Fy', '#db2777', 'left');
@@ -392,8 +395,8 @@
     D.sphere(cx, cy, 6, '#7c8aa5', { gloss: false, outline: '#3a465c' });
     const lab = (x, y, str, bg, al) => labIn(x, y, str, { bg, size: 13, align: al || 'center' }, f.bx + 4, VW - 12);
     lab(cx + 8, Math.min(SH - 22, cy + mg * k + 12), 'mg = ' + mg.toFixed(0) + ' N', '#5a6679', 'left');
-    lab(cx + nrm.x * c.N * k + 10, cy - nrm.y * c.N * k - 4, 'N = ' + c.N.toFixed(1) + ' N', '#3867f4', 'left');
-    if (c.f > 0.02) lab(cx - e.x * c.f * k - 6, cy - e.y * c.f * k - 18, 'f = ' + c.f.toFixed(1) + ' N', '#d97706', 'right');
+    lab(cx + nrm.x * c.N * k + 10, cy - nrm.y * c.N * k - 4, 'N = ' + (slHide() ? '?' : c.N.toFixed(1)) + ' N', '#3867f4', 'left');
+    if (c.f > 0.02) lab(cx - e.x * c.f * k - 6, cy - e.y * c.f * k - 18, 'f = ' + (slHide() ? '?' : c.f.toFixed(1)) + ' N', '#d97706', 'right');
     lab(tipE.x + 8, tipE.y + 12, 'mg sinθ', '#db2777', 'left');
     lab(tipN.x - 8, tipN.y + 12, 'mg cosθ', '#db2777', 'right');
     drawSlopePanel(c, s);
@@ -401,11 +404,12 @@
   function drawSlopePanel(c, s) {
     panel(PX, PY, PW, PH, 16);
     const x0 = PX + 14, lh = PHONE ? 24 : 27, fs = PHONE ? 13 : 14.5, y0 = PY + 25;
+    const hq = (v) => (slHide() ? '?' : v);
     lines(x0, y0, lh, fs, [
-      ['비탈 방향 성분 mg sinθ = ' + c.par.toFixed(1) + ' N'],
-      ['수직 성분 mg cosθ = N = ' + c.N.toFixed(1) + ' N', '#1d4ed8'],
-      [c.slides ? '마찰력 f = μN = ' + c.fk.toFixed(1) + ' N' : '마찰력 f = mg sinθ = ' + c.par.toFixed(1) + ' N (최대 μN = ' + c.fk.toFixed(1) + ' N)', '#b45309'],
-      ['가속도 a = g(sinθ − μcosθ) = ' + c.a.toFixed(1) + ' m/s²', '#0b6b39'],
+      ['비탈 방향 성분 mg sinθ = ' + hq(c.par.toFixed(1)) + ' N'],
+      ['수직 성분 mg cosθ = N = ' + hq(c.N.toFixed(1)) + ' N', '#1d4ed8'],
+      [c.slides ? '마찰력 f = μN = ' + hq(c.fk.toFixed(1)) + ' N' : '마찰력 f = mg sinθ = ' + hq(c.par.toFixed(1)) + ' N (최대 μN = ' + hq(c.fk.toFixed(1)) + ' N)', '#b45309'],
+      ['가속도 a = g(sinθ − μcosθ) = ' + hq(c.a.toFixed(1)) + ' m/s²', '#0b6b39'],
     ]);
     const cond = 'tanθ = ' + Math.tan(s.th * RAD).toFixed(2) + (c.slides ? ' > ' : ' ≤ ') + 'μ = ' + s.mu.toFixed(1);
     const bx = PHONE ? x0 : x0, by = y0 + 4 * lh - 6;
@@ -625,25 +629,25 @@
   function drawPredictPanel(t) {
     panel(PX, PY, PW, PH, 16);
     const p = S.pr, x0 = PX + 14, lh = PHONE ? 24 : 27, fs = PHONE ? 13 : 14.5, y0 = PY + 25;
-    const sc = p.sc, doneNow = p.st === 'done';
+    const sc = p.sc, doneNow = p.st === 'done', hq = (v) => (prHide() ? '?' : v);
     let L;
     if (sc === 'A') L = [
       ['① 합력 = 바람의 힘 = 0.40 N (+y 방향뿐)'],
       ['② a_y = F / m = 0.40 / 0.20 = 2.0 m/s², a_x = 0'],
-      ['③ 1 s 후  x = v₀t = 2.0 m,  y = ½ a t² = ' + (0.5 * AA).toFixed(1) + ' m', '#0b6b39'],
-      ['④ 속도 (vx, vy) = (2.0, ' + AA.toFixed(1) + ') → 속력 ' + TRUE.Av.toFixed(1) + ' m/s', '#0b6b39'],
+      ['③ 1 s 후  x = v₀t = 2.0 m,  y = ½ a t² = ' + hq((0.5 * AA).toFixed(1)) + ' m', '#0b6b39'],
+      ['④ 속도 (vx, vy) = (2.0, ' + hq(AA.toFixed(1)) + ') → 속력 ' + hq(TRUE.Av.toFixed(1)) + ' m/s', '#0b6b39'],
     ];
     else if (sc === 'B') L = [
       ['① 비탈 방향 mg sinθ = ' + BCALC.par.toFixed(1) + ' N,  N = ' + BCALC.N.toFixed(1) + ' N'],
       ['② f = μN = ' + BCALC.fk.toFixed(1) + ' N  → 알짜힘 = ' + (BCALC.par - BCALC.fk).toFixed(1) + ' N'],
       ['③ a = 알짜힘 / m = ' + BCALC.a.toFixed(1) + ' m/s²', '#0b6b39'],
-      ['④ 2.0 s 후  v = at = ' + B_V.toFixed(1) + ' m/s,  d = ½at² = ' + B_D.toFixed(1) + ' m', '#0b6b39'],
+      ['④ 2.0 s 후  v = at = ' + hq(B_V.toFixed(1)) + ' m/s,  d = ½at² = ' + hq(B_D.toFixed(1)) + ' m', '#0b6b39'],
     ];
     else L = [
       ['① 두 힘 400 N, 사이각 60° (각 힘은 보트 진행 방향에서 30°)'],
-      ['② R = 2F cos30° = 2 × 400 × 0.866 = ' + C_R.toFixed(0) + ' N', '#c2410c'],
-      ['③ a = R / m = ' + C_R.toFixed(0) + ' / 1000 = ' + C_A.toFixed(2) + ' m/s²', '#0b6b39'],
-      ['④ 4.0 s 후  v = at = ' + (C_A * PC.T).toFixed(1) + ' m/s', '#0b6b39'],
+      ['② R = 2F cos30° = 2 × 400 × 0.866 = ' + hq(C_R.toFixed(0)) + ' N', '#c2410c'],
+      ['③ a = R / m = ' + hq(C_R.toFixed(0)) + ' / 1000 = ' + hq(C_A.toFixed(2)) + ' m/s²', '#0b6b39'],
+      ['④ 4.0 s 후  v = at = ' + hq((C_A * PC.T).toFixed(1)) + ' m/s', '#0b6b39'],
     ];
     T(x0, y0, '합력 → 가속도 → 속도·위치 순서로 계산해요', fs, '#6d3fd6', 'left', 800);
     lines(x0, y0 + lh, lh, fs, L);
@@ -756,13 +760,13 @@
     const m = S.mode;
     if (m === 'combine') { const cb = S.cb, r = comb(cb.F1, cb.F2, cb.phi); L1 = '합력 R'; a = r.R.toFixed(1) + ' N'; L2 = '방향 (F₁ 기준)'; b = r.R > 0.05 ? r.alpha.toFixed(1) + '°' : '—'; L3 = '가속도 a'; c = r.a.toFixed(1) + ' m/s²'; }
     else if (m === 'pull') { const p = S.pu, cl = pullCalc(p.th), h = p.hide; L1 = '수직항력 N'; a = h ? '?' : cl.N.toFixed(1) + ' N'; L2 = '마찰력 f'; b = h ? '?' : cl.f.toFixed(1) + ' N'; L3 = '가속도 a'; c = h ? '?' : cl.a.toFixed(2) + ' m/s²'; }
-    else if (m === 'slope') { const s = S.sl, cl = slopeCalc(s.th, s.mu); L1 = '수직항력 N'; a = cl.N.toFixed(1) + ' N'; L2 = '마찰력 f'; b = cl.f.toFixed(1) + ' N'; L3 = '가속도 a'; c = cl.a.toFixed(1) + ' m/s²'; }
+    else if (m === 'slope') { const s = S.sl, cl = slopeCalc(s.th, s.mu), h = slHide(); L1 = '수직항력 N'; a = h ? '?' : cl.N.toFixed(1) + ' N'; L2 = '마찰력 f'; b = h ? '?' : cl.f.toFixed(1) + ' N'; L3 = '가속도 a'; c = h ? '?' : cl.a.toFixed(1) + ' m/s²'; }
     else if (m === 'rope') { const r = S.rp; L1 = '장력 T (줄마다)'; a = ropeT(r.th).toFixed(1) + ' N'; L2 = '무게 W'; b = ROPE_W + ' N'; L3 = '2T sinθ'; c = (2 * ropeT(r.th) * Math.sin(r.th * RAD)).toFixed(1) + ' N'; }
     else {
-      const sc = S.pr.sc;
-      if (sc === 'A') { L1 = '합력'; a = PA.F.toFixed(2) + ' N (+y)'; L2 = '가속도'; b = AA.toFixed(1) + ' m/s²'; L3 = '1 s 후 위치'; c = '(2.0, 1.0) m'; }
-      else if (sc === 'B') { L1 = '알짜힘'; a = (BCALC.par - BCALC.fk).toFixed(1) + ' N'; L2 = '가속도'; b = BCALC.a.toFixed(1) + ' m/s²'; L3 = '2 s 후 속력'; c = B_V.toFixed(1) + ' m/s'; }
-      else { L1 = '합력 R'; a = C_R.toFixed(0) + ' N'; L2 = '가속도'; b = C_A.toFixed(2) + ' m/s²'; L3 = '4 s 후 속력'; c = (C_A * PC.T).toFixed(1) + ' m/s'; }
+      const sc = S.pr.sc, h = prHide();
+      if (sc === 'A') { L1 = '합력'; a = PA.F.toFixed(2) + ' N (+y)'; L2 = '가속도'; b = AA.toFixed(1) + ' m/s²'; L3 = '1 s 후 위치'; c = h ? '?' : '(2.0, 1.0) m'; }
+      else if (sc === 'B') { L1 = '알짜힘'; a = (BCALC.par - BCALC.fk).toFixed(1) + ' N'; L2 = '가속도'; b = BCALC.a.toFixed(1) + ' m/s²'; L3 = '2 s 후 속력'; c = h ? '?' : B_V.toFixed(1) + ' m/s'; }
+      else { L1 = '합력 R'; a = h ? '?' : C_R.toFixed(0) + ' N'; L2 = '가속도'; b = h ? '?' : C_A.toFixed(2) + ' m/s²'; L3 = '4 s 후 속력'; c = h ? '?' : (C_A * PC.T).toFixed(1) + ' m/s'; }
     }
     const key = [L1, a, L2, b, L3, c].join('|');
     if (key === rlast) return; rlast = key;

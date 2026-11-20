@@ -15,7 +15,7 @@
     build(ctx) {
       const { THREE, root, label, info, controls } = ctx;
       const V3 = THREE.Vector3, C = THREE.Color;
-      let mode = 'cold', f = -5, sc = 'front', sig = '', tkSig = '', wmSegs = null;
+      let mode = 'cold', f = -5, sc = 'front', sig = '', tkSig = '', tkO = -1, wmSegs = null;
       const MT = ctx.mats, lc = (h) => new THREE.Color(h).convertSRGBToLinear();   // 화면에서 색이 바래지 않게 (찬 공기 파랑 · 따뜻한 공기 주황이 또렷하게)
       const sm = (c, o) => { const q = Object.assign({ color: lc(c), roughness: 0.6, metalness: 0 }, o || {}); if (typeof q.emissive === 'number') q.emissive = lc(q.emissive); return new THREE.MeshStandardMaterial(q); };
       const gnd = new THREE.Mesh(((g, k) => { const a = g.attributes.uv; for (let i = 0; i < a.count; i++) a.setX(i, a.getX(i) * k); return g; })(new THREE.BoxGeometry(XW * 2 + 0.6, 0.4, DZ + 0.4), 3.84), MT.ground('grass', { repeat: 1.5 })); gnd.position.y = -0.2; gnd.userData.v3bg = true; root.add(gnd);   // 땅은 배경: 자동 맞춤이 공기 덩어리 · 전선면에 맞춰요
@@ -275,7 +275,7 @@
         part.visible = o < 0.02;
       }
       function setScene(n) {
-        sc = n; const isTank = n === 'tank', isHL = n === 'column', isMap = n === 'mass' || n === 'wmap', isFr = !isTank && !isHL && !isMap;
+        sc = n; tkO = -1; const isTank = n === 'tank', isHL = n === 'column', isMap = n === 'mass' || n === 'wmap', isFr = !isTank && !isHL && !isMap;
         gnd.visible = !isMap; tank.visible = isTank; fronts.visible = isFr; hl.visible = isHL; home.visible = isFr; mapG.visible = isMap;
         tkW.show(isTank); tkC.show(isTank); rainI.visible = isFr; airs.visible = isFr;
         if (isHL) { buildHL(); } else if (isTank || isMap) { wL.show(false); cL.show(false); fL.show(false); } else buildFront();

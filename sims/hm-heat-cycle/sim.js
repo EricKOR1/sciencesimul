@@ -331,7 +331,7 @@
     if (q.k === 2) { D.arrow(bx, py + 6, bx, py + 6 + 40, { color: 'rgba(37,99,235,.9)', width: 5, head: 11 }); D.label(bx + 10, py + 26, 'W 나감', { bg: BLUE, size: 13, align: 'left', pad: 6 }); }
     if (q.k === 0) { D.arrow(bx, py + 46, bx, py + 6, { color: 'rgba(124,58,237,.9)', width: 5, head: 11 }); D.label(bx + 10, py + 26, 'W 받음', { bg: '#6d28d9', size: 13, align: 'left', pad: 6 }); }
     // 구간 이름
-    D.label(ex + W / 2, c.y + 20, seg.ab + ' ' + (PHONE ? seg.tag : seg.name), { bg: seg.col, size: 13 });
+    D.label(ex + W / 2, c.y + 20, seg.ab + ' ' + (PHONE || showCalc('seg') ? seg.tag : seg.name), { bg: seg.col, size: 13 });
   }
   const PPN = 20;
   function drawEngineScene(dt) {
@@ -357,7 +357,7 @@
       D.roundRect(gx0, gy0, gw, gh, 12); ctx.fillStyle = cur ? SciSim.color.rgba(sg.col, 0.14) : '#f4f7fd'; ctx.fill(); ctx.strokeStyle = cur ? sg.col : '#dde4f0'; ctx.lineWidth = cur ? 3 : 1.5; ctx.stroke();
       ctx.fillStyle = sg.col; ctx.beginPath(); ctx.arc(gx0 + 17, gy0 + 20, 11, 0, TAU); ctx.fill();
       T(gx0 + 17, gy0 + 25, String(i + 1), 13, '#fff', 'center', 800);
-      T(gx0 + 34, gy0 + 25, sg.ab + ' ' + sg.name, PHONE ? 13.5 : 14.5, sg.col, 'left', 800);
+      T(gx0 + 34, gy0 + 25, sg.ab + ' ' + (showCalc('seg') ? sg.tag : sg.name), PHONE ? 13.5 : 14.5, sg.col, 'left', 800);
       para(gx0 + 10, gy0 + 46, sg.desc, gw - 18, 13, INK, 17, 700);
     });
     const ty = PY + 40 + (PHONE ? 2 : 1) * (gh + 8) + 14;

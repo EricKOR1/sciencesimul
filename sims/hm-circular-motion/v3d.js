@@ -185,7 +185,7 @@
         setArrow(sW, hang, hang.clone().add(new V3(0, -1.1, 0))); lsW.obj = hang.clone().add(new V3(0, -1.2, 0));
         setArrow(sC, hang, hang.clone().addScaledVector(inw, 0.5 + w.w * w.w * 0.6)); lsC.obj = hang.clone().addScaledVector(inw, 0.5 + w.w * w.w * 0.6); lsC.off = [0, 0.25, 0];
         const hide = A.eff('hideTh') || A.eff('hideA');
-        info('<b>🎡 회전 그네</b> · 회전 빠르기 ω = ' + f1(w.w) + ' rad/s' + (hide ? '' : ' · 반지름 r = ' + f1(sv.r) + ' m · 줄이 수직과 이루는 각 θ = ' + (th / RAD).toFixed(1) + '°') + '<br>장력의 연직 성분은 중력과 균형, <b>수평 성분이 구심력</b>이에요. ω가 커질수록 바깥으로 더 벌어져요.<br><span style="opacity:.8">ω는 옆 조작판에서 바꿔요.</span>');
+        info('<b>🎡 회전 그네</b> · 회전 빠르기 ω = ' + f1(w.w) + ' rad/s' + (hide ? '' : ' · 반지름 r = ' + f1(sv.r) + ' m · 줄이 수직과 이루는 각 θ = ' + (th / RAD).toFixed(1) + '°') + '<br>장력의 연직 성분은 중력과 균형, <b>수평 성분이 구심력</b>이에요. ω가 커질수록 바깥으로 더 벌어져요.' + (A.eff('lockW') ? '' : '<br><span style="opacity:.8">ω는 옆 조작판에서 바꿔요.</span>'));
       }
       /* ================= 🎡 관람차 (반지름 10 m, 1 m = 0.4칸) ================= */
       const UW = 0.4;
@@ -207,7 +207,7 @@
         setArrow(wG, me.clone().add(new V3(0.5, 0, 0.4)), me.clone().add(new V3(0.5, -1.0, 0.4))); lwG.obj = me.clone().add(new V3(0.6, -1.1, 0.4));
         setArrow(wN, me.clone().add(new V3(-0.5, 0, 0.4)), me.clone().add(new V3(-0.5, 0.35 + Math.max(0, az) * 1.0, 0.4))); lwN.obj = me.clone().add(new V3(-0.5, 0.5 + Math.max(0, az), 0.4)); lwN.set(hide ? '좌석이 나를 미는 힘 N' : 'N = ' + f2(az) + ' mg');
         lwMe.off = [0, -0.7, 0]; lwV.off = [0.4, 0.3, 0]; lwG.off = [0.3, 0, 0]; lwN.off = [-0.4, 0.2, 0];
-        info('<b>🎡 관람차</b> · 반지름 ' + A.WH_R + ' m · 속력 ' + f1(w.v) + ' m/s<br>빨간 곤돌라(나)의 스마트폰 연직 센서' + ' = <b>' + f2(az) + ' g</b> (1 g = 가만히 있을 때)' + (hide ? ' → 센서 값으로 좌석이 미는 힘을 구해요.' : '') + '<br>최저점에서는 센서 값이 커지고, 최고점에서는 작아져요 (원운동의 구심 가속도 때문).<br><span style="opacity:.8">속력은 옆 조작판에서 바꿔요.</span>');
+        info('<b>🎡 관람차</b> · 반지름 ' + A.WH_R + ' m · 속력 ' + f1(w.v) + ' m/s<br>빨간 곤돌라(나)의 스마트폰 연직 센서' + ' = <b>' + f2(az) + ' g</b> (1 g = 가만히 있을 때)' + (hide ? ' → 센서 값으로 좌석이 미는 힘을 구해요.' : '') + '<br>최저점에서는 센서 값이 커지고, 최고점에서는 작아져요 (원운동의 구심 가속도 때문).' + (A.eff('lockV') ? '' : '<br><span style="opacity:.8">속력은 옆 조작판에서 바꿔요.</span>'));
       }
       /* ================= 🎡 로터 (반지름 2 m, 1 m = 0.9칸) ================= */
       const UR = 0.9, ROH = 5;

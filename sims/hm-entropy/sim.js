@@ -785,7 +785,7 @@
           check: () => S.ht.T1 === S.ht.T2,
           hold: 1.0,
           status() { const cc = htCalc(); return mark(S.ht.T1 === S.ht.T2) + ' T₁ = ' + S.ht.T1 + ' K, T₂ = ' + S.ht.T2 + ' K &nbsp; ΔS 합 = ' + fd(cc.tot, true) + ' J/K'; },
-          explain: '온도가 같으면 열을 준 쪽 ' + MINUS + 'Q/T와 받은 쪽 +Q/T가 서로 상쇄돼 <b>합 = 0</b>이에요. 이것이 <b>열평형</b>이에요. 더 이상 어느 쪽으로도 엔트로피가 늘지 않아서 열이 일부러 이동하지 않아요.',
+          explain: '온도가 같으면 열을 준 쪽 ' + MINUS + 'Q/T와 받은 쪽 +Q/T가 서로 상쇄돼 <b>합 = 0</b>이에요. 이것이 <b>열평형</b>이에요. 더 이상 어느 쪽으로도 엔트로피가 늘지 않아서 열이 더 이상 저절로 이동하지 않아요.',
         },
         {
           type: 'quiz', title: '열이 저절로 저온 → 고온으로 가지 않는 까닭',
