@@ -1142,7 +1142,7 @@
         {
           title: '일식 종류 짝짓기', manual: true,
           goal: '네 가지 상황이 각각 어떤 일식인지 골라요.',
-          hint: '그림에서 본영의 끝이 지표에 닿는지, 반영만 닿는지 보세요. 🎯과 ▶ 그림자 지나가기를 눌러 지구가 그림자를 지나가게 하면 혼성 일식(거리 약 37.4~38.0만 km)도 볼 수 있어요.',
+          hint: '그림에서 본영의 끝이 지표에 닿는지, 반영만 닿는지 보세요. 🎯과 ▶ 그림자 지나가기를 눌러 지구가 그림자를 지나가게 하면 혼성 일식(거리 약 37.3만~38.0만 km)도 볼 수 있어요.',
           setup() { S.showCards = true; S.cards = []; $$('#cardsRows select').forEach((s) => (s.value = '')); updateCtl(); },
           status: () => '고른 것 ' + S.cards.filter(Boolean).length + ' / 4',
           check: () => {

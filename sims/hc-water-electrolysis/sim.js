@@ -844,6 +844,7 @@
   /* =========================================================
      미션
      ========================================================= */
+  const fillBase = () => { if (!S.base) S.base = [2, 4, 6, 8].map((t) => ({ t, h: rateH(V_REF) * t, o: rateO(V_REF) * t, V: V_REF })); };
   const levels = [
     {
       title: '전해질이 필요해요', short: '전해질 필요', icon: '🧂', phase: '관찰',
@@ -930,7 +931,11 @@
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> (−)극에 수소, (+)극에 산소가 모이고 부피가 2 : 1이라는 것을 봤어요. 단원 33에서 배운 <b>화학 반응식의 계수비 = 몰수비 = (기체의) 부피비</b>와 연결해 봐요.</div>' +
         '<p>기록표를 <b>시간–부피 그래프</b>로 나타내고 두 직선의 <b>기울기의 비</b>를 구해 봐요. 그 비가 반응식 2H₂O → 2H₂ + O₂의 계수비와 같은지 확인해요.</p>',
       features: ['graph'],
-      setup() { S.gate = ''; S.gr = { h: 0, o: 0, hd: false, od: false, pick: null }; setScene('graph'); updateUI(); },
+      setup() {
+        // 앞 단계 기록이 없으면(이어 하기 · 다시 만들기) 9 V · 8분 기록표를 채워 그래프 버튼이 늘 작동하게 해요
+        fillBase();
+        S.gate = ''; S.gr = { h: 0, o: 0, hd: false, od: false, pick: null }; setScene('graph'); updateUI();
+      },
       recap: '시간–부피 그래프에서 H₂의 기울기는 1.0 mL/분, O₂는 0.5 mL/분으로 비가 2 : 1이에요. 같은 온도 · 압력에서 기체의 부피비 = 몰수비 = 반응식의 계수비예요.',
       summary: '<ul><li>그래프의 두 직선은 원점을 지나고, 기울기는 H₂ <b>1.0 mL/분</b>, O₂ <b>0.5 mL/분</b>이에요. 기울기의 비 = <b>2 : 1</b></li><li>2H₂O → 2H₂ + O₂ 에서 계수비 H₂ : O₂ = 2 : 1. 같은 온도 · 압력에서 <b>부피비 = 몰수비 = 계수비</b></li><li>질량비로 바꾸면 H₂ : O₂ = (2 × 2.0) : (1 × 32.0) = 4 : 32 = <b>1 : 8</b> (중3의 물의 일정 성분비와 같아요)</li></ul>',
       missions: [
@@ -938,7 +943,7 @@
           title: '그래프를 그리고 기울기의 비 구하기',
           goal: 'H₂와 O₂ <b>두 그래프를 모두 그리고</b>, 두 기울기의 비를 골라 보세요.',
           hint: '각 그래프를 그리면 기울기(부피 ÷ 시간)가 계산되어 나와요. H₂의 기울기를 O₂의 기울기로 나눠 보세요.',
-          setup() { S.gate = ''; setScene('graph'); updateUI(); },
+          setup() { fillBase(); S.gate = ''; setScene('graph'); updateUI(); },
           check: () => S.gr.hd && S.gr.od && S.gr.pick === '2:1',
           hold: 0.5,
           status: () => mark(S.gr.hd) + ' H₂ 그래프 &nbsp; ' + mark(S.gr.od) + ' O₂ 그래프 &nbsp; ' + (S.gr.pick === '2:1' ? '✅' : S.gr.pick ? '❌' : '⬜') + ' 기울기의 비' + (S.gr.pick && S.gr.pick !== '2:1' ? ' (다시 계산)' : ''),
