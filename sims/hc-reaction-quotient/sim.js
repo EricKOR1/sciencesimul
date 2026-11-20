@@ -620,7 +620,7 @@
       D.sphere(px, py, 5.5, SP_COL[i % 4], { shadow: true });
       D.label(ax.x1 - 6, ax.y1 + 14 + i * 22, '[' + FOR(s.k) + ']', { bg: SP_COL[i % 4], size: 12, align: 'right', pad: 7 });
     });
-    if (!h.length) T((ax.x0 + ax.x1) / 2, (ax.y0 + ax.y1) / 2 + 70, '예측한 뒤 ▶ 실행하기를 눌러요', 13.5, MUTED, 'center', 800);
+    if (!h.length) T((ax.x0 + ax.x1) / 2, (ax.y0 + ax.y1) / 2 + 70, '예측한 뒤 ▶ 반응시키기를 눌러요', 13.5, MUTED, 'center', 800);
     const id = matchId();
     if (RUN.done && S.lastRunOk !== null) stamp(r.x + r.w - 74, r.y + 26, S.lastRunOk ? '예측 적중!' : '다시 예측', S.lastRunOk ? GOOD : BAD, -0.1, S.stampT * 2.5, 0.78);
     if (RUN.done && id) T(r.x + 14, r.y + 48, '처음 Q = ' + fq(QM[id].q) + (QM[id].d === 'eq' ? ' = ' : QM[id].q < S.rx.K ? ' < ' : ' > ') + 'K = ' + fq(S.rx.K) + ' → ' + DIR_TXT[QM[id].d], 13.5, INK, 'left', 800);
@@ -796,7 +796,7 @@
       missions: [
         {
           title: '예측 3문제와 실행 결과 비교',
-          goal: '㉣, ㉤, N₂O₄ 혼합물의 방향을 <b>먼저 예측</b>하고 <b>▶ 실행하기</b>로 확인해요. 예측이 맞아야 완료돼요.',
+          goal: '㉣, ㉤, N₂O₄ 혼합물의 방향을 <b>먼저 예측</b>하고 <b>▶ 반응시키기</b>로 확인해요. 예측이 맞아야 완료돼요.',
           hint: 'Q를 계산해 K와 비교해요. ㉣은 Q = 0.100² ÷ (0.050 × 0.020), N₂O₄는 Q = [NO₂]² ÷ [N₂O₄]이고 K = 0.0060이에요.',
           setup() { S.gate = ''; S.pred = {}; setScene('predict'); loadMix('d'); updateCtl(); },
           check: () => !!(S.pred.d && S.pred.e && S.pred.n1), hold: 0.5,

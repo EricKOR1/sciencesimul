@@ -977,7 +977,7 @@
           setup() { S.calc.pi = 1; setScene('calc'); refreshCalc(); updateCtl(); },
           check: () => calcSolved(1), hold: 0.5,
           status: () => mark(S.calc.stage[1] >= 1) + ' ① H⁺ 수 a &nbsp; ' + mark(S.calc.stage[1] >= 2) + ' ③ 농도 M',
-          explain: '2 × M × 10.0 = 1 × 0.100 × 24.0 → M = 2.40 ÷ 20.0 = <b>0.120 M</b>이에요. 2를 곱하지 않으면 0.240 M(2배)이 되고, 반대로 곱하면 값이 틀려요.',
+          explain: '2 × M × 10.0 = 1 × 0.100 × 24.0 → M = 2.40 ÷ 20.0 = <b>0.120 M</b>이에요. 2를 곱하지 않으면 0.240 M(2배)이 되고, 2를 염기 쪽에 잘못 곱하면 0.480 M(4배)이 되어 틀려요.',
         },
         {
           type: 'quiz', title: 'H₂SO₄ 식에 2를 곱하는 까닭',
