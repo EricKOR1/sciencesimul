@@ -1197,7 +1197,7 @@
     panel(V.x, V.y, V.w, V.h, 16, '#fff', 12, 4, 'rgba(30,50,100,.16)');
     const fs = PHONE ? 14 : 15.5, lh = PHONE ? 21 : 23;
     if (MX.t < 0) {
-      const ls = wrapText('🥄 아래에서 물질을 고르고 [넣고 저어 보기]를 눌러요. 입자가 어떻게 섞이는지 렌즈로 살펴봐요.', V.w - 36, fs, 700);
+      const ls = wrapText('🥄 ‘물에 넣을 물질’을 고르고 [넣고 저어 보기]를 눌러요. 입자가 어떻게 섞이는지 렌즈로 살펴봐요.', V.w - 36, fs, 700);
       ls.forEach((l, i) => text(V.x + 18, V.y + (PHONE ? 30 : 38) + i * lh, l, { size: fs, weight: 700, color: COL.muted, align: 'left' }));
     } else if (!done) {
       const ph = MX.t < T_SP1 + 0.3 ? '물에 넣는 중…' : MX.t < 4.2 ? '막대로 젓는 중…' : '가만히 두는 중…';

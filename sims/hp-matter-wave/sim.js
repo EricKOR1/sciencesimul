@@ -740,7 +740,7 @@
         {
           title: '광학 현미경의 한계 찾기',
           goal: '<b>광학 현미경</b>으로 두 점 사이의 거리를 줄이며, 구분되던 두 점이 <b>한 덩어리로 합쳐지는</b> 것을 확인하세요. 그리고 <b>전자 현미경</b>으로 바꾸면 같은 거리에서 다시 구분되는 것도 확인하세요.',
-          hint: '광학 현미경으로 두 점 사이를 약 200~400 nm에서 시작해 150 nm쯤으로 줄여요. 합쳐진 상태에서 🔭 전자 현미경 버튼을 눌러요.',
+          hint: '광학 현미경으로 두 점 사이를 약 200~400 nm에서 시작해 150 nm쯤으로 줄여요. 합쳐진 상태에서 ⚛️ 전자 현미경 버튼을 눌러요.',
           setup() { S.rs.mic = 'light'; S.rs.sp = 'two'; setSlider('sSep', 55); S.rs.seen = { lr: false, lm: false, er: false, vl: false, ve: false, de: false }; S.rs.hold = {}; setScene('res'); updateCtl(); },
           check: () => S.rs.seen.lr && S.rs.seen.lm && S.rs.seen.er,
           hold: 0.3,

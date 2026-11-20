@@ -998,7 +998,7 @@
           {
             title: '같은 시간 켜 보기',
             goal: '시간을 <b>5시간 이상</b>으로 늘려, 두 전구가 쓴 전기 에너지 막대를 비교해 보세요.',
-            hint: '아래 슬라이더를 오른쪽으로 밀거나 [시간 흐르게 하기]를 눌러요.',
+            hint: '‘켜 둔 시간’ 슬라이더를 오른쪽으로 밀거나 [시간 흐르게 하기]를 눌러요.',
             setup() { setScene('power'); S.pw.t = 0; S.pw.bar = [0, 0]; setPlaying(false); syncTime(); },
             check: () => S.scene === 'power' && S.pw.t >= 5,
             status: () => '켜 둔 시간 <b>' + S.pw.t.toFixed(1) + '시간</b> · ' + box(S.pw.t >= 5) + ' 5시간 이상',

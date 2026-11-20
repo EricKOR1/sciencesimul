@@ -108,15 +108,17 @@
       const scLab = [label('별(먼 천체)', scStar, { size: 12, offset: [0, 0.5, 0] }), label('대기', [-5.6, 0.9, 0], { size: 11.5, color: 'rgba(40,100,190,.92)' }), label('지상 망원경', gTel, { size: 12, offset: [0, 1.5, 0] }), label('우주 망원경 (대기 밖)', sTel, { size: 12, offset: [0, -0.8, 0] }),
         label('흐릿한 상', imgG, { size: 11.5, offset: [0, 1.15, 0], color: 'rgba(120,60,20,.92)' }), label('선명한 상', imgS, { size: 11.5, offset: [0, 1.15, 0], color: 'rgba(15,100,70,.92)' })];
       scope.children.forEach(() => {});
-      let mode = 'near', labs = true, showDeb = true, PH = 0, pl = null, internal = false;
+      let mode = 'near', labs = true, showDeb = true, PH = 0, pl = null, internal = false, viewEls = [];
       const dm = new THREE.Object3D(), tmp = new V3();
       function apply() {
         near.visible = mode === 'near'; solar.visible = mode === 'sol'; scope.visible = mode === 'scope'; scLab.forEach((l) => l.show(labs && mode === 'scope'));
         lNear.forEach((l) => l.show(labs && mode === 'near')); lDeb.show(labs && showDeb && mode === 'near'); lS.forEach((l) => l.show(labs && mode === 'sol')); PL.forEach((p) => p.l.show(labs && mode === 'sol'));
         deb.visible = showDeb;
+        viewEls.forEach((e) => { e.style.display = mode === 'scope' ? 'none' : ''; });   // 망원경 비교 장면에서는 보기 · 로켓 발사 · 우주 쓰레기 단추가 필요 없어요 (누르면 비교 장면을 벗어나요)
         if (mode === 'scope') { orbit.dist = PHN ? 22 : 15; orbit.phi = 1.4; orbit.theta = 0.1; orbit.tx = 0; orbit.ty = 3; orbit.tz = 0; info('<b>지상 망원경 vs 우주 망원경</b><br>같은 별을 땅 위의 망원경과 대기권 밖의 망원경으로 보면 어떻게 다를까요?<br>[⛰️ 지상] · [🛰️ 우주] 버튼을 눌러 두 상을 비교해 보세요.'); } else if (mode === 'near') { orbit.ty = 0; orbit.dist = PHN ? 17 : 12; orbit.phi = 1.2; info('<b>지구 주변</b>: 인공위성·우주 정거장·우주 망원경이 지구를 돌아요.<br>수명이 다한 위성의 조각 같은 <b>우주 쓰레기</b>도 많이 떠돌아서 위험해요.'); }
         else { orbit.dist = PHN ? 36 : 27; orbit.phi = 1.1; info('<b>태양계 탐사</b>: 탐사선은 행성 곁을 지나가며 사진과 자료를 보내요.<br>보이저 1·2호는 목성과 토성을 지나 태양계 밖으로 나아가고 있어요.'); }
       }
+      const barV = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl'), nV = barV.children.length;
       const sg = controls.segment('보기', [{ label: '지구 주변', value: 'near' }, { label: '태양계', value: 'sol' }], mode, (v) => { mode = v; apply(); });
       // ▶ 재생: 로켓 발사 → 우주(고도 100 km) 도착 → 인공위성을 궤도에 올리기 (2D의 '로켓 발사!'와 같은 순서)
       pl = controls.player({
@@ -125,6 +127,7 @@
         onFrame(p) { if (!pl || internal) return; if (mode !== 'near') { mode = 'near'; sg.set('near'); apply(); } },
       });
       controls.button('우주 쓰레기', () => { showDeb = !showDeb; apply(); });
+      viewEls = [...barV.children].slice(nV);
       controls.button('이름표', () => { labs = !labs; apply(); });
       /* 목표와 방법 짝짓기(2단계 미션): 방법 카드를 고른 뒤 목표 단추를 눌러요 → 실험의 카드판과 같은 상태(window.__sim.placeMatch) */
       const bar = ctx.renderer.domElement.closest('.v3-wrap').querySelector('.v3-ctl'), matchEls = [];

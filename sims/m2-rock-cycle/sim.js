@@ -1479,7 +1479,7 @@
     // 휴대폰 화면에서는 상자 제목과 겹치지 않게 제목 줄 오른쪽에 둬요
     const pillAt = L.key === 'tall' ? { x: B.x + B.w - 14, y: B.y + 22 * fs, align: 'right' } : { x: T.x + T.w / 2, y: hy - 16 * fs };
     if (pr) tagPill(ctx, L, SED[pr.id].emoji + ' ' + SED[pr.id].name + ' 쏟는 중', pillAt.x, pillAt.y, { bg: 'rgba(14,165,233,.92)', stroke: '#bae6fd', size: 13.5, align: pillAt.align });
-    else if (!SD.layers.length) tagPill(ctx, L, '아래 버튼으로 퇴적물을 골라요', pillAt.x, pillAt.y, { bg: 'rgba(6,10,26,.7)', size: 13.5, align: pillAt.align });
+    else if (!SD.layers.length) tagPill(ctx, L, '퇴적물 버튼을 눌러 쌓아요', pillAt.x, pillAt.y, { bg: 'rgba(6,10,26,.7)', size: 13.5, align: pillAt.align });
     // 상자 속: 물
     ctx.save();
     roundRect(ctx, T.x, T.y, T.w, T.h, 6); ctx.clip();
@@ -2690,7 +2690,7 @@
       {
         title: '🏖️ 퇴적물 쌓기',
         goal: '퇴적물을 골라 <b>3층 이상</b> 쌓아 보세요. 종류가 다르면 층이 나뉘어 보여요.',
-        hint: '아래 버튼에서 자갈·모래·진흙·석회 물질을 눌러 쌓아요. 한 번 누를 때마다 한 층이 쌓여요.',
+        hint: '‘퇴적물 쌓기’의 자갈·모래·진흙·석회 물질 버튼을 눌러 쌓아요. 한 번 누를 때마다 한 층이 쌓여요.',
         setup() { setScene('sed'); sedReset(); S.sed.made.clear(); },
         check: () => S.sed.layers.filter((l) => l.landed >= l.count).length >= 3,
         hold: 0.5,

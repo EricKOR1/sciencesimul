@@ -60,19 +60,20 @@
       const box = new THREE.Mesh(new THREE.BoxGeometry(NX * SP, NY * SP, NZ * SP * 1.2), new THREE.MeshBasicMaterial({ color: 0x6f8fd0, wireframe: true, transparent: true, opacity: 0.08 }));
       box.position.set(SX + NX * SP / 2, 0, 0); root.add(box);
 
-      let vol = 3, pitch = 400, air = true, aAir = 1, phase = 0, pl = null, pushedAt = -9, now = 0;
+      let vol = 3, pitch = 400, air = true, bell = false, aAir = 1, phase = 0, pl = null, pushedAt = -9, now = 0;
       const lamOf = (f) => Math.max(0.9, Math.min(5, 2.6 * Math.pow(400 / f, 0.85)));
       let lastS = '';
       /* 2D 실험의 소리 크기 · 진동수 · (진공 종에서) 공기의 양을 그대로 따라가요 */
       function readS() {
         const s = sm() && sm().S; if (!s) return;
-        const a2 = !(s.scene === 'bell' && s.air != null && s.air < 0.5); if (a2 !== air) { air = a2; text(); }
+        const a2 = !(s.scene === 'bell' && s.air != null && s.air < 0.5), bl2 = s.scene === 'bell'; if (a2 !== air || bl2 !== bell) { air = a2; bell = bl2; text(); }
         if (now - pushedAt < 0.8) return;
         const key = s.vol + ':' + s.pitch;
         if (key === lastS) return; lastS = key;
         vol = Math.max(1, Math.min(5, s.vol || 3)); pitch = s.pitch || 400; volR.set(vol); pitchR.set(pitch); text();
       }
       function text() {
+        if (bell && air) { info(`<b>진공 종 실험</b>: 소리를 내는 물체(스피커)와 귀 사이의 <b>공기 입자</b>를 보여 줘요.<br><b>🌬️ 공기 빼기</b>를 누르면 입자가 줄어들어요. 소리는 어떻게 될까요?`); return; }
         info(air ? `<b>소리는 파동</b>이에요. 스피커가 떨리면 공기 입자도 떨려요.<br>노란 입자 하나를 지켜보세요. 공기 입자는 어떻게 움직이나요?<br>빨강: 입자가 촘촘한 곳 · 파랑: 성긴 곳` : `<b>공기가 없어요!</b> 소리를 전달해 줄 입자가 없어서 <b>소리가 들리지 않아요</b>.`);
       }
       // 3D에서 바꾸면 2D 실험의 값도 같이 바뀌어요
@@ -85,7 +86,9 @@
         phases: [[0, '한 주기 시작'], [0.25, '1/4 주기'], [0.5, '반 주기'], [0.75, '3/4 주기']],
         onFrame(p) { phase = p * Math.PI * 2; },
       });
-      const airCtl = [...barA.children].slice(nA);   // 소리 크기 · 진동수 · 파동 재생: 공기 장면에서만 보여요 (줄 장면에서는 바뀌는 것이 없어요)
+      // 소리 크기 · 진동수 (이름표 + 슬라이더 4개)는 2~3단계(2D)에서 다뤄요: 1단계 3D에서는 늘 감춰요
+      [...barA.children].slice(nA, nA + 4).forEach((e) => { e.style.display = 'none'; });
+      const airCtl = [...barA.children].slice(nA + 4);   // 파동 재생: 공기 장면에서만 보여요 (줄 장면에서는 바뀌는 것이 없어요)
       controls.button('이름표', () => { const v = labSp.visible === false; labSp.show(v); labEar.show(v); labAir.show(v); });
       text();
       /* ===== 장면 rope(줄 파동) · 파형(소리굽쇠 · 피리 · 기타): 2D와 같은 줄 · 같은 파형 ===== */

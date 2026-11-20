@@ -436,7 +436,7 @@
       const gh = 94;
       S.labSlot.forEach((slot, i) => phaseGraph({ x: PX + 6, y: PY + 8 + i * (gh + 6), w: PW - 12, h: gh }, slot, q, names(slot, i), hideLab));
       T(x1, PY + 8 + 3 * (gh + 6) + 20, 'x = ' + fx(q.x, 2, true) + ' m · v = ' + fx(q.v, 2, true) + ' m/s · a = ' + fx(q.a, 1, true) + ' m/s²', 13.5, INK, 'left', 800);
-      T(x1, PY + 8 + 3 * (gh + 6) + 44, '주황 점: 같은 순간. 세 그래프를 세로로 비교해요.', 13, MUTED, 'left', 700);
+      T(x1, PY + 8 + 3 * (gh + 6) + 44, '주황 세로선: 같은 순간. 세 그래프를 세로로 비교해요.', 13, MUTED, 'left', 700);
     } else {
       T(x1, PY + 28, '🔭 지금 값', 15, INK, 'left', 800);
       T(x1, PY + 56, 'x = ' + fx(q.x, 2, true) + ' m    v = ' + fx(q.v, 2, true) + ' m/s    a = ' + fx(q.a, 1, true) + ' m/s²', 15, '#1d4ed8', 'left', 800);
@@ -495,7 +495,7 @@
     $('#oM').textContent = fm(peM()) + ' kg'; setSl('sM', S.pe.mv, 1, 16);
     $('#oK').textContent = peK() + ' N/m'; setSl('sK', S.pe.kv, 1, 8);
     $('#oA3').textContent = fx(peA(), 2) + ' m'; setSl('sA3', S.pe.av, 2, 12);
-    $('#nEn').textContent = S.o.freeze != null ? '진동을 멈춰 x = 0.06 m인 순간이에요. 에너지 막대를 보세요.' : '진동하는 동안 세 그래프의 같은 순간(주황 점)을 비교해요.';
+    $('#nEn').textContent = S.o.freeze != null ? '진동을 멈춰 x = 0.06 m인 순간이에요. 에너지 막대를 보세요.' : '진동하는 동안 세 그래프의 같은 순간(주황 세로선)을 비교해요.';
     $('#bGo4').textContent = S.o.freeze != null ? '▶ 진동시키기' : '↺ 처음부터 보기';
     $$('#labGrid select').forEach((s2, i) => { if (s2.value !== S.lab[i]) s2.value = S.lab[i]; });
   }
@@ -723,7 +723,7 @@
     {
       title: '에너지·위상: 시간 그래프의 짝', short: '에너지·위상', icon: '📊', phase: '모형',
       intro: '<div class="si-link">🔗 <b>앞 단계에서</b> a = ' + MINUS + 'ω²x와 주기 T = 2π/ω를 알았어요. <b>등속 원운동</b>의 각속도 ω(hm-circular-motion)를 기억하나요? 용수철 진자의 단진동은 반지름 A인 원을 각속도 ω로 도는 점의 <b>그림자</b>와 같아요.</div>' +
-        '<p><b>위치 x, 속도 v, 가속도 a</b>의 시간 그래프를 나란히 놓고 주황 점(같은 순간)을 비교해요. 누가 누구보다 얼마나 앞서는지 찾고, <b>운동 에너지와 탄성 위치 에너지</b>가 서로 바뀌면서 합이 일정한 것도 확인해요.</p>',
+        '<p><b>위치 x, 속도 v, 가속도 a</b>의 시간 그래프를 나란히 놓고 주황 세로선(같은 순간)을 비교해요. 누가 누구보다 얼마나 앞서는지 찾고, <b>운동 에너지와 탄성 위치 에너지</b>가 서로 바뀌면서 합이 일정한 것도 확인해요.</p>',
       features: ['energy'],
       setup() { resetFlags(); S.lab = ['', '', '']; setScene('energy'); enterScene('energy'); },
       recap: 'x가 최대일 때 v = 0이고 |a|는 최대이며, x = 0일 때 |v|가 최대이고 a = 0이에요. v는 x보다 ¼주기 앞서고, a는 x와 반대예요. 마찰이 없으면 E_k + E_p = ½kA²가 일정해요.',
@@ -737,7 +737,7 @@
         {
           title: '세 그래프에 이름 붙이기', manual: true,
           goal: '<b>▶ 진동</b>하는 모습과 기준 원을 보면서 세 그래프가 각각 <b>위치 x, 속도 v, 가속도 a</b> 중 무엇인지 골라 ✔ 확인하기를 누르세요.',
-          hint: '물체가 오른쪽 끝(x 최대)에 있을 때 속도는 0이에요. 가속도는 변위와 반대 방향이라 그때 가장 작은(−) 값이에요. 주황 점이 세 그래프에서 어떤 값에 있는지 비교해요.',
+          hint: '물체가 오른쪽 끝(x 최대)에 있을 때 속도는 0이에요. 가속도는 변위와 반대 방향이라 그때 가장 작은(−) 값이에요. 주황 세로선 위의 점이 세 그래프에서 어떤 값에 있는지 비교해요.',
           setup() { resetFlags(); S.lab = ['', '', '']; clrSel('#labGrid select'); setFlag('lab', true); setScene('energy'); enterScene('energy'); },
           check() {
             if (S.lab.some((v) => !v)) return '세 그래프에 모두 이름을 골라 주세요.';

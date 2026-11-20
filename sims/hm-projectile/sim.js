@@ -401,8 +401,10 @@
     D.sphere(bx, by, 9, '#fff3c4', { shadow: true, outline: '#e0b84a' });
     ctx.restore();
     const lab = (x, y, s, bg) => D.label(x, y, s, { bg, size: 13, align: 'left' });
-    lab(fr.x + 12, fr.y + 24, '→ vx = ' + VX.toFixed(1) + ' m/s (일정)', '#1d6fb8');
-    lab(fr.x + 12, fr.y + 52, '↑ vy = ' + (Math.abs(vy) > 0.05 ? fx(vy, 1) : '0.0') + ' m/s' + (Math.abs(vy) <= 0.05 ? ' (최고점)' : ''), '#c2760d');
+    /* vx, v₀y를 계산하는 미션 중에는 속도 값을 가려요 */
+    const hv = eff('vcalc');
+    lab(fr.x + 12, fr.y + 24, '→ vx = ' + (hv ? '?' : VX.toFixed(1)) + ' m/s (일정)', '#1d6fb8');
+    lab(fr.x + 12, fr.y + 52, '↑ vy = ' + (hv ? '?' : Math.abs(vy) > 0.05 ? fx(vy, 1) : '0.0') + ' m/s' + (!hv && Math.abs(vy) <= 0.05 ? ' (최고점)' : ''), '#c2760d');
     lab(fr.x + 12, fr.y + 80, '↓ a = 10 m/s² (중력, 항상 아래)', '#b91c1c');
     D.label(fr.x + fr.w - 12, fr.y + 22, '프레임 ' + v.fr + ' / ' + (NF - 1) + ' · t = ' + (v.play ? t.toFixed(2) : (v.fr * FDT).toFixed(1)) + ' s', { bg: 'rgba(0,0,0,.55)', size: 13, align: 'right' });
     if (v.flash > 0) { v.flash = Math.max(0, v.flash - dt); }
