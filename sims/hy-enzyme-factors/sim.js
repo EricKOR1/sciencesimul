@@ -1015,7 +1015,7 @@
         {
           id: 'run', title: '5점 이상 측정하기',
           goal: '선택한 요인의 값을 <b>5가지 이상</b> 골라 각각 <b>3회씩</b> 측정하세요. (대조군도 한 번 측정해 보세요)',
-          hint: '오른쪽의 값 버튼(또는 표의 행)을 누르고 ▶ 3회 측정을 눌러요. 측정이 끝나면 평균이 그래프의 점으로 날아가요. 이어서 다른 값을 골라 반복해요.',
+          hint: '조작판의 값 버튼(또는 표의 행)을 누르고 ▶ 3회 측정을 눌러요. 측정이 끝나면 평균이 그래프의 점으로 날아가요. 이어서 다른 값을 골라 반복해요.',
           setup() { ensureDesign(); setMode('run'); },
           check: () => rnDonePts() >= 5 && !rnBusy(), hold: 0.6,
           status: () => mark(rnDonePts() >= 5) + ' 측정한 점 ' + rnDonePts() + ' / 5 (값마다 3회 · 평균) &nbsp; ' + mark(rnKeys().some((k) => k.ctl && S.rn.rows[k.key] && S.rn.rows[k.key].done)) + ' 대조군 측정',

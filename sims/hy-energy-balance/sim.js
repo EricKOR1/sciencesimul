@@ -751,7 +751,7 @@
         {
           id: 'act', title: '활동 대사량 540 kcal 만들기',
           goal: '체중을 <b>60 kg</b>으로 맞추고 시간표에 <b>앉아 공부 6시간 · 걷기 1시간 · 달리기 0.5시간</b>을 칠하세요.',
-          hint: '아래 활동 버튼을 고르고 시간표 칸을 끌어서 칠해요. 한 칸은 30분이라 앉아 공부 12칸, 걷기 2칸, 달리기 1칸이에요.',
+          hint: '조작판에서 활동 버튼(📖 앉아 공부 등)을 고르고 시간표 칸을 끌어서 칠해요. 한 칸은 30분이라 앉아 공부 12칸, 걷기 2칸, 달리기 1칸이에요.',
           setup() { S.bn.kg = 60; $('#sKg').value = 60; bnClear(); $('#inTot').value = ''; setMode('burn'); },
           check: () => bnExample() && Math.round(bnAct()) === 540, hold: 0.8,
           status: () => mark(S.bn.kg === 60) + ' 체중 60 kg &nbsp; ' + mark(bnExample()) + ' 공부 ' + bnHours('study') + ' h · 걷기 ' + bnHours('walk') + ' h · 달리기 ' + bnHours('run') + ' h &nbsp; ' + mark(Math.round(bnAct()) === 540) + ' 활동 ' + comma(bnAct()) + ' kcal',
@@ -760,7 +760,7 @@
         {
           id: 'total', title: '하루 총 소비 완성',
           goal: '기초 대사량 1440 + 활동 대사량 540 + 식이 열 효과 220을 더해 <b>총 소비</b>를 입력하세요.',
-          hint: '1440 + 540 + 220 = ? 오른쪽 위 도넛에 각 값이 적혀 있어요.',
+          hint: '1440 + 540 + 220 = ? 그림의 총 소비 도넛 옆에 각 값이 적혀 있어요.',
           setup() { $('#inTot').value = ''; setMode('burn'); },
           check: () => near(numIn('inTot'), 2200, 0.5) && bnExample(), hold: 0.6,
           status: () => mark(bnExample()) + ' 예시 하루 시간표 &nbsp; ' + mark(near(numIn('inTot'), 2200, 0.5)) + ' 총 소비 입력',
