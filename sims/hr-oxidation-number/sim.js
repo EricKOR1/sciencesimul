@@ -422,7 +422,7 @@
     D.roundRect(MAIN.x + 14, ey - 30, MAIN.w - 28, 56, 12); ctx.fillStyle = '#f8fafc'; ctx.fill(); ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.4; ctx.stroke();
     T(MAIN.x + MAIN.w / 2, ey + 2, eq, Math.max(13, efs), INK, 'center', 800);
     const sum = has ? cmpSum(c, val) : null;
-    const msg = !has ? '아래에서 ' + c.name + '의 산화수 x를 입력해 보세요' : good ? '✅ 합 = ' + qStr(sum) + ' = 전하 ' + qStr(c.q) + ' → 맞아요!' : '합 = ' + qStr(sum) + ' ≠ 전하 ' + qStr(c.q) + '  (' + (sum > c.q ? '값을 줄여 보세요' : '값을 키워 보세요') + ')';
+    const msg = !has ? c.name + '의 산화수 x를 조작판의 입력 칸에 넣어 보세요' : good ? '✅ 합 = ' + qStr(sum) + ' = 전하 ' + qStr(c.q) + ' → 맞아요!' : '합 = ' + qStr(sum) + ' ≠ 전하 ' + qStr(c.q) + '  (' + (sum > c.q ? '값을 줄여 보세요' : '값을 키워 보세요') + ')';
     T(MAIN.x + MAIN.w / 2, ey + 46, msg, 14.5, good ? '#166534' : has ? '#9a3412' : MUTED, 'center', 800);
     if (c.id === 'h2o2') T(MAIN.x + MAIN.w / 2, G.gy + maxH / 2 + 46, 'O–O 결합이 있는 과산화물이에요', 13.5, '#7c3aed', 'center', 800);
     // 규칙 카드
@@ -1099,7 +1099,7 @@
         {
           title: '미지 원자의 산화수 구하기',
           goal: '화합물 6개 중 <b>4개 이상</b>에서 미지 원자의 산화수를 구해 합이 전하와 같아지게 하세요.',
-          hint: '화합물을 고르고 아래 칸에 값을 넣거나 + · − 단추를 눌러요. 식의 합이 전하와 같아지면 초록색으로 바뀌어요. 예: HNO₃는 (+1) + x + 3×(−2) = 0.',
+          hint: '화합물을 고르고 “산화수 x” 입력 칸에 값을 넣거나 + · − 단추를 눌러요. 식의 합이 전하와 같아지면 초록색으로 바뀌어요. 예: HNO₃는 (+1) + x + 3×(−2) = 0.',
           setup() { S.ru.val = {}; S.ru.solved = {}; S.ru.cmp = 'hno3'; $('#ruIn').value = ''; S.sub.rules = 'calc'; setScene('rules'); },
           check: () => solvedN() >= 4, hold: 0.6,
           status: () => '맞힌 화합물 ' + solvedN() + ' / 4 ' + mark(solvedN() >= 4),

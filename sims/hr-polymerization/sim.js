@@ -593,7 +593,7 @@
       drawTileLabel(kd, p.x, p.y, k, true);
     });
     if (BD.drag) { D.roundRect(MAIN.x + 8, bdTrayBottom() + 4, MAIN.w - 16, MAIN.y + MAIN.h - bdTrayBottom() - 12, 12); ctx.setLineDash([9, 7]); ctx.strokeStyle = C.rgba(PUR, 0.45 + 0.3 * Math.sin(t * 6)); ctx.lineWidth = 3; ctx.stroke(); ctx.setLineDash([]); }
-    if (!ch.length) T(MAIN.x + MAIN.w / 2, cy + 5, '타일을 끌어다 놓거나 아래 단추를 눌러 사슬을 시작해요', PHONE ? 13.5 : 15, MUTED, 'center', 700);
+    if (!ch.length) T(MAIN.x + MAIN.w / 2, cy + 5, '타일을 끌어다 놓거나 ＋ 단추를 눌러 사슬을 시작해요', PHONE ? 13.5 : 15, MUTED, 'center', 700);
     // 사슬
     ch.forEach((it, i) => {
       const kd = KIND[it.k];
@@ -1020,7 +1020,7 @@
         {
           title: 'PET 사슬 만들기',
           goal: '테레프탈산과 에틸렌 글라이콜을 <b>번갈아</b> 이어 붙여 <b>반복 단위 5개</b>(단위체 10개)짜리 PET 사슬을 만드세요.',
-          hint: '같은 단위체를 연달아 붙일 수는 없어요. 테레프탈산 → 에틸렌 글라이콜 → 테레프탈산 … 순서로 붙여요. 타일을 끌어다 놓거나 아래 단추를 눌러요.',
+          hint: '같은 단위체를 연달아 붙일 수는 없어요. 테레프탈산 → 에틸렌 글라이콜 → 테레프탈산 … 순서로 붙여요. 타일을 끌어다 놓거나 “＋ 테레프탈산”, “＋ 에틸렌 글라이콜” 단추를 눌러요.',
           setup() { S.gate = ''; setScene('build'); bdSetSys('pet'); },
           check: () => { const s = bdStats('pet'); return s.n >= 10 && s.water >= 9; }, hold: 0.9,
           status: () => { const s = bdStats('pet'); return '단위체 ' + s.n + ' / 10 · 반복 단위 ' + Math.floor(s.n / 2) + ' / 5 ' + mark(s.n >= 10 && s.water >= 9); },
@@ -1029,7 +1029,7 @@
         {
           title: '천연 고분자도 같은 방식으로',
           goal: '<b>단백질</b>(아미노산)과 <b>녹말</b>(포도당)을 각각 단위체 <b>3개 이상</b> 이어 붙여 보세요.',
-          hint: '화면 위쪽 “단백질”, “녹말” 단추로 사슬을 바꾼 뒤, 타일을 끌어다 놓거나 단추를 눌러요. 아미노산은 어떤 순서로 붙여도 돼요.',
+          hint: '“단백질”, “녹말” 단추로 사슬을 바꾼 뒤, 타일을 끌어다 놓거나 단추를 눌러요. 아미노산은 어떤 순서로 붙여도 돼요.',
           setup() { S.gate = ''; setScene('build'); bdSetSys('pro'); },
           check: () => { const a = bdStats('pro'), b = bdStats('sta'); return a.n >= 3 && a.water >= 2 && b.n >= 3 && b.water >= 2; }, hold: 0.9,
           status: () => { const a = bdStats('pro'), b = bdStats('sta'); return '단백질 ' + Math.min(a.n, 3) + ' / 3 ' + mark(a.n >= 3 && a.water >= 2) + ' &nbsp;녹말 ' + Math.min(b.n, 3) + ' / 3 ' + mark(b.n >= 3 && b.water >= 2); },

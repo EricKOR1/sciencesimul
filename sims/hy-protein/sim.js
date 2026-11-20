@@ -842,7 +842,7 @@
     $('#inCalc').classList.toggle('ok', calcOk());
     chipSet($('#stageSel'), S.fold.stage);
     $('#foldBtn').hidden = S.fold.stage !== 3; $('#foldBtn').disabled = S.fold.run; $('#foldBtn').textContent = S.fold.run ? '💧 접히는 중…' : S.fold.folded ? '↺ 다시 풀어서 접기' : '💧 물에 풀어 접기';
-    $('#foldNote').innerHTML = ({ 1: '구슬 12개가 <b>1차 구조</b>(아미노산 서열)예요.', 2: '사슬의 일부가 <b>나선</b>과 <b>병풍</b>으로 접혀요.', 3: S.fold.folded ? '소수성 R기(주황)가 <b>안쪽</b>에 모였어요!' : '버튼을 눌러 사슬을 물에 풀어 놓아요.', 4: '완성한 단백질 <b>4개</b>가 모여 4차 구조가 돼요.' })[S.fold.stage];
+    $('#foldNote').innerHTML = ({ 1: '구슬 12개가 <b>1차 구조</b>(아미노산 서열)예요.', 2: '사슬의 일부가 <b>나선</b>과 <b>병풍</b>으로 접혀요.', 3: S.fold.folded ? '소수성 R기(주황)가 <b>안쪽</b>에 모였어요!' : '버튼을 눌러 사슬을 물에 풀어 놓아요.', 4: '접힌 폴리펩타이드 <b>4개</b>가 모여 4차 구조가 돼요.' })[S.fold.stage];
     chipSet($('#sickSeg'), S.sk.mut ? 'm' : 'n'); chipSet($('#oxySeg'), S.sk.low ? 'low' : 'hi');
     $('#oTemp').textContent = S.dn.T + ' °C';
     $('#btnAcid').classList.toggle('on', S.dn.acid); $('#btnAlc').classList.toggle('on', S.dn.alc);

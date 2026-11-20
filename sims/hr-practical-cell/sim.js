@@ -580,7 +580,7 @@
     // 메시지
     let msg = '', col = MUTED;
     if (blocked) { msg = '⚠ ' + b.name + '은 충전하면 안 돼요 (1차 전지)'; col = '#b91c1c'; }
-    else if (!dir) msg = '아래에서 전자의 이동 방향을 골라요';
+    else if (!dir) msg = '조작판에서 전자의 이동 방향을 골라요';
     else if (!cfSOK()) { msg = dis ? '전자가 반대로 가요. 방전 때 전자는 (−)극에서 나와요.' : '방전과 같은 방향으로는 충전되지 않아요. 외부 전원이 전자를 반대로 밀어야 해요.'; col = '#b91c1c'; }
     else { msg = dis ? '✅ 방전 : (−)극 → 외부 회로 → (+)극 (화학 에너지 → 전기 에너지)' : '✅ 충전 : 방전과 반대 방향 (전기 에너지 → 화학 에너지)'; col = '#166534'; }
     textBlock(MAIN.x + 16, MAIN.y + MAIN.h - (PHONE ? 38 : 30), MAIN.w - 32, msg, 14, col, 19, 800);

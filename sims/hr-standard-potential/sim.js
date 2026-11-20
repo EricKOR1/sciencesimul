@@ -448,7 +448,7 @@
     else if (!B) { msg = A.name + ' (' + sgn2(A.E) + ' V) 를 골랐어요. 비교할 카드를 하나 더 골라요.'; }
     else if (s.last && s.last.ok) { const r = HC[s.last.red], o = HC[s.last.ox]; msg = '✅ 환원극 ' + r.name + ' (' + sgn2(r.E) + ' V) , 산화극 ' + o.name + ' (' + sgn2(o.E) + ' V)  →  E°cell = ' + sgn2(r.E) + ' − (' + sgn2(o.E) + ') = ' + sgn2(r.E - o.E) + ' V'; col = '#166534'; }
     else if (s.last && !s.last.ok) { msg = '아니에요. E°가 더 큰 쪽이 전자를 받는 환원극이에요. 눈금에서 더 아래에 있는 쪽이에요.'; col = '#b91c1c'; }
-    else { msg = A.name + ' , ' + B.name + ' 중 어느 쪽이 환원극((+)극)일까요? 아래 단추로 답해요.'; }
+    else { msg = A.name + ' , ' + B.name + ' 중 어느 쪽이 환원극((+)극)일까요? 조작판에서 환원극인 쪽 이름 단추를 눌러 답해요.'; }
     textBlock(INFO.x + 16, INFO.y + 54, INFO.w - 32, msg, PHONE ? 14 : 15, col, 21, 800);
     textBlock(INFO.x + 16, INFO.y + INFO.h - (PHONE ? 52 : 40), INFO.w - 32, '판정한 짝 : ' + tbNJ() + ' / 3 (서로 다른 짝 3개를 맞혀요)', 14, tbNJ() >= 3 ? '#166534' : MUTED, 19, 800);
   }
@@ -594,7 +594,7 @@
     if (done) {
       if (sp) { T(bxs, ry, '자발적으로 일어나요 ○', 16, '#166534', 'left', 900); T(bxs, ry + 24, r.rdn + ' : 환원제 (산화돼요) , ' + r.oxn + ' : 산화제 (환원돼요)', PHONE ? 13 : 14, INK, 'left', 800); }
       else { T(bxs, ry, '자발적으로 일어나지 않아요 ×', 16, '#b91c1c', 'left', 900); T(bxs, ry + 24, '이 짝에서는 ' + iga(r.rdn) + ' 전자를 내놓지 못해요', PHONE ? 13 : 14, INK, 'left', 800); }
-    } else T(bxs, ry, '아래 단추로 ○ / × 를 골라요', 15, MUTED, 'left', 800);
+    } else T(bxs, ry, '○ · × 단추로 골라요', 15, MUTED, 'left', 800);
     // INFO
     panel(INFO.x, INFO.y, INFO.w, INFO.h, 14);
     T(INFO.x + 16, INFO.y + 24, r.eq, PHONE ? 15 : 17, INK, 'left', 900);
@@ -692,7 +692,7 @@
         {
           title: '환원극과 산화극 판정하기',
           goal: '표에서 반쪽 전지를 <b>두 개</b> 눌러 고르고, 어느 쪽이 <b>환원극</b>인지 답하세요. 서로 다른 짝으로 <b>3번</b> 맞혀요.',
-          hint: '카드를 눌러 두 장을 고른 뒤 아래 단추를 눌러요. E°가 더 큰(눈금에서 더 아래에 있는) 쪽이 환원극이에요. 같은 짝은 한 번만 세요.',
+          hint: '카드를 눌러 두 장을 고른 뒤, 조작판에 나타난 두 이름 중 환원극인 쪽을 눌러요. E°가 더 큰(눈금에서 더 아래에 있는) 쪽이 환원극이에요. 같은 짝은 한 번만 세요.',
           setup() { S.gate = 'tb'; const s = S.tb; s.a = s.b = -1; s.last = null; s.judged = {}; setScene('table'); updateCtl(); },
           check: () => tbNJ() >= 3, hold: 0.5,
           status: () => '맞힌 짝 ' + tbNJ() + ' / 3 ' + mark(tbNJ() >= 3),
