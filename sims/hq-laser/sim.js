@@ -905,7 +905,7 @@
         {
           title: '세 과정 모두 시연해 보기',
           goal: '“흡수”, “자발 방출”, “유도 방출”을 차례로 골라 애니메이션을 <b>끝까지</b> 지켜보세요. 광자 수가 어떻게 변하는지 눈여겨봐요.',
-          hint: '위쪽 버튼으로 과정을 고르면 저절로 시연돼요. 끝나면 ✅ 표시가 생겨요. 다시 보려면 ▶ 다시 보기를 눌러요.',
+          hint: '‘과정 고르기’의 버튼으로 과정을 고르면 저절로 시연돼요. 끝나면 ✅ 표시가 생겨요. 다시 보려면 ▶ 다시 보기를 눌러요.',
           setup() { S.at.seen = { abs: false, spon: false, stim: false }; S.show.selA = false; startProc('abs'); setScene('atom'); },
           check: () => S.at.seen.abs && S.at.seen.spon && S.at.seen.stim,
           hold: 0.3,

@@ -459,7 +459,7 @@
       y += lh; T(x + 12, y, 'ΔV = ' + IV[bi][0] + ' V − ' + IV[bi][1] + ' V = ' + (IV[bi][0] - IV[bi][1]) + ' V', sz, '#26324a', 'left', 800);
       y += lh; T(x + 12, y, 'Δr = ' + (RADS[bi + 1] - RADS[bi]) + ' cm = 0.03 m', sz, '#26324a', 'left', 800);
       y += lh; T(x + 12, y, 'E ≈ ΔV / Δr = ' + sci(Eiv(bi)) + ' V/m', sz, '#9a3412', 'left', 800);
-      if (!PHONE) { y += lh; T(x + 12, y, bi === 0 ? '← 간격이 좁은 곳이 E가 커요' : bi === 2 ? '← 간격이 넓은 곳은 E가 작아요' : '', sz - 0.5, '#0b7a41', 'left', 800); }
+      if (!PHONE) { y += lh; T(x + 12, y, bi === 0 ? '← 전위차가 큰 곳이 E가 커요' : bi === 2 ? '← 전위차가 작은 곳은 E가 작아요' : '', sz - 0.5, '#0b7a41', 'left', 800); }
     }
     // 에너지 막대
     const y2 = PHONE ? y1 + h1 + 8 : y1 + h1 + 10, h2 = PHONE ? PHB - h1 - 8 : AR.y1 - y2;
@@ -705,7 +705,7 @@
     let bad = 0; rules.forEach((r, i) => { const o = +store[i] - 1 === r[2]; if (!o) bad++; selMark(sels[i], i, o, ok); });
     return bad ? msg : true;
   }
-  const B2 = { rules: [['등전위선 간격이 가장 좁은 구간은?', ['3~6 cm', '6~9 cm', '9~12 cm'], 0]], st: {}, ok: {} };
+  const B2 = { rules: [['같은 3 cm 간격에서 전위차가 가장 큰 구간은?', ['3~6 cm', '6~9 cm', '9~12 cm'], 0]], st: {}, ok: {} };
   const b2Sels = makeSelects($('#selHost2'), B2.rules, B2.st, B2.ok);
   const num2 = makeNum($('#selHost2'), '그 구간의 전기장 E = ΔV/Δr 은?', 'E ≈', 'V/m');
   const num3 = makeNum($('#num3Host'), '<b>V = 12 V</b>인 판의 간격만 <b>절반(6.0 cm → 3.0 cm)</b>으로 줄이면 E는?', 'E =', 'V/m');
@@ -790,19 +790,19 @@
           explain: '3 cm 선은 V = (9.0 V·m)/(0.03 m) = <b>300 V</b>, 12 cm 선은 <b>75 V</b>이므로 전위차는 300 − 75 = <b>225 V</b>예요. 2.0 nC의 전하를 300 V에서 75 V로 옮기면 전기력이 하는 일은 W = qΔV = (2.0×10⁻⁹)(225) = <b>4.5×10⁻⁷ J</b>이에요.',
         },
         {
-          title: '간격이 좁은 곳 찾기', manual: true,
-          goal: '등전위선 간격이 <b>가장 좁은 구간</b>을 고르고, 그 구간의 전기장 <b>E ≈ ΔV/Δr</b>을 구해 입력한 뒤 <b>✔ 확인하기</b>를 누르세요.',
+          title: '전기장이 센 구간 찾기', manual: true,
+          goal: '같은 3 cm 간격에서 <b>전위차가 가장 큰 구간</b>을 고르고, 그 구간의 전기장 <b>E ≈ ΔV/Δr</b>을 구해 입력한 뒤 <b>✔ 확인하기</b>를 누르세요.',
           hint: '구간별 ΔV와 간격 Δr(= 0.03 m)이 화면에 적혀 있어요. 가장 안쪽 구간은 ΔV = 150 V예요. E = ΔV / Δr.',
           setup() { S.gate = 'm2b'; resetSels(b2Sels, B2.st, B2.ok); num2.clear(); setScene('equi'); },
           check: () => {
             if (!B2.st[0]) return '구간을 먼저 골라 주세요.';
             const ok = +B2.st[0] - 1 === 0; selMark(b2Sels[0], 0, ok, B2.ok);
             const r = checkNum(num2, 5.0e3, 0.04, 'E = ΔV/Δr = 150 V / 0.03 m 를 계산해 보세요. 10의 거듭제곱도 확인해요.');
-            if (!ok) return '간격이 가장 좁은 구간을 다시 찾아 보세요. 그림에서 동심원 사이가 가장 촘촘한 곳이에요.';
+            if (!ok) return '전위차가 가장 큰 구간을 다시 찾아 보세요. 구간마다 간격은 3 cm로 같으니 두 등전위선의 전위 눈금 차이를 비교해요.';
             return r;
           },
           status: () => '구간 ' + mark(!!B2.st[0] && +B2.st[0] === 1) + ' &nbsp; E ' + mark(numOK(num2, 5.0e3, 0.04) === true),
-          explain: '안쪽 구간(3~6 cm)의 간격이 가장 좁고(전위차 150 V가 3 cm에 몰려 있어요), E ≈ 150 / 0.03 = <b>5.0×10³ V/m</b>예요. 바깥으로 갈수록 같은 3 cm 간격이어도 전위차가 150 → 50 → 25 V로 줄어 E는 5.0×10³ → 1.7×10³ → 8.3×10² V/m로 약해져요.',
+          explain: '안쪽 구간(3~6 cm)은 같은 3 cm에 전위차 150 V가 몰려 있어서, E ≈ 150 / 0.03 = <b>5.0×10³ V/m</b>예요. 바깥으로 갈수록 같은 3 cm 간격이어도 전위차가 150 → 50 → 25 V로 줄어 E는 5.0×10³ → 1.7×10³ → 8.3×10² V/m로 약해져요. 등전위선을 같은 전위차(예: 25 V)마다 그리면 안쪽일수록 선의 간격이 좁아져요.',
         },
         {
           type: 'quiz', title: '같은 등전위면 위에서의 이동',

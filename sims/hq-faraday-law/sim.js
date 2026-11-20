@@ -924,7 +924,7 @@
         {
           title: '코일을 자기장과 나란히', manual: true,
           goal: 'θ를 <b>90°</b>로 돌려 코일 면을 자기장과 나란하게 하고, 이때의 Φ를 고른 뒤 <b>✔ 확인하기</b>를 누르세요.',
-          hint: 'θ = 90°이면 cos 90° = 0이에요. 주황색 선(코일을 지나는 자기력선)이 하나도 없어지는지 보세요.',
+          hint: 'θ = 90°이면 cos 90° = 0이에요. <span class="only2d">주황색</span><span class="only3d">노란</span> 선(코일을 지나는 자기력선)이 하나도 없어지는지 보세요.',
           setup() { S.gate = 'mf2'; setFlux(0.5, 0.02, 0); resetSels(selFs, selF.st, selF.ok); setScene('flux'); },
           check: () => (S.f.th !== 90 ? 'θ 슬라이더를 90°로 돌려 코일 면을 자기장과 나란하게 만들어 보세요.' : checkSel(selFR, selF.st, selF.ok, selFs, '다시 생각해 보세요. Φ = BA cosθ 에서 cos 90° 는 얼마일까요?')),
           status: () => mark(S.f.th === 90) + ' θ = ' + S.f.th + '° &nbsp; ' + mark(!!selF.st[0]) + ' Φ 고르기',
