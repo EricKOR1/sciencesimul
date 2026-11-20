@@ -66,7 +66,7 @@
     { name: '철 핵', prod: '핵융합이 멈춰요', col: '#d1d5db' },
   ];
   const RR = [1.0, 0.82, 0.64, 0.47, 0.31, 0.17];
-  const STN = ['① 수소 연소', '② 헬륨 연소', '③ 탄소 연소', '④ 네온·산소 연소', '⑤ 규소 연소', '⑥ 철 핵 완성'];
+  const STN = ['① 수소 핵융합', '② 헬륨 핵융합', '③ 탄소 핵융합', '④ 네온·산소 핵융합', '⑤ 규소 핵융합', '⑥ 철 핵 완성'];
   const TIME20 = ['약 1천만 년', '약 1백만 년', '약 수백 년', '약 1년', '약 1일', '—'];
   const ANS_OPT = ['?', '헬륨', '탄소·산소', '네온·마그네슘', '규소', '철'];
   const ANS_OK = { 1: 2, 8: 5, 20: 5 };
@@ -508,7 +508,7 @@
   $('#bBirth').addEventListener('click', () => { Sound.click(); restartBirth(); });
   const bTemp = SciSim.bindRange(sTemp, oTemp, (v) => (+v * 100).toLocaleString('ko-KR') + '만 K', (v) => { S.T = v; });
   $('#bBalance').addEventListener('click', () => { Sound.click(); S.balPressed = true; updateCtl(); });
-  const stMax = () => (S.m3 === 1 ? 2 : 5);   // 태양 정도의 별은 ③(탄소 연소)에 이르기 전에 진화가 끝나요
+  const stMax = () => (S.m3 === 1 ? 2 : 5);   // 태양 정도의 별은 ③(탄소 핵융합)에 이르기 전에 진화가 끝나요
   function setM3(m) { S.m3 = m; S.st = Math.min(S.st, stMax()); Sound.tick(); updateCtl(); }
   ctl.m3.forEach((b) => b.addEventListener('click', () => setM3(+b.dataset.m)));
   function setSt(v) { S.st = clamp(Math.round(v), 0, stMax()); sSt.value = S.st; updateCtl(); }
