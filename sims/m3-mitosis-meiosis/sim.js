@@ -1464,7 +1464,7 @@
           hint: '다음 단계 ▶ 를 3번 눌러 가운데 배열(4/9)까지 가요. <span class="only2d">짝지은 염색체를 한쪽 극으로 끌면 짝은 반대쪽으로 끌려가요.</span><span class="only3d">긴 쌍 · 짧은 쌍 나누기 단추를 하나씩 누르면 짝이 서로 반대쪽 극으로 끌려가요.</span> 그다음 다음 단계 ▶ 를 계속 눌러요.',
           check: () => meio.stage === 8 && meio.ready && meio.userSep[0] && meio.userSep[1],
           hold: 0.5,
-          status: () => mark(meio.userSep[0]) + ' 주황 염색체 쌍 분리 · ' + mark(meio.userSep[1]) + ' 보라 염색체 쌍 분리 · ' + mark(meio.maxStage >= 5) + ' 세포 2개 · ' + mark(meio.stage === 8 && meio.ready) + ' 생식세포 4개',
+          status: () => mark(meio.userSep[0]) + ' 긴 염색체 쌍 분리 · ' + mark(meio.userSep[1]) + ' 짧은 염색체 쌍 분리 · ' + mark(meio.maxStage >= 5) + ' 세포 2개 · ' + mark(meio.stage === 8 && meio.ready) + ' 생식세포 4개',
           explain: '1분열에서 <b>상동 염색체가 서로 반대쪽으로 분리</b>되어 염색체 수가 절반(4 → 2)이 되고, 2분열에서 염색 분체가 나뉘어 <b>생식세포 4개</b>(염색체 2개씩)가 만들어져요. 체세포분열과 달리 <b>상동 염색체의 짝짓기</b>가 일어나는 것이 큰 특징이에요.',
         },
         {

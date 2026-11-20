@@ -11,7 +11,7 @@
   const lerp = (a, b, t) => a + (b - a) * t, DEG = Math.PI / 180;
 
   window.SciSim3D.attach({
-    title: '온대 저기압과 전선 3D',
+    title: '중위도 저기압과 전선 3D',
     hint: '드래그: 돌리기 · 휠/두 손가락: 확대',
     levels: [0],             // 0단계(저기압 구조): 3D 조작 막대의 이름표 단추로 ①②③ 자리에 이름표를 놓아요(2D 이름표 판과 같은 상태). 1~3단계(관측 그래프 · 기압 그래프 · 일기도 읽기)는 2D 화면에서 해요
     camera: { dist: PHONE ? 17 : 12, theta: -0.45, phi: 0.98, min: 5, max: 30, target: [0.8, 0.7, 0.6] },
