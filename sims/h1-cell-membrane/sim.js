@@ -487,7 +487,7 @@
   function stepLab(dt) {
     const L = S.lab;
     if (L.exp === 'iodine') {
-      const r = L.iod; r.box.step(dt);
+      const r = L.iod; if (r.st !== 'idle') r.box.step(dt);
       if (r.st === 'run') { r.t = Math.min(LAB_MIN, r.t + dt * LAB_MIN / LAB_SECS); if (r.t >= LAB_MIN) { r.st = 'done'; Sound.success(); parts.burst(190, 270, { count: 16, speed: 140, size: 3.4, colors: ['#312e81', '#6366f1', '#fff'], gravity: 100 }); updateCtl(); } }
       r.f = smooth(r.t / LAB_MIN);
       IOD_TYPES.starch.color = C.mix('#d1d5db', '#3b3a8a', r.f);

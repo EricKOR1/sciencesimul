@@ -749,7 +749,7 @@
           setup() { ensure('build'); if (S.asm.target !== 'density') { resetAsm('density'); updateCtl(); $('#inCalc').value = ''; } },
           check: () => !!S.asm.solved.density && S.asm.target === 'density' && S.asm.ok, hold: 0.5,
           status: () => mark(S.asm.target === 'density' && S.asm.ok) + ' 단위 kg/m³ 만들기 · ' + mark(!!S.asm.solved.density) + ' 계산 (0.2 kg ÷ 2×10⁻⁴ m³)',
-          explain: '질량(kg) ÷ [길이 × 길이 × 길이](m³) = <b>kg/m³</b>예요. 물 200 g이 200 cm³이면 밀도는 1 g/cm³ = <b>1000 kg/m³</b>이에요. 기본량 3개가 모두 쓰여 밀도가 만들어져요.',
+          explain: '질량(kg) ÷ [길이 × 길이 × 길이](m³) = <b>kg/m³</b>예요. 물 200 g이 200 cm³이면 밀도는 1 g/cm³ = <b>1000 kg/m³</b>이에요. 질량 블록 1개와 길이 블록 3개, 두 가지 기본량으로 밀도가 만들어져요.',
         },
         {
           type: 'quiz', title: '유도량의 단위',
