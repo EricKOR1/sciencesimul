@@ -572,6 +572,7 @@
   const curP = [25, 21.5, 18, 14.5, 11, 4];
   const lapseOf = (P0) => { let mx = -99, inv = false; for (let i = 0; i < P0.length - 1; i++) { const g = ((P0[i] - P0[i + 1]) / (ZL[i + 1] - ZL[i])) / 10; if (g < -0.02) inv = true; mx = Math.max(mx, g); } return { max: mx, inv }; };
   const gamSea = () => (S.sst - S.t850) / 1.5 / 10;
+  const hideGam = () => { const m = game && game.current(); return !!(m && m.hideGam && game.isActive(m)); };
   const catOf = (g) => (g < 0.5 ? 's' : g < 1.0 ? 'c' : 'u');
   function drawChange(t, dt) {
     const { A, B, C } = RC4, sit = S.sit, target = profOf(sit);
@@ -645,20 +646,21 @@
     D.label(pb.x + 8, pb.y + 16, '─ 주변(붉은 실선)  ┄ 덩어리(건조 단열)', { bg: 'rgba(15,23,42,.7)', size: 11.5, pad: 7, align: 'left' });
     const L0 = lapseOf(curP);
     drawWrap(B.x + B.w / 2, B.y + B.h - (PHONE ? 40 : 52), '붉은 면: 덩어리가 더 따뜻해 떠올라요 · 푸른 면: 더 차가워 제자리로', B.w - 20, 12, { color: '#475569', weight: 800 });
-    D.text(B.x + B.w / 2, B.y + B.h - 12, L0.inv ? '기온 역전층이 있어요 (높이 올라갈수록 기온이 오르는 층)' : '가장 가파른 층의 감률 ' + fx(L0.max, 2) + ' °C/100 m', { size: 13, weight: 800, color: '#b91c1c' });
+    D.text(B.x + B.w / 2, B.y + B.h - 12, L0.inv ? '기온 역전층이 있어요 (높이 올라갈수록 기온이 오르는 층)' : hideGam() ? '가장 가파른 층의 감률은 얼마일까요?' : '가장 가파른 층의 감률 ' + fx(L0.max, 2) + ' °C/100 m', { size: 13, weight: 800, color: '#b91c1c' });
 
     // 서해 계산 패널
     card(C, '🧮 겨울 서해: 해수면 ' + S.sst + ' °C 위로 ' + minus(S.t850) + ' °C(1.5 km)의 공기');
-    const g = gamSea(), cat = catOf(g), tx = C.x + 16;
-    D.text(tx, C.y + 56, '감률 = (' + S.sst + ' − (' + minus(S.t850) + ')) / 1.5 km', { size: 13.5, weight: 800, color: '#334155', align: 'left' });
-    D.text(tx, C.y + 56 + 26 * FS * 0.9, '= ' + fx(S.sst - S.t850, 0) + ' °C / 1.5 km = ' + fx((S.sst - S.t850) / 1.5, 1) + ' °C/km', { size: 13.5, weight: 800, color: '#334155', align: 'left' });
-    D.text(tx, C.y + 56 + 54 * FS * 0.9, '= ' + fx(g, 2) + ' °C/100 m', { size: 17, weight: 800, color: '#b91c1c', align: 'left' });
+    // 감률을 직접 계산해 입력하는 미션 중에는 계산 과정과 답을 가려요 (맞히면 다시 보여 줘요)
+    const g = gamSea(), cat = catOf(g), tx = C.x + 16, hid = hideGam();
+    D.text(tx, C.y + 56, '감률 = (해수면 기온 − 1.5 km 기온) / 1.5 km' + (hid ? '' : ' = (' + S.sst + ' − (' + minus(S.t850) + ')) / 1.5 km'), { size: 13.5, weight: 800, color: '#334155', align: 'left' });
+    D.text(tx, C.y + 56 + 26 * FS * 0.9, hid ? '= ? °C/km  (직접 계산해 봐요)' : '= ' + fx(S.sst - S.t850, 0) + ' °C / 1.5 km = ' + fx((S.sst - S.t850) / 1.5, 1) + ' °C/km', { size: 13.5, weight: 800, color: '#334155', align: 'left' });
+    D.text(tx, C.y + 56 + 54 * FS * 0.9, hid ? '= ? °C/100 m' : '= ' + fx(g, 2) + ' °C/100 m', { size: 17, weight: 800, color: '#b91c1c', align: 'left' });
     D.text(tx, C.y + 56 + 80 * FS * 0.9, '건조 단열 감률 1.0, 습윤 0.5와 비교하면?', { size: 12.5, weight: 700, color: '#64748b', align: 'left' });
     // 눈금 막대
     const bx = C.x + 16, bw = C.w - 32, by = C.y + C.h - (PHONE ? 30 : 38), gx = (v) => bx + (bw * clamp(v, 0, 1.6)) / 1.6;
     ctx.fillStyle = 'rgba(34,197,94,.35)'; ctx.fillRect(bx, by, gx(0.5) - bx, 12); ctx.fillStyle = 'rgba(245,158,11,.4)'; ctx.fillRect(gx(0.5), by, gx(1.0) - gx(0.5), 12); ctx.fillStyle = 'rgba(239,68,68,.4)'; ctx.fillRect(gx(1.0), by, bx + bw - gx(1.0), 12);
     D.text(gx(0.25), by + 26, '절대 안정', { size: 11.5, weight: 800, color: '#15803d' }); D.text(gx(0.75), by + 26, '조건부 불안정', { size: 11.5, weight: 800, color: '#b45309' }); D.text(gx(1.3), by + 26, '절대 불안정', { size: 11.5, weight: 800, color: '#b91c1c' });
-    D.sphere(gx(g), by + 6, 8, '#1d4ed8', { shadow: true });
+    if (!hid) D.sphere(gx(g), by + 6, 8, '#1d4ed8', { shadow: true });
   }
 
   /* ======================================================
@@ -895,9 +897,9 @@
       summary: '<ul><li><b>낮 지표 가열</b> → 감률 증가 → 불안정(소나기). <b>맑은 밤 복사 냉각</b> → 지표 근처 기온 역전 → 안정(안개·스모그). <b>고기압 침강</b> → 단열 압축 가열 → 역전층(스모그). <b>상층 한기 유입</b> → 감률 증가 → 불안정(소나기·뇌우).</li><li>겨울 서해: 시베리아 한랭 기단(850 hPa, 약 1.5 km 기온 −12 °C)이 해수면 8 °C 위로 오면 Γ = 20 °C / 1.5 km ≈ <b>1.33 °C/100 m &gt; 1.0</b> → 절대 불안정 → 눈구름 발달, 서해안 대설.</li></ul>',
       missions: [
         {
-          title: '겨울 서해 상공의 기온 감률', manual: true,
+          title: '겨울 서해 상공의 기온 감률', manual: true, hideGam: true,
           goal: '해수면 <b>8 °C</b>, 약 1.5 km(850 hPa) 기온 <b>−12 °C</b>일 때 서해 상공의 기온 감률을 °C/100 m로 입력하고, 안정도를 골라요.',
-          hint: '(8 − (−12)) / 1.5 km = 20 / 1.5 = 13.3 °C/km이고, 100 m로 바꾸면 1.33 °C/100 m예요. 건조 단열 감률(1.0)보다 커요.',
+          hint: '(해수면 기온 − 1.5 km 기온)을 1.5 km로 나누면 1 km당 값(°C/km)이 나와요. 이것을 10으로 나누면 100 m당 값이에요. 그 값을 습윤 단열 감률 0.5, 건조 단열 감률 1.0과 비교해요.',
           setup() { S.sit = 3; S.sst = 8; S.t850 = -12; setSlider($('#sSst'), $('#oSst'), 8, (v) => v + ' °C'); setSlider($('#sT850'), $('#oT850'), -12, (v) => minus(v) + ' °C'); $('#iGam').value = ''; S.gamPick = null; syncGam(); setMode('change'); setCtl(['sea', 'gamIn']); },
           status: () => mark(near($in('#iGam'), gamSea(), 0.03)) + ' 입력 ' + ($in('#iGam') == null ? '—' : $in('#iGam') + ' °C/100 m') + ' · ' + mark(S.gamPick === catOf(gamSea())) + ' 안정도 ' + (S.gamPick ? ({ s: '절대 안정', c: '조건부 불안정', u: '절대 불안정' })[S.gamPick] : '—'),
           check() {
@@ -941,7 +943,7 @@
     if (m === 'lapse') setReadouts(['덩어리 높이', Math.round(S.zV) + ' m', '덩어리 기온', minus(fx(parcelT(S.zV), 1)) + ' °C', '이슬점', minus(fx(parcelTd(S.zV), 1)) + ' °C']);
     else if (m === 'judge') { const dT = dTj(ENVG[S.env], S.zJ); setReadouts(['환경 감률', ENVG[S.env].toFixed(1) + ' °C/100 m', '덩어리 − 주변', (dT > 0.04 ? '+' : dT < -0.04 ? '−' : '') + fx(Math.abs(dT), 1) + ' °C', '높이', S.zJ + ' m']); }
     else if (m === 'skew') setReadouts(['덩어리 경로', S.pp >= ZT ? '완성' : S.pp > 0 ? '그리는 중' : '아직', 'LCL 표시', S.marks.lcl ? fx(S.marks.lcl.z, 1) + ' km' : '—', 'LFC 표시', S.marks.lfc ? fx(S.marks.lfc.z, 1) + ' km' : '—']);
-    else setReadouts(['지금 장면', SITN[S.sit], '서해 상공 감률', fx(gamSea(), 2) + ' °C/100 m', '판정 기준', '0.5 · 1.0 °C/100 m']);
+    else setReadouts(['지금 장면', SITN[S.sit], '서해 상공 감률', hideGam() ? '? (계산해요)' : fx(gamSea(), 2) + ' °C/100 m', '판정 기준', '0.5 · 1.0 °C/100 m']);
   }
 
   /* ---------- 루프 ---------- */

@@ -739,13 +739,13 @@
     // 정확도 판
     const ay = PHONE ? 780 : 392, ah = PHONE ? 50 : 156;
     if (PHONE) {
-      note(10, 782, 580, S.trained && S.training <= 0 ? '정확도(%) = 맞힌 수 / 전체 × 100  →  12개 중 ' + S.nCorrect + '개 맞힘' : '이름표를 모두 달고 🧠 훈련하기를 눌러요', 13, { bg: 'rgba(255,255,255,.92)' });
+      note(10, 782, 580, S.trained && S.training <= 0 ? '정확도(%) = 맞힌 수 / 시험한 수 × 100  →  시험 은하 4개 중 ' + S.nCorrect + '개 맞힘' : '이름표를 모두 달고 🧠 훈련하기를 눌러요', 13, { bg: 'rgba(255,255,255,.92)' });
     } else {
       panel(486, ay, 302, ah, { title: '정확도' });
       if (S.trained && S.training <= 0) {
-        TXD(498, ay + 50, '정확도(%) = 맞힌 수 / 전체 × 100', 13, '#334155', 'left', 800);
-        TXD(498, ay + 78, '12개 중 ' + S.nCorrect + '개를 맞혔어요', 15, '#0f172a', 'left', 800);
-        TXD(498, ay + 100, '(훈련 8개 + 시험 4개)', 12.5, '#64748b', 'left', 700);
+        TXD(498, ay + 50, '정확도(%) = 맞힌 수 / 시험한 수 × 100', 13, '#334155', 'left', 800);
+        TXD(498, ay + 78, '시험 은하 4개 중 ' + S.nCorrect + '개를 맞혔어요', 15, '#0f172a', 'left', 800);
+        TXD(498, ay + 100, '(훈련에 쓰지 않은 은하로 평가해요)', 12.5, '#64748b', 'left', 700);
         TXD(498, ay + 132, 'AI의 정확도를 입력창에 써 보세요 →', 12.5, '#b45309', 'left', 800);
       } else {
         drawWrap(498, ay + 48, S.training > 0 ? '경계선이 데이터를 따라 움직이며 학습하는 중이에요...' : '① 훈련 은하 8개에 이름표 달기\n② 🧠 훈련하기\n③ 시험 은하 4개 결과 보기', 302 - 24, 13, { align: 'left', color: '#334155' });
@@ -830,9 +830,10 @@
   function finishTraining() {
     S.training = 0; S.wd = S.w.slice();
     S.pred = {}; let ok = 0;
-    G4.forEach((g) => { S.pred[g.id] = scoreOf(S.w, g) > 0 ? 'S' : 'E'; if (S.pred[g.id] === g.y) ok++; });
-    S.nCorrect = ok; S.acc = ok / G4.length * 100;
+    // 정확도는 훈련에 쓰지 않은 시험 은하로만 평가해요 (이미 배운 훈련 은하는 넣지 않아요)
     const tests = G4.filter((g) => g.role === 'test');
+    G4.forEach((g) => { S.pred[g.id] = scoreOf(S.w, g) > 0 ? 'S' : 'E'; if (g.role === 'test' && S.pred[g.id] === g.y) ok++; });
+    S.nCorrect = ok; S.acc = ok / tests.length * 100;
     tests.forEach((g, i) => SciSim.tween(S.flip, { [g.id]: 1 }, { duration: 0.55, delay: 0.25 + i * 0.4, ease: 'outCubic', onDone: () => { Sound.tick(); if (i === tests.length - 1) { S.revealed = true; Sound.success(); updateCtl(); const P = plot4(); parts.burst(P.gx(0.5), P.gy(0.5), { count: 16, speed: 150, colors: ['#3b82f6', '#f59e0b', '#fff'] }); } } }));
     updateCtl();
   }
@@ -1039,7 +1040,7 @@
         '<p>은하마다 두 가지 특징(<b>납작한 정도</b>, <b>푸른 정도</b>)이 있어요. 훈련 은하 8개에 <b>타원/나선</b> 이름표를 달아 가르치면 AI가 두 무리를 나누는 <b>경계선</b>을 학습하고, 시험 은하 4개를 예측해요.</p>',
       setup() { enterLevel(3); },
       recap: 'AI는 이름표가 붙은 훈련 데이터에서 규칙을 배워 새 은하를 분류해요. 훈련에 없던 유형은 잘못 분류할 수 있어요.',
-      summary: '<ul><li>빅데이터 시대에는 은하가 수백만 개라서 사람이 모두 분류하기 어려워 <b>AI</b>를 이용해요.</li><li>AI 분류: <b>훈련 데이터(이름표가 붙은 은하) → 규칙(경계선) → 예측(새 은하)</b></li><li><b>정확도(%) = 맞힌 수 ÷ 전체 × 100</b> (예: 12개 중 10개 → 약 83 %)</li><li>오분류 예: 옆에서 본 나선 은하는 납작한 타원 은하처럼 보이고, 붉은 Sa 은하는 타원 은하처럼 보여요. 훈련 데이터에 없던 경우는 틀리기 쉬워요.</li></ul>',
+      summary: '<ul><li>빅데이터 시대에는 은하가 수백만 개라서 사람이 모두 분류하기 어려워 <b>AI</b>를 이용해요.</li><li>AI 분류: <b>훈련 데이터(이름표가 붙은 은하) → 규칙(경계선) → 예측(새 은하)</b></li><li><b>정확도(%) = 맞힌 수 ÷ 시험한 수 × 100</b>: 훈련에 쓰지 않은 시험 데이터로 평가해요 (예: 시험 은하 4개 중 2개 → 50 %)</li><li>오분류 예: 옆에서 본 나선 은하는 납작한 타원 은하처럼 보이고, 붉은 Sa 은하는 타원 은하처럼 보여요. 훈련 데이터에 없던 경우는 틀리기 쉬워요.</li></ul>',
       missions: [
         {
           title: '훈련 데이터에 이름표 달기',
@@ -1059,11 +1060,11 @@
         {
           title: 'AI의 정확도 계산하기',
           goal: '<b>🧠 훈련하기</b>를 눌러 AI를 훈련하고, 시험 결과가 나오면 <b>정확도(%)</b>를 계산해 써요.',
-          hint: '정확도(%) = 맞힌 수 ÷ 전체 × 100 예요. 전체는 훈련 8개 + 시험 4개 = 12개이고, 맞힌 수는 ✓ 표시를 세어요.',
+          hint: '정확도(%) = 맞힌 수 ÷ 시험한 수 × 100 예요. AI의 실력은 훈련에 쓰지 않은 <b>시험 은하 4개</b>로 평가해요. 시험 은하에 붙은 ✓ 표시를 세어요.',
           hold: 0.4, setup() { setView('v4'); },
           status: () => '훈련 ' + mark(S.trained && S.training <= 0) + ' · 시험 결과 ' + mark(S.revealed) + ' · 정확도 ' + mark(S.revealed && isFinite(parseNum(inAcc.value)) && Math.abs(parseNum(inAcc.value) - S.acc) <= 1.5),
           check: () => S.revealed && isFinite(parseNum(inAcc.value)) && Math.abs(parseNum(inAcc.value) - S.acc) <= 1.5,
-          explain: '12개 중 10개를 맞혔으므로 정확도는 10 / 12 × 100 ≈ <b>83 %</b>예요. 훈련 은하는 모두 맞혔고, 시험 은하 4개 중 2개(옆에서 본 나선 은하, 붉은 Sa 은하)를 타원으로 잘못 분류했어요.',
+          explain: '시험 은하 4개 중 2개를 맞혔으므로 정확도는 2 / 4 × 100 = <b>50 %</b>예요. 훈련 은하 8개는 모두 맞혔지만, 이미 정답을 보고 배운 자료라서 실력 평가에는 넣지 않아요. 시험 은하 4개 중 2개(옆에서 본 나선 은하, 붉은 Sa 은하)를 타원으로 잘못 분류했어요.',
         },
         {
           type: 'quiz', title: 'AI 분류의 장점과 한계', goal: 'AI가 <b>옆에서 본 나선 은하</b>를 타원 은하로 잘못 분류한 까닭과, 천문학에서 AI를 쓰는 까닭을 가장 잘 설명한 것은?', setup() { setView('v4'); },
