@@ -7,7 +7,7 @@ SciSim.quiz('m3-mendel-ind', [
     id: 'e1', lv: 1, step: 1, type: 'short',
     q: '순종인 주름지고 초록색 완두(rryy)가 만드는 생식세포의 유전자 구성을 기호로 써 보세요.',
     do: '보관함의 <b>주름지고 초록색</b> 완두를 자리에 놓고, 그 아래에 나타나는 생식세포를 읽어요.',
-    answer: ['ry', 'yr'],
+    answer: ['ry', 'yr'], cs: true,
     explain: '생식세포에는 씨 모양 유전자 쌍(rr)에서 하나, 씨 색깔 유전자 쌍(yy)에서 하나가 들어가요. 그래서 rryy는 <b>ry</b> 생식세포만 만들어요.',
   },
   {
