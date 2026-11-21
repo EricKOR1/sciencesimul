@@ -435,6 +435,23 @@ input[type=range]:disabled { opacity: .45; cursor: not-allowed; }
 .mission-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; align-items: center; }
 .mission-actions .grow { flex: 1; }
 
+/* ---- 교사 모드 ---- */
+.teacher-btn {
+  display: inline-flex; align-items: center; gap: 5px; height: var(--tap); padding: 0 13px; border-radius: 999px; flex: none; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--muted); font-size: 17px; white-space: nowrap;
+}
+.teacher-btn b { font-size: 14.5px; font-weight: 800; }
+.teacher-btn.on { background: #1f6f43; border-color: #1f6f43; color: #fff; }
+.teacher-btn:active { transform: scale(.96); }
+@media (max-width: 599px) { .sim-header .teacher-btn { height: 40px; width: 40px; padding: 0; justify-content: center; } .sim-header .teacher-btn b { display: none; } }
+.teacher-bar { margin: 0 0 12px; padding: 9px 11px; border-radius: 14px; background: #e6f4ea; border: 1px solid #b7dfc3; color: #14532d; }
+.teacher-bar .tb-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.teacher-bar .tb-k { font-weight: 800; font-size: 14.5px; margin-right: auto; }
+.teacher-bar .btn { min-height: 38px; }
+.teacher-bar .tb-note { margin-top: 5px; font-size: 12.5px; font-weight: 600; opacity: .85; }
+:root[data-theme="dark"] .teacher-bar { background: #12301f; border-color: #1f5a37; color: #a7e3bd; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .teacher-bar { background: #12301f; border-color: #1f5a37; color: #a7e3bd; } }
+
 /* ---- 실력 문제 (문제 은행) ---- */
 .game-tabs button small { font-size: 12px; font-weight: 800; color: var(--subject-ink); background: var(--subject-soft); border-radius: 99px; padding: 1px 6px; margin-left: 2px; }
 .game.has-quiz .game-tabs button { padding: 8px 4px; font-size: 15px; white-space: nowrap; }

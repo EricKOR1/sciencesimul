@@ -46,7 +46,7 @@
 
   // 맨 위 막대: 테마 버튼 + 화면을 내리면 지금 고른 단원 표시
   const topbar = document.querySelector('.topbar');
-  document.getElementById('themeSlot').replaceWith(SciSim.themeButton());
+  { const slot = document.getElementById('themeSlot'); slot.parentNode.insertBefore(SciSim.teacherButton(), slot); slot.replaceWith(SciSim.themeButton()); }
   const crumbEl = el('div', { class: 'crumb' });
   topbar.querySelector('.topbar-in').insertBefore(crumbEl, statsEl);
   function renderCrumb() {

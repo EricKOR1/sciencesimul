@@ -355,6 +355,18 @@
   }
 
   /* ---------------- 헤더 (효과음, 전체 화면, 별, 화면 밝기) ---------------- */
+  /* 교사 모드: 미션을 풀지 않아도 모든 단계·미션·문제를 자유롭게 넘기며 설명할 수 있어요 (진행 기록은 저장하지 않음) */
+  const isTeacher = () => !!Store.get('teacher', false);
+  function teacherButton() {
+    const on = isTeacher();
+    const b = el('button', { class: 'teacher-btn' + (on ? ' on' : ''), type: 'button', 'aria-pressed': String(on),
+      title: on ? '교사 모드 끄기 (학생 화면으로 돌아가요)' : '교사 모드 켜기: 미션·퀴즈를 풀지 않고 모든 단계를 자유롭게 이동해요',
+      html: '<span aria-hidden="true">👩‍🏫</span><b>' + (on ? '교사 모드' : '교사') + '</b>' });
+    b.setAttribute('aria-label', b.title);
+    b.addEventListener('click', () => { Store.set('teacher', !on); try { global.location.reload(); } catch (e) { /* 무시 */ } });
+    return b;
+  }
+
   function setProgress(p) {
     const h = $('.sim-header');
     if (h) h.style.setProperty('--prog', String(Math.max(0, Math.min(1, p))));
@@ -383,6 +395,8 @@
       right.insertBefore(fb, sb || null);
     }
     if (right && !$('.theme-btn', right)) right.insertBefore(themeButton(), $('#fsBtn') || sb || null);
+    if (right && !$('.teacher-btn', right)) right.insertBefore(teacherButton(), right.firstChild);
+    document.body.classList.toggle('teacher-mode', isTeacher());
     const sm = $('#starMeter');
     if (sm && simId) sm.innerHTML = starsHTML(Store.sim(simId).stars);
   }
@@ -481,7 +495,11 @@
     const allFeatures = new Set();
     levels.forEach((lv) => (lv.features || []).forEach((f) => allFeatures.add(f)));
 
+    const teacher = isTeacher();
+    const TCUR = 'sciencesimul:tcur:' + simId;      // 교사 모드에서 보고 있는 위치 (이 탭에서만 기억)
     let rec = Store.sim(simId);
+    if (teacher) { let c = NaN; try { c = parseInt(global.sessionStorage.getItem(TCUR), 10); } catch (e) { /* 무시 */ } if (c >= 0) rec.cursor = c; }
+    const saveRec = () => { if (teacher) { try { global.sessionStorage.setItem(TCUR, String(idx)); } catch (e) { /* 무시 */ } } else Store.saveSim(simId, rec); };
     if (rec.cursor >= flat.length || rec.cursor < 0) { rec.cursor = 0; rec.score = 0; }
     if (rec.levelsDone == null) rec.levelsDone = rec.cleared ? levels.length : Math.max(0, flat[rec.cursor]._level);
     let idx = rec.cursor;
@@ -537,6 +555,7 @@
     /* ---- 실험 잠금: 단계 설명을 읽는 동안 애니메이션 정지 + 조작 막기 ---- */
     let lockEls = null;
     function setLock(on, li, goBtn) {
+      if (teacher && on) return;
       if (on) lockArgs = [li, goBtn];
       lock.on = on;
       markDirty(on ? 30 : 3);
@@ -599,7 +618,7 @@
 
     function persist() {
       rec.cursor = idx; rec.score = score;
-      Store.saveSim(simId, rec);
+      saveRec();
       setProgress(phase === 'complete' ? 1 : idx / flat.length);
     }
     function setStars(n) {
@@ -621,7 +640,7 @@
       const box = el('div', { class: 'stepper', role: 'list', 'aria-label': '학습 단계' });
       levels.forEach((lv, i) => {
         const done = free || i < rec.levelsDone;
-        const open = (free || i <= rec.levelsDone) && i !== cur && phase !== 'complete' || (phase === 'complete');
+        const open = (teacher && i !== cur) || (free || i <= rec.levelsDone) && i !== cur && phase !== 'complete' || (phase === 'complete');
         const cls = 'st' + (i === cur && phase !== 'complete' ? ' now' : done ? ' done' : '') + (open ? ' open' : '');
         const b = el('button', { class: cls, type: 'button', role: 'listitem', title: (i + 1) + '단계 · ' + lv.title + (open ? '' : ' (잠김)') }, [
           el('span', { class: 'c', text: done && i !== cur ? '✓' : String(i + 1) }),
@@ -632,6 +651,39 @@
         box.appendChild(b);
       });
       return box;
+    }
+
+    /* ---- 교사 모드 막대: 이전·다음으로 자유 이동, 정답·해설 바로 보기 ---- */
+    function teacherBar() {
+      if (!teacher) return null;
+      const m = flat[idx], li = m._level, inIntro = phase === 'intro';
+      const lastOfLevel = idx === flat.length - 1 || flat[idx + 1]._level !== li;
+      const prev = el('button', { class: 'btn btn-sm', type: 'button', html: '◀ 이전', disabled: inIntro && li === 0 });
+      const nextB = el('button', { class: 'btn btn-sm', type: 'button', html: '다음 ▶', disabled: !inIntro && idx === flat.length - 1 });
+      prev.addEventListener('click', () => {
+        Sound.click();
+        if (inIntro) { rec.cursor = firstOf(li - 1); idx = rec.cursor; saveRec(); try { global.location.reload(); } catch (e) { renderIntro(li - 1, false); } return; }
+        if (m._index === 0) { renderIntro(li, false); return; }
+        idx--; renderMission();
+      });
+      nextB.addEventListener('click', () => {
+        Sound.click();
+        if (inIntro) { renderMission(); return; }
+        if (lastOfLevel) { idx++; renderIntro(li + 1, true); return; }
+        idx++; renderMission();
+      });
+      const kids = [el('span', { class: 'tb-k', html: '👩‍🏫 교사 모드' }), prev, nextB];
+      if (!inIntro) {
+        const show = el('button', { class: 'btn btn-sm', type: 'button', html: '👁 정답·해설' });
+        show.addEventListener('click', () => {
+          Sound.click();
+          if (refs.choices) refs.choices.forEach((b) => { if (+b.getAttribute('data-i') === m.answer) b.classList.add('right'); });
+          if (m.type !== 'quiz' && m.hint && phase === 'active') { refs.feedback.className = 'mission-feedback hint'; refs.feedback.innerHTML = '💡 ' + m.hint; }
+          if (m.explain && !refs.card.querySelector('.mission-explain')) refs.card.insertBefore(el('div', { class: 'mission-explain', html: '<h4>🔍 왜 그럴까?</h4>' + m.explain }), refs.card.querySelector('.mission-actions'));
+        });
+        kids.push(show);
+      }
+      return el('div', { class: 'teacher-bar' }, [el('div', { class: 'tb-row' }, kids), el('div', { class: 'tb-note', text: '미션을 풀지 않아도 넘어갈 수 있어요. 위 단계 번호를 눌러 원하는 단계로 바로 가요. (진행 기록은 저장되지 않아요)' })]);
     }
 
     function footer() {
@@ -677,7 +729,7 @@
       go.addEventListener('click', () => { Sound.click(); renderMission(); });
       card.appendChild(go);
       setLock(true, li, go);
-      bodyMission.append(stepper(li), card, footer());
+      bodyMission.append(stepper(li), teacherBar(), card, footer());
       global.SciSimLevel = li;
       try { global.dispatchEvent(new CustomEvent('scisim-level', { detail: { level: li } })); } catch (e) { /* 무시 */ }
       persist();
@@ -760,7 +812,7 @@
       actions.appendChild(refs.nextBtn);
       card.appendChild(actions);
 
-      bodyMission.append(stepper(m._level), head, dots, card, footer());
+      bodyMission.append(stepper(m._level), teacherBar(), head, dots, card, footer());
 
       opts.onMissionStart && opts.onMissionStart(m);
       if (m.setup) { try { m.setup(); } catch (e) { console.error(e); } }
@@ -780,7 +832,7 @@
       refs.hold.classList.remove('show');
       refs.feedback.className = 'mission-feedback good';
       refs.feedback.innerHTML = '🎉 성공! <b>+' + pts + '점</b>' + (wrong === 0 && !hintUsed ? ' (한 번에 성공!)' : '');
-      if (m.explain) refs.card.insertBefore(el('div', { class: 'mission-explain', html: '<h4>🔍 왜 그럴까?</h4>' + m.explain }), refs.card.querySelector('.mission-actions'));
+      if (m.explain && !refs.card.querySelector('.mission-explain')) refs.card.insertBefore(el('div', { class: 'mission-explain', html: '<h4>🔍 왜 그럴까?</h4>' + m.explain }), refs.card.querySelector('.mission-actions'));
       if (refs.checkBtn) refs.checkBtn.hidden = true;
       if (refs.hintBtn) refs.hintBtn.hidden = true;
       const isLast = idx === flat.length - 1;
@@ -805,7 +857,7 @@
       } else {
         rec.cursor = idx + 1; rec.score = score;
       }
-      Store.saveSim(simId, rec);
+      saveRec();
       setProgress(isLast ? 1 : (idx + 1) / flat.length);
       setTimeout(() => { if (refs.nextBtn) { refs.nextBtn.focus({ preventScroll: true }); refs.nextBtn.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }, 80);
     }
@@ -908,9 +960,9 @@
     /* 단계 다시 하기: 페이지를 새로 불러와 실험 상태를 처음부터 다시 시작해요.
        (앞에서 해 둔 실험 결과가 남아 다음 미션이 저절로 통과되는 일을 막아요. 별·열린 단계는 그대로) */
     function replayFrom(li, resetScore) {
-      rec.cursor = firstOf(li);
+      rec.cursor = firstOf(li); idx = rec.cursor;
       rec.score = resetScore ? 0 : score;
-      Store.saveSim(simId, rec);
+      saveRec();
       try { global.location.reload(); } catch (e) { free = false; idx = firstOf(li); renderIntro(li, false); }
     }
 
@@ -996,7 +1048,7 @@
     let bank = null, qTier = 1, qRetry = null, qTry = null;
     const qSel = { 1: 0, 2: 0, 3: 0 };
     if (!rec.quiz || typeof rec.quiz !== 'object') rec.quiz = {};
-    const qOpen = (q) => free || rec.cleared || q.step <= rec.levelsDone;
+    const qOpen = (q) => teacher || free || rec.cleared || q.step <= rec.levelsDone;
     const qNorm = (s) => String(s == null ? '' : s).toLowerCase().replace(/[−–]/g, '-').replace(/[\s.,·ㆍ!?'"‘’“”()\[\]~]/g, '');
     function qNum(s) {
       const t = String(s).replace(/[−–]/g, '-').replace(/[,\s]/g, '');
@@ -1096,7 +1148,7 @@
       const finish = (helped, note) => {
         const v = !helped && st.wrong === 0 && !st.help ? 2 : 1;
         if (!(rec.quiz[q.id] >= v)) rec.quiz[q.id] = v;
-        Store.saveSim(simId, rec);
+        saveRec();
         qRetry = null; qTry = null;
         if (helped) Sound.click(); else { Sound.success(); const r = card.getBoundingClientRect(); confetti({ count: 36, x: r.left + r.width / 2, y: r.top + 40 }); }
         quizTabLabel(); renderQuiz();
@@ -1214,8 +1266,8 @@
           hb.addEventListener('click', () => { Sound.click(); st.help = true; fb.className = 'mission-feedback hint'; fb.innerHTML = '💡 ' + q.hint; });
           actions.insertBefore(hb, actions.firstChild);
         }
-        if (q.type !== 'choice' && q.type !== 'ox') {
-          reveal = el('button', { class: 'btn btn-sm qz-reveal', type: 'button', hidden: true, html: q.type === 'essay' ? '📖 모범 답안 보기' : '📖 정답 보기' });
+        if (teacher || (q.type !== 'choice' && q.type !== 'ox')) {
+          reveal = el('button', { class: 'btn btn-sm qz-reveal', type: 'button', hidden: !teacher, html: teacher ? '👁 정답·풀이' : q.type === 'essay' ? '📖 모범 답안 보기' : '📖 정답 보기' });
           reveal.addEventListener('click', () => finish(true));
           actions.insertBefore(reveal, actions.firstChild);
         }
@@ -1241,7 +1293,7 @@
     global.addEventListener('scisim-quiz', (e) => { if (e.detail && e.detail.id === simId) setBank(QUIZ[simId]); });
 
     const api = {
-      has, isNew,
+      has, isNew, teacher,
       current: () => flat[idx],
       isActive: (m) => phase === 'active' && flat[idx] === m,
       showTab,
@@ -1275,7 +1327,7 @@
   }
 
   global.SciSim = {
-    quiz, catalogInfo, Store, Sound, el, $, $$, themeButton, isDark, setTheme, toast, modal, confetti, stage, pointer, loop, bindRange,
+    quiz, isTeacher, teacherButton, catalogInfo, Store, Sound, el, $, $$, themeButton, isDark, setTheme, toast, modal, confetti, stage, pointer, loop, bindRange,
     clamp, lerp, fmt, starsHTML, game, wireHeader,
   };
 
