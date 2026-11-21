@@ -1032,7 +1032,7 @@
       features: ['lab'],
       setup() { resetLab(); S.gate = ''; setScene('lab'); },
       recap: '에탄올, 아세트알데하이드, 아세트산은 모두 물에 잘 섞이지만, 수용액이 산성이고 NaHCO₃와 반응해 CO₂ 기포를 내는 것은 카복실산(–COOH)뿐이에요. 끓는점은 세 가지 모두 작용기가 없는 에테인보다 높아요.',
-      summary: '<table class="mini"><tr><th>시료(작용기)</th><th>물</th><th>0.10 M pH</th><th>NaHCO₃</th><th>끓는점</th></tr><tr><td>에탄올(–OH)</td><td>잘 섞임</td><td>≈ 7 중성</td><td>기포 없음</td><td>78 °C</td></tr><tr><td>아세트알데하이드(–CHO)</td><td>잘 섞임</td><td>≈ 7 중성</td><td>기포 없음</td><td>20 °C</td></tr><tr><td>아세트산(–COOH)</td><td>잘 섞임</td><td>2.87 약산성</td><td>CO₂ 기포</td><td>118 °C</td></tr></table><ul><li>카복실산만 수용액이 <b>산성</b>이에요 (약산, 단원 53의 아세트산 K<sub>a</sub> = 1.8×10⁻⁵).</li><li>에테인(−89 °C)보다 끓는점이 높은 까닭 : 극성인 작용기 때문에 분자 사이의 인력이 커요.</li></ul>',
+      summary: '<table class="mini"><tr><th>시료(작용기)</th><th>물</th><th>0.10 M pH</th><th>NaHCO₃</th><th>끓는점</th></tr><tr><td>에탄올(–OH)</td><td>잘 섞임</td><td>≈ 7 중성</td><td>기포 없음</td><td>78 °C</td></tr><tr><td>아세트알데하이드(–CHO)</td><td>잘 섞임</td><td>≈ 7 중성</td><td>기포 없음</td><td>20 °C</td></tr><tr><td>아세트산(–COOH)</td><td>잘 섞임</td><td>2.87 약산성</td><td>CO₂ 기포</td><td>118 °C</td></tr></table><ul><li>카복실산만 수용액이 <b>산성</b>이에요 (약산, 산 염기 평형 단원의 아세트산 K<sub>a</sub> = 1.8×10⁻⁵).</li><li>에테인(−89 °C)보다 끓는점이 높은 까닭 : 극성인 작용기 때문에 분자 사이의 인력이 커요.</li></ul>',
       missions: [
         {
           title: '시료 3종 × 시험 4개 측정',
