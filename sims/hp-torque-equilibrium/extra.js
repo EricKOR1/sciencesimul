@@ -8,12 +8,17 @@
   const FONT = '800 20px "Pretendard Variable", Pretendard, sans-serif';
   const DEG = Math.PI / 180, SC = 135, PX = 350, PY = 270;
   const limit = (s) => Math.atan((s.w / 2) / s.h) / DEG;
+  function tag(ctx, text, x, y, col, right) {
+    const tw = ctx.measureText(text).width, x0 = right ? x - tw - 10 : x - 6;
+    ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.roundRect(x0, y - 15, tw + 16, 30, 7); ctx.fill();
+    ctx.fillStyle = col; ctx.textAlign = 'left'; ctx.fillText(text, x0 + 8, y);
+  }
 
   SciSim.extraLab({
     id: 'tip', icon: '🔎', title: '넘어지는 각도',
     // step: 4단계부터 단추가 보여요. 엔진이 step을 단계 번호와 애니메이션 함수로 함께 쓰므로 valueOf로 번호를 줘요.
     step: Object.assign(function () {}, { valueOf: () => 4 }),
-    intro: '상자를 오른쪽 아래 모서리를 축으로 기울여요. 질량을 바꾸면 넘어지는 각이 달라질까요?',
+    intro: '모서리를 축으로 상자를 기울여요. 질량을 바꾸면 넘어지는 각이 달라질까요?',
     size: [600, 340],
     controls: [
       { key: 'm', type: 'range', label: '상자의 질량', min: 10, max: 50, step: 10, value: 10, unit: 'kg' },
@@ -53,8 +58,8 @@
       // 이름표
       ctx.font = FONT; ctx.textBaseline = 'middle';
       ctx.textAlign = 'left'; ctx.fillStyle = '#1e293b'; ctx.fillText('회전축', PX + 16, PY + 22);
-      ctx.textAlign = 'right'; ctx.fillStyle = '#111827'; ctx.fillText('무게중심', gx - 14, gy - 14);
-      ctx.fillStyle = '#7c3aed'; ctx.fillText('무게', gx - 14, gy + al - 10);
+      tag(ctx, '무게중심', gx - 14, gy - 16, '#111827', true);
+      tag(ctx, '무게', gx + 16, gy + al * 0.5, '#7c3aed', false);
       ctx.textAlign = 'left'; ctx.fillStyle = tip ? '#dc2626' : '#15803d';
       ctx.fillText(tip ? '수직선이 축 밖 → 넘어져요' : '수직선이 축 안쪽 → 되돌아와요', 16, 26);
     },

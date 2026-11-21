@@ -19,6 +19,8 @@
     size: [600, 340],
     controls: [
       { key: 'str', type: 'range', label: '난류의 세기 (지금 = 100 %)', min: 0, max: 100, step: 10, value: 100, unit: '%', fmt: (v) => String(v) },
+      { key: 'weak', type: 'button', primary: true, label: '▼ 난류 10 % 약하게', onClick(s, lab) { lab.set('str', Math.max(0, s.str - 10)); } },
+      { key: 'back', type: 'button', label: '↺ 지금처럼 (100 %)', onClick(s, lab) { lab.set('str', 100); } },
     ],
     readouts: [{ key: 'sst', label: '앞바다 수온 (1월)' }, { key: 't', label: '도시의 1월 평균 기온' }, { key: 'd', label: '지금보다' }],
     init(s) { s.ph = 0; s.f = s.str / 100; },

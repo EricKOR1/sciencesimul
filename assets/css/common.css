@@ -464,7 +464,8 @@ input[type=range]:disabled { opacity: .45; cursor: not-allowed; }
 .xl-ctl .segmented button { min-height: 34px; padding: 4px 12px; font-size: 14px; }
 /* 세로 화면·휴대폰·낮은 가로 화면: 무대 높이가 정해져 있어서, 추가 실험을 열면 무대가 내용만큼 늘어나요 */
 @media (orientation: portrait) and (min-width: 600px), (max-width: 599px), (orientation: landscape) and (max-height: 500px) and (min-width: 600px) {
-  .stage-canvas:has(> .xl-panel:not([hidden])) { height: auto !important; aspect-ratio: auto !important; }
+  .stage-canvas:has(> .xl-panel:not([hidden])) { height: auto !important; min-height: 0 !important; aspect-ratio: auto !important; }
+  .stage-canvas:has(> .xl-panel:not([hidden])) > :not(.xl-panel) { visibility: hidden !important; }
   .xl-panel { position: relative; inset: auto; }
   .xl-cv { flex: none; aspect-ratio: var(--xl-ar, 1.9); }
 }
