@@ -12,10 +12,9 @@
   const distOf = (lv) => 2 + 0.15 * lv;
   const grainOf = (lv) => { const d = distOf(lv); return d < 1 ? 'g' : d < 3 ? 's' : 'm'; };
   const NAME = { g: '역암', s: '사암', m: '이암' };
-  const GRAIN = { g: '자갈', s: '모래', m: '진흙' };
   const SIZE = { g: 3, s: 2, m: 1 };
   const COL = { g: '#a8a29e', s: '#facc15', m: '#78716c' };
-  const SITE = 330, A = 60, B = 0.6, PX = 50;
+  const SITE = 360, A = 90, B = 0.42, PX = 56;
   const floorY = (x) => A + B * x;
 
   function trend(s) {
@@ -59,15 +58,15 @@
       { key: 'down', type: 'button', primary: true, label: '▼ 해수면 10 m 내리기', onClick(s) { move(s, -STEP); } },
       { key: 'reset', type: 'button', label: '↺ 처음으로', onClick(s) { reset(s); } },
     ],
-    readouts: [{ key: 'lv', label: '해수면 높이' }, { key: 'd', label: '해안선까지 거리' }, { key: 'g', label: '새로 쌓인 층' }],
+    readouts: [{ key: 'lv', label: '해수면 높이' }, { key: 'd', label: '해안선까지 거리' }, { key: 'tr', label: '위로 갈수록 알갱이' }],
     init(s) { reset(s); },
     tick(s, dt) { s.shown += Math.max(-1, Math.min(1, s.level - s.shown)) * Math.min(Math.abs(s.level - s.shown), 30 * dt); },
     read(s) {
-      const g = grainOf(s.level);
-      return { lv: (s.level > 0 ? '+' : '') + s.level + ' m', d: distOf(s.level).toFixed(1) + ' km', g: NAME[g] + ' (' + GRAIN[g] + ')' };
+      const t = trend(s), tr = t === 'fine' ? '작아짐 (해침)' : t === 'coarse' ? '커짐 (해퇴)' : '—';
+      return { lv: (s.level > 0 ? '+' : '') + s.level + ' m', d: distOf(s.level).toFixed(1) + ' km', tr };
     },
     draw(ctx, W, H, s) {
-      const XE = 400, xs = SITE - PX * distOf(s.shown), ys = floorY(xs);
+      const XE = 445, xs = SITE - PX * distOf(s.shown), ys = floorY(xs);
       ctx.fillStyle = '#eaf3fb'; ctx.fillRect(0, 0, W, H);
       // 바다 (해수면 아래, 해저면 위)
       ctx.fillStyle = '#7cc0ea';
@@ -89,11 +88,11 @@
       ctx.fillStyle = '#dc2626'; ctx.beginPath(); ctx.moveTo(SITE, fy - 70); ctx.lineTo(SITE + 22, fy - 62); ctx.lineTo(SITE, fy - 54); ctx.closePath(); ctx.fill();
       label(ctx, '관찰 지점', SITE - 10, fy + 34);
       label(ctx, '육지', 60, 30);
-      label(ctx, '바다', Math.min(360, Math.max(xs + 50, 300)), Math.max(30, ys - 26));
+      label(ctx, '바다', 412, ys - 26);
       // 해안선 표시
       ctx.fillStyle = '#1d4ed8'; ctx.beginPath(); ctx.arc(xs, ys, 6, 0, Math.PI * 2); ctx.fill();
       // 주상도
-      const cx = 450, cw = 120, lh = 38, bot = 322;
+      const cx = 470, cw = 110, lh = 38, bot = 322;
       ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(cx - 10, 52, cw + 20, bot - 52 + 10, 10); ctx.fill();
       s.layers.forEach((g, i) => {
         const y = bot - (i + 1) * lh;

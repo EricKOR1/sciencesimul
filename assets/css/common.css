@@ -443,6 +443,10 @@ input[type=range]:disabled { opacity: .45; cursor: not-allowed; }
 .xl-btn.on { background: var(--subject); border-color: var(--subject); color: #fff; }
 .xl-btn[hidden] { display: none; }
 .xl-bar-only:not(:has(.xl-btn:not([hidden]))) { display: none; }
+/* 3D 화면이 무대 카드 전체(위 줄 포함)를 덮는 차시: 더 탐구 단추를 3D 화면 오른쪽 위에 띄워요 */
+.stage-card.v3-on > .stage-toolbar .xl-btn { position: absolute; top: 52px; right: 10px; z-index: 27; background: #fff; box-shadow: 0 4px 14px rgba(10, 16, 30, .35); }
+.stage-card.v3-on > .stage-toolbar .xl-btn.on { background: var(--subject); }
+@media (max-width: 599px) { .stage-card.v3-on > .stage-toolbar .xl-btn { display: block; max-width: 42vw; overflow: hidden; text-overflow: ellipsis; top: 48px; right: 6px; } .stage-card.v3-on > .stage-toolbar .xl-btn[hidden] { display: none; } }
 /* 차시의 휴대폰용 규칙이 무대 위 줄을 숨기더라도, 더 탐구 단추가 있으면 줄을 보여요 */
 .stage-toolbar:has(> .xl-btn:not([hidden])) { display: flex !important; }
 .xl-panel { position: absolute; inset: 0; z-index: 32; display: flex; flex-direction: column; background: #fff; color: #191f28; }
