@@ -27,7 +27,7 @@
     ],
     readouts: [{ key: 'h', label: '수직 높이' }, { key: 'len', label: '관 속 수은 길이' }, { key: 'm', label: '관 속 수은의 양' }],
     init(s) { s.ang = 0; s.hh = hOf(s); },
-    step(s, dt) {
+    tick(s, dt) {
       const k = Math.min(1, dt * 6);
       s.ang += (s.tilt - s.ang) * k;
       s.hh += (hOf(s) - s.hh) * k;

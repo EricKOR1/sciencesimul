@@ -1332,7 +1332,7 @@
        ],
        readouts: [{ key: 'depth', label: '파인 깊이' }],
        size: [720, 380],                          // 그림의 논리 크기 (이 좌표로 그려요)
-       init(state) {}, step(state, dt, t) {}, draw(ctx, W, H, state, t) {}, read(state) { return { depth: '3.2 cm' }; },
+       init(state) {}, tick(state, dt, t) {}, draw(ctx, W, H, state, t) {}, read(state) { return { depth: '3.2 cm' }; },
        onChange(key, value, state, lab) {},
      })
      state에는 조작 값이 key 이름으로 들어 있어요. 반환값: { open(), close(), state, set(key, v) } (window.SciSimExtra[id]로도 접근)
@@ -1344,6 +1344,9 @@
     let bar = $('.stage-toolbar', card);
     if (!bar) { bar = el('div', { class: 'stage-toolbar xl-bar-only' }); card.insertBefore(bar, card.firstChild); }
     const state = {}; const W = (o.size && o.size[0]) || 720, H = (o.size && o.size[1]) || 380;
+    // step: 단추가 보이기 시작하는 단계 번호(1부터) · tick(state, dt, t): 매 프레임 움직임 (예전 파일은 step에 함수를 쓰기도 했어요)
+    const tick = typeof o.tick === 'function' ? o.tick : typeof o.step === 'function' ? o.step : null;
+    const stepNo = Math.max(1, (typeof o.step === 'number' ? o.step : +o.step) || o.stepNo || 1);
     (o.controls || []).forEach((c) => { if (c.type !== 'button') state[c.key] = c.value; });
     const btn = el('button', { class: 'xl-btn', type: 'button', hidden: true, 'data-xl': o.id, title: '더 탐구하기: ' + o.title, html: '<span aria-hidden="true">' + (o.icon || '🔎') + '</span> 더 탐구: ' + o.title });
     const sp = $('.spacer', bar); if (sp && sp.nextSibling) bar.insertBefore(btn, sp.nextSibling); else bar.appendChild(btn);
@@ -1357,7 +1360,7 @@
     const rd = el('div', { class: 'xl-readouts' });
     (o.readouts || []).forEach((r) => { const v = el('b', { text: '—' }); outs[r.key] = v; rd.appendChild(el('span', { class: 'xl-rd' }, [el('small', { text: r.label }), v])); });
     const ctl = el('div', { class: 'xl-ctl' });
-    const lab = { state, open, close, set, get isOpen() { return !panel.hidden; } };
+    const lab = { state, open, close, set, step: stepNo, get isOpen() { return !panel.hidden; } };
     const changed = (k, v) => { state[k] = v; if (o.onChange) { try { o.onChange(k, v, state, lab); } catch (e) { console.error(e); } } };
     (o.controls || []).forEach((c) => {
       if (c.type === 'range') {
@@ -1399,7 +1402,7 @@
       if (panel.hidden) { raf = 0; return; }
       const t = ts / 1000, dt = Math.min(0.05, last ? t - last : 0.016); last = t;
       try {
-        if (o.step) o.step(state, dt, t);
+        if (tick) tick(state, dt, t);
         fit(); ctx.clearRect(0, 0, W, H);
         if (o.draw) o.draw(ctx, W, H, state, t);
         if (o.read) { const r = o.read(state) || {}; const sig = JSON.stringify(r); if (sig !== lastRead) { lastRead = sig; Object.keys(outs).forEach((k) => { outs[k].innerHTML = r[k] == null ? '—' : String(r[k]); }); } }
@@ -1417,7 +1420,7 @@
     btn.addEventListener('click', () => { Sound.click(); if (panel.hidden) open(); else close(); });
     closeB.addEventListener('click', () => { Sound.click(); close(); });
     const simId = o.simId || ((global.location && global.location.pathname.match(/sims\/([^/]+)\//)) || [])[1] || '';
-    const gate = () => { const lv = global.SciSimLevel == null ? 0 : global.SciSimLevel; const on = isTeacher() || lv >= (o.step || 1) - 1 || !!(Store.sim(simId).cleared); btn.hidden = !on; if (!on) close(); };
+    const gate = () => { const lv = global.SciSimLevel == null ? 0 : global.SciSimLevel; const on = isTeacher() || lv >= stepNo - 1 || !!(Store.sim(simId).cleared); btn.hidden = !on; if (!on) close(); };
     global.addEventListener('scisim-level', () => { close(); gate(); });
     if (o.init) { try { o.init(state, lab); } catch (e) { console.error(e); } }
     Promise.resolve().then(() => setTimeout(gate, 0));

@@ -22,7 +22,7 @@
     ],
     readouts: [{ key: 'b', label: 'BTB' }, { key: 'p', label: '페놀프탈레인' }, { key: 'm', label: '메틸 오렌지' }],
     init(s) { s.ps = s.ph; },
-    step(s, dt) { s.ps += (s.ph - s.ps) * Math.min(1, dt * 6); },
+    tick(s, dt) { s.ps += (s.ph - s.ps) * Math.min(1, dt * 6); },
     read(s) { return { b: btb(s.ph)[0], p: pp(s.ph)[0], m: mo(s.ph)[0] }; },
     draw(ctx, W, H, s, t) {
       ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, W, H);

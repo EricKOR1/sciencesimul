@@ -28,7 +28,7 @@
     ],
     readouts: [{ key: 'kind', label: '월식' }, { key: 'color', label: '달의 모습' }, { key: 'light', label: '그림자 속 달에 닿는 빛' }],
     init(s) { s.my = POS[s.pos]; },
-    step(s, dt) { const t = POS[s.pos]; s.my += (t - s.my) * Math.min(1, dt * 4); },
+    tick(s, dt) { const t = POS[s.pos]; s.my += (t - s.my) * Math.min(1, dt * 4); },
     read(s) {
       const on = s.air === 'on';
       const kind = s.pos === 'out' ? '일어나지 않음 (보름달)' : s.pos === 'part' ? '부분 월식' : '개기 월식';

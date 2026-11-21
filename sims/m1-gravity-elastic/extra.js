@@ -44,7 +44,7 @@
     readouts: [{ key: 'd', label: '변형된 길이' }, { key: 'f', label: '탄성력의 크기' }, { key: 'dir', label: '탄성력의 방향' }],
     init(s) { s.fly = -1; },
     onChange(key, v, s) { s.fly = -1; },
-    step(s, dt) { if (s.fly >= 0) { s.fly += dt; if (s.fly > 1.4) s.fly = -1; } },
+    tick(s, dt) { if (s.fly >= 0) { s.fly += dt; if (s.fly > 1.4) s.fly = -1; } },
     read(s) {
       const f = force(s);
       const dir = s.d === 0 ? '없음 (원래 모양)' : s.obj === 'bow' ? '앞쪽 (당긴 쪽과 반대)' : '위쪽 (누른 쪽과 반대)';

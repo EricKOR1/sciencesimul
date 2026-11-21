@@ -14,8 +14,9 @@
 
   SciSim.extraLab({
     id: 'bolt', icon: '🔎', title: '번개의 에너지',
-    // step: 4단계부터 단추가 보여요. 엔진이 step을 단계 번호와 애니메이션 함수로 함께 쓰므로 valueOf로 번호를 줘요.
-    step: Object.assign(function () {}, { valueOf: () => 4 }),
+    // step: 4단계부터 단추가 보여요.
+    step: 4,
+    tick: function () {},
     intro: '구름과 땅 사이의 전위차와 번개로 옮겨 간 전하량을 바꿔 보세요. W = qV',
     size: [600, 340],
     controls: [

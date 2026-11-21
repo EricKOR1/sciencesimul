@@ -16,8 +16,9 @@
 
   SciSim.extraLab({
     id: 'tip', icon: '🔎', title: '넘어지는 각도',
-    // step: 4단계부터 단추가 보여요. 엔진이 step을 단계 번호와 애니메이션 함수로 함께 쓰므로 valueOf로 번호를 줘요.
-    step: Object.assign(function () {}, { valueOf: () => 4 }),
+    // step: 4단계부터 단추가 보여요.
+    step: 4,
+    tick: function () {},
     intro: '모서리를 축으로 상자를 기울여요. 질량을 바꾸면 넘어지는 각이 달라질까요?',
     size: [600, 340],
     controls: [

@@ -58,7 +58,7 @@
     readouts: [{ key: 'a', label: '뚝배기 속 국' }, { key: 'b', label: '금속 냄비 속 국' }, { key: 'd', label: '온도 차' }],
     init(s) { s.run = false; s.tt = 0; },
     onChange(key, v, s) { if (key === 't') s.run = false; },
-    step(s, dt) {
+    tick(s, dt) {
       if (!s.run || !s.lab) return;
       s.tt = Math.min(30, s.tt + dt * 3);
       if (Math.floor(s.tt) !== s.t) s.lab.set('t', Math.floor(s.tt));

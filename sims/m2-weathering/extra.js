@@ -23,7 +23,7 @@
     readouts: [{ key: 'years', label: '지난 세월' }, { key: 'w', label: '틈의 너비' }, { key: 'note', label: '바위의 모습' }],
     init(s) { s.years = 0; s.target = 0; },
     onChange(key, v, s) { if (key === 'rock') { s.years = 0; s.target = 0; } },
-    step(s, dt) {
+    tick(s, dt) {
       if (s.years < s.target) s.years = Math.min(s.target, s.years + 10000 * dt / 2.5);
       drops.forEach((d) => { d.y += d.v * dt * (0.6 + 0.4 * RAIN[s.rain]); if (d.y > 150) { d.y = -10; } });
     },

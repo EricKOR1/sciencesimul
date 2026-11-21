@@ -24,7 +24,7 @@
     ],
     readouts: [{ key: 'sst', label: '앞바다 수온 (1월)' }, { key: 't', label: '도시의 1월 평균 기온' }, { key: 'd', label: '지금보다' }],
     init(s) { s.ph = 0; s.f = s.str / 100; },
-    step(s, dt) {
+    tick(s, dt) {
       s.f += (s.str / 100 - s.f) * Math.min(1, dt * 5);
       s.ph = (s.ph + dt * (0.05 + 0.25 * s.f)) % 1;
       flakes.forEach((p) => { p.y += p.v * dt; if (p.y > 340) p.y = -6; });

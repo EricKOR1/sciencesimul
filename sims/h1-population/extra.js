@@ -46,7 +46,7 @@
     ],
     readouts: [{ key: 'b', label: '큰입배스 수' }, { key: 'n', label: '토종 물고기 수' }, { key: 'eq', label: '생태계 평형' }],
     init(s) { const r = now(s); s.bs = r.B; s.ns = r.N; },
-    step(s, dt) {
+    tick(s, dt) {
       const r = now(s), k = Math.min(1, dt * 4);
       s.bs += (r.B - s.bs) * k; s.ns += (r.N - s.ns) * k;
     },

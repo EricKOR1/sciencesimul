@@ -41,8 +41,9 @@
     ],
     readouts: [{ key: 'dT', label: '두 열원의 온도 차' }, { key: 'W', label: '받은 열 1000 J 중 일' }, { key: 'e', label: '효율' }],
     init(s) { s.ang = 0; s.off = 0; },
-    // step: 2단계부터 단추가 보여요. 엔진이 step을 단계 번호와 애니메이션 함수로 함께 쓰므로 valueOf로 번호를 줘요.
-    step: Object.assign(function (s, dt) { const m = model(s); s.ang += dt * m.dT * 0.03; s.off += dt * m.dT * 0.4; }, { valueOf: () => 2 }),
+    // step: 2단계부터 단추가 보여요.
+    step: 2,
+    tick: function (s, dt) { const m = model(s); s.ang += dt * m.dT * 0.03; s.off += dt * m.dT * 0.4; },
     read(s) {
       const m = model(s);
       return { dT: m.dT + ' °C', W: m.dT === 0 ? '0 J (열이 안 흘러요)' : Math.round(m.W) + ' J', e: m.e.toFixed(0) + ' %' };

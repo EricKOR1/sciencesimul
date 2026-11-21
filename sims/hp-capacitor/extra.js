@@ -11,8 +11,9 @@
 
   SciSim.extraLab({
     id: 'gap', icon: '🔎', title: '판 간격과 전하',
-    // step: 4단계부터 단추가 보여요. 엔진이 step을 단계 번호와 애니메이션 함수로 함께 쓰므로 valueOf로 번호를 줘요.
-    step: Object.assign(function (s, dt) { s.ph += dt * 5; }, { valueOf: () => 4 }),
+    // step: 4단계부터 단추가 보여요.
+    step: 4,
+    tick: function (s, dt) { s.ph += dt * 5; },
     intro: '두 판을 6 V 전지에 연결했어요. 간격과 판의 넓이를 바꿔 모이는 전하를 세어 보세요.',
     size: [600, 340],
     controls: [

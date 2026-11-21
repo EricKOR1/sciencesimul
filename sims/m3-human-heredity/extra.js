@@ -33,7 +33,7 @@
     readouts: [{ key: 'gt', label: '자녀의 유전자형' }, { key: 'bt', label: '자녀의 혈액형' }],
     init(s) { s.rev = 4; },
     onChange(key, v, s) { s.rev = 0; },
-    step(s, dt) { if (s.rev < 4) s.rev = Math.min(4, s.rev + dt * 6); },
+    tick(s, dt) { if (s.rev < 4) s.rev = Math.min(4, s.rev + dt * 6); },
     read(s) {
       const cs = cells(s);
       const gts = ['AA', 'AB', 'AO', 'BB', 'BO', 'OO'].filter((g) => count(cs, g)).map((g) => g + ' ' + frac(count(cs, g)));

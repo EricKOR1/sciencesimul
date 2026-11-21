@@ -28,7 +28,7 @@
     ],
     readouts: [{ key: 'name', label: '지금 맡는 냄새' }, { key: 'time', label: '계속 맡은 시간' }, { key: 'feel', label: '느끼는 세기' }],
     init(s) { s.t = { coffee: 0, lemon: 0 }; s.goal = { coffee: 0, lemon: 0 }; },
-    step(s, dt) {
+    tick(s, dt) {
       Object.keys(s.t).forEach((k) => { if (s.t[k] < s.goal[k]) s.t[k] = Math.min(s.goal[k], s.t[k] + dt * 1.2); });
       parts.forEach((q) => { q.p += dt * 0.35; if (q.p > 1) q.p -= 1; });
     },

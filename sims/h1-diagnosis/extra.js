@@ -28,7 +28,7 @@
     ],
     readouts: [{ key: 'v', label: '바이러스 양' }, { key: 'pcr', label: 'PCR 검사' }, { key: 'ag', label: '항원 검사' }],
     init(s) { s.ds = s.day; },
-    step(s, dt) { s.ds += (s.day - s.ds) * Math.min(1, dt * 6); },
+    tick(s, dt) { s.ds += (s.day - s.ds) * Math.min(1, dt * 6); },
     read(s) {
       const L = logV(s.day);
       return { v: amount(L) + ' 개/mL', pcr: L >= LIM.pcr ? '양성' : '음성', ag: L >= LIM.ag ? '양성' : '음성' };

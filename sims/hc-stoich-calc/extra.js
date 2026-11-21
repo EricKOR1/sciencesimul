@@ -30,7 +30,7 @@
     readouts: [{ key: 'r', label: '반응한 물질' }, { key: 'p1', label: '생성물 ①' }, { key: 'p2', label: '생성물 ②' }],
     init(s) { s.hs = calc(s).map((o) => o.n); },
     onChange(key, v, s, lab) { if (key === 'rx') { lab.set('mass', RX[v].ex); s.hs = null; } },
-    step(s, dt) {
+    tick(s, dt) {
       const t = calc(s).map((o) => o.n);
       if (!s.hs || s.hs.length !== t.length) s.hs = t.map(() => 0);
       s.hs = s.hs.map((h, i) => h + (t[i] - h) * Math.min(1, dt * 5));

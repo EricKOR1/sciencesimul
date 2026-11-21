@@ -30,8 +30,9 @@
 
   SciSim.extraLab({
     id: 'abs', icon: '🔎', title: 'ABS와 제동 거리',
-    // step: 3단계부터 단추가 보여요. 엔진이 step을 단계 번호와 애니메이션 함수로 함께 쓰므로 valueOf로 번호를 줘요.
-    step: Object.assign(function (s, dt) { s.tm += dt * 2; }, { valueOf: () => 3 }),
+    // step: 3단계부터 단추가 보여요.
+    step: 3,
+    tick: function (s, dt) { s.tm += dt * 2; },
     intro: '같은 속력에서 바퀴가 잠긴 차와 ABS 차가 동시에 급제동해요.',
     size: [600, 340],
     controls: [

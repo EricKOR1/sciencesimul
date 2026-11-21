@@ -35,7 +35,7 @@
     readouts: [{ key: 'push', label: '미는 힘' }, { key: 'fric', label: '마찰력' }, { key: 'box', label: '상자' }],
     init(s) { s.x = 0; },
     onChange(key, v, s) { if (key === 'floor' || !moving(s)) s.x = 0; },
-    step(s, dt) {
+    tick(s, dt) {
       if (moving(s)) { s.x += dt * (40 + 6 * (s.push - LIMIT[s.floor])); if (s.x > 190) s.x = 0; }
       else s.x = 0;
     },

@@ -25,8 +25,9 @@
     ],
     readouts: [{ key: 'Q', label: '마찰이 한 일 (열)' }, { key: 'melt', label: '녹은 얼음' }, { key: 'T', label: '얼음물의 온도' }],
     init(s) { s.ph = 0; },
-    // step: 3단계부터 단추가 보여요. 엔진이 step을 단계 번호와 애니메이션 함수로 함께 쓰므로 valueOf로 번호를 줘요.
-    step: Object.assign(function (s, dt) { s.ph += dt * 2.2; }, { valueOf: () => 3 }),
+    // step: 3단계부터 단추가 보여요.
+    step: 3,
+    tick: function (s, dt) { s.ph += dt * 2.2; },
     read(s) {
       const m = model(s);
       return { Q: Math.round(m.Q).toLocaleString('ko-KR') + ' J', melt: fmtG(m.melt) + ' g / 20 g', T: m.T.toFixed(1) + ' °C' };

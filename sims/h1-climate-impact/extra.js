@@ -31,7 +31,7 @@
     ],
     readouts: [{ key: 'cover', label: '식생 피복률' }, { key: 'desert', label: '사막화 면적' }, { key: 'note', label: '땅의 모습' }],
     init(s) { s.vs = coverOf(s); s.ds = desertOf(s); },
-    step(s, dt) {
+    tick(s, dt) {
       const k = Math.min(1, dt * 3);
       s.vs += (coverOf(s) - s.vs) * k; s.ds += (desertOf(s) - s.ds) * k;
       dust.forEach((d) => { d.x += d.v * dt; if (d.x > 620) d.x = -20; });
