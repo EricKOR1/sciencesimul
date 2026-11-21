@@ -23,7 +23,7 @@
 
   SciSim.extraLab({
     id: 'candle', step: 2, icon: '🔎', title: '표준 촛불의 밝기',
-    intro: '광도를 아는 천체를 멀리 옮기면 겉보기 밝기가 어떻게 줄어드는지 봐요. 밝기는 10 Mpc에 있는 기준 광도 L₀ 천체를 1로 두어요.',
+    intro: '광도를 아는 천체를 멀리 옮기며 겉보기 밝기를 비교해요.',
     size: [600, 340],
     controls: [
       { key: 'd', type: 'range', label: '천체까지 거리', min: 10, max: 100, step: 10, value: 10, unit: 'Mpc' },
@@ -62,6 +62,8 @@
       sg.addColorStop(0, '#fff'); sg.addColorStop(0.4, '#fde047'); sg.addColorStop(1, 'rgba(253,224,71,0)');
       ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(SX, SY, r * 2.4, 0, Math.PI * 2); ctx.fill();
       label(ctx, '표준 촛불', SX, SY + 62);
+      ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 2.5; ctx.setLineDash([6, 5]);
+      ctx.beginPath(); ctx.moveTo(300, 44); ctx.lineTo(xs - wid / 2 + (k + 0.5) * wid / n, top + k * cell); ctx.stroke(); ctx.setLineDash([]);
       label(ctx, '망원경이 받는 한 칸', 300, 28, 'rgba(34,211,238,.95)', '#0f172a');
       label(ctx, '빛이 ' + areaOf(s) + '칸으로 퍼짐', 300, H - 24);
     },
