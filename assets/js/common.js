@@ -1319,6 +1319,112 @@
     return api;
   }
 
+  /* =========================================================
+     더 탐구하기 (extraLab): 기존 실험 화면은 그대로 두고, 무대 위에 겹쳐 여는 작은 추가 실험
+     SciSim.extraLab({
+       id: 'acid', step: 2,                      // step: 이 단계부터 단추가 보여요 (1부터)
+       title: '석회암과 산성 빗물', icon: '🔎', intro: '한 줄 안내',
+       controls: [
+         { key: 'ph', type: 'range', label: '빗물의 pH', min: 3, max: 7, step: 0.5, value: 5.5, fmt: (v) => v.toFixed(1) },
+         { key: 'rock', type: 'seg', label: '암석', options: [['lime', '석회암'], ['gran', '화강암']], value: 'lime' },
+         { key: 'abs', type: 'toggle', label: 'ABS 켜기', value: false },
+         { key: 'go', type: 'button', label: '▶ 1000년 지나기', onClick(state, lab) {} },
+       ],
+       readouts: [{ key: 'depth', label: '파인 깊이' }],
+       size: [720, 380],                          // 그림의 논리 크기 (이 좌표로 그려요)
+       init(state) {}, step(state, dt, t) {}, draw(ctx, W, H, state, t) {}, read(state) { return { depth: '3.2 cm' }; },
+       onChange(key, value, state, lab) {},
+     })
+     state에는 조작 값이 key 이름으로 들어 있어요. 반환값: { open(), close(), state, set(key, v) } (window.SciSimExtra[id]로도 접근)
+     ========================================================= */
+  const EXTRA = (global.SciSimExtra = global.SciSimExtra || {});
+  function extraLab(o) {
+    const card = $('.stage-card'), host = $('.stage-canvas');
+    if (!card || !host) return null;
+    let bar = $('.stage-toolbar', card);
+    if (!bar) { bar = el('div', { class: 'stage-toolbar xl-bar-only' }); card.insertBefore(bar, card.firstChild); }
+    const state = {}; const W = (o.size && o.size[0]) || 720, H = (o.size && o.size[1]) || 380;
+    (o.controls || []).forEach((c) => { if (c.type !== 'button') state[c.key] = c.value; });
+    const btn = el('button', { class: 'xl-btn', type: 'button', hidden: true, 'data-xl': o.id, title: '더 탐구하기: ' + o.title, html: '<span aria-hidden="true">' + (o.icon || '🔎') + '</span> 더 탐구: ' + o.title });
+    const sp = $('.spacer', bar); if (sp && sp.nextSibling) bar.insertBefore(btn, sp.nextSibling); else bar.appendChild(btn);
+    const panel = el('div', { class: 'xl-panel', hidden: true, 'data-xl': o.id });
+    panel.style.setProperty('--xl-ar', String(W / H));
+    const closeB = el('button', { class: 'btn btn-sm', type: 'button', html: '✕ 실험으로 돌아가기' });
+    panel.appendChild(el('div', { class: 'xl-head' }, [el('b', { html: (o.icon || '🔎') + ' ' + o.title }), o.intro ? el('span', { class: 'xl-intro', html: o.intro }) : null, el('span', { class: 'grow' }), closeB]));
+    const cvWrap = el('div', { class: 'xl-cv' }), cv = el('canvas', { 'aria-label': o.title });
+    cvWrap.appendChild(cv); panel.appendChild(cvWrap);
+    const outs = {}, ctlEls = {};
+    const rd = el('div', { class: 'xl-readouts' });
+    (o.readouts || []).forEach((r) => { const v = el('b', { text: '—' }); outs[r.key] = v; rd.appendChild(el('span', { class: 'xl-rd' }, [el('small', { text: r.label }), v])); });
+    const ctl = el('div', { class: 'xl-ctl' });
+    const lab = { state, open, close, set, get isOpen() { return !panel.hidden; } };
+    const changed = (k, v) => { state[k] = v; if (o.onChange) { try { o.onChange(k, v, state, lab); } catch (e) { console.error(e); } } };
+    (o.controls || []).forEach((c) => {
+      if (c.type === 'range') {
+        const out = el('output'), inp = el('input', { type: 'range', min: String(c.min), max: String(c.max), step: String(c.step || 1), value: String(c.value), 'aria-label': c.label });
+        const f = c.fmt || ((v) => String(v)); const upd = () => { out.innerHTML = f(+inp.value) + (c.unit ? ' ' + c.unit : ''); syncRangeFill(inp); };
+        inp.addEventListener('input', () => { upd(); changed(c.key, +inp.value); });
+        ctlEls[c.key] = { set: (v) => { inp.value = String(v); upd(); } }; upd();
+        ctl.appendChild(el('label', { class: 'xl-c xl-range' }, [el('span', { class: 'xl-l' }, [el('span', { html: c.label }), out]), inp]));
+      } else if (c.type === 'seg') {
+        const box = el('span', { class: 'segmented' });
+        const bs = c.options.map(([v, t]) => { const b = el('button', { type: 'button', class: v === c.value ? 'on' : '', 'data-v': String(v), 'aria-pressed': String(v === c.value), html: t }); b.addEventListener('click', () => { Sound.click(); mark(b); changed(c.key, v); }); box.appendChild(b); return b; });
+        const mark = (b) => bs.forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); });
+        ctlEls[c.key] = { set: (v) => mark(bs.find((x) => x.getAttribute('data-v') === String(v))) };
+        ctl.appendChild(el('span', { class: 'xl-c' }, [c.label ? el('span', { class: 'xl-l', html: c.label }) : null, box]));
+      } else if (c.type === 'toggle') {
+        const inp = el('input', { type: 'checkbox' }); inp.checked = !!c.value;
+        inp.addEventListener('change', () => { Sound.click(); changed(c.key, inp.checked); });
+        ctlEls[c.key] = { set: (v) => { inp.checked = !!v; } };
+        ctl.appendChild(el('label', { class: 'switch xl-c' }, [inp, document.createTextNode(' ' + c.label)]));
+      } else if (c.type === 'button') {
+        const b = el('button', { class: 'btn btn-sm' + (c.primary ? ' btn-primary' : ''), type: 'button', 'data-k': c.key, html: c.label });
+        b.addEventListener('click', () => { Sound.click(); if (c.onClick) { try { c.onClick(state, lab); } catch (e) { console.error(e); } } });
+        ctl.appendChild(b);
+      }
+    });
+    panel.append(rd, ctl);
+    host.appendChild(panel);
+    const ctx = cv.getContext('2d');
+    function fit() {
+      const r = cvWrap.getBoundingClientRect(); if (r.width < 10 || r.height < 10) return;
+      const k = Math.min(r.width / W, r.height / H), dpr = Math.min(global.devicePixelRatio || 1, 2);
+      cv.style.width = Math.floor(W * k) + 'px'; cv.style.height = Math.floor(H * k) + 'px';
+      const pw = Math.round(W * k * dpr), ph = Math.round(H * k * dpr);
+      if (cv.width !== pw || cv.height !== ph) { cv.width = pw; cv.height = ph; }
+      ctx.setTransform(k * dpr, 0, 0, k * dpr, 0, 0);
+    }
+    let last = 0, raf = 0, lastRead = '';
+    function frame(ts) {
+      if (panel.hidden) { raf = 0; return; }
+      const t = ts / 1000, dt = Math.min(0.05, last ? t - last : 0.016); last = t;
+      try {
+        if (o.step) o.step(state, dt, t);
+        fit(); ctx.clearRect(0, 0, W, H);
+        if (o.draw) o.draw(ctx, W, H, state, t);
+        if (o.read) { const r = o.read(state) || {}; const sig = JSON.stringify(r); if (sig !== lastRead) { lastRead = sig; Object.keys(outs).forEach((k) => { outs[k].innerHTML = r[k] == null ? '—' : String(r[k]); }); } }
+      } catch (e) { console.error(e); }
+      raf = global.requestAnimationFrame(frame);
+    }
+    function open() {
+      if (btn.hidden) return;
+      // 장면마다 무대가 따로 있는 차시: 지금 보이는 무대에 붙여요
+      const vis = $$('.stage-canvas', card).find((x) => x.offsetWidth > 0) || host;
+      if (panel.parentNode !== vis) vis.appendChild(panel);
+      $$('.xl-panel', card).forEach((p) => { if (p !== panel) p.hidden = true; }); $$('.xl-btn', bar).forEach((b) => b.classList.toggle('on', b === btn)); panel.hidden = false; last = 0; if (!raf) raf = global.requestAnimationFrame(frame); }
+    function close() { panel.hidden = true; btn.classList.remove('on'); }
+    function set(k, v) { state[k] = v; if (ctlEls[k]) ctlEls[k].set(v); }
+    btn.addEventListener('click', () => { Sound.click(); if (panel.hidden) open(); else close(); });
+    closeB.addEventListener('click', () => { Sound.click(); close(); });
+    const simId = o.simId || ((global.location && global.location.pathname.match(/sims\/([^/]+)\//)) || [])[1] || '';
+    const gate = () => { const lv = global.SciSimLevel == null ? 0 : global.SciSimLevel; const on = isTeacher() || lv >= (o.step || 1) - 1 || !!(Store.sim(simId).cleared); btn.hidden = !on; if (!on) close(); };
+    global.addEventListener('scisim-level', () => { close(); gate(); });
+    if (o.init) { try { o.init(state, lab); } catch (e) { console.error(e); } }
+    Promise.resolve().then(() => setTimeout(gate, 0));
+    EXTRA[o.id] = lab;
+    return lab;
+  }
+
   /* 차시별 실력 문제 등록 (sims/<id>/quiz.js) */
   const QUIZ = {};
   function quiz(id, list) {
@@ -1327,7 +1433,7 @@
   }
 
   global.SciSim = {
-    quiz, isTeacher, teacherButton, catalogInfo, Store, Sound, el, $, $$, themeButton, isDark, setTheme, toast, modal, confetti, stage, pointer, loop, bindRange,
+    quiz, extraLab, isTeacher, teacherButton, catalogInfo, Store, Sound, el, $, $$, themeButton, isDark, setTheme, toast, modal, confetti, stage, pointer, loop, bindRange,
     clamp, lerp, fmt, starsHTML, game, wireHeader,
   };
 
