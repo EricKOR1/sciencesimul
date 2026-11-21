@@ -1193,7 +1193,7 @@
       const use = Math.min(dy, G.runLeft);
       G.hc = clamp(G.hc + 0.4 * (RECHARGE - G.runP) * use, -2, 9);
       G.year += use; G.runLeft -= use;
-      if (!G.warned && xToe() < WELL_X) {
+      if (!G.warned && xToe() < WELL_X - 21) {          // 우물물 표시가 '짬'이 되는 기준(염분 0.35)과 같은 때
         G.warned = true; G.pulse = 1.2; Sound.tone(220, 0.25, 'sine', 0.08);
         showHint('⚠️ 바닷물이 지하수층으로 밀려와 우물에 닿았어요!', 3600);
       }

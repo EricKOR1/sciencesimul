@@ -880,7 +880,7 @@
     const v = S.view;
     if (v === 'rad') { const vr = rdVr(); setReadouts(['고른 별', rdName(), 'Δλ', f3s(LAM0 * vr / C_KMS) + ' nm', '시선 방향', vr < -0.05 ? '다가와요' : vr > 0.05 ? '멀어져요' : '정지']); }
     else if (v === 'tan') { const st = tnStar(); setReadouts(['이동 각 θ', f1(st.mu * S.tn.dt) + '″', '고유 운동 μ', f3(st.mu) + '″/년', '접선 속도 v_t', S.flags.showVt || FREE() || S.tn.ok ? f1(st.vt) + ' km/s' : '?']); }
-    else if (v === 'vec') setReadouts(['지금부터', comma(Math.round(S.vc.t / 100) * 100) + '년', '지구와의 거리', f2(barDist(S.vc.ts)) + ' pc', '공간 속도 v', S.vc.vOk || FREE() ? f1(BAR.v) + ' km/s' : '?']);
+    else if (v === 'vec') setReadouts(['지금부터', comma(Math.round(S.vc.t / 100) * 100) + '년', '지구와의 거리', f2(barDist(S.vc.t)) + ' pc', '공간 속도 v', S.vc.vOk || FREE() ? f1(BAR.v) + ' km/s' : '?']);
     else setReadouts(['자료', cnDS().name, '시점', f0(S.cn.yaw) + '°', '고른 별', S.cn.sel.size + '개']);
   }
 

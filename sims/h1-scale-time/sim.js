@@ -475,8 +475,9 @@
     parts.burst(TREE_C.x + Math.cos(-0.6) * r, TREE_C.y + Math.sin(-0.6) * r, { count: 6, speed: 80, size: 2.5, life: 0.5, colors: ['#fbbf24', '#f59e0b'], gravity: 80 });
     return true;
   }
-  const iceAge = (d) => 6 * Math.pow(d, 1.15);
-  const iceDepth = (a) => Math.pow(a / 6, 1 / 1.15);
+  // 깊을수록 얼음이 눌려 얇아져서 나이가 빠르게 늘어요: 약 600 m에서 1만 년, 3000 m에서 약 40만 년
+  const iceAge = (d) => 6 * Math.pow(d, 1.15) + 4.2e-9 * Math.pow(d, 4);
+  const iceDepth = (a) => { let lo = 0, hi = 4000; for (let i = 0; i < 60; i++) { const m = (lo + hi) / 2; if (iceAge(m) < a) lo = m; else hi = m; } return (lo + hi) / 2; };
   function drawIce(t) {
     const sk = ctx.createLinearGradient(0, 0, 0, VH); sk.addColorStop(0, '#e0f2fe'); sk.addColorStop(1, '#f0f9ff'); ctx.fillStyle = sk; ctx.fillRect(0, 0, VW, VH);
     D.text(VW / 2, 32, '빙하를 깊이 뚫을수록 더 오래된 얼음이에요', { size: 18, color: '#0c4a6e', weight: 800 });
