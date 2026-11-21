@@ -222,6 +222,7 @@
         el('span', { class: 'lp-stars', html: starsHTML(rec.stars || 0), title: '획득한 별 ' + (rec.stars || 0) + '개' }),
         steps.length ? el('span', { class: 'lp-steps', title: steps.map((t, i) => (i + 1) + '. ' + t).join('  ') }, steps.map((_, i) => el('i', { class: i < done ? 'on' : '' }))) : null,
         steps.length ? el('span', { class: 'lp-steps-t', text: done + ' / ' + steps.length + '단계' }) : null,
+        rec.quizTotal ? el('span', { class: 'lp-quiz', title: '푼 실력 문제', text: '📝 ' + Object.keys(rec.quiz || {}).length + ' / ' + rec.quizTotal }) : null,
       ]),
     ]);
     const label = rec.cleared ? '다시 하기' : started ? '이어하기' : '시작';

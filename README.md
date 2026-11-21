@@ -255,3 +255,11 @@ design/                  차시 설계 문서와 제작 규칙 (design/README.md
    HTML 요소에 `data-feature="이름"`을 달면 그 도구가 열리는 단계까지 자동으로 숨겨집니다.
 3. `assets/js/catalog.js`에서 해당 단원의 `sims` 배열에 차시 순서대로 항목(성취기준 `std`, `stdText` 포함)을 추가하면
    메인 화면과 "다음 차시" 연결에 자동으로 반영됩니다.
+
+## 실력 문제 (문제 은행)
+
+- 차시마다 `sims/<id>/quiz.js`에 문제를 적고 `index.html`에서 `sim.js` 다음에 불러와요. 미션 옆 **📝 문제** 탭에 쉬움·중간·어려움으로 나뉘어 나와요.
+- 문제 형식: 객관식(`choice`), OX(`ox`), 모두 고르기(`multi`), 단답형(`short`), 수치 입력(`num`), 서술형(`essay`: 채점 기준 낱말로 자동 확인 + 모범 답안).
+- `step`: 그 단계를 마치면 문제가 열려요. `do`: 실험에서 해 볼 일(🔬 실험 문제). 형식 설명은 `assets/js/common.js`의 "실력 문제" 주석에 있어요.
+- 형식 검사: `node tools/check_quiz.js [id ...]`
+

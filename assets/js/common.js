@@ -500,16 +500,31 @@
     const tabs = el('div', { class: 'game-tabs', role: 'tablist' });
     const tabMission = el('button', { class: 'on', role: 'tab', html: '🎯 미션' });
     const tabConcept = el('button', { role: 'tab', html: hasNotes ? '📘 배운 내용' : '📘 핵심 원리' });
-    tabs.append(tabMission, tabConcept);
+    const tabQuiz = el('button', { role: 'tab', hidden: true, html: '📝 문제' });
+    tabs.append(tabMission, tabConcept, tabQuiz);
     const bodyMission = el('div', { class: 'game-body' });
     const bodyConcept = el('div', { class: 'game-body concept', hidden: true });
-    mount.append(tabs, bodyMission, bodyConcept);
-    function showTab(which) {
+    const bodyQuiz = el('div', { class: 'game-body quiz', hidden: true });
+    mount.append(tabs, bodyMission, bodyConcept, bodyQuiz);
+    let lockArgs = null, quizUnlocked = false;
+    function showTab(which, step) {
+      if (which === 'quiz' && !bank) which = 'mission';
       tabMission.classList.toggle('on', which === 'mission');
       tabConcept.classList.toggle('on', which === 'concept');
+      tabQuiz.classList.toggle('on', which === 'quiz');
       bodyMission.hidden = which !== 'mission';
       bodyConcept.hidden = which !== 'concept';
+      bodyQuiz.hidden = which !== 'quiz';
       if (which === 'concept') { renderNotes(); tabConcept.innerHTML = hasNotes ? '📘 배운 내용' : '📘 핵심 원리'; }
+      // 문제를 푸는 동안에는 단계 설명 잠금을 풀어 실험을 움직일 수 있게 해요 (미션 탭으로 돌아오면 다시 잠가요)
+      if (which === 'quiz') {
+        if (phase === 'intro' && lock.on && bank.some(qOpen)) { setLock(false); quizUnlocked = true; }
+        if (step) quizGoStep(step);
+        renderQuiz();
+      } else if (quizUnlocked) {
+        quizUnlocked = false;
+        if (phase === 'intro' && lockArgs) setLock(true, lockArgs[0], lockArgs[1]);
+      }
       const sc = mount.closest('.side-col');
       if (sc && sc.scrollTop > mount.offsetTop) sc.scrollTop = mount.offsetTop - 8;
     }
@@ -522,6 +537,7 @@
     /* ---- 실험 잠금: 단계 설명을 읽는 동안 애니메이션 정지 + 조작 막기 ---- */
     let lockEls = null;
     function setLock(on, li, goBtn) {
+      if (on) lockArgs = [li, goBtn];
       lock.on = on;
       markDirty(on ? 30 : 3);
       document.body.classList.toggle('sim-locked', on);
@@ -549,6 +565,7 @@
     }
     tabMission.addEventListener('click', () => { Sound.click(); showTab('mission'); });
     tabConcept.addEventListener('click', () => { Sound.click(); showTab('concept'); });
+    tabQuiz.addEventListener('click', () => { Sound.click(); showTab('quiz'); });
 
     let refs = {};
 
@@ -626,7 +643,7 @@
 
     /* ---- 단계 소개 ---- */
     function renderIntro(li, highlight) {
-      phase = 'intro';
+      phase = 'intro'; quizUnlocked = false;
       idx = firstOf(li);
       const lv = levels[li];
       applyFeatures(featuresUpTo(li), highlight !== false);
@@ -672,6 +689,7 @@
       const m = flat[idx];
       const lv = levels[m._level];
       if (!free) applyFeatures(featuresUpTo(m._level), false);
+      quizUnlocked = false;
       setLock(false);
       // 단계 중간에서 이어 할 때도 3D 화면이 지금 단계에 맞게 열리도록 알려 줘요
       if (global.SciSimLevel !== m._level) {
@@ -831,12 +849,13 @@
       const levelEnd = isLast || flat[idx + 1]._level !== li;
       if (!levelEnd) { idx++; renderMission(); return; }
       if (isLast) { complete(); return; }
-      idx++;
-      persist();
+      // 다음 단계로 넘어가는 것은 '다음 단계로'를 눌렀을 때 (문제를 풀러 가면 실험은 이 단계 상태 그대로 남아요)
       Sound.level();
       confetti({ count: 140 });
       const lv = levels[li], nx = levels[li + 1];
       const tools = (nx.features || []).filter((f) => labels[f]);
+      const nq = bank ? bank.filter((q) => q.step === li + 1).length : 0;
+      const goNext = () => { if (flat[idx]._level === li) idx++; persist(); renderIntro(li + 1, true); };
       modal({
         icon: lv.icon || '🎊',
         stars: rec.stars,
@@ -844,8 +863,9 @@
         html: '<b>' + lv.title + '</b>' + eulReul(lv.title) + ' 마쳤어요. 현재 점수 <b>' + score + '점</b>' +
           (lv.recap ? '<div class="learned"><b class="k">✏️ 이번 단계에서 배운 것</b>' + lv.recap + '</div>' : '') +
           '<div class="next-step">➡️ <b>다음: ' + (li + 2) + '단계 · ' + nx.title + '</b>' +
-          (tools.length ? '<div style="margin-top:6px">' + tools.map((f) => '<span class="tool-chip">' + labels[f] + '</span>').join('') + '</div>' : '') + '</div>',
-        buttons: [{ label: '다음 단계로 →', primary: true, onClick: () => renderIntro(li + 1, true) }],
+          (tools.length ? '<div style="margin-top:6px">' + tools.map((f) => '<span class="tool-chip">' + labels[f] + '</span>').join('') + '</div>' : '') + '</div>' +
+          (nq ? '<div class="qz-open">📝 이 단계의 <b>실력 문제 ' + nq + '개</b>가 열렸어요. 지금 실험을 움직이며 풀어 볼 수 있어요.</div>' : ''),
+        buttons: (nq ? [{ label: '📝 문제 풀기', onClick: () => showTab('quiz', li + 1) }] : []).concat([{ label: '다음 단계로 →', primary: true, onClick: goNext }]),
         dismissible: false,
       });
     }
@@ -868,6 +888,7 @@
         el('p', { html: '최종 점수 <b>' + finalScore + '</b> / ' + max + '점 · 최고 기록 <b>' + rec.best + '점</b>' + (opts.badge ? '<br>획득한 칭호: <b>🏅 ' + opts.badge + '</b>' : '') + '<br><br>🔓 이제 <b>모든 도구</b>가 열렸어요. 자유롭게 탐구해 보세요!<br>위 단계 번호를 누르면 원하는 단계를 다시 할 수 있어요.' }),
         el('div', { class: 'mission-actions', style: 'justify-content:center' }, [
           el('button', { class: 'btn', type: 'button', html: '📘 배운 내용', onclick: () => { Sound.click(); showTab('concept'); } }),
+          bank ? el('button', { class: 'btn', type: 'button', html: '📝 실력 문제', onclick: () => { Sound.click(); showTab('quiz'); } }) : null,
           el('button', { class: 'btn', type: 'button', html: '↺ 처음부터', onclick: () => { Sound.click(); replayFrom(0, true); } }),
           info && info.next
             ? el('a', { class: 'btn btn-primary', href: '../../' + info.next.path, html: '다음 차시: ' + info.next.icon + ' ' + info.next.title + ' →' })
@@ -878,8 +899,8 @@
         icon: '🏆', stars: 3, title: '모든 단계 완료!',
         html: '최종 점수 <b>' + finalScore + '점</b>' + (opts.badge ? '<br>칭호 <b>🏅 ' + opts.badge + '</b> 획득!' : '') + '<br><br>📘 <b>배운 내용</b>에 단계별 정리가 모두 모였어요.',
         buttons: info && info.next
-          ? [{ label: '배운 내용 보기', onClick: () => showTab('concept') }, { label: '자유 탐구하기' }, { label: '다음 차시 →', primary: true, onClick: () => { location.href = '../../' + info.next.path; } }]
-          : [{ label: '배운 내용 보기', onClick: () => showTab('concept') }, { label: '자유 탐구하기', primary: true }],
+          ? [{ label: '배운 내용 보기', onClick: () => showTab('concept') }, bank ? { label: '📝 문제 풀기', onClick: () => showTab('quiz') } : { label: '자유 탐구하기' }, { label: '다음 차시 →', primary: true, onClick: () => { location.href = '../../' + info.next.path; } }]
+          : [{ label: '배운 내용 보기', onClick: () => showTab('concept') }, bank ? { label: '📝 문제 풀기', primary: true, onClick: () => showTab('quiz') } : { label: '자유 탐구하기', primary: true }],
       });
       opts.onComplete && opts.onComplete(finalScore);
     }
@@ -949,6 +970,7 @@
         }
       }
       if (m.type !== 'task' || m.manual || !m.check) return;
+      if (!bodyQuiz.hidden) { holdStart = 0; return; }
       let ok = false;
       try { ok = !!m.check(); } catch (e) { ok = false; }
       const hold = m.hold != null ? m.hold : 0.6;
@@ -963,6 +985,260 @@
         refs.hold.classList.remove('show');
       }
     }, { always: true });
+
+    /* ---- 실력 문제 (문제 은행): sims/<id>/quiz.js 가 SciSim.quiz(id, [...])로 등록 ----
+       { id, lv: 1 쉬움 | 2 중간 | 3 어려움, step: 이 문제가 열리는 단계(1부터), q: '질문', figure, do: '실험에서 해 볼 일', hint, explain,
+         type: 'choice'(choices, answer, feedback) | 'ox'(answer: true/false) | 'multi'(choices, answer: [0, 2])
+             | 'short'(answer: ['정답', '같은 뜻']) | 'num'(answer: 12.5, tol, unit) | 'essay'(model, keys: [{ t: '채점 기준', k: ['낱말', ...] }], need) }
+       기록: rec.quiz[id] = 2(한 번에 맞힘) | 1(여러 번 만에 또는 정답을 보고) */
+    const TIER = { 1: ['🌱', '쉬움'], 2: ['🌿', '중간'], 3: ['🌳', '어려움'] };
+    const QTYPE = { choice: '객관식', ox: 'OX', multi: '모두 고르기', short: '단답형', num: '수치 입력', essay: '서술형' };
+    let bank = null, qTier = 1, qRetry = null, qTry = null;
+    const qSel = { 1: 0, 2: 0, 3: 0 };
+    if (!rec.quiz || typeof rec.quiz !== 'object') rec.quiz = {};
+    const qOpen = (q) => free || rec.cleared || q.step <= rec.levelsDone;
+    const qNorm = (s) => String(s == null ? '' : s).toLowerCase().replace(/[−–]/g, '-').replace(/[\s.,·ㆍ!?'"‘’“”()\[\]~]/g, '');
+    function qNum(s) {
+      const t = String(s).replace(/[−–]/g, '-').replace(/[,\s]/g, '');
+      const f = t.match(/^(-?\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)/);
+      if (f && +f[2]) return +f[1] / +f[2];
+      const m = t.match(/-?\d+(?:\.\d+)?|-?\.\d+/);
+      return m ? parseFloat(m[0]) : NaN;
+    }
+    function qCho(s) {
+      const C = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+      return Array.from(String(s)).map((ch) => { const c = ch.charCodeAt(0); return c >= 0xac00 && c <= 0xd7a3 ? C[Math.floor((c - 0xac00) / 588)] : ch === ' ' ? ' ' : '○'; }).join('');
+    }
+    function quizSolved() { let n = 0; bank.forEach((q) => { if (rec.quiz[q.id]) n++; }); return n; }
+    function quizTabLabel() { tabQuiz.innerHTML = '📝 문제 <small>' + quizSolved() + '/' + bank.length + '</small>'; }
+    function setBank(list) {
+      if (!Array.isArray(list) || !list.length) return;
+      bank = list.map((q0, i) => {
+        const q = Object.assign({}, q0);
+        q.id = String(q.id || 'q' + (i + 1));
+        q.lv = q.lv === 1 || q.lv === 3 ? q.lv : 2;
+        q.step = Math.max(1, Math.min(levels.length, q.step | 0 || 1));
+        if (!q.type) q.type = q.choices ? (Array.isArray(q.answer) ? 'multi' : 'choice') : typeof q.answer === 'boolean' ? 'ox' : typeof q.answer === 'number' ? 'num' : q.model ? 'essay' : 'short';
+        if (q.type === 'short' && !Array.isArray(q.answer)) q.answer = [q.answer];
+        return q;
+      });
+      tabQuiz.hidden = false;
+      mount.classList.add('has-quiz');
+      rec.quizTotal = bank.length;
+      quizTabLabel();
+      if (!bodyQuiz.hidden) renderQuiz();
+    }
+    // 그 단계의 아직 안 푼 첫 문제로 이동
+    function quizGoStep(step) {
+      const c = bank.filter((q) => q.step === step).sort((a, b) => a.lv - b.lv);
+      const q = c.find((x) => !rec.quiz[x.id]) || c[0];
+      if (!q) return;
+      qTier = q.lv; qSel[q.lv] = bank.filter((x) => x.lv === q.lv).indexOf(q);
+    }
+    function renderQuiz() {
+      if (!bank) return;
+      bodyQuiz.innerHTML = '';
+      const all = quizSolved();
+      bodyQuiz.appendChild(el('div', { class: 'qz-head' }, [
+        el('b', { text: '📝 실력 문제' }),
+        el('span', { text: '실험을 직접 움직이며 풀어요 · ' + all + ' / ' + bank.length + ' 해결' }),
+      ]));
+      if (all === bank.length) bodyQuiz.appendChild(el('div', { class: 'qz-all', html: '🏅 모든 문제를 풀었어요! 이 차시의 개념을 잘 이해했어요.' }));
+      const chips = el('div', { class: 'qz-tiers', role: 'tablist' });
+      [1, 2, 3].forEach((t) => {
+        const L = bank.filter((q) => q.lv === t);
+        if (!L.length) return;
+        const n = L.filter((q) => rec.quiz[q.id]).length;
+        const b = el('button', { type: 'button', role: 'tab', class: 'qz-tier t' + t + (t === qTier ? ' on' : '') + (n === L.length ? ' done' : '') }, [
+          el('span', { text: TIER[t][0] + ' ' + TIER[t][1] }), el('small', { text: n + '/' + L.length }),
+        ]);
+        b.addEventListener('click', () => { Sound.click(); qTier = t; qTry = null; qRetry = null; renderQuiz(); });
+        chips.appendChild(b);
+      });
+      bodyQuiz.appendChild(chips);
+      let list = bank.filter((q) => q.lv === qTier);
+      if (!list.length) { qTier = bank[0].lv; list = bank.filter((q) => q.lv === qTier); }
+      const pos = Math.max(0, Math.min(list.length - 1, qSel[qTier] || 0));
+      qSel[qTier] = pos;
+      const strip = el('div', { class: 'qz-strip' });
+      list.forEach((q, i) => {
+        const d = rec.quiz[q.id];
+        const b = el('button', { type: 'button', class: 'qz-n' + (i === pos ? ' now' : '') + (d ? ' done' : '') + (qOpen(q) ? '' : ' lock'), title: (i + 1) + '번 문제', text: !qOpen(q) ? '🔒' : d === 2 ? '★' : d ? '✓' : String(i + 1) });
+        b.addEventListener('click', () => { Sound.click(); qSel[qTier] = i; qTry = null; qRetry = null; renderQuiz(); });
+        strip.appendChild(b);
+      });
+      bodyQuiz.appendChild(strip);
+      bodyQuiz.appendChild(quizCard(list[pos], list, pos));
+    }
+    function quizCard(q, list, pos) {
+      const rv = rec.quiz[q.id];
+      const done = !!rv && qRetry !== q.id;
+      const card = el('div', { class: 'mission-card qz-card' + (done ? ' success' : ''), 'data-qid': q.id, 'data-qtype': q.type });
+      card.appendChild(el('div', { class: 'mission-num' }, [
+        el('span', { text: TIER[q.lv][0] + ' ' + TIER[q.lv][1] + ' ' + (pos + 1) + ' / ' + list.length }),
+        el('span', { class: 'mission-type', text: QTYPE[q.type] }),
+        q.do ? el('span', { class: 'mission-type qz-sim', text: '🔬 실험' }) : null,
+        el('span', { class: 'mission-type', text: q.step + '단계' }),
+      ]));
+      if (!qOpen(q)) {
+        card.appendChild(el('div', { class: 'qz-locked', html: '🔒 <b>' + q.step + '단계</b>를 마치면 이 문제가 열려요.<br><small>미션 탭에서 단계를 먼저 공부해요.</small>' }));
+        return card;
+      }
+      if (!qTry || qTry.id !== q.id) qTry = { id: q.id, wrong: 0, help: false };
+      const st = qTry;
+      card.appendChild(el('div', { class: 'qz-q', html: q.q }));
+      if (q.figure) card.appendChild(el('div', { class: 'mission-figure', html: q.figure }));
+      if (q.do) card.appendChild(el('div', { class: 'qz-do', html: '<b>🔬 실험으로 알아봐요</b>' + q.do }));
+      const area = el('div', { class: 'qz-area' });
+      const fb = el('div', { class: 'mission-feedback' });
+      const actions = el('div', { class: 'mission-actions' });
+      card.append(area, fb, actions);
+      const finish = (helped, note) => {
+        const v = !helped && st.wrong === 0 && !st.help ? 2 : 1;
+        if (!(rec.quiz[q.id] >= v)) rec.quiz[q.id] = v;
+        Store.saveSim(simId, rec);
+        qRetry = null; qTry = null;
+        if (helped) Sound.click(); else { Sound.success(); const r = card.getBoundingClientRect(); confetti({ count: 36, x: r.left + r.width / 2, y: r.top + 40 }); }
+        quizTabLabel(); renderQuiz();
+        const c = bodyQuiz.querySelector('.qz-card');
+        const f = c && c.querySelector('.mission-feedback');
+        if (f && !helped) { f.className = 'mission-feedback good'; f.innerHTML = v === 2 ? '🎉 정답! <b>한 번에 맞혔어요 ★</b>' : '🎉 정답이에요!'; }
+        else if (f && note) { f.className = 'mission-feedback bad'; f.innerHTML = note; }
+      };
+      const miss = (msg) => {
+        st.wrong++;
+        Sound.fail();
+        card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+        fb.className = 'mission-feedback bad';
+        fb.innerHTML = '🤔 ' + (msg || '아직 아니에요. 다시 생각해 보세요!');
+        if (reveal && st.wrong >= 2) reveal.hidden = false;
+      };
+      let reveal = null;
+      const ansText = () => q.type === 'short' ? q.answer[0] : q.type === 'num' ? q.answer + (q.unit ? ' ' + q.unit : '') : '';
+
+      if (q.type === 'choice' || q.type === 'multi') {
+        const order = q.choices.map((_, i) => i);
+        if (!done && !global.SCISIM_NO_SHUFFLE && q.shuffle !== false) for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = order[i]; order[i] = order[j]; order[j] = t; }
+        const right = (i) => q.type === 'multi' ? q.answer.indexOf(i) >= 0 : i === q.answer;
+        const ch = el('div', { class: 'choices' });
+        const btns = order.map((i, p) => {
+          const b = el('button', { class: 'choice' + (done && right(i) ? ' right' : ''), type: 'button', 'data-i': String(i), disabled: done }, [el('span', { class: 'key', text: q.type === 'multi' ? (done && right(i) ? '✓' : '') : String(p + 1) }), el('span', { html: q.choices[i] })]);
+          if (!done) b.addEventListener('click', () => {
+            if (q.type === 'multi') { Sound.tick(); const on = b.classList.toggle('picked'); b.firstChild.textContent = on ? '✓' : ''; return; }
+            if (i === q.answer) { b.classList.add('right'); finish(false); }
+            else { b.classList.add('wrong'); b.disabled = true; miss(q.feedback && q.feedback[i]); }
+          });
+          ch.appendChild(b);
+          return b;
+        });
+        if (q.type === 'multi' && !done) area.appendChild(el('div', { class: 'qz-note', text: '옳은 것을 모두 고른 뒤 확인을 눌러요.' }));
+        area.appendChild(ch);
+        if (q.type === 'multi' && !done) {
+          const ok = el('button', { class: 'btn btn-primary btn-sm', type: 'button', html: '✔ 확인하기' });
+          ok.addEventListener('click', () => {
+            const picked = btns.filter((b) => b.classList.contains('picked')).map((b) => +b.getAttribute('data-i'));
+            if (!picked.length) { fb.className = 'mission-feedback hint'; fb.innerHTML = '먼저 보기를 골라요.'; return; }
+            const good = picked.filter(right).length, bad = picked.length - good;
+            if (bad === 0 && good === q.answer.length) finish(false);
+            else miss(bad ? '옳지 않은 보기가 섞여 있어요. (옳은 보기는 모두 ' + q.answer.length + '개)' : '옳은 보기가 더 있어요. (모두 ' + q.answer.length + '개)');
+          });
+          actions.appendChild(ok);
+        }
+      } else if (q.type === 'ox') {
+        const row = el('div', { class: 'qz-ox' });
+        [true, false].forEach((v) => {
+          const b = el('button', { class: 'choice' + (done && v === q.answer ? ' right' : ''), type: 'button', 'data-v': String(v), disabled: done, html: v ? '⭕ 맞아요' : '❌ 아니에요' });
+          if (!done) b.addEventListener('click', () => {
+            if (v === q.answer) { b.classList.add('right'); finish(false); }
+            else { st.wrong++; Sound.fail(); finish(true, '🤔 아쉬워요. 정답은 <b>' + (q.answer ? '⭕ 맞아요' : '❌ 아니에요') + '</b>예요. 풀이를 읽어 보세요.'); }
+          });
+          row.appendChild(b);
+        });
+        area.appendChild(row);
+      } else if (q.type === 'short' || q.type === 'num') {
+        if (done) area.appendChild(el('div', { class: 'qz-ans', html: '정답: <b>' + ansText() + '</b>' }));
+        else {
+          const inp = el('input', { class: 'qz-input', type: 'text', inputmode: q.type === 'num' ? 'decimal' : null, autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', placeholder: q.type === 'num' ? '숫자를 적어요' : '답을 적어요', 'aria-label': '답 입력' });
+          const ok = el('button', { class: 'btn btn-primary btn-sm', type: 'button', html: '✔ 확인' });
+          const check = () => {
+            const raw = inp.value.trim();
+            if (!raw) { fb.className = 'mission-feedback hint'; fb.innerHTML = '답을 먼저 적어요.'; return; }
+            if (q.type === 'num') {
+              const v = qNum(raw);
+              if (isNaN(v)) { fb.className = 'mission-feedback hint'; fb.innerHTML = '숫자로 적어요. (예: 12.5)'; return; }
+              const tol = q.tol != null ? q.tol : Math.max(Math.abs(q.answer) * 0.02, 1e-9);
+              if (Math.abs(v - q.answer) <= tol + 1e-12) finish(false);
+              else miss(st.wrong >= 1 ? (v > q.answer ? '조금 더 작은 값이에요.' : '조금 더 큰 값이에요.') + ' 실험 화면의 값을 다시 읽어 보세요.' : null);
+            } else {
+              const v = qNorm(raw);
+              if (q.answer.some((a) => qNorm(a) === v)) finish(false);
+              else miss(st.wrong >= 1 ? '아직 아니에요. 💡 초성 힌트: <b>' + qCho(q.answer[0]) + '</b>' : null);
+            }
+          };
+          ok.addEventListener('click', check);
+          inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); check(); } });
+          area.appendChild(el('div', { class: 'qz-row' }, [inp, q.unit ? el('span', { class: 'qz-unit', html: q.unit }) : null, ok]));
+        }
+      } else if (q.type === 'essay') {
+        if (done) {
+          area.appendChild(el('div', { class: 'qz-ans', html: '<b>모범 답안</b><br>' + q.model }));
+          if (q.keys && q.keys.length) area.appendChild(el('ul', { class: 'qz-keys' }, q.keys.map((k) => el('li', { class: 'ok', html: k.t }))));
+        } else {
+          const ta = el('textarea', { class: 'qz-input qz-ta', rows: '3', placeholder: '내 생각을 문장으로 적어요', 'aria-label': '서술형 답 입력' });
+          const out = el('ul', { class: 'qz-keys', hidden: true });
+          const ok = el('button', { class: 'btn btn-primary btn-sm', type: 'button', html: '✔ 확인' });
+          ok.addEventListener('click', () => {
+            const v = qNorm(ta.value);
+            if (v.length < 6) { fb.className = 'mission-feedback hint'; fb.innerHTML = '조금 더 자세히 적어요.'; return; }
+            const keys = q.keys || [];
+            const hit = keys.map((k) => (k.k || []).some((w) => v.indexOf(qNorm(w)) >= 0));
+            const n = hit.filter(Boolean).length, need = q.need || keys.length;
+            if (n >= need) { finish(false); return; }
+            out.hidden = false; out.innerHTML = '';
+            keys.forEach((k, i) => out.appendChild(el('li', { class: hit[i] ? 'ok' : 'no', html: hit[i] ? k.t : '아직 빠진 내용이 있어요 (' + (i + 1) + ')' })));
+            miss('꼭 들어가야 할 내용 ' + keys.length + '가지 중 <b>' + n + '가지</b>가 보여요. 빠진 내용을 더해 다시 써 보세요.');
+            reveal.hidden = false;
+          });
+          area.append(ta, out);
+          actions.appendChild(ok);
+        }
+      }
+      if (done) {
+        if (q.explain) card.insertBefore(el('div', { class: 'mission-explain', html: '<h4>🔍 풀이</h4>' + q.explain }), fb);
+        const again = el('button', { class: 'btn btn-sm', type: 'button', html: '↺ 다시 풀기' });
+        again.addEventListener('click', () => { Sound.click(); qRetry = q.id; qTry = null; renderQuiz(); });
+        actions.insertBefore(again, actions.firstChild);
+      } else {
+        if (q.hint) {
+          const hb = el('button', { class: 'btn btn-sm', type: 'button', html: '💡 힌트' });
+          hb.addEventListener('click', () => { Sound.click(); st.help = true; fb.className = 'mission-feedback hint'; fb.innerHTML = '💡 ' + q.hint; });
+          actions.insertBefore(hb, actions.firstChild);
+        }
+        if (q.type !== 'choice' && q.type !== 'ox') {
+          reveal = el('button', { class: 'btn btn-sm qz-reveal', type: 'button', hidden: true, html: q.type === 'essay' ? '📖 모범 답안 보기' : '📖 정답 보기' });
+          reveal.addEventListener('click', () => finish(true));
+          actions.insertBefore(reveal, actions.firstChild);
+        }
+      }
+      actions.appendChild(el('span', { class: 'grow' }));
+      // 다음 문제: 이 난이도의 아직 안 푼 문제 → 없으면 다음 난이도
+      const rest = list.map((x, i) => i).filter((i) => i !== pos && !rec.quiz[list[i].id] && qOpen(list[i]));
+      const after = rest.find((i) => i > pos);
+      const nextI = after != null ? after : rest.length ? rest[0] : pos + 1 < list.length ? pos + 1 : -1;
+      const nextTier = [1, 2, 3].find((t) => t !== qTier && bank.some((x) => x.lv === t && !rec.quiz[x.id] && qOpen(x)));
+      if (nextI >= 0 && (rest.length || !nextTier || !done)) {
+        const nb = el('button', { class: 'btn btn-sm' + (done ? ' btn-good' : ''), type: 'button', html: '다음 문제 →' });
+        nb.addEventListener('click', () => { Sound.click(); qSel[qTier] = nextI; qTry = null; qRetry = null; renderQuiz(); });
+        actions.appendChild(nb);
+      } else if (nextTier) {
+        const nb = el('button', { class: 'btn btn-sm' + (done ? ' btn-good' : ''), type: 'button', html: TIER[nextTier][0] + ' ' + TIER[nextTier][1] + ' 문제로 →' });
+        nb.addEventListener('click', () => { Sound.click(); qTier = nextTier; qSel[nextTier] = Math.max(0, bank.filter((x) => x.lv === nextTier).findIndex((x) => !rec.quiz[x.id] && qOpen(x))); qTry = null; qRetry = null; renderQuiz(); });
+        actions.appendChild(nb);
+      }
+      return card;
+    }
+    if (QUIZ[simId]) setBank(QUIZ[simId]);
+    global.addEventListener('scisim-quiz', (e) => { if (e.detail && e.detail.id === simId) setBank(QUIZ[simId]); });
 
     const api = {
       has, isNew,
@@ -991,8 +1267,15 @@
     return api;
   }
 
+  /* 차시별 실력 문제 등록 (sims/<id>/quiz.js) */
+  const QUIZ = {};
+  function quiz(id, list) {
+    QUIZ[id] = list;
+    try { global.dispatchEvent(new CustomEvent('scisim-quiz', { detail: { id } })); } catch (e) { /* 무시 */ }
+  }
+
   global.SciSim = {
-    catalogInfo, Store, Sound, el, $, $$, themeButton, isDark, setTheme, toast, modal, confetti, stage, pointer, loop, bindRange,
+    quiz, catalogInfo, Store, Sound, el, $, $$, themeButton, isDark, setTheme, toast, modal, confetti, stage, pointer, loop, bindRange,
     clamp, lerp, fmt, starsHTML, game, wireHeader,
   };
 
