@@ -27,11 +27,11 @@
     if (r) {
       const ry = r * 1.15, cy = neck - 6 - ry;
       const g = ctx.createRadialGradient(cx - r * 0.35, cy - ry * 0.4, r * 0.1, cx, cy, ry);
-      g.addColorStop(0, '#fca5a5'); g.addColorStop(0.6, col); g.addColorStop(1, '#991b1b');
+      g.addColorStop(0, col[0]); g.addColorStop(0.6, col[1]); g.addColorStop(1, col[2]);
       ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(cx, cy, r, ry, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = col; ctx.fillRect(cx - 9, neck - 10, 18, 12);
+      ctx.fillStyle = col[1]; ctx.fillRect(cx - 9, neck - 10, 18, 12);
     } else {
-      ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(cx, neck - 14, 10, 14, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = col[1]; ctx.beginPath(); ctx.ellipse(cx, neck - 14, 10, 14, 0, 0, Math.PI * 2); ctx.fill();
     }
     // 발효관(삼각 플라스크)
     ctx.fillStyle = 'rgba(241,217,154,.9)';
@@ -63,8 +63,8 @@
       ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, W, H);
       // 물중탕
       ctx.fillStyle = 'rgba(96,165,250,.25)'; ctx.fillRect(20, 276, W - 40, 30);
-      flask(ctx, 170, vAt(BASE, s.t), '#94a3b8', '기본 설정');
-      flask(ctx, 430, vAt(v20(s), s.t), '#ef4444', '내 조건');
+      flask(ctx, 170, vAt(BASE, s.t), ['#e2e8f0', '#94a3b8', '#475569'], '기본 설정');
+      flask(ctx, 430, vAt(v20(s), s.t), ['#fca5a5', '#ef4444', '#991b1b'], '내 조건');
       ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.moveTo(300, 20); ctx.lineTo(300, 300); ctx.stroke(); ctx.setLineDash([]);
     },
   });
