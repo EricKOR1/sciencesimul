@@ -61,6 +61,7 @@ function check(id) {
       subj++;
       if (typeof q.answer !== 'number' || !isFinite(q.answer)) E('num의 answer는 숫자');
       if (q.tol != null && !(q.tol >= 0)) E('tol은 0 이상');
+      if (q.unit && /\/\s*\d/.test(String(q.unit).replace(/<[^>]*>/g, ''))) E('unit에 "/ 숫자"가 있어요: 입력 칸이 a/b를 분수로 읽으니 다른 표기로 바꿔요');
     } else if (q.type === 'essay') {
       subj++; essay++;
       if (!q.model) E('essay에는 model(모범 답안)이 필요해요');
