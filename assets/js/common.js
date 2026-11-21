@@ -1041,7 +1041,7 @@
     /* ---- 실력 문제 (문제 은행): sims/<id>/quiz.js 가 SciSim.quiz(id, [...])로 등록 ----
        { id, lv: 1 쉬움 | 2 중간 | 3 어려움, step: 이 문제가 열리는 단계(1부터), q: '질문', figure, do: '실험에서 해 볼 일', hint, explain,
          type: 'choice'(choices, answer, feedback) | 'ox'(answer: true/false) | 'multi'(choices, answer: [0, 2])
-             | 'short'(answer: ['정답', '같은 뜻']) | 'num'(answer: 12.5, tol, unit) | 'essay'(model, keys: [{ t: '채점 기준', k: ['낱말', ...] }], need) }
+             | 'short'(answer: ['정답', '같은 뜻'], cs: true면 대소문자 구분 — 유전자형 Rr 등) | 'num'(answer: 12.5, tol, unit) | 'essay'(model, keys: [{ t: '채점 기준', k: ['낱말', ...] }], need) }
        기록: rec.quiz[id] = 2(한 번에 맞힘) | 1(여러 번 만에 또는 정답을 보고) */
     const TIER = { 1: ['🌱', '쉬움'], 2: ['🌿', '중간'], 3: ['🌳', '어려움'] };
     const QTYPE = { choice: '객관식', ox: 'OX', multi: '모두 고르기', short: '단답형', num: '수치 입력', essay: '서술형' };
@@ -1049,7 +1049,7 @@
     const qSel = { 1: 0, 2: 0, 3: 0 };
     if (!rec.quiz || typeof rec.quiz !== 'object') rec.quiz = {};
     const qOpen = (q) => teacher || free || rec.cleared || q.step <= rec.levelsDone;
-    const qNorm = (s) => String(s == null ? '' : s).toLowerCase().replace(/[−–]/g, '-').replace(/[\s.,·ㆍ!?'"‘’“”()\[\]~]/g, '');
+    const qNorm = (s, cs) => (cs ? String(s == null ? '' : s) : String(s == null ? '' : s).toLowerCase()).replace(/[−–]/g, '-').replace(/[\s.,·ㆍ!?'"‘’“”()\[\]~]/g, '');
     function qNum(s) {
       const t = String(s).replace(/[−–]/g, '-').replace(/[,\s]/g, '');
       const f = t.match(/^(-?\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)/);
@@ -1222,8 +1222,8 @@
               if (Math.abs(v - q.answer) <= tol + 1e-12) finish(false);
               else miss(st.wrong >= 1 ? (v > q.answer ? '조금 더 작은 값이에요.' : '조금 더 큰 값이에요.') + ' 실험 화면의 값을 다시 읽어 보세요.' : null);
             } else {
-              const v = qNorm(raw);
-              if (q.answer.some((a) => qNorm(a) === v)) finish(false);
+              const v = qNorm(raw, q.cs);
+              if (q.answer.some((a) => qNorm(a, q.cs) === v)) finish(false);
               else miss(st.wrong >= 1 ? '아직 아니에요. 💡 초성 힌트: <b>' + qCho(q.answer[0]) + '</b>' : null);
             }
           };

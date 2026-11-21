@@ -41,7 +41,7 @@ function check(id) {
     if (q.type === 'choice' || q.type === 'multi') {
       if (!Array.isArray(q.choices) || q.choices.length < 3 || q.choices.length > 5) E('choices는 3~5개');
       else {
-        if (new Set(q.choices.map(norm)).size !== q.choices.length) E('같은 보기가 있어요');
+        if (new Set(q.choices.map((c) => String(c).replace(/\s/g, ''))).size !== q.choices.length) E('같은 보기가 있어요');
         if (q.type === 'choice') {
           if (!Number.isInteger(q.answer) || q.answer < 0 || q.answer >= q.choices.length) E('answer가 보기 범위를 벗어나요');
           if (q.feedback) { if (!Array.isArray(q.feedback) || q.feedback.length !== q.choices.length) E('feedback 개수가 보기 개수와 달라요'); else if (q.feedback[q.answer]) E('정답 보기에 feedback이 있어요'); }
@@ -55,6 +55,7 @@ function check(id) {
       subj++;
       const a = Array.isArray(q.answer) ? q.answer : [q.answer];
       if (!a.length || a.some((x) => typeof x !== 'string' || !norm(x))) E('short의 answer는 글자 목록');
+      else if (!q.cs && a.some((x) => /^[A-Za-z]{2,6}$/.test(x) && /[a-z]/.test(x) && /[A-Z]/.test(x) && new Set(x.toLowerCase()).size < x.length)) E('유전자형처럼 대소문자가 뜻을 가르는 답이에요: cs: true를 넣어요');
       else if (a.some((x) => norm(x).length > 14)) warn.push(at + '단답형 정답이 길어요(14자 초과): 서술형이 더 맞을 수 있어요');
     } else if (q.type === 'num') {
       subj++;
